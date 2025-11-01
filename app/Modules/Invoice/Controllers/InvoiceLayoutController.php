@@ -1,0 +1,319 @@
+<?php
+
+namespace App\Modules\Invoice\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Modules\Invoice\Models\InvoiceLayout;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class InvoiceLayoutController extends Controller
+{
+    public function index()
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        $layouts = InvoiceLayout::where('company_id', $companyId)
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $templates = [
+            [
+                'id' => 'modern',
+                'name' => 'Modern',
+                'description' => 'Modernes, sauberes Design mit klaren Linien und großzügigen Weißräumen',
+                'preview_image' => '/images/templates/modern.png',
+                'features' => ['Minimalistisch', 'Professionell', 'Responsive'],
+                'colors' => ['#2563eb', '#64748b', '#0ea5e9', '#1e293b'],
+                'fonts' => ['Inter', 'Roboto']
+            ],
+            [
+                'id' => 'classic',
+                'name' => 'Klassisch',
+                'description' => 'Traditionelles Layout für professionelle Dokumente mit bewährter Struktur',
+                'preview_image' => '/images/templates/classic.png',
+                'features' => ['Traditionell', 'Bewährt', 'Seriös'],
+                'colors' => ['#1f2937', '#6b7280', '#374151', '#111827'],
+                'fonts' => ['Times New Roman', 'Georgia']
+            ],
+            [
+                'id' => 'minimal',
+                'name' => 'Minimal',
+                'description' => 'Minimalistisches Design mit Fokus auf Inhalt und Lesbarkeit',
+                'preview_image' => '/images/templates/minimal.png',
+                'features' => ['Schlicht', 'Übersichtlich', 'Fokussiert'],
+                'colors' => ['#000000', '#666666', '#999999', '#333333'],
+                'fonts' => ['Helvetica', 'Arial']
+            ],
+            [
+                'id' => 'professional',
+                'name' => 'Professionell',
+                'description' => 'Geschäftliches Layout für Unternehmen mit Corporate Design',
+                'preview_image' => '/images/templates/professional.png',
+                'features' => ['Corporate', 'Strukturiert', 'Vertrauenswürdig'],
+                'colors' => ['#1e40af', '#3b82f6', '#60a5fa', '#1e293b'],
+                'fonts' => ['Open Sans', 'Lato']
+            ],
+            [
+                'id' => 'creative',
+                'name' => 'Kreativ',
+                'description' => 'Kreatives Design für moderne Unternehmen mit frischen Akzenten',
+                'preview_image' => '/images/templates/creative.png',
+                'features' => ['Modern', 'Auffällig', 'Innovativ'],
+                'colors' => ['#7c3aed', '#a855f7', '#c084fc', '#1f2937'],
+                'fonts' => ['Montserrat', 'Poppins']
+            ],
+            [
+                'id' => 'elegant',
+                'name' => 'Elegant',
+                'description' => 'Elegantes Design mit raffinierten Details und hochwertiger Anmutung',
+                'preview_image' => '/images/templates/elegant.png',
+                'features' => ['Raffiniert', 'Hochwertig', 'Stilvoll'],
+                'colors' => ['#059669', '#10b981', '#34d399', '#1f2937'],
+                'fonts' => ['Playfair Display', 'Source Sans Pro']
+            ]
+        ];
+
+        return Inertia::render('settings/invoice-layouts', [
+            'layouts' => $layouts,
+            'templates' => $templates
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:invoice,offer,both',
+            'template' => 'required|string',
+            'settings' => 'required|array',
+            'settings.colors' => 'required|array',
+            'settings.colors.primary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.secondary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.accent' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.text' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.fonts' => 'required|array',
+            'settings.fonts.heading' => 'required|string|max:50',
+            'settings.fonts.body' => 'required|string|max:50',
+            'settings.fonts.size' => 'required|in:small,medium,large',
+            'settings.layout' => 'required|array',
+            'settings.layout.header_height' => 'required|integer|min:50|max:300',
+            'settings.layout.footer_height' => 'required|integer|min:30|max:200',
+            'settings.layout.margin_top' => 'required|integer|min:0|max:100',
+            'settings.layout.margin_bottom' => 'required|integer|min:0|max:100',
+            'settings.layout.margin_left' => 'required|integer|min:0|max:100',
+            'settings.layout.margin_right' => 'required|integer|min:0|max:100',
+            'settings.branding' => 'required|array',
+            'settings.branding.show_logo' => 'required|boolean',
+            'settings.branding.logo_position' => 'required|in:top-left,top-center,top-right',
+            'settings.branding.company_info_position' => 'required|in:top-left,top-center,top-right',
+            'settings.content' => 'required|array',
+            'settings.content.show_item_images' => 'required|boolean',
+            'settings.content.show_item_codes' => 'required|boolean',
+            'settings.content.show_tax_breakdown' => 'required|boolean',
+            'settings.content.show_payment_terms' => 'required|boolean',
+            'settings.content.custom_footer_text' => 'nullable|string|max:2000',
+            'settings.template_specific' => 'sometimes|array',
+        ]);
+
+        // Check if this is the first layout for the company
+        $companyId = $this->getEffectiveCompanyId();
+        $isFirstLayout = !InvoiceLayout::where('company_id', $companyId)->exists();
+
+        $layout = InvoiceLayout::create([
+            'company_id' => $companyId,
+            'name' => $request->name,
+            'type' => $request->type,
+            'template' => $request->template,
+            'settings' => $request->settings,
+            'is_default' => $isFirstLayout, // First layout becomes default
+        ]);
+
+        return redirect()->route('invoice-layouts.index')
+            ->with('success', 'Layout wurde erfolgreich erstellt.');
+    }
+
+    public function update(Request $request, InvoiceLayout $invoiceLayout)
+    {
+        // Check if user can access this layout
+        $companyId = $this->getEffectiveCompanyId();
+        if ($invoiceLayout->company_id !== $companyId) {
+            abort(403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:invoice,offer,both',
+            'template' => 'required|string',
+            'settings' => 'required|array',
+            'settings.colors' => 'required|array',
+            'settings.colors.primary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.secondary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.accent' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.text' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.fonts' => 'required|array',
+            'settings.fonts.heading' => 'required|string|max:50',
+            'settings.fonts.body' => 'required|string|max:50',
+            'settings.fonts.size' => 'required|in:small,medium,large',
+            'settings.layout' => 'required|array',
+            'settings.layout.header_height' => 'required|integer|min:50|max:300',
+            'settings.layout.footer_height' => 'required|integer|min:30|max:200',
+            'settings.layout.margin_top' => 'required|integer|min:0|max:100',
+            'settings.layout.margin_bottom' => 'required|integer|min:0|max:100',
+            'settings.layout.margin_left' => 'required|integer|min:0|max:100',
+            'settings.layout.margin_right' => 'required|integer|min:0|max:100',
+            'settings.branding' => 'required|array',
+            'settings.branding.show_logo' => 'required|boolean',
+            'settings.branding.logo_position' => 'required|in:top-left,top-center,top-right',
+            'settings.branding.company_info_position' => 'required|in:top-left,top-center,top-right',
+            'settings.content' => 'required|array',
+            'settings.content.show_item_images' => 'required|boolean',
+            'settings.content.show_item_codes' => 'required|boolean',
+            'settings.content.show_tax_breakdown' => 'required|boolean',
+            'settings.content.show_payment_terms' => 'required|boolean',
+            'settings.content.custom_footer_text' => 'nullable|string|max:2000',
+            'settings.template_specific' => 'sometimes|array',
+        ]);
+
+        $invoiceLayout->update([
+            'name' => $request->name,
+            'type' => $request->type,
+            'template' => $request->template,
+            'settings' => $request->settings,
+        ]);
+
+        return redirect()->route('invoice-layouts.index')
+            ->with('success', 'Layout wurde erfolgreich aktualisiert.');
+    }
+
+    public function destroy(InvoiceLayout $invoiceLayout)
+    {
+        // Check if user can access this layout
+        $companyId = $this->getEffectiveCompanyId();
+        if ($invoiceLayout->company_id !== $companyId) {
+            abort(403);
+        }
+
+        // Prevent deletion of default layout
+        if ($invoiceLayout->is_default) {
+            return redirect()->route('invoice-layouts.index')
+                ->with('error', 'Das Standard-Layout kann nicht gelöscht werden.');
+        }
+
+        // Check if layout is in use
+        $invoicesCount = $invoiceLayout->invoices()->count();
+        if ($invoicesCount > 0) {
+            return redirect()->route('invoice-layouts.index')
+                ->with('error', "Das Layout wird von {$invoicesCount} Rechnung(en) verwendet und kann nicht gelöscht werden.");
+        }
+
+        $invoiceLayout->delete();
+
+        return redirect()->route('invoice-layouts.index')
+            ->with('success', 'Layout wurde erfolgreich gelöscht.');
+    }
+
+    public function setDefault(InvoiceLayout $invoiceLayout)
+    {
+        // Check if user can access this layout
+        $companyId = $this->getEffectiveCompanyId();
+        if ($invoiceLayout->company_id !== $companyId) {
+            abort(403);
+        }
+
+        // Remove default from all layouts of this company
+        InvoiceLayout::where('company_id', $companyId)
+            ->update(['is_default' => false]);
+
+        // Set this layout as default
+        $invoiceLayout->update(['is_default' => true]);
+
+        return redirect()->route('invoice-layouts.index')
+            ->with('success', 'Layout wurde als Standard festgelegt.');
+    }
+
+    public function duplicate(InvoiceLayout $invoiceLayout)
+    {
+        // Check if user can access this layout
+        $companyId = $this->getEffectiveCompanyId();
+        if ($invoiceLayout->company_id !== $companyId) {
+            abort(403);
+        }
+
+        $duplicatedLayout = $invoiceLayout->replicate();
+        $duplicatedLayout->name = $invoiceLayout->name . ' (Kopie)';
+        $duplicatedLayout->is_default = false;
+        $duplicatedLayout->save();
+
+        return redirect()->route('invoice-layouts.index')
+            ->with('success', 'Layout wurde erfolgreich dupliziert.');
+    }
+
+    public function preview(InvoiceLayout $invoiceLayout)
+    {
+        // Check if user can access this layout
+        $companyId = $this->getEffectiveCompanyId();
+        if ($invoiceLayout->company_id !== $companyId) {
+            abort(403);
+        }
+
+        // Create sample data objects that match Invoice, Customer, and Company models
+        $sampleInvoice = (object) [
+            'id' => 'sample-001',
+            'number' => 'RE-2024-0001',
+            'status' => 'draft',
+            'issue_date' => now(),
+            'due_date' => now()->addDays(30),
+            'subtotal' => 125.00,
+            'tax_rate' => 0.19,
+            'tax_amount' => 23.75,
+            'total' => 148.75,
+            'notes' => null,
+            'items' => collect([
+                (object) [
+                    'id' => 'item-001',
+                    'description' => 'Beispielprodukt',
+                    'quantity' => 2,
+                    'unit' => 'Stk.',
+                    'unit_price' => 50.00,
+                    'total' => 100.00,
+                ],
+                (object) [
+                    'id' => 'item-002',
+                    'description' => 'Weiteres Produkt',
+                    'quantity' => 1,
+                    'unit' => 'Stk.',
+                    'unit_price' => 25.00,
+                    'total' => 25.00,
+                ],
+            ]),
+        ];
+
+        $sampleCustomer = (object) [
+            'id' => 'customer-001',
+            'name' => 'Musterkunde GmbH',
+            'contact_person' => 'Herr Mustermann',
+            'address' => 'Kundenstraße 456',
+            'postal_code' => '54321',
+            'city' => 'Kundenstadt',
+            'country' => 'Deutschland',
+            'customer_number' => 'KU-2024-0001',
+        ];
+
+        // Attach customer to invoice (as the view expects $invoice->customer)
+        $sampleInvoice->customer = $sampleCustomer;
+
+        $sampleCompany = \App\Modules\Company\Models\Company::find($companyId);
+        
+        // Use the same PDF view for preview
+        return view('pdf.invoice', [
+            'layout' => $invoiceLayout,
+            'invoice' => $sampleInvoice,
+            'company' => $sampleCompany,
+            'customer' => $sampleCustomer,
+            'preview' => true,
+        ]);
+    }
+
+}
+
