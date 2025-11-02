@@ -10,13 +10,16 @@ return new class extends Migration
     {
         Schema::table('company_settings', function (Blueprint $table) {
             // E-Rechnung settings
-            $table->boolean('erechnung_enabled')->default(false)->after('currency');
-            $table->boolean('xrechnung_enabled')->default(true)->after('erechnung_enabled');
-            $table->boolean('zugferd_enabled')->default(true)->after('xrechnung_enabled');
-            $table->string('zugferd_profile')->default('EN16931')->after('zugferd_enabled'); // MINIMUM, BASIC, EN16931, EXTENDED
-            $table->string('business_process_id')->nullable()->after('zugferd_profile');
-            $table->string('electronic_address_scheme')->nullable()->after('business_process_id'); // e.g., EM (Email)
-            $table->string('electronic_address')->nullable()->after('electronic_address_scheme');
+            // Note: company_settings uses key-value structure, so these columns don't fit the schema
+            // These settings should be stored as key-value pairs instead
+            // Keeping migration for backward compatibility but these columns may not be used
+            $table->boolean('erechnung_enabled')->default(false);
+            $table->boolean('xrechnung_enabled')->default(true);
+            $table->boolean('zugferd_enabled')->default(true);
+            $table->string('zugferd_profile')->default('EN16931'); // MINIMUM, BASIC, EN16931, EXTENDED
+            $table->string('business_process_id')->nullable();
+            $table->string('electronic_address_scheme')->nullable(); // e.g., EM (Email)
+            $table->string('electronic_address')->nullable();
         });
     }
 
