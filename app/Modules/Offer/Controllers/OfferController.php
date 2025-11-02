@@ -383,6 +383,7 @@ class OfferController extends Controller
 
         try {
             // Configure SMTP settings dynamically for this company
+            Config::set('mail.default', 'smtp');
             Config::set('mail.mailers.smtp.host', $company->smtp_host);
             Config::set('mail.mailers.smtp.port', $company->smtp_port);
             Config::set('mail.mailers.smtp.username', $company->smtp_username);

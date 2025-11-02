@@ -76,6 +76,9 @@ class SendDailyReminders extends Command
      */
     protected function configureSMTP(Company $company)
     {
+        // Set default mailer to smtp (otherwise it might use 'log' which just logs emails)
+        Config::set('mail.default', 'smtp');
+        
         Config::set('mail.mailers.smtp.host', $company->smtp_host);
         Config::set('mail.mailers.smtp.port', $company->smtp_port);
         Config::set('mail.mailers.smtp.username', $company->smtp_username);
