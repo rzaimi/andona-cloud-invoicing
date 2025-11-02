@@ -19,8 +19,33 @@ class SettingsController extends Controller
 
     public function index(Request $request)
     {
-        $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::find($companyId);
+        try {
+            $companyId = $this->getEffectiveCompanyId();
+            
+            if (!$companyId) {
+                \Log::error('SettingsController::index - No company ID found for user', [
+                    'user_id' => $request->user()?->id,
+                    'user_email' => $request->user()?->email,
+                ]);
+                abort(404, 'Company not found. Please ensure your account is associated with a company.');
+            }
+
+            $company = \App\Modules\Company\Models\Company::find($companyId);
+
+            if (!$company) {
+                \Log::error('SettingsController::index - Company not found', [
+                    'company_id' => $companyId,
+                    'user_id' => $request->user()?->id,
+                ]);
+                abort(404, 'Company not found. Please contact support.');
+            }
+        } catch (\Exception $e) {
+            \Log::error('SettingsController::index - Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
 
         // Get all settings for this company (company-specific + global + defaults)
         $settings = $this->settingsService->getAll($companyId);
@@ -141,5 +166,200 @@ class SettingsController extends Controller
                 'payment_terms' => $settings['payment_terms'] ?? 14,
             ],
         ]);
+    }
+
+    public function email(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        $company = \App\Modules\Company\Models\Company::find($companyId);
+        
+        return Inertia::render('settings/email', [
+            'settings' => [
+                'smtp_host' => $company->smtp_host ?? '',
+                'smtp_port' => $company->smtp_port ?? 587,
+                'smtp_username' => $company->smtp_username ?? '',
+                'smtp_password' => $company->smtp_password ? '••••••••' : '', // Mask password
+                'smtp_encryption' => $company->smtp_encryption ?? 'tls',
+                'smtp_from_address' => $company->smtp_from_address ?? $company->email,
+                'smtp_from_name' => $company->smtp_from_name ?? $company->name,
+            ],
+        ]);
+    }
+
+    public function updateEmail(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        $company = \App\Modules\Company\Models\Company::find($companyId);
+        
+        $validated = $request->validate([
+            'smtp_host' => 'required|string|max:255',
+            'smtp_port' => 'required|integer|min:1|max:65535',
+            'smtp_username' => 'required|string|max:255',
+            'smtp_password' => 'nullable|string|max:255', // nullable if not changing
+            'smtp_encryption' => 'required|string|in:tls,ssl,none',
+            'smtp_from_address' => 'required|email|max:255',
+            'smtp_from_name' => 'required|string|max:255',
+        ]);
+
+        // Don't update password if it's the masked value
+        if ($validated['smtp_password'] === '••••••••') {
+            unset($validated['smtp_password']);
+        }
+
+        // Convert 'none' to null for encryption
+        if ($validated['smtp_encryption'] === 'none') {
+            $validated['smtp_encryption'] = null;
+        }
+
+        $company->update($validated);
+
+        return redirect()->route('settings.email')
+            ->with('success', 'E-Mail Einstellungen wurden erfolgreich aktualisiert.');
+    }
+
+    public function reminders(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        $settings = $this->settingsService->getAll($companyId);
+        
+        return Inertia::render('settings/reminders', [
+            'settings' => [
+                'reminder_friendly_days' => $settings['reminder_friendly_days'] ?? 7,
+                'reminder_mahnung1_days' => $settings['reminder_mahnung1_days'] ?? 14,
+                'reminder_mahnung2_days' => $settings['reminder_mahnung2_days'] ?? 21,
+                'reminder_mahnung3_days' => $settings['reminder_mahnung3_days'] ?? 30,
+                'reminder_inkasso_days' => $settings['reminder_inkasso_days'] ?? 45,
+                'reminder_mahnung1_fee' => $settings['reminder_mahnung1_fee'] ?? 5.00,
+                'reminder_mahnung2_fee' => $settings['reminder_mahnung2_fee'] ?? 10.00,
+                'reminder_mahnung3_fee' => $settings['reminder_mahnung3_fee'] ?? 15.00,
+                'reminder_interest_rate' => $settings['reminder_interest_rate'] ?? 9.00,
+                'reminder_auto_send' => $settings['reminder_auto_send'] ?? true,
+            ],
+        ]);
+    }
+
+    public function updateReminders(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        
+        $validated = $request->validate([
+            'reminder_friendly_days' => 'required|integer|min:1|max:90',
+            'reminder_mahnung1_days' => 'required|integer|min:1|max:90',
+            'reminder_mahnung2_days' => 'required|integer|min:1|max:90',
+            'reminder_mahnung3_days' => 'required|integer|min:1|max:90',
+            'reminder_inkasso_days' => 'required|integer|min:1|max:365',
+            'reminder_mahnung1_fee' => 'required|numeric|min:0|max:100',
+            'reminder_mahnung2_fee' => 'required|numeric|min:0|max:100',
+            'reminder_mahnung3_fee' => 'required|numeric|min:0|max:100',
+            'reminder_interest_rate' => 'required|numeric|min:0|max:20',
+            'reminder_auto_send' => 'required|boolean',
+        ]);
+
+        // Update each setting using the service
+        foreach ($validated as $key => $value) {
+            $type = $this->getSettingType($key, $value);
+            $this->settingsService->setCompany($key, $value, $companyId, $type);
+        }
+
+        // Clear cache
+        $this->settingsService->clearCompanyCache($companyId);
+
+        return redirect()->route('settings.reminders')
+            ->with('success', 'Mahnungseinstellungen wurden erfolgreich aktualisiert.');
+    }
+
+    public function emailLogs(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        
+        $query = \App\Models\EmailLog::forCompany($companyId)
+            ->with(['customer:id,name,email'])
+            ->orderBy('sent_at', 'desc');
+
+        // Filter by type
+        if ($request->type && $request->type !== 'all') {
+            $query->where('type', $request->type);
+        }
+
+        // Filter by status
+        if ($request->status && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Search by recipient or subject
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('recipient_email', 'like', "%{$request->search}%")
+                    ->orWhere('recipient_name', 'like', "%{$request->search}%")
+                    ->orWhere('subject', 'like', "%{$request->search}%");
+            });
+        }
+
+        $logs = $query->paginate(20)->withQueryString();
+
+        // Calculate statistics
+        $stats = [
+            'total' => \App\Models\EmailLog::forCompany($companyId)->count(),
+            'invoice' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'invoice')->count(),
+            'offer' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'offer')->count(),
+            'mahnung' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'mahnung')->count(),
+            'failed' => \App\Models\EmailLog::forCompany($companyId)->where('status', 'failed')->count(),
+        ];
+
+        return Inertia::render('settings/email-logs', [
+            'logs' => $logs,
+            'filters' => $request->only(['type', 'status', 'search']),
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Show E-Rechnung settings page
+     */
+    public function erechnung(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        
+        $settings = [
+            'erechnung_enabled' => $this->settingsService->get('erechnung_enabled', false, $companyId),
+            'xrechnung_enabled' => $this->settingsService->get('xrechnung_enabled', true, $companyId),
+            'zugferd_enabled' => $this->settingsService->get('zugferd_enabled', true, $companyId),
+            'zugferd_profile' => $this->settingsService->get('zugferd_profile', 'EN16931', $companyId),
+            'business_process_id' => $this->settingsService->get('business_process_id', null, $companyId),
+            'electronic_address_scheme' => $this->settingsService->get('electronic_address_scheme', 'EM', $companyId),
+            'electronic_address' => $this->settingsService->get('electronic_address', null, $companyId),
+        ];
+
+        return Inertia::render('settings/erechnung', [
+            'settings' => $settings,
+        ]);
+    }
+
+    /**
+     * Update E-Rechnung settings
+     */
+    public function updateErechnung(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+
+        $validated = $request->validate([
+            'erechnung_enabled' => 'required|boolean',
+            'xrechnung_enabled' => 'required|boolean',
+            'zugferd_enabled' => 'required|boolean',
+            'zugferd_profile' => 'required|string|in:MINIMUM,BASIC,EN16931,EXTENDED,XRECHNUNG',
+            'business_process_id' => 'nullable|string|max:255',
+            'electronic_address_scheme' => 'nullable|string|max:50',
+            'electronic_address' => 'nullable|string|max:255',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            $type = is_bool($value) ? 'boolean' : 'string';
+            $this->settingsService->setCompany($key, $value, $companyId, $type);
+        }
+
+        $this->settingsService->clearCompanyCache($companyId);
+
+        return redirect()->route('settings.erechnung')
+            ->with('success', 'E-Rechnung Einstellungen wurden erfolgreich aktualisiert.');
     }
 }

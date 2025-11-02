@@ -1,6 +1,3 @@
 <?php
-use App\Http\Controllers\Settings\ProfileController;
-
-Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+// Profile routes moved to routes/settings.php under /settings/profile
+// This file kept for potential future use
