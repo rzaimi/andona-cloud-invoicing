@@ -45,6 +45,13 @@ class Company extends Model
         'logo',
         'status',
         'settings',
+        'smtp_host',
+        'smtp_port',
+        'smtp_username',
+        'smtp_password',
+        'smtp_encryption',
+        'smtp_from_address',
+        'smtp_from_name',
     ];
 
     protected $casts = [
