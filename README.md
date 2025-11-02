@@ -51,7 +51,8 @@ A comprehensive, modern invoicing and billing system built with Laravel 12 and R
 
 - PHP 8.2 or higher
 - Composer
-- Node.js 18+ and npm
+- Node.js 20.19.0+ or 22.12.0+ (Node.js 21.x is not supported)
+- npm 10+
 - SQLite (default) or MySQL/MariaDB
 - Web server (Apache/Nginx) or PHP built-in server
 
@@ -292,6 +293,60 @@ composer dev
 - Authentication required for all routes
 - Role-based access control
 - Company data isolation
+
+## 🚀 Production Deployment
+
+### Node.js Version Management
+
+This project requires **Node.js 20.19.0+ or 22.12.0+**. Node.js 21.x is not supported.
+
+If using `nodenv` or `nvm`:
+
+```bash
+# Using nodenv
+nodenv install 20.19.0
+nodenv local 20.19.0
+
+# Using nvm
+nvm install 20.19.0
+nvm use 20.19.0
+```
+
+The project includes `.nvmrc` and `.node-version` files to help version managers automatically select the correct Node.js version.
+
+### Installation on Hosting
+
+```bash
+# Make sure you're using the correct Node.js version
+node -v  # Should be 20.19.0+ or 22.12.0+
+
+# Install dependencies
+npm ci
+
+# Build assets
+npm run build
+```
+
+**Troubleshooting npm install errors:**
+
+If you encounter engine warnings or `nodenv: node: command not found` errors:
+
+1. **Switch Node.js version** (recommended):
+   ```bash
+   nodenv local 20.19.0  # or nvm use 20.19.0
+   ```
+
+2. **Fix PATH for nodenv** (if node command not found):
+   ```bash
+   eval "$(nodenv init -)"
+   export PATH="$HOME/.nodenv/bin:$PATH"
+   ```
+
+3. **Workaround** (if you must use unsupported Node version):
+   ```bash
+   npm install --ignore-engines
+   ```
+   ⚠️ **Warning**: This may cause runtime issues. Use proper Node.js version instead.
 
 ## 🆘 Support
 
