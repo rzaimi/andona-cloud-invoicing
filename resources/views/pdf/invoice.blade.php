@@ -7,12 +7,15 @@
     <style>
         @php
             // Helper function to convert font size string to pixels
-            function getFontSizePx($size) {
-                switch($size) {
-                    case 'small': return 11;
-                    case 'large': return 14;
-                    case 'medium':
-                    default: return 12;
+            // Check if function exists to avoid redeclaration errors when multiple PDFs are generated
+            if (!function_exists('getFontSizePx')) {
+                function getFontSizePx($size) {
+                    switch($size) {
+                        case 'small': return 11;
+                        case 'large': return 14;
+                        case 'medium':
+                        default: return 12;
+                    }
                 }
             }
             
