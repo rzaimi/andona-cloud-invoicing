@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('color', 7)->default('#3B82F6'); // Hex color code
-            $table->string('icon', 10)->nullable(); // Emoji icon
+            $table->string('icon', 50)->nullable(); // Icon name (e.g., lucide icon names can be longer)
             $table->foreignUuid('parent_id')->nullable()->constrained('categories')->onDelete('cascade');
             $table->integer('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
