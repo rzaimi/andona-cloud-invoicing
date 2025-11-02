@@ -28,7 +28,7 @@ return new class extends Migration
             $table->text('terms_conditions')->nullable();
             $table->integer('validity_days')->default(30);
             $table->uuid('layout_id')->nullable();
-            $table->foreign('layout_id')->references('id')->on('offer_layouts')->onDelete('set null');
+            // Foreign key constraint will be added in a later migration after offer_layouts table exists
             $table->uuid('converted_to_invoice_id')->nullable();
             $table->foreign('converted_to_invoice_id')->references('id')->on('invoices')->onDelete('set null');
             $table->timestamps();
