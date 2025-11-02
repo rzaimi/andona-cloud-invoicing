@@ -2,6 +2,8 @@
 
 namespace App\Modules\Product\Models;
 
+use App\Modules\Company\Models\Company;
+use App\Modules\User\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +17,7 @@ class StockMovement extends Model
         'company_id',
         'warehouse_id',
         'product_id',
-        'user_id',
+        'created_by',
         'type',
         'quantity',
         'unit_cost',
@@ -66,7 +68,7 @@ class StockMovement extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**

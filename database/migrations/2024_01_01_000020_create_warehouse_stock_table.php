@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('warehouse_stocks', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->foreignUuid('company_id')->constrained('companies')->onDelete('cascade');
-            $table->foreignUuid('warehouse_id')->constrained()->onDelete('cascade');
-            $table->foreignUuid('product_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('warehouse_id')->constrained('warehouses')->onDelete('cascade');
+            $table->foreignUuid('product_id')->constrained('products')->onDelete('cascade');
             $table->decimal('quantity', 10, 2)->default(0);
             $table->decimal('reserved_quantity', 10, 2)->default(0); // Reserved for orders
             $table->decimal('available_quantity', 10, 2)->storedAs('quantity - reserved_quantity');

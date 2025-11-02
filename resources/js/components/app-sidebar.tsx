@@ -25,6 +25,8 @@ import {
     Tag,
     Warehouse,
     MoreHorizontal,
+    Mail,
+    FileCheck,
 } from "lucide-react"
 import {
     Sidebar,
@@ -126,7 +128,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
     const availableCompanies = pageProps.auth?.available_companies || []
     const canSwitchCompany = availableCompanies.length > 0 && user.permissions?.includes("manage_companies")
     const [selectedCompanyId, setSelectedCompanyId] = useState<string>(user.company?.id || "")
-    
+
     useEffect(() => {
         // Initialize selected company ID from user's company
         if (user.company?.id) {
@@ -286,6 +288,30 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             isActive: isActive("/settings"),
         },
         {
+            title: "E-Mail Einstellungen",
+            url: "/settings/email",
+            icon: Mail,
+            isActive: isActive("/settings/email"),
+        },
+        {
+            title: "Mahnungseinstellungen",
+            url: "/settings/reminders",
+            icon: Bell,
+            isActive: isActive("/settings/reminders"),
+        },
+        {
+            title: "E-Rechnung",
+            url: "/settings/erechnung",
+            icon: FileCheck,
+            isActive: isActive("/settings/erechnung"),
+        },
+        {
+            title: "E-Mail-Verlauf",
+            url: "/settings/email-logs",
+            icon: Mail,
+            isActive: isActive("/settings/email-logs"),
+        },
+        {
             title: "Rechnungslayouts",
             url: "/invoice-layouts",
             icon: LayoutTemplate,
@@ -339,7 +365,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                         <Receipt className="size-4" />
                                     </div>
                                     <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
-                                        <span className="truncate font-semibold">Rechnungssystem</span>
+                                        <span className="truncate font-semibold">AndoBill</span>
                                         {canSwitchCompany ? (
                                             <Select
                                                 value={selectedCompanyId}
@@ -352,7 +378,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                                             preserveState: false,
                                                             preserveScroll: false,
                                                             onSuccess: () => {
-                                                                // Page will reload automatically due to preserveState: false
+                                                                // Will redirect to dashboard and fully reload the application
                                                             },
                                                             onError: (errors) => {
                                                                 console.error('Company switch error:', errors)
@@ -654,15 +680,9 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                 sideOffset={4}
                             >
                                 <DropdownMenuItem asChild>
-                                    <Link href="/profile">
+                                    <Link href="/settings/profile">
                                         <Users className="mr-2 h-4 w-4" />
                                         Profil bearbeiten
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href="/settings">
-                                        <Settings className="mr-2 h-4 w-4" />
-                                        Schnelleinstellungen
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>

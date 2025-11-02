@@ -15,6 +15,14 @@ class Invoice extends Model
 {
     use HasFactory, HasUuids;
 
+    // Reminder Level Constants
+    const REMINDER_NONE = 0;
+    const REMINDER_FRIENDLY = 1;
+    const REMINDER_MAHNUNG_1 = 2;
+    const REMINDER_MAHNUNG_2 = 3;
+    const REMINDER_MAHNUNG_3 = 4;
+    const REMINDER_INKASSO = 5;
+
     protected $fillable = [
         'number',
         'company_id',
@@ -31,6 +39,15 @@ class Invoice extends Model
         'payment_method',
         'payment_terms',
         'layout_id',
+        'reminder_level',
+        'last_reminder_sent_at',
+        'reminder_fee',
+        'reminder_history',
+        'is_correction',
+        'corrects_invoice_id',
+        'corrected_by_invoice_id',
+        'correction_reason',
+        'corrected_at',
     ];
 
     protected $casts = [
@@ -40,6 +57,11 @@ class Invoice extends Model
         'tax_rate' => 'decimal:4',
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'reminder_fee' => 'decimal:2',
+        'last_reminder_sent_at' => 'datetime',
+        'reminder_history' => 'array',
+        'is_correction' => 'boolean',
+        'corrected_at' => 'datetime',
     ];
 
     public function company(): BelongsTo
@@ -65,6 +87,22 @@ class Invoice extends Model
     public function layout(): BelongsTo
     {
         return $this->belongsTo(InvoiceLayout::class);
+    }
+
+    /**
+     * The original invoice that this correction corrects
+     */
+    public function correctsInvoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'corrects_invoice_id');
+    }
+
+    /**
+     * The correction invoice that corrects this invoice
+     */
+    public function correctedByInvoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'corrected_by_invoice_id');
     }
 
     public function scopeForCompany($query, $companyId)
@@ -93,5 +131,161 @@ class Invoice extends Model
         $lastNumber = $lastInvoice ? (int) substr($lastInvoice->number, -4) : 0;
 
         return $prefix . $year . '-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Get human-readable reminder level name
+     */
+    public function getReminderLevelNameAttribute(): string
+    {
+        return match($this->reminder_level) {
+            self::REMINDER_NONE => 'Keine',
+            self::REMINDER_FRIENDLY => 'Freundliche Erinnerung',
+            self::REMINDER_MAHNUNG_1 => '1. Mahnung',
+            self::REMINDER_MAHNUNG_2 => '2. Mahnung',
+            self::REMINDER_MAHNUNG_3 => '3. Mahnung',
+            self::REMINDER_INKASSO => 'Inkasso',
+            default => 'Unbekannt',
+        };
+    }
+
+    /**
+     * Check if invoice is overdue
+     */
+    public function isOverdue(): bool
+    {
+        return $this->status !== 'paid' 
+            && $this->status !== 'cancelled'
+            && $this->due_date 
+            && $this->due_date->isPast();
+    }
+
+    /**
+     * Get days overdue
+     */
+    public function getDaysOverdue(): int
+    {
+        if (!$this->isOverdue()) {
+            return 0;
+        }
+        return abs($this->due_date->diffInDays(now()));
+    }
+
+    /**
+     * Check if invoice can receive next reminder
+     */
+    public function canSendNextReminder(): bool
+    {
+        if ($this->status === 'paid' || $this->status === 'cancelled') {
+            return false;
+        }
+        
+        if ($this->reminder_level >= self::REMINDER_INKASSO) {
+            return false; // Already at max level
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the next reminder level
+     */
+    public function getNextReminderLevel(): int
+    {
+        return min($this->reminder_level + 1, self::REMINDER_INKASSO);
+    }
+
+    /**
+     * Add reminder to history
+     */
+    public function addReminderToHistory(int $level, float $fee = 0): void
+    {
+        $history = $this->reminder_history ?? [];
+        $history[] = [
+            'level' => $level,
+            'level_name' => $this->getReminderLevelNameForLevel($level),
+            'sent_at' => now()->toDateTimeString(),
+            'days_overdue' => $this->getDaysOverdue(),
+            'fee' => $fee,
+        ];
+        
+        $this->reminder_history = $history;
+        $this->last_reminder_sent_at = now();
+        $this->reminder_level = $level;
+        
+        if ($fee > 0) {
+            $this->reminder_fee = ($this->reminder_fee ?? 0) + $fee;
+        }
+    }
+
+    /**
+     * Get reminder level name for a specific level (public for use in commands)
+     */
+    public function getReminderLevelNameForLevel(int $level): string
+    {
+        return match($level) {
+            self::REMINDER_NONE => 'Keine',
+            self::REMINDER_FRIENDLY => 'Freundliche Erinnerung',
+            self::REMINDER_MAHNUNG_1 => '1. Mahnung',
+            self::REMINDER_MAHNUNG_2 => '2. Mahnung',
+            self::REMINDER_MAHNUNG_3 => '3. Mahnung',
+            self::REMINDER_INKASSO => 'Inkasso',
+            default => 'Unbekannt',
+        };
+    }
+
+    /**
+     * Get total amount including reminder fees
+     */
+    public function getTotalWithFeesAttribute(): float
+    {
+        return $this->total + ($this->reminder_fee ?? 0);
+    }
+
+    /**
+     * Check if invoice can be corrected
+     */
+    public function canBeCorrect(): bool
+    {
+        // Can only correct sent or paid invoices
+        // Cannot correct if already corrected
+        // Cannot correct if it's already a correction invoice
+        return in_array($this->status, ['sent', 'paid', 'overdue']) 
+            && !$this->corrected_by_invoice_id 
+            && !$this->is_correction;
+    }
+
+    /**
+     * Check if invoice is corrected
+     */
+    public function isCorrected(): bool
+    {
+        return $this->corrected_by_invoice_id !== null;
+    }
+
+    /**
+     * Generate correction number based on original invoice
+     */
+    public function generateCorrectionNumber(): string
+    {
+        $company = $this->company;
+        $prefix = $company->getSetting('invoice_prefix', 'RE-');
+        
+        // Extract the number from the original invoice
+        if ($this->corrects_invoice_id && $this->correctsInvoice) {
+            $originalNumber = $this->correctsInvoice->number;
+            return str_replace($prefix, $prefix . 'STORNO-', $originalNumber);
+        }
+        
+        // Fallback to regular numbering with STORNO prefix
+        $year = now()->year;
+        $lastInvoice = static::where('company_id', $this->company_id)
+            ->whereYear('created_at', $year)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $lastNumber = $lastInvoice ? (int) substr($lastInvoice->number, -4) : 0;
+
+        return $prefix . 'STORNO-' . $year . '-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
     }
 }

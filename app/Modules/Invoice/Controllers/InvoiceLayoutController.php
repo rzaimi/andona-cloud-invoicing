@@ -4,11 +4,18 @@ namespace App\Modules\Invoice\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Invoice\Models\InvoiceLayout;
+use App\Services\ContextService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class InvoiceLayoutController extends Controller
 {
+    public function __construct(ContextService $contextService)
+    {
+        parent::__construct($contextService);
+        $this->middleware('auth');
+    }
+
     public function index()
     {
         $companyId = $this->getEffectiveCompanyId();
@@ -19,13 +26,13 @@ class InvoiceLayoutController extends Controller
 
         $templates = [
             [
-                'id' => 'modern',
-                'name' => 'Modern',
-                'description' => 'Modernes, sauberes Design mit klaren Linien und großzügigen Weißräumen',
-                'preview_image' => '/images/templates/modern.png',
-                'features' => ['Minimalistisch', 'Professionell', 'Responsive'],
-                'colors' => ['#2563eb', '#64748b', '#0ea5e9', '#1e293b'],
-                'fonts' => ['Inter', 'Roboto']
+                'id' => 'minimal',
+                'name' => 'Minimal',
+                'description' => 'Minimalistisches Design mit Fokus auf Inhalt und Lesbarkeit',
+                'preview_image' => '/images/templates/minimal.png',
+                'features' => ['Schlicht', 'Übersichtlich', 'Fokussiert'],
+                'colors' => ['#000000', '#666666', '#999999', '#333333'],
+                'fonts' => ['Helvetica', 'Arial']
             ],
             [
                 'id' => 'classic',
@@ -35,15 +42,6 @@ class InvoiceLayoutController extends Controller
                 'features' => ['Traditionell', 'Bewährt', 'Seriös'],
                 'colors' => ['#1f2937', '#6b7280', '#374151', '#111827'],
                 'fonts' => ['Times New Roman', 'Georgia']
-            ],
-            [
-                'id' => 'minimal',
-                'name' => 'Minimal',
-                'description' => 'Minimalistisches Design mit Fokus auf Inhalt und Lesbarkeit',
-                'preview_image' => '/images/templates/minimal.png',
-                'features' => ['Schlicht', 'Übersichtlich', 'Fokussiert'],
-                'colors' => ['#000000', '#666666', '#999999', '#333333'],
-                'fonts' => ['Helvetica', 'Arial']
             ],
             [
                 'id' => 'professional',
@@ -297,7 +295,7 @@ class InvoiceLayoutController extends Controller
             'postal_code' => '54321',
             'city' => 'Kundenstadt',
             'country' => 'Deutschland',
-            'customer_number' => 'KU-2024-0001',
+            'number' => 'KU-2024-0001', // Changed from customer_number to number
         ];
 
         // Attach customer to invoice (as the view expects $invoice->customer)

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Warehouse extends Model
 {
@@ -16,11 +17,14 @@ class Warehouse extends Model
 
     protected $fillable = [
         'company_id',
+        'code',
         'name',
         'description',
-        'address',
+        'street',
+        'street_number',
         'postal_code',
         'city',
+        'state',
         'country',
         'contact_person',
         'phone',
@@ -72,7 +76,7 @@ class Warehouse extends Model
     public function getFullAddressAttribute(): string
     {
         $parts = array_filter([
-            $this->address,
+            $this->street . ($this->street_number ? ' ' . $this->street_number : ''),
             $this->postal_code . ' ' . $this->city,
             $this->country,
         ]);
@@ -87,7 +91,7 @@ class Warehouse extends Model
     {
         return $this->warehouseStocks()
             ->join('products', 'warehouse_stocks.product_id', '=', 'products.id')
-            ->sum(\DB::raw('warehouse_stocks.quantity * products.cost_price'));
+            ->sum(DB::raw('warehouse_stocks.quantity * products.cost_price'));
     }
 
     /**

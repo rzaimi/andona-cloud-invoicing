@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer } from "@/types"
+import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 
 interface InvoiceItem {
     id: number
@@ -23,9 +24,21 @@ interface InvoiceItem {
     total: number
 }
 
+interface Product {
+    id: string
+    name: string
+    description?: string
+    price: number
+    unit: string
+    tax_rate: number
+    sku?: string
+    number?: string
+}
+
 interface InvoicesCreateProps {
     customers: Customer[]
     layouts: any[]
+    products: Product[]
     settings: {
         currency: string
         tax_rate: number
@@ -43,7 +56,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function InvoicesCreate() {
-    const { customers, layouts, settings } = usePage<InvoicesCreateProps>().props
+    const { customers, layouts, products, settings } = usePage<InvoicesCreateProps>().props
 
     const { data, setData, post, processing, errors } = useForm({
         customer_id: "",
@@ -227,10 +240,20 @@ export default function InvoicesCreate() {
                                 <CardTitle>Rechnungspositionen</CardTitle>
                                 <CardDescription>Fügen Sie Positionen zu Ihrer Rechnung hinzu</CardDescription>
                             </div>
-                            <Button type="button" onClick={addItem} size="sm">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Position hinzufügen
-                            </Button>
+                            <ProductSelectorDialog 
+                                products={products} 
+                                onSelect={(item) => {
+                                    const newItem = {
+                                        id: Date.now(),
+                                        description: item.description,
+                                        quantity: item.quantity,
+                                        unit_price: item.unit_price,
+                                        unit: item.unit,
+                                        total: item.quantity * item.unit_price,
+                                    }
+                                    setData("items", [...data.items, newItem])
+                                }}
+                            />
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">

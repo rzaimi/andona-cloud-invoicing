@@ -62,9 +62,9 @@ export default function CompaniesIndex({ companies }: Props) {
                     </div>
 
                     <Button asChild>
-                        <Link href={route("companies.create")}>
+                        <Link href={route("companies.wizard.start")}>
                             <Plus className="mr-2 h-4 w-4" />
-                            Neue Firma
+                            Neue Firma erstellen
                         </Link>
                     </Button>
                 </div>

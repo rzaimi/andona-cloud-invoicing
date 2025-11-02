@@ -17,10 +17,12 @@ import {
     FileText,
     AlertTriangle,
     Clock,
-    CheckCircle
+    CheckCircle,
+    Send
 } from "lucide-react"
 import { route } from "ziggy-js"
 import AppLayout from "@/layouts/app-layout"
+import { SendEmailDialog } from "@/components/send-email-dialog"
 import type { BreadcrumbItem, Offer, PaginatedData } from "@/types"
 
 interface OffersIndexProps {
@@ -45,14 +47,22 @@ export default function OffersIndex() {
     const { offers, filters, stats } = usePage<OffersIndexProps>().props
     const [search, setSearch] = useState(filters.search || "")
     const [status, setStatus] = useState(filters.status || "all")
+    const [sendDialogOpen, setSendDialogOpen] = useState(false)
+    const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
 
     const handleSearch = () => {
-        router.get("/offers", { search, status }, { preserveState: true })
+        const params: any = {}
+        if (search) params.search = search
+        if (status && status !== 'all') params.status = status
+        router.get("/offers", params, { preserveScroll: true })
     }
 
     const handleStatusChange = (newStatus: string) => {
         setStatus(newStatus)
-        router.get("/offers", { search, status: newStatus }, { preserveState: true })
+        const params: any = {}
+        if (search) params.search = search
+        if (newStatus && newStatus !== 'all') params.status = newStatus
+        router.get("/offers", params, { preserveScroll: true })
     }
 
     const handleDelete = (offer: Offer) => {
@@ -315,6 +325,19 @@ export default function OffersIndex() {
                                                                 <FileText className="h-4 w-4 mr-1" />
                                                                 PDF
                                                             </Button>
+                                                            {offer.status === "draft" && (
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    size="sm" 
+                                                                    title="Versenden"
+                                                                    onClick={() => {
+                                                                        setSelectedOffer(offer)
+                                                                        setSendDialogOpen(true)
+                                                                    }}
+                                                                >
+                                                                    <Send className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
                                                             {offer.status === "accepted" && (
                                                                 <Button
                                                                     variant="outline"
@@ -346,32 +369,37 @@ export default function OffersIndex() {
                         </div>
 
                         {/* Pagination */}
-                        {offers.last_page > 1 && (
-                            <div className="flex items-center justify-between mt-6">
-                                <div className="text-sm text-gray-500">
-                                    Zeige {offers.from} bis {offers.to} von {offers.total} Angeboten
-                                </div>
-                                <div className="flex space-x-2">
-                                    {offers.prev_page_url && (
-                                        <Link href={offers.prev_page_url}>
-                                            <Button variant="outline" size="sm">
-                                                Vorherige
-                                            </Button>
-                                        </Link>
-                                    )}
-                                    {offers.next_page_url && (
-                                        <Link href={offers.next_page_url}>
-                                            <Button variant="outline" size="sm">
-                                                Nächste
-                                            </Button>
-                                        </Link>
-                                    )}
-                                </div>
+                        {offers.links && offers.links.length > 3 && (
+                            <div className="flex justify-center mt-6 gap-2">
+                                {offers.links.map((link, index) => (
+                                    <Button
+                                        key={index}
+                                        variant={link.active ? "default" : "outline"}
+                                        size="sm"
+                                        disabled={!link.url}
+                                        onClick={() => link.url && router.get(link.url)}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                ))}
                             </div>
                         )}
                     </CardContent>
                 </Card>
             </div>
+
+            {selectedOffer && (
+                <SendEmailDialog
+                    open={sendDialogOpen}
+                    onOpenChange={setSendDialogOpen}
+                    type="offer"
+                    documentId={selectedOffer.id}
+                    documentNumber={selectedOffer.number}
+                    customerEmail={selectedOffer.customer?.email}
+                    onSuccess={() => {
+                        router.reload()
+                    }}
+                />
+            )}
         </AppLayout>
     )
 }

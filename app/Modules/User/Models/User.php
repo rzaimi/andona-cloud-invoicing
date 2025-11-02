@@ -12,10 +12,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Database\Factories\UserFactory;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasUuids, HasRoles;
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return UserFactory::new();
+    }
 
     protected $fillable = [
         'name',

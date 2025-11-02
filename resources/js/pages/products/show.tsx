@@ -1,10 +1,29 @@
 "use client"
 
-import { Head, Link, router } from "@inertiajs/react"
+import { Head, Link, router, useForm } from "@inertiajs/react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
     ArrowLeft,
     Edit,
@@ -35,13 +54,44 @@ interface ProductShowProps {
             type: "in" | "out" | "adjustment"
             quantity: number
             reason: string
+            notes?: string
             created_at: string
             user_name: string
+            warehouse_name?: string
         }>
     }
+    warehouses?: Array<{
+        id: string
+        name: string
+        code: string
+        is_default: boolean
+    }>
+    stock_movements?: Array<{
+        id: string
+        type: "in" | "out" | "adjustment"
+        quantity: number
+        reason: string
+        notes?: string
+        created_at: string
+        user_name: string
+        warehouse_name?: string
+    }>
 }
 
-export default function ProductShow({ user, product }: ProductShowProps) {
+export default function ProductShow({ user, product, warehouses = [], stock_movements = [] }: ProductShowProps) {
+    const [adjustStockDialogOpen, setAdjustStockDialogOpen] = useState(false)
+
+    // Merge stock_movements from props with product.stock_movements (props takes precedence)
+    const allStockMovements = stock_movements.length > 0 ? stock_movements : (product.stock_movements || [])
+
+    const { data: adjustStockData, setData: setAdjustStockData, post: adjustStockPost, processing: adjustingStock, errors: adjustStockErrors, reset: resetAdjustStock } = useForm({
+        warehouse_id: warehouses.find(w => w.is_default)?.id || warehouses[0]?.id || "",
+        adjustment_type: "set",
+        quantity: product.stock_quantity || 0,
+        reason: "",
+        notes: "",
+    })
+
     const deleteProduct = () => {
         if (
             confirm(
@@ -50,6 +100,16 @@ export default function ProductShow({ user, product }: ProductShowProps) {
         ) {
             router.delete(`/products/${product.id}`)
         }
+    }
+
+    const handleAdjustStock = (e: React.FormEvent) => {
+        e.preventDefault()
+        adjustStockPost(`/products/${product.id}/adjust-stock`, {
+            onSuccess: () => {
+                setAdjustStockDialogOpen(false)
+                resetAdjustStock()
+            },
+        })
     }
 
     const getStockStatusBadge = () => {
@@ -266,12 +326,21 @@ export default function ProductShow({ user, product }: ProductShowProps) {
                                                     </div>
                                                 </div>
 
+                                                {warehouses.length > 0 && (
+                                                    <div className="flex justify-end">
+                                                        <Button onClick={() => setAdjustStockDialogOpen(true)}>
+                                                            <Package className="mr-2 h-4 w-4" />
+                                                            Bestand anpassen
+                                                        </Button>
+                                                    </div>
+                                                )}
+
                                                 {/* Stock Movements */}
-                                                {product.stock_movements && product.stock_movements.length > 0 && (
+                                                {allStockMovements.length > 0 && (
                                                     <div>
                                                         <h4 className="font-medium mb-3">Letzte Bestandsbewegungen</h4>
                                                         <div className="space-y-2">
-                                                            {product.stock_movements.slice(0, 5).map((movement) => (
+                                                            {allStockMovements.slice(0, 10).map((movement) => (
                                                                 <div
                                                                     key={movement.id}
                                                                     className="flex items-center justify-between p-3 rounded-lg bg-muted"
@@ -283,9 +352,12 @@ export default function ProductShow({ user, product }: ProductShowProps) {
                                                                         <div>
                                                                             <p className="text-sm font-medium">
                                                                                 {movement.type === "in" ? "+" : movement.type === "out" ? "-" : "±"}
-                                                                                {movement.quantity} {product.unit}
+                                                                                {Math.abs(movement.quantity)} {product.unit}
                                                                             </p>
                                                                             <p className="text-xs text-muted-foreground">{movement.reason}</p>
+                                                                            {movement.warehouse_name && (
+                                                                                <p className="text-xs text-muted-foreground">Lager: {movement.warehouse_name}</p>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                     <div className="text-right">
@@ -301,6 +373,121 @@ export default function ProductShow({ user, product }: ProductShowProps) {
                                         )}
                                     </CardContent>
                                 </Card>
+
+                                {/* Stock Adjustment Dialog */}
+                                <Dialog open={adjustStockDialogOpen} onOpenChange={setAdjustStockDialogOpen}>
+                                    <DialogContent className="sm:max-w-[500px]">
+                                        <DialogHeader>
+                                            <DialogTitle>Bestand anpassen</DialogTitle>
+                                            <DialogDescription>
+                                                Passen Sie den Bestand für {product.name} an.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <form onSubmit={handleAdjustStock}>
+                                            <div className="space-y-4 py-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="warehouse_id">Lager *</Label>
+                                                    <Select
+                                                        value={adjustStockData.warehouse_id}
+                                                        onValueChange={(value) => setAdjustStockData("warehouse_id", value)}
+                                                    >
+                                                        <SelectTrigger id="warehouse_id">
+                                                            <SelectValue placeholder="Lager auswählen" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {warehouses.map((warehouse) => (
+                                                                <SelectItem key={warehouse.id} value={warehouse.id}>
+                                                                    {warehouse.name} {warehouse.is_default && "(Standard)"}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {adjustStockErrors.warehouse_id && (
+                                                        <p className="text-sm text-red-500">{adjustStockErrors.warehouse_id}</p>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="adjustment_type">Anpassungstyp *</Label>
+                                                    <Select
+                                                        value={adjustStockData.adjustment_type}
+                                                        onValueChange={(value) => setAdjustStockData("adjustment_type", value as "set" | "add" | "subtract")}
+                                                    >
+                                                        <SelectTrigger id="adjustment_type">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="set">Bestand setzen</SelectItem>
+                                                            <SelectItem value="add">Bestand hinzufügen</SelectItem>
+                                                            <SelectItem value="subtract">Bestand abziehen</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {adjustStockErrors.adjustment_type && (
+                                                        <p className="text-sm text-red-500">{adjustStockErrors.adjustment_type}</p>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="quantity">Menge *</Label>
+                                                    <Input
+                                                        id="quantity"
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={adjustStockData.quantity}
+                                                        onChange={(e) => setAdjustStockData("quantity", parseFloat(e.target.value) || 0)}
+                                                    />
+                                                    <p className="text-xs text-muted-foreground">Einheit: {product.unit}</p>
+                                                    {adjustStockErrors.quantity && (
+                                                        <p className="text-sm text-red-500">{adjustStockErrors.quantity}</p>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="reason">Grund *</Label>
+                                                    <Input
+                                                        id="reason"
+                                                        value={adjustStockData.reason}
+                                                        onChange={(e) => setAdjustStockData("reason", e.target.value)}
+                                                        placeholder="z.B. Inventur, Defekt, Lieferung..."
+                                                    />
+                                                    {adjustStockErrors.reason && (
+                                                        <p className="text-sm text-red-500">{adjustStockErrors.reason}</p>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="notes">Notizen (optional)</Label>
+                                                    <Textarea
+                                                        id="notes"
+                                                        value={adjustStockData.notes}
+                                                        onChange={(e) => setAdjustStockData("notes", e.target.value)}
+                                                        placeholder="Zusätzliche Informationen..."
+                                                        rows={3}
+                                                    />
+                                                    {adjustStockErrors.notes && (
+                                                        <p className="text-sm text-red-500">{adjustStockErrors.notes}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <DialogFooter>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setAdjustStockDialogOpen(false)
+                                                        resetAdjustStock()
+                                                    }}
+                                                >
+                                                    Abbrechen
+                                                </Button>
+                                                <Button type="submit" disabled={adjustingStock}>
+                                                    {adjustingStock ? "Speichern..." : "Speichern"}
+                                                </Button>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
                             </TabsContent>
 
                             {/* Usage Statistics */}
@@ -398,11 +585,6 @@ export default function ProductShow({ user, product }: ProductShowProps) {
                                 <Button variant="outline" className="w-full bg-transparent" asChild>
                                     <Link href={`/offers/create?product=${product.id}`}>Angebot erstellen</Link>
                                 </Button>
-                                {product.track_stock && (
-                                    <Button variant="outline" className="w-full bg-transparent" asChild>
-                                        <Link href={`/warehouse/adjustments/create?product=${product.id}`}>Bestand anpassen</Link>
-                                    </Button>
-                                )}
                             </CardContent>
                         </Card>
 

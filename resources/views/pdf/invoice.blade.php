@@ -37,7 +37,7 @@
         .container {
             max-width: 210mm;
             margin: 0 auto;
-            padding: {{ $layout->settings['layout']['margin_top'] ?? '20' }}mm {{ $layout->settings['layout']['margin_right'] ?? '20' }}mm {{ $layout->settings['layout']['margin_bottom'] ?? '20' }}mm {{ $layout->settings['layout']['margin_left'] ?? '20' }}mm;
+            padding: {{ min($layout->settings['layout']['margin_top'] ?? 15, 15) }}mm {{ min($layout->settings['layout']['margin_right'] ?? 15, 15) }}mm {{ min($layout->settings['layout']['margin_bottom'] ?? 15, 15) }}mm {{ min($layout->settings['layout']['margin_left'] ?? 15, 15) }}mm;
         }
 
         .header {
@@ -283,166 +283,18 @@
     </div>
 @endif
 
-<div class="container">
-    <!-- Header: Company name and logo -->
-    <div class="header">
-        <div class="company-header-line">
-            <span class="company-name">{{ $company->name }}</span> | 
-            @if($layout->settings['content']['show_company_address'] ?? true)
-                {{ $company->address ?? '' }} | 
-                {{ $company->postal_code ?? '' }} {{ $company->city ?? '' }}
-            @endif
-        </div>
-        @if(isset($layout->settings['branding']['show_logo']) && $layout->settings['branding']['show_logo'])
-            <div class="logo-container">
-                @if($company->logo)
-                    <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo">
-                @else
-                    <span>Ihr Logo</span>
-                @endif
-            </div>
-        @endif
-        <div class="clearfix"></div>
-    </div>
+@php
+    // Get template from layout, ensure it's a valid template name
+    $template = $layout->template ?? 'minimal';
+    $validTemplates = ['classic', 'minimal', 'professional', 'creative', 'elegant'];
+    if (!in_array($template, $validTemplates)) {
+        $template = 'minimal'; // Fallback to minimal if invalid
+    }
+    $templateFile = 'pdf.invoice-templates.' . $template;
+@endphp
 
-    <!-- Customer Address Block -->
-    <div class="customer-block">
-        <strong>{{ $invoice->customer->name }}</strong>
-        @if($invoice->customer->contact_person)
-            <span class="contact-person">{{ $invoice->customer->contact_person }}</span>
-        @endif
-        <div>
-            {{ $invoice->customer->address }}<br>
-            {{ $invoice->customer->postal_code }} {{ $invoice->customer->city }}
-            @if($invoice->customer->country && $invoice->customer->country !== 'Deutschland')
-                <br>{{ $invoice->customer->country }}
-            @endif
-        </div>
-    </div>
-
-    <!-- Invoice Meta Row: Customer number, Delivery date, Invoice date -->
-    <div class="invoice-meta-row">
-        @if($layout->settings['content']['show_customer_number'] ?? true && $invoice->customer->number)
-            <div class="meta-item">
-                <span class="meta-label">Kundennummer</span>
-                <span class="meta-value">{{ $invoice->customer->number }}</span>
-            </div>
-        @endif
-        <div class="meta-item">
-            <span class="meta-label">Liefer-/Leistungsdatum</span>
-            <span class="meta-value">{{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">Rechnungsdatum</span>
-            <span class="meta-value">{{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}</span>
-        </div>
-        <div class="clearfix"></div>
-    </div>
-
-    <!-- Invoice Number -->
-    <div class="invoice-number">Rechnung Nr. {{ $invoice->number }}</div>
-
-    <!-- Introductory Text -->
-    <div class="intro-text">
-        Wir bedanken uns für die gute Zusammenarbeit und stellen Ihnen vereinbarungsgemäß folgende Lieferungen und Leistungen in Rechnung:
-    </div>
-
-    <!-- Items Table -->
-    <table class="items-table">
-        <thead>
-        <tr>
-            <th style="width: 5%">Pos.</th>
-            <th style="width: 45%">Bezeichnung</th>
-            <th style="width: 20%" class="text-center">Menge</th>
-            <th style="width: 15%" class="text-right">Einzel (€)</th>
-            <th style="width: 15%" class="text-right">Gesamt (€)</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach($invoice->items as $index => $item)
-            <tr>
-                <td>{{ $index + 1 }}</td>
-                <td>{{ $item->description }}</td>
-                <td class="text-center">
-                    {{ number_format($item->quantity, 2, ',', '.') }}
-                    @if($layout->settings['content']['show_unit_column'] ?? true && $item->unit)
-                        {{ $item->unit }}
-                    @else
-                        Stück
-                    @endif
-                </td>
-                <td class="text-right">{{ number_format($item->unit_price, 2, ',', '.') }}</td>
-                <td class="text-right">{{ number_format($item->total, 2, ',', '.') }}</td>
-            </tr>
-        @endforeach
-        </tbody>
-    </table>
-
-    <!-- Totals -->
-    <div class="totals">
-        <table class="totals-table">
-            <tr>
-                <td>Summe Netto</td>
-                <td class="text-right">€ {{ number_format($invoice->subtotal, 2, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td>Umsatzsteuer {{ number_format($invoice->tax_rate * 100, 2, ',', '.') }}%</td>
-                <td class="text-right">€ {{ number_format($invoice->tax_amount, 2, ',', '.') }}</td>
-            </tr>
-            <tr class="total-row">
-                <td>Rechnungsbetrag</td>
-                <td class="text-right">€ {{ number_format($invoice->total, 2, ',', '.') }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- Payment Terms and Signature -->
-    <div class="payment-section">
-        @if($layout->settings['content']['show_payment_terms'] ?? true)
-            <div class="payment-terms">
-                Zahlung innerhalb von {{ \Carbon\Carbon::parse($invoice->due_date)->diffInDays(\Carbon\Carbon::parse($invoice->issue_date)) }} Tagen ab Rechnungseingang ohne Abzüge an die unten angegebene Bankverbindung.
-            </div>
-        @endif
-        
-        <div class="greeting">Mit freundlichen Grüßen</div>
-        
-        @if($company->managing_director)
-            <div class="signature">{{ $company->managing_director }}</div>
-        @endif
-    </div>
-
-    <!-- Footer: Three Columns -->
-    @if($layout->settings['branding']['show_footer'] ?? true)
-        <div class="footer">
-            <div class="footer-columns">
-                <!-- Left Column: Company Information -->
-                <div class="footer-column">
-                    <strong>{{ $company->name }}</strong><br>
-                    @if($company->address){{ $company->address }}<br>@endif
-                    @if($company->postal_code && $company->city){{ $company->postal_code }} {{ $company->city }}<br>@endif
-                    @if($company->vat_number)Ust-IdNr.: {{ $company->vat_number }}@endif
-                </div>
-
-                <!-- Middle Column: Contact Information -->
-                <div class="footer-column">
-                    @if($company->phone)Tel.: {{ $company->phone }}<br>@endif
-                    @if($company->email)E-Mail: {{ $company->email }}<br>@endif
-                    @if($company->website)Web: {{ $company->website }}@endif
-                </div>
-
-                <!-- Right Column: Bank Information -->
-                <div class="footer-column">
-                    @if($layout->settings['content']['show_bank_details'] ?? true)
-                        @if($company->bank_name){{ $company->bank_name }}<br>@endif
-                        @if($company->bank_iban)IBAN: {{ $company->bank_iban }}<br>@endif
-                        @if($company->bank_bic)BIC: {{ $company->bank_bic }}@endif
-                    @endif
-                </div>
-                <div class="clearfix"></div>
-            </div>
-        </div>
-    @endif
-</div>
+{{-- Include the specific template file based on layout->template --}}
+@includeFirst([$templateFile, 'pdf.invoice-templates.minimal'])
 </body>
 </html>
 

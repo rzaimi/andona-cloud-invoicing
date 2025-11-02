@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Head, Link, router } from "@inertiajs/react"
+import { Head, Link, router, usePage } from "@inertiajs/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -31,7 +31,9 @@ interface ProductsIndexProps {
     }
 }
 
-export default function ProductsIndex({ user, products, categories, stats, filters }: ProductsIndexProps) {
+export default function ProductsIndex({ products, categories, stats, filters }: Omit<ProductsIndexProps, 'user'>) {
+    const { props } = usePage()
+    const user = (props as any).auth?.user || (props as any).user
     const [search, setSearch] = useState(filters.search || "")
     const [selectedCategory, setSelectedCategory] = useState(filters.category || "all")
     const [selectedStatus, setSelectedStatus] = useState(filters.status || "all")
@@ -342,7 +344,7 @@ export default function ProductsIndex({ user, products, categories, stats, filte
                                 <div className="flex items-center space-x-2">
                                     {products.links.map((link, index) => (
                                         <Button
-                                            key={index}
+                                            key={`${link.label}-${index}`}
                                             variant={link.active ? "default" : "outline"}
                                             size="sm"
                                             disabled={!link.url}

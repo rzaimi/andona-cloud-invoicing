@@ -62,11 +62,13 @@ class WarehouseController extends Controller
         $stats = [
             'total_warehouses' => Warehouse::where('company_id', $companyId)->count(),
             'active_warehouses' => Warehouse::where('company_id', $companyId)->where('is_active', true)->count(),
-            'total_stock_value' => WarehouseStock::where('company_id', $companyId)
+            'total_stock_value' => WarehouseStock::where('warehouse_stocks.company_id', $companyId)
                 ->join('products', 'warehouse_stocks.product_id', '=', 'products.id')
+                ->where('products.company_id', $companyId)
                 ->sum(DB::raw('warehouse_stocks.quantity * products.cost_price')),
-            'low_stock_items' => WarehouseStock::where('company_id', $companyId)
+            'low_stock_items' => WarehouseStock::where('warehouse_stocks.company_id', $companyId)
                 ->join('products', 'warehouse_stocks.product_id', '=', 'products.id')
+                ->where('products.company_id', $companyId)
                 ->where('products.track_stock', true)
                 ->whereColumn('warehouse_stocks.quantity', '<=', 'products.min_stock_level')
                 ->count(),
@@ -102,10 +104,12 @@ class WarehouseController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'address' => 'nullable|string|max:255',
+            'street' => 'nullable|string|max:255',
+            'street_number' => 'nullable|string|max:10',
             'postal_code' => 'nullable|string|max:10',
             'city' => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:2',
             'contact_person' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
@@ -114,7 +118,7 @@ class WarehouseController extends Controller
         ]);
 
         $validated['company_id'] = $companyId;
-        $validated['country'] = $validated['country'] ?? 'Deutschland';
+        $validated['country'] = $validated['country'] ?? 'DE';
         $validated['is_active'] = $validated['is_active'] ?? true;
 
         // If this is set as default, unset other defaults
@@ -124,7 +128,7 @@ class WarehouseController extends Controller
 
         Warehouse::create($validated);
 
-        return redirect()->route('warehouse.index')->with('success', 'Lager erfolgreich erstellt.');
+        return redirect()->route('warehouses.index')->with('success', 'Lager erfolgreich erstellt.');
     }
 
     /**
@@ -231,7 +235,7 @@ class WarehouseController extends Controller
 
         $warehouse->update($validated);
 
-        return redirect()->route('warehouse.index')->with('success', 'Lager erfolgreich aktualisiert.');
+        return redirect()->route('warehouses.index')->with('success', 'Lager erfolgreich aktualisiert.');
     }
 
     /**
@@ -253,7 +257,7 @@ class WarehouseController extends Controller
 
         $warehouse->delete();
 
-        return redirect()->route('warehouse.index')->with('success', 'Lager erfolgreich gelöscht.');
+        return redirect()->route('warehouses.index')->with('success', 'Lager erfolgreich gelöscht.');
     }
 
     /**
@@ -365,7 +369,7 @@ class WarehouseController extends Controller
             ]);
         });
 
-        return redirect()->route('warehouse.index')
+        return redirect()->route('warehouses.index')
             ->with('success', 'Bestandskorrektur erfolgreich durchgeführt.');
     }
 }

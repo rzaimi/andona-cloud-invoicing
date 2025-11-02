@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
             CompanySettingsSeeder::class,
             UserSeeder::class,
             CustomerSeeder::class,
+            CategorySeeder::class,
+            ProductSeeder::class,
             InvoiceSeeder::class,
             OfferSeeder::class,
         ]);

@@ -4,11 +4,18 @@ namespace App\Modules\Offer\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Offer\Models\OfferLayout;
+use App\Services\ContextService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class OfferLayoutController extends Controller
 {
+    public function __construct(ContextService $contextService)
+    {
+        parent::__construct($contextService);
+        $this->middleware('auth');
+    }
+
     public function index()
     {
         $companyId = $this->getEffectiveCompanyId();

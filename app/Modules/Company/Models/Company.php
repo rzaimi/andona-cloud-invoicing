@@ -8,6 +8,7 @@ use App\Modules\Invoice\Models\InvoiceLayout;
 use App\Modules\Offer\Models\Offer;
 use App\Modules\Offer\Models\OfferLayout;
 use App\Modules\User\Models\User;
+use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Company extends Model
 {
     use HasFactory, HasUuids;
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return CompanyFactory::new();
+    }
 
     protected $fillable = [
         'name',

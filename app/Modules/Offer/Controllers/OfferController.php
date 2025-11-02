@@ -11,6 +11,8 @@ use App\Modules\Offer\Models\OfferItem;
 use App\Modules\Offer\Models\OfferLayout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Config;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -20,22 +22,26 @@ class OfferController extends Controller
     {
         $companyId = $this->getEffectiveCompanyId();
 
-        $offers = Offer::forCompany($companyId)
-            ->with(['customer:id,name,email', 'user:id,name'])
-            ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
-            })
-            ->when($request->search, function ($query, $search) {
-                $query->where('number', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
+        $query = Offer::forCompany($companyId)
+            ->with(['customer:id,name,email', 'user:id,name']);
+        
+        // Apply status filter
+        if ($request->status && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Apply search filter
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('number', 'like', "%{$request->search}%")
+                    ->orWhereHas('customer', function ($customerQuery) use ($request) {
+                        $customerQuery->where('name', 'like', "%{$request->search}%");
                     });
-            })
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            });
+        }
+        
+        $offers = $query->latest()->paginate(15)->withQueryString();
 
-        $companyId = $this->getEffectiveCompanyId();
         // Calculate statistics
         $stats = [
             'total' => Offer::forCompany($companyId)->count(),
@@ -67,9 +73,16 @@ class OfferController extends Controller
         $layouts = OfferLayout::forCompany($companyId)
             ->get();
 
+        $products = \App\Modules\Product\Models\Product::where('company_id', $companyId)
+            ->where('status', 'active')
+            ->select('id', 'name', 'description', 'price', 'unit', 'tax_rate', 'sku', 'number')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('offers/create', [
             'customers' => $customers,
             'layouts' => $layouts,
+            'products' => $products,
             'settings' => \App\Modules\Company\Models\Company::find($companyId)->getDefaultSettings(),
         ]);
     }
@@ -165,12 +178,19 @@ class OfferController extends Controller
         $layouts = OfferLayout::forCompany($companyId)
             ->get();
 
+        $products = \App\Modules\Product\Models\Product::where('company_id', $companyId)
+            ->where('status', 'active')
+            ->select('id', 'name', 'description', 'price', 'unit', 'tax_rate', 'sku', 'number')
+            ->orderBy('name')
+            ->get();
+
         $offer->load('items');
 
         return Inertia::render('offers/edit', [
             'offer' => $offer,
             'customers' => $customers,
             'layouts' => $layouts,
+            'products' => $products,
             'settings' => \App\Modules\Company\Models\Company::find($companyId)->getDefaultSettings(),
         ]);
     }
@@ -334,6 +354,138 @@ class OfferController extends Controller
             'company' => $offer->company,
             'customer' => $offer->customer,
             'preview' => true,
+        ]);
+    }
+
+    public function send(Request $request, Offer $offer)
+    {
+        $this->authorize('update', $offer);
+
+        $validated = $request->validate([
+            'to' => 'required|email',
+            'cc' => 'nullable|email',
+            'subject' => 'required|string|max:255',
+            'message' => 'nullable|string|max:2000',
+        ]);
+
+        $companyId = $this->getEffectiveCompanyId();
+        $company = \App\Modules\Company\Models\Company::find($companyId);
+
+        // Validate customer email exists
+        if (!$offer->customer || !$offer->customer->email) {
+            return back()->withErrors(['email' => 'Kunde hat keine E-Mail-Adresse hinterlegt.']);
+        }
+
+        // Check if SMTP is configured
+        if (!$company->smtp_host || !$company->smtp_username) {
+            return back()->withErrors(['email' => 'SMTP-Einstellungen sind nicht konfiguriert. Bitte konfigurieren Sie die E-Mail-Einstellungen.']);
+        }
+
+        try {
+            // Configure SMTP settings dynamically for this company
+            Config::set('mail.mailers.smtp.host', $company->smtp_host);
+            Config::set('mail.mailers.smtp.port', $company->smtp_port);
+            Config::set('mail.mailers.smtp.username', $company->smtp_username);
+            Config::set('mail.mailers.smtp.password', $company->smtp_password);
+            Config::set('mail.mailers.smtp.encryption', $company->smtp_encryption ?: 'tls');
+            Config::set('mail.from.address', $company->smtp_from_address ?: $company->email);
+            Config::set('mail.from.name', $company->smtp_from_name ?: $company->name);
+
+            // Generate PDF
+            $pdf = $this->generateOfferPdf($offer);
+
+            // Send email
+            Mail::send('emails.offer-sent', [
+                'offer' => $offer,
+                'company' => $company,
+                'customMessage' => $validated['message'] ?? null,
+            ], function ($message) use ($validated, $offer, $pdf, $company) {
+                $message->to($validated['to']);
+                
+                if (!empty($validated['cc'])) {
+                    $message->cc($validated['cc']);
+                }
+                
+                $message->subject($validated['subject'] ?: "Angebot {$offer->number}");
+                $message->attachData($pdf->output(), "Angebot_{$offer->number}.pdf", [
+                    'mime' => 'application/pdf',
+                ]);
+            });
+
+            // Update offer status to 'sent' if it's still 'draft'
+            if ($offer->status === 'draft') {
+                $offer->update(['status' => 'sent']);
+            }
+
+            return redirect()->back()->with('success', 'Angebot wurde erfolgreich per E-Mail versendet.');
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send offer email: ' . $e->getMessage());
+            return back()->withErrors(['email' => 'E-Mail konnte nicht versendet werden: ' . $e->getMessage()]);
+        }
+    }
+
+    private function generateOfferPdf(Offer $offer)
+    {
+        $offer->load(['items', 'customer', 'company', 'user']);
+        
+        $layout = $offer->layout ?: OfferLayout::forCompany($offer->company_id)
+            ->where('is_default', true)
+            ->first();
+
+        if (!$layout) {
+            $layout = (object) [
+                'template' => 'minimal',
+                'settings' => [
+                    'colors' => [
+                        'primary' => '#3B82F6',
+                        'secondary' => '#64748B',
+                        'accent' => '#F59E0B',
+                    ],
+                    'fonts' => [
+                        'heading' => 'DejaVu Sans',
+                        'body' => 'DejaVu Sans',
+                        'size' => 'medium',
+                    ],
+                    'layout' => [
+                        'margin_top' => 20,
+                        'margin_right' => 20,
+                        'margin_bottom' => 20,
+                        'margin_left' => 20,
+                        'header_height' => 120,
+                        'footer_height' => 80,
+                    ],
+                    'branding' => [
+                        'show_logo' => true,
+                        'logo_position' => 'top-right',
+                        'company_info_position' => 'top-left',
+                        'show_header_line' => true,
+                        'show_footer_line' => true,
+                        'show_footer' => true,
+                    ],
+                    'content' => [
+                        'show_company_address' => true,
+                        'show_company_contact' => true,
+                        'show_customer_number' => true,
+                        'show_tax_number' => true,
+                        'show_unit_column' => true,
+                        'show_notes' => true,
+                        'show_bank_details' => true,
+                        'show_company_registration' => true,
+                        'show_payment_terms' => true,
+                        'show_item_images' => false,
+                        'show_item_codes' => false,
+                        'show_tax_breakdown' => false,
+                    ],
+                ],
+            ];
+        }
+
+        return Pdf::loadView('pdf.offer', [
+            'layout' => $layout,
+            'offer' => $offer,
+            'company' => $offer->company,
+            'customer' => $offer->customer,
         ]);
     }
 }

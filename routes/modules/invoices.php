@@ -15,6 +15,17 @@ Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])->name
 Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
 Route::post('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('invoices.mark-paid');
 
+// Mahnung (Reminder) Routes
+Route::post('invoices/{invoice}/send-reminder', [InvoiceController::class, 'sendReminder'])->name('invoices.send-reminder');
+Route::get('invoices/{invoice}/reminder-history', [InvoiceController::class, 'reminderHistory'])->name('invoices.reminder-history');
+
+// E-Rechnung Routes
+Route::get('invoices/{invoice}/xrechnung', [InvoiceController::class, 'downloadXRechnung'])->name('invoices.xrechnung');
+Route::get('invoices/{invoice}/zugferd', [InvoiceController::class, 'downloadZugferd'])->name('invoices.zugferd');
+
+// Correction Routes
+Route::post('invoices/{invoice}/correction', [InvoiceController::class, 'createCorrection'])->name('invoices.create-correction');
+
 // Invoice Layout Routes
 Route::prefix('invoice-layouts')->name('invoice-layouts.')->group(function () {
     Route::get('/', [InvoiceLayoutController::class, 'index'])->name('index');

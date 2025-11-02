@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer } from "@/types"
+import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { route } from "ziggy-js"
 
 interface OfferItem {
@@ -38,10 +39,22 @@ interface Offer {
     items: OfferItem[]
 }
 
+interface Product {
+    id: string
+    name: string
+    description?: string
+    price: number
+    unit: string
+    tax_rate: number
+    sku?: string
+    number?: string
+}
+
 interface OffersEditProps {
     offer: Offer
     customers: Customer[]
     layouts: any[]
+    products: Product[]
     settings: {
         currency: string
         tax_rate: number
@@ -51,7 +64,7 @@ interface OffersEditProps {
 }
 
 export default function OffersEdit() {
-    const { offer, customers, layouts, settings } = usePage<OffersEditProps>().props
+    const { offer, customers, layouts, products, settings } = usePage<OffersEditProps>().props
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -61,8 +74,8 @@ export default function OffersEdit() {
 
     const { data, setData, put, processing, errors } = useForm({
         customer_id: offer.customer_id.toString(),
-        issue_date: offer.issue_date,
-        valid_until: offer.valid_until,
+        issue_date: offer.issue_date?.split('T')[0] || offer.issue_date,
+        valid_until: offer.valid_until?.split('T')[0] || offer.valid_until,
         notes: offer.notes || "",
         terms: offer.terms_conditions || "",
         layout_id: offer.layout_id?.toString() || "",
@@ -70,10 +83,10 @@ export default function OffersEdit() {
         items: offer.items.map((item) => ({
             id: item.id,
             description: item.description,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
+            quantity: Number(item.quantity) || 0,
+            unit_price: Number(item.unit_price) || 0,
             unit: item.unit || "Stk.",
-            total: item.total,
+            total: Number(item.quantity) * Number(item.unit_price),
         })),
     })
 
@@ -268,10 +281,20 @@ export default function OffersEdit() {
                                 <CardTitle>Angebotspositionen</CardTitle>
                                 <CardDescription>Bearbeiten Sie die Positionen Ihres Angebots</CardDescription>
                             </div>
-                            <Button type="button" onClick={addItem} size="sm">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Position hinzufügen
-                            </Button>
+                            <ProductSelectorDialog 
+                                products={products || []} 
+                                onSelect={(item) => {
+                                    const newItem = {
+                                        id: Date.now(),
+                                        description: item.description,
+                                        quantity: item.quantity,
+                                        unit_price: item.unit_price,
+                                        unit: item.unit,
+                                        total: item.quantity * item.unit_price,
+                                    }
+                                    setData("items", [...data.items, newItem])
+                                }}
+                            />
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">

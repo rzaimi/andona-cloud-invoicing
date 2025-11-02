@@ -293,17 +293,9 @@ composer dev
 - Role-based access control
 - Company data isolation
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-This project is open-sourced software licensed under the [MIT license](LICENSE.md).
-
 ## 🆘 Support
 
-For issues, questions, or contributions, please open an issue on GitHub.
+For issues or questions, please contact the development team.
 
 ## 🙏 Acknowledgments
 
@@ -311,6 +303,12 @@ For issues, questions, or contributions, please open an issue on GitHub.
 - UI components from [Radix UI](https://www.radix-ui.com)
 - Icons from [Lucide](https://lucide.dev)
 - E-Rechnung support via [ZUGFeRD](https://www.ferd-net.de)
+
+---
+
+## 📄 License
+
+This is proprietary software. All rights reserved.
 
 ---
 

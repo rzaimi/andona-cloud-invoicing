@@ -11,14 +11,29 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, FileText, FileCheck, ChevronDown, XCircle } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer, Invoice, InvoiceItem } from "@/types"
+import { ProductSelectorDialog } from "@/components/product-selector-dialog"
+import { InvoiceCorrectionDialog } from "@/components/invoice-correction-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+interface Product {
+    id: string
+    name: string
+    description?: string
+    price: number
+    unit: string
+    tax_rate: number
+    sku?: string
+    number?: string
+}
 
 interface InvoicesEditProps {
     invoice: Invoice & { items: InvoiceItem[] }
     customers: Customer[]
     layouts: any[]
+    products: Product[]
     settings: {
         currency: string
         tax_rate: number
@@ -29,7 +44,7 @@ interface InvoicesEditProps {
 
 export default function InvoicesEdit() {
     // @ts-ignore
-    const { invoice, customers, layouts, settings } = usePage<InvoicesEditProps>().props
+    const { invoice, customers, layouts, products, settings } = usePage<InvoicesEditProps>().props
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -39,18 +54,18 @@ export default function InvoicesEdit() {
 
     const { data, setData, put, processing, errors } = useForm({
         customer_id: invoice.customer_id.toString(),
-        issue_date: invoice.issue_date,
-        due_date: invoice.due_date,
+        issue_date: invoice.issue_date?.split('T')[0] || invoice.issue_date,
+        due_date: invoice.due_date?.split('T')[0] || invoice.due_date,
         notes: invoice.notes || "",
         layout_id: invoice.layout_id?.toString() || "",
         status: invoice.status,
         items: invoice.items.map((item) => ({
             id: item.id,
             description: item.description,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
+            quantity: Number(item.quantity) || 0,
+            unit_price: Number(item.unit_price) || 0,
             unit: item.unit || "Stk.",
-            total: item.total,
+            total: Number(item.quantity) * Number(item.unit_price),
         })),
     })
 
@@ -59,6 +74,8 @@ export default function InvoicesEdit() {
         tax_amount: 0,
         total: 0,
     })
+
+    const [correctionDialogOpen, setCorrectionDialogOpen] = useState(false)
 
     const germanUnits = ["Stk.", "Std.", "Tag", "Monat", "Jahr", "m", "m²", "m³", "kg", "l", "Paket"]
 
@@ -151,7 +168,61 @@ export default function InvoicesEdit() {
                         </div>
                         <p className="text-gray-600">{invoice.number}</p>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/invoices/${invoice.id}/pdf`, "_blank")}
+                        >
+                            <FileText className="mr-2 h-4 w-4" />
+                            PDF
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <FileCheck className="mr-2 h-4 w-4" />
+                                    E-Rechnung
+                                    <ChevronDown className="ml-2 h-3 w-3" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => window.open(`/invoices/${invoice.id}/xrechnung`, "_blank")}
+                                >
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    XRechnung (XML)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => window.open(`/invoices/${invoice.id}/zugferd`, "_blank")}
+                                >
+                                    <FileCheck className="mr-2 h-4 w-4" />
+                                    ZUGFeRD (PDF+XML)
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        {/* Correction Button - Only show for sent/paid invoices that haven't been corrected */}
+                        {(invoice.status === 'sent' || invoice.status === 'paid' || invoice.status === 'overdue') && 
+                         !invoice.corrected_by_invoice_id && 
+                         !invoice.is_correction && (
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setCorrectionDialogOpen(true)}
+                                type="button"
+                            >
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Stornieren
+                            </Button>
+                        )}
+                    </div>
                 </div>
+
+                {/* Correction Dialog */}
+                <InvoiceCorrectionDialog
+                    open={correctionDialogOpen}
+                    onOpenChange={setCorrectionDialogOpen}
+                    invoice={invoice}
+                />
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Basic Information */}
@@ -247,10 +318,20 @@ export default function InvoicesEdit() {
                                 <CardTitle>Rechnungspositionen</CardTitle>
                                 <CardDescription>Bearbeiten Sie die Positionen Ihrer Rechnung</CardDescription>
                             </div>
-                            <Button type="button" onClick={addItem} size="sm">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Position hinzufügen
-                            </Button>
+                            <ProductSelectorDialog 
+                                products={products || []} 
+                                onSelect={(item) => {
+                                    const newItem = {
+                                        id: Date.now(),
+                                        description: item.description,
+                                        quantity: item.quantity,
+                                        unit_price: item.unit_price,
+                                        unit: item.unit,
+                                        total: item.quantity * item.unit_price,
+                                    }
+                                    setData("items", [...data.items, newItem])
+                                }}
+                            />
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">

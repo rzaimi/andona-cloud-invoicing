@@ -5,6 +5,7 @@ namespace App\Modules\Product\Models;
 use App\Modules\Company\Models\Company;
 use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Offer\Models\OfferItem;
+use App\Modules\Product\Models\Category;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,7 +24,7 @@ class Product extends Model
         'unit',
         'price',
         'cost_price',
-        'category',
+        'category_id',
         'sku',
         'barcode',
         'tax_rate',
@@ -70,6 +71,11 @@ class Product extends Model
         return $this->hasMany(OfferItem::class);
     }
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
@@ -96,9 +102,9 @@ class Product extends Model
                     ->whereColumn('stock_quantity', '<=', 'min_stock_level');
     }
 
-    public function scopeByCategory($query, $category)
+    public function scopeByCategory($query, $categoryId)
     {
-        return $query->where('category', $category);
+        return $query->where('category_id', $categoryId);
     }
 
     public function generateProductNumber(): string

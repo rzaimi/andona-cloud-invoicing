@@ -336,11 +336,6 @@ export default function CustomerShow() {
                                                             <TableCell>
                                                                 <div className="flex items-center space-x-2">
                                                                     <Button variant="ghost" size="sm" asChild>
-                                                                        <Link href={`/invoices/${invoice.id}`}>
-                                                                            <FileText className="w-4 h-4" />
-                                                                        </Link>
-                                                                    </Button>
-                                                                    <Button variant="ghost" size="sm" asChild>
                                                                         <Link href={`/invoices/${invoice.id}/edit`}>
                                                                             <Edit className="w-4 h-4" />
                                                                         </Link>
@@ -397,11 +392,6 @@ export default function CustomerShow() {
                                                             <TableCell className="text-right font-medium">{formatCurrency(offer.total)}</TableCell>
                                                             <TableCell>
                                                                 <div className="flex items-center space-x-2">
-                                                                    <Button variant="ghost" size="sm" asChild>
-                                                                        <Link href={`/offers/${offer.id}`}>
-                                                                            <FileText className="w-4 h-4" />
-                                                                        </Link>
-                                                                    </Button>
                                                                     <Button variant="ghost" size="sm" asChild>
                                                                         <Link href={`/offers/${offer.id}/edit`}>
                                                                             <Edit className="w-4 h-4" />

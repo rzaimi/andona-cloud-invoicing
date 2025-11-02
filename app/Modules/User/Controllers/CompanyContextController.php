@@ -25,8 +25,8 @@ class CompanyContextController extends Controller
         // Store selected company in session for super admin context switching
         Session::put('selected_company_id', $validated['company_id']);
 
-        // Redirect back to the current page to refresh with new company context
-        return back()->with('success', 'Firma erfolgreich gewechselt');
+        // Always redirect to dashboard with full page reload
+        return Inertia::location(route('dashboard'));
     }
 
     public function getCurrent(Request $request)

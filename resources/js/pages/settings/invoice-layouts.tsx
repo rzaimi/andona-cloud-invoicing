@@ -52,12 +52,23 @@ interface InvoiceLayoutSettings {
         show_logo: boolean
         logo_position: string
         company_info_position: string
+        show_header_line: boolean
+        show_footer_line: boolean
+        show_footer: boolean
     }
     content: {
+        show_company_address: boolean
+        show_company_contact: boolean
+        show_customer_number: boolean
+        show_tax_number: boolean
+        show_unit_column: boolean
+        show_notes: boolean
+        show_bank_details: boolean
+        show_company_registration: boolean
+        show_payment_terms: boolean
         show_item_images: boolean
         show_item_codes: boolean
         show_tax_breakdown: boolean
-        show_payment_terms: boolean
         custom_footer_text: string
     }
     template_specific?: Record<string, any>
@@ -114,12 +125,23 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         show_logo: true,
         logo_position: "top-left",
         company_info_position: "top-right",
+        show_header_line: true,
+        show_footer_line: true,
+        show_footer: true,
     },
     content: {
+        show_company_address: true,
+        show_company_contact: true,
+        show_customer_number: true,
+        show_tax_number: true,
+        show_unit_column: true,
+        show_notes: true,
+        show_bank_details: true,
+        show_company_registration: true,
+        show_payment_terms: true,
         show_item_images: false,
         show_item_codes: true,
         show_tax_breakdown: true,
-        show_payment_terms: true,
         custom_footer_text: "",
     },
 })
@@ -146,8 +168,8 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
 
     // Template-specific layout configurations
     switch (templateId) {
-        case 'modern':
-            // Modern: Clean design with generous whitespaces, larger margins
+        case 'minimal':
+            // Minimal: Clean design with generous whitespaces, larger margins
             defaults.layout = {
                 header_height: 140,
                 footer_height: 100,
@@ -160,12 +182,23 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_logo: true,
                 logo_position: "top-right",
                 company_info_position: "top-left",
+                show_header_line: true,
+                show_footer_line: true,
+                show_footer: true,
             }
             defaults.content = {
+                show_company_address: true,
+                show_company_contact: true,
+                show_customer_number: true,
+                show_tax_number: true,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: true,
+                show_company_registration: true,
+                show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: true,
                 show_tax_breakdown: true,
-                show_payment_terms: true,
                 custom_footer_text: "",
             }
             break
@@ -208,12 +241,23 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_logo: false,
                 logo_position: "top-left",
                 company_info_position: "top-left",
+                show_header_line: false,
+                show_footer_line: false,
+                show_footer: true,
             }
             defaults.content = {
+                show_company_address: true,
+                show_company_contact: false,
+                show_customer_number: false,
+                show_tax_number: false,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: false,
+                show_company_registration: false,
+                show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: false,
                 show_tax_breakdown: false,
-                show_payment_terms: true,
                 custom_footer_text: "",
             }
             break
@@ -232,12 +276,23 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_logo: true,
                 logo_position: "top-left",
                 company_info_position: "top-right",
+                show_header_line: true,
+                show_footer_line: true,
+                show_footer: true,
             }
             defaults.content = {
+                show_company_address: true,
+                show_company_contact: true,
+                show_customer_number: true,
+                show_tax_number: true,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: true,
+                show_company_registration: true,
+                show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: true,
                 show_tax_breakdown: true,
-                show_payment_terms: true,
                 custom_footer_text: "",
             }
             break
@@ -256,12 +311,23 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_logo: true,
                 logo_position: "top-right",
                 company_info_position: "top-left",
+                show_header_line: true,
+                show_footer_line: true,
+                show_footer: true,
             }
             defaults.content = {
+                show_company_address: true,
+                show_company_contact: true,
+                show_customer_number: true,
+                show_tax_number: true,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: true,
+                show_company_registration: true,
+                show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: true,
                 show_tax_breakdown: true,
-                show_payment_terms: true,
                 custom_footer_text: "",
             }
             break
@@ -280,12 +346,23 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_logo: true,
                 logo_position: "top-center",
                 company_info_position: "top-center",
+                show_header_line: true,
+                show_footer_line: true,
+                show_footer: true,
             }
             defaults.content = {
+                show_company_address: true,
+                show_company_contact: true,
+                show_customer_number: true,
+                show_tax_number: true,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: true,
+                show_company_registration: true,
+                show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: true,
                 show_tax_breakdown: true,
-                show_payment_terms: true,
                 custom_footer_text: "",
             }
             break
@@ -319,11 +396,28 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
         },
         branding: {
             ...defaults.branding,
-            ...(settings.branding || {}),
+            show_logo: settings.branding?.show_logo ?? defaults.branding.show_logo,
+            logo_position: settings.branding?.logo_position ?? defaults.branding.logo_position,
+            company_info_position: settings.branding?.company_info_position ?? defaults.branding.company_info_position,
+            show_header_line: settings.branding?.show_header_line ?? defaults.branding.show_header_line,
+            show_footer_line: settings.branding?.show_footer_line ?? defaults.branding.show_footer_line,
+            show_footer: settings.branding?.show_footer ?? defaults.branding.show_footer,
         },
         content: {
             ...defaults.content,
-            ...(settings.content || {}),
+            show_company_address: settings.content?.show_company_address ?? defaults.content.show_company_address,
+            show_company_contact: settings.content?.show_company_contact ?? defaults.content.show_company_contact,
+            show_customer_number: settings.content?.show_customer_number ?? defaults.content.show_customer_number,
+            show_tax_number: settings.content?.show_tax_number ?? defaults.content.show_tax_number,
+            show_unit_column: settings.content?.show_unit_column ?? defaults.content.show_unit_column,
+            show_notes: settings.content?.show_notes ?? defaults.content.show_notes,
+            show_bank_details: settings.content?.show_bank_details ?? defaults.content.show_bank_details,
+            show_company_registration: settings.content?.show_company_registration ?? defaults.content.show_company_registration,
+            show_payment_terms: settings.content?.show_payment_terms ?? defaults.content.show_payment_terms,
+            show_item_images: settings.content?.show_item_images ?? defaults.content.show_item_images,
+            show_item_codes: settings.content?.show_item_codes ?? defaults.content.show_item_codes,
+            show_tax_breakdown: settings.content?.show_tax_breakdown ?? defaults.content.show_tax_breakdown,
+            custom_footer_text: settings.content?.custom_footer_text ?? defaults.content.custom_footer_text,
         },
         template_specific: settings.template_specific || {},
     }
@@ -339,14 +433,14 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
     const form = useForm({
         name: "",
         type: "both" as "invoice" | "offer" | "both",
-        template: "modern",
+        template: "minimal",
         settings: getDefaultSettings(),
     })
 
     const [layoutFormData, setLayoutFormData] = useState({
         name: "",
         type: "both" as "invoice" | "offer" | "both",
-        template: "modern",
+        template: "minimal",
         settings: getDefaultSettings(),
     })
 
@@ -354,7 +448,7 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
         setLayoutFormData({
             name: "",
             type: "both",
-            template: "modern",
+            template: "minimal",
             settings: getDefaultSettings(),
         })
     }
@@ -370,7 +464,7 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
         setLayoutFormData({
             name: layout.name || "",
             type: layout.type || "both",
-            template: layout.template || "modern",
+            template: layout.template || "minimal",
             settings: mergeWithDefaults(layout.settings),
         })
         setIsLayoutDialogOpen(true)
@@ -1080,6 +1174,39 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                                             </Select>
                                                         </div>
                                                     </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Kopfzeilen-Linie anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Linie unter dem Header anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.branding.show_header_line}
+                                                            onCheckedChange={(checked) => updateBrandingSetting("show_header_line", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Fußzeile anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Fußzeile mit Firmeninformationen anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.branding.show_footer}
+                                                            onCheckedChange={(checked) => updateBrandingSetting("show_footer", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Fußzeilen-Linie anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Linie über der Fußzeile anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.branding.show_footer_line}
+                                                            onCheckedChange={(checked) => updateBrandingSetting("show_footer_line", checked)}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1088,7 +1215,121 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                     <TabsContent value="content" className="space-y-4">
                                         <div className="space-y-6">
                                             <div>
-                                                <h3 className="text-lg font-semibold mb-3">Inhaltsoptionen</h3>
+                                                <h3 className="text-lg font-semibold mb-3">Firmeninformationen</h3>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Firmenadresse anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Adresse der Firma im Header anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_company_address}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_company_address", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Firmenkontakt anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Telefon, E-Mail und Website anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_company_contact}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_company_contact", checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h3 className="text-lg font-semibold mb-3">Rechnungsinformationen</h3>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Kundennummer anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Kundennummer im Dokument anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_customer_number}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_customer_number", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Steuernummer anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Steuernummer im Dokument anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_tax_number}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_tax_number", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Einheitsspalte anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Einheit (Stk., kg, etc.) in Artikeltabelle anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_unit_column}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_unit_column", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Notizen anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Notizenfeld im Dokument anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_notes}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_notes", checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h3 className="text-lg font-semibold mb-3">Fußzeilen-Informationen</h3>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Bankverbindung anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">IBAN, BIC und Bankname anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_bank_details}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_bank_details", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Handelsregister anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Handelsregister und Steuernummer anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_company_registration}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_company_registration", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Zahlungsbedingungen anzeigen</Label>
+                                                            <p className="text-sm text-gray-600">Zahlungsbedingungen im Dokument anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_payment_terms}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_payment_terms", checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h3 className="text-lg font-semibold mb-3">Artikeloptionen</h3>
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
@@ -1120,17 +1361,6 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_tax_breakdown}
                                                             onCheckedChange={(checked) => updateContentSetting("show_tax_breakdown", checked)}
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="space-y-0.5">
-                                                            <Label>Zahlungsbedingungen anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Zahlungsbedingungen im Dokument anzeigen</p>
-                                                        </div>
-                                                        <Switch
-                                                            checked={layoutFormData.settings.content.show_payment_terms}
-                                                            onCheckedChange={(checked) => updateContentSetting("show_payment_terms", checked)}
                                                         />
                                                     </div>
                                                 </div>

@@ -88,12 +88,12 @@ class CategoryController extends Controller
         $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
 
-        if (!$company) {
+        if (!$companyId) {
             return redirect()->route('dashboard')->with('error', 'Keine Firma zugeordnet.');
         }
 
         // Get parent categories
-        $parentCategories = Category::where('company_id', $company->id)
+        $parentCategories = Category::where('company_id', $companyId)
             ->whereNull('parent_id')
             ->orderBy('name')
             ->get();
@@ -111,7 +111,7 @@ class CategoryController extends Controller
         $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
 
-        if (!$company) {
+        if (!$companyId) {
             return redirect()->route('dashboard')->with('error', 'Keine Firma zugeordnet.');
         }
 
