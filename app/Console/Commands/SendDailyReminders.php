@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Modules\Company\Models\Company;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Offer\Models\Offer;
+use App\Traits\LogsEmails;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
@@ -14,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class SendDailyReminders extends Command
 {
+    use LogsEmails;
     /**
      * The name and signature of the console command.
      *
@@ -265,6 +267,27 @@ class SendDailyReminders extends Command
                 'mime' => 'application/pdf',
             ]);
         });
+
+        // Log the mahnung email
+        $this->logEmail(
+            companyId: $company->id,
+            recipientEmail: $invoice->customer->email,
+            subject: $subject,
+            type: 'mahnung',
+            customerId: $invoice->customer_id,
+            recipientName: $invoice->customer->name,
+            relatedType: 'Invoice',
+            relatedId: $invoice->id,
+            metadata: [
+                'reminder_level' => $level,
+                'reminder_level_name' => $invoice->getReminderLevelNameForLevel($level),
+                'invoice_number' => $invoice->number,
+                'invoice_total' => $invoice->total,
+                'reminder_fee' => $fee,
+                'days_overdue' => $invoice->getDaysOverdue(),
+                'has_pdf_attachment' => true,
+            ]
+        );
     }
 
     /**
@@ -282,16 +305,36 @@ class SendDailyReminders extends Command
             'customer' => $offer->customer,
         ]);
 
+        $subject = "Erinnerung - Angebot {$offer->number}";
+
         Mail::send('emails.offer-reminder', [
             'offer' => $offer,
             'company' => $company,
-        ], function ($message) use ($offer, $pdf) {
+        ], function ($message) use ($offer, $pdf, $subject) {
             $message->to($offer->customer->email);
-            $message->subject("Erinnerung - Angebot {$offer->number}");
+            $message->subject($subject);
             $message->attachData($pdf->output(), "Angebot_{$offer->number}.pdf", [
                 'mime' => 'application/pdf',
             ]);
         });
+
+        // Log the offer reminder email
+        $this->logEmail(
+            companyId: $company->id,
+            recipientEmail: $offer->customer->email,
+            subject: $subject,
+            type: 'reminder',
+            customerId: $offer->customer_id,
+            recipientName: $offer->customer->name,
+            relatedType: 'Offer',
+            relatedId: $offer->id,
+            metadata: [
+                'offer_number' => $offer->number,
+                'valid_until' => $offer->valid_until->format('Y-m-d'),
+                'days_remaining' => Carbon::today()->diffInDays(Carbon::parse($offer->valid_until)),
+                'has_pdf_attachment' => true,
+            ]
+        );
     }
 
     /**
