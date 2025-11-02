@@ -293,6 +293,10 @@ composer dev
 - Role-based access control
 - Company data isolation
 
+## 🚀 Deployment
+
+For detailed deployment instructions, especially for hosting environments with Node.js version constraints, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## 🆘 Support
 
 For issues or questions, please contact the development team.
