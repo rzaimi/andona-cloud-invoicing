@@ -168,41 +168,6 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
 
     // Template-specific layout configurations
     switch (templateId) {
-        case 'minimal':
-            // Minimal: Clean design with generous whitespaces, larger margins
-            defaults.layout = {
-                header_height: 140,
-                footer_height: 100,
-                margin_top: 25,
-                margin_bottom: 25,
-                margin_left: 25,
-                margin_right: 25,
-            }
-            defaults.branding = {
-                show_logo: true,
-                logo_position: "top-right",
-                company_info_position: "top-left",
-                show_header_line: true,
-                show_footer_line: true,
-                show_footer: true,
-            }
-            defaults.content = {
-                show_company_address: true,
-                show_company_contact: true,
-                show_customer_number: true,
-                show_tax_number: true,
-                show_unit_column: true,
-                show_notes: true,
-                show_bank_details: true,
-                show_company_registration: true,
-                show_payment_terms: true,
-                show_item_images: false,
-                show_item_codes: true,
-                show_tax_breakdown: true,
-                custom_footer_text: "",
-            }
-            break
-
         case 'classic':
             // Classic: Traditional layout, compact margins, centered logo
             defaults.layout = {
