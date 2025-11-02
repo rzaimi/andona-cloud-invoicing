@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('payment_method')->nullable();
             $table->text('payment_terms')->nullable();
             $table->uuid('layout_id')->nullable();
-            $table->foreign('layout_id')->references('id')->on('invoice_layouts')->onDelete('set null');
+            // Foreign key constraint will be added in a later migration after invoice_layouts table exists
             $table->timestamps();
 
             $table->unique(['company_id', 'number']);
