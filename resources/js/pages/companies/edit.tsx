@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, useForm } from "@inertiajs/react"
+import { route } from "ziggy-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -40,7 +41,7 @@ interface EditProps {
 }
 
 export default function Edit({ auth, company }: EditProps) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, transform } = useForm({
         name: company.name || "",
         email: company.email || "",
         phone: company.phone || "",
@@ -57,13 +58,26 @@ export default function Edit({ auth, company }: EditProps) {
         bank_bic: company.bank_bic || "",
         website: company.website || "",
         status: company.status || "active",
+        logo: null as File | null,
     })
 
     const [activeTab, setActiveTab] = useState("basic")
 
+    const [logoPreview, setLogoPreview] = useState<string | null>(null)
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setData("logo", file)
+            setLogoPreview(URL.createObjectURL(file))
+        }
+    }
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        put(route("companies.update", company.id))
+        // Use POST + method spoofing for reliable file uploads across browsers/servers
+        transform((data) => ({ ...data, _method: "put" }))
+        post(route("companies.update", company.id), { forceFormData: true, preserveScroll: true })
     }
 
     return (
@@ -209,6 +223,40 @@ export default function Edit({ auth, company }: EditProps) {
                                                 <p className="text-sm text-red-500">{errors.managing_director}</p>
                                             )}
                                         </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Logo */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Logo</CardTitle>
+                                    <CardDescription>Firmenlogo hochladen (optional)</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {(company.logo || logoPreview) && (
+                                        <div className="flex items-center gap-4">
+                                            <img
+                                                src={logoPreview || (company.logo ? `/storage/${company.logo}` : "")}
+                                                alt="Aktuelles Firmenlogo"
+                                                className="h-16 w-16 rounded object-contain border"
+                                            />
+                                            <div className="text-sm text-muted-foreground">Aktuelles Logo</div>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <Label htmlFor="logo">Logo-Datei</Label>
+                                        <Input
+                                            id="logo"
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/jpg,image/gif"
+                                            onChange={handleLogoChange}
+                                            className={errors.logo ? "border-red-500" : ""}
+                                        />
+                                        {errors.logo && <p className="text-sm text-red-500 mt-1">{errors.logo}</p>}
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Maximale Dateigröße: 2MB. Erlaubte Formate: JPEG, PNG, JPG, GIF
+                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
