@@ -2,6 +2,11 @@
 <div class="container">
     <!-- Header: Simple, left-aligned -->
     <div style="margin-bottom: 40px;">
+        @if($company->logo)
+            <div style="margin-bottom: 15px;">
+                <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 60px; max-width: 200px;">
+            </div>
+        @endif
         <div class="company-name" style="font-size: {{ $headingFontSize + 2 }}px; font-weight: bold; color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }}; margin-bottom: 5px;">
             {{ $company->name }}
         </div>

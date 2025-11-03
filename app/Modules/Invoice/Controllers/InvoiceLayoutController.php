@@ -26,6 +26,15 @@ class InvoiceLayoutController extends Controller
 
         $templates = [
             [
+                'id' => 'modern',
+                'name' => 'Modern',
+                'description' => 'Modernes, zeitgemäßes Design mit klaren Linien und frischem Layout',
+                'preview_image' => '/images/templates/modern.png',
+                'features' => ['Modern', 'Zeitgemäß', 'Klar'],
+                'colors' => ['#3b82f6', '#2563eb', '#1d4ed8', '#1f2937'],
+                'fonts' => ['Inter', 'Roboto']
+            ],
+            [
                 'id' => 'minimal',
                 'name' => 'Minimal',
                 'description' => 'Minimalistisches Design mit Fokus auf Inhalt und Lesbarkeit',

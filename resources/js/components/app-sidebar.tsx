@@ -67,6 +67,7 @@ interface User {
     company: {
         id: string
         name: string
+        logo?: string | null
     } | null
     roles?: string[]
     permissions?: string[]
@@ -364,9 +365,19 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                         <div className="flex items-center justify-between w-full">
                             <SidebarMenuButton size="lg" asChild className="flex-1">
                                 <Link href="/dashboard">
-                                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                        <Receipt className="size-4" />
-                                    </div>
+                                    {user.company?.logo ? (
+                                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
+                                            <img 
+                                                src={`/storage/${user.company.logo}`} 
+                                                alt={user.company.name}
+                                                className="w-full h-full object-contain"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                                            <Receipt className="size-4" />
+                                        </div>
+                                    )}
                                     <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
                                         <span className="truncate font-semibold">AndoBill</span>
                                         {canSwitchCompany ? (

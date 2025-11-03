@@ -15,7 +15,7 @@
                         </div>
                     @endif
                 </td>
-                @if(isset($layout->settings['branding']['show_logo']) && $layout->settings['branding']['show_logo'] && $company->logo)
+                @if($company->logo)
                 <td style="width: 30%; text-align: right; vertical-align: middle;">
                     <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 80px; max-width: 200px; background: white; padding: 10px; border-radius: 8px;">
                 </td>

@@ -289,7 +289,7 @@
 @php
     // Get template from layout, ensure it's a valid template name
     $template = $layout->template ?? 'minimal';
-    $validTemplates = ['classic', 'minimal', 'professional', 'creative', 'elegant'];
+    $validTemplates = ['modern', 'classic', 'minimal', 'professional', 'creative', 'elegant'];
     if (!in_array($template, $validTemplates)) {
         $template = 'minimal'; // Fallback to minimal if invalid
     }

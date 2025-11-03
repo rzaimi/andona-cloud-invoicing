@@ -4,7 +4,7 @@
     <table style="width: 100%; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid {{ $layout->settings['colors']['primary'] ?? '#2563eb' }};">
         <tr>
             <td style="width: 50%; vertical-align: top;">
-                @if(isset($layout->settings['branding']['show_logo']) && $layout->settings['branding']['show_logo'] && $company->logo)
+                @if($company->logo)
                     <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 70px; max-width: 200px; margin-bottom: 10px;">
                 @endif
             </td>

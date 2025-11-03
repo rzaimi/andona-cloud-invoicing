@@ -249,7 +249,7 @@
                 @endif
             </div>
         </div>
-        @if($layout->settings['branding']['show_logo'] ?? true && $company->logo)
+        @if($company->logo)
             <div class="logo">
                 <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 80px; max-width: 200px;">
             </div>

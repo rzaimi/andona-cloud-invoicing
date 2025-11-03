@@ -2,7 +2,7 @@
 <div class="container">
     <!-- Header: Elegant, centered -->
     <div style="text-align: center; margin-bottom: 45px; padding-bottom: 25px; border-bottom: 1px solid {{ $layout->settings['colors']['accent'] ?? '#e5e7eb' }};">
-        @if(isset($layout->settings['branding']['show_logo']) && $layout->settings['branding']['show_logo'] && $company->logo)
+        @if($company->logo)
             <div style="margin-bottom: 20px;">
                 <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 90px; max-width: 250px;">
             </div>

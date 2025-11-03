@@ -125,6 +125,7 @@ class HandleInertiaRequests extends Middleware
                         $userData['company'] = [
                             'id' => $company->id,
                             'name' => $company->name,
+                            'logo' => $company->logo,
                         ];
                     }
                     
