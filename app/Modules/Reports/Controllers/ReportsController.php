@@ -83,18 +83,18 @@ class ReportsController extends Controller
         $paidInvoices = Invoice::where('company_id', $companyId)->where('status', 'paid')->count();
         $monthlyRevenue = Invoice::where('company_id', $companyId)
             ->where('status', 'paid')
-            ->where('created_at', '>=', $startOfMonth)
+            ->where('issue_date', '>=', $startOfMonth)
             ->sum('total');
         $yearlyRevenue = Invoice::where('company_id', $companyId)
             ->where('status', 'paid')
-            ->where('created_at', '>=', $startOfYear)
+            ->where('issue_date', '>=', $startOfYear)
             ->sum('total');
 
         // Offer stats
         $totalOffers = Offer::where('company_id', $companyId)->count();
         $acceptedOffers = Offer::where('company_id', $companyId)->where('status', 'accepted')->count();
         $monthlyOffers = Offer::where('company_id', $companyId)
-            ->where('created_at', '>=', $startOfMonth)
+            ->where('issue_date', '>=', $startOfMonth)
             ->sum('total');
 
         // Customer stats
@@ -137,14 +137,14 @@ class ReportsController extends Controller
 
                     $revenue = Invoice::where('company_id', $companyId)
                         ->where('status', 'paid')
-                        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                        ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
                         ->sum('total');
 
                     $data[] = [
                         'period' => $month->format('M Y'),
                         'revenue' => $revenue,
                         'invoices' => Invoice::where('company_id', $companyId)
-                            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                            ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
                             ->count(),
                     ];
                 }
@@ -159,14 +159,14 @@ class ReportsController extends Controller
 
                     $revenue = Invoice::where('company_id', $companyId)
                         ->where('status', 'paid')
-                        ->whereBetween('created_at', [$startOfQuarter, $endOfQuarter])
+                        ->whereBetween('issue_date', [$startOfQuarter, $endOfQuarter])
                         ->sum('total');
 
                     $data[] = [
                         'period' => 'Q' . $quarter->quarter . ' ' . $quarter->year,
                         'revenue' => $revenue,
                         'invoices' => Invoice::where('company_id', $companyId)
-                            ->whereBetween('created_at', [$startOfQuarter, $endOfQuarter])
+                            ->whereBetween('issue_date', [$startOfQuarter, $endOfQuarter])
                             ->count(),
                     ];
                 }
@@ -182,14 +182,14 @@ class ReportsController extends Controller
 
                     $revenue = Invoice::where('company_id', $companyId)
                         ->where('status', 'paid')
-                        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                        ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
                         ->sum('total');
 
                     $data[] = [
                         'period' => $month->format('M Y'),
                         'revenue' => $revenue,
                         'invoices' => Invoice::where('company_id', $companyId)
-                            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                            ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
                             ->count(),
                     ];
                 }
@@ -262,14 +262,13 @@ class ReportsController extends Controller
 
                     $invoices = Invoice::where('company_id', $companyId)
                         ->where('status', 'paid')
-                        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                        ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
                         ->get();
 
+                    // Use actual subtotal and tax_amount from invoices
+                    $subtotal = $invoices->sum('subtotal');
+                    $tax = $invoices->sum('tax_amount');
                     $total = $invoices->sum('total');
-                    $subtotal = $invoices->sum(function ($invoice) {
-                        return $invoice->total / (1 + ($invoice->tax_rate ?? 0.19));
-                    });
-                    $tax = $total - $subtotal;
 
                     $data[] = [
                         'period' => $month->format('M Y'),
@@ -290,14 +289,13 @@ class ReportsController extends Controller
 
                     $invoices = Invoice::where('company_id', $companyId)
                         ->where('status', 'paid')
-                        ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                        ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
                         ->get();
 
+                    // Use actual subtotal and tax_amount from invoices
+                    $subtotal = $invoices->sum('subtotal');
+                    $tax = $invoices->sum('tax_amount');
                     $total = $invoices->sum('total');
-                    $subtotal = $invoices->sum(function ($invoice) {
-                        return $invoice->total / (1 + ($invoice->tax_rate ?? 0.19));
-                    });
-                    $tax = $total - $subtotal;
 
                     $data[] = [
                         'period' => $month->format('M Y'),
