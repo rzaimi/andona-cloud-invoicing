@@ -16,9 +16,40 @@ return new class extends Migration
 
     public function down()
     {
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
+        $connection = Schema::getConnection();
+        $driverName = $connection->getDriverName();
+        
+        // Check and drop foreign key if it exists
+        if ($driverName === 'mysql' && Schema::hasTable('invoice_items')) {
+            $dbName = $connection->getDatabaseName();
+            $foreignKeys = $connection->select(
+                "SELECT CONSTRAINT_NAME 
+                FROM information_schema.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = ? 
+                AND TABLE_NAME = 'invoice_items' 
+                AND COLUMN_NAME = 'product_id' 
+                AND REFERENCED_TABLE_NAME IS NOT NULL",
+                [$dbName]
+            );
+            
+            if (!empty($foreignKeys)) {
+                $foreignKeyName = $foreignKeys[0]->CONSTRAINT_NAME;
+                try {
+                    $connection->statement("ALTER TABLE `invoice_items` DROP FOREIGN KEY `{$foreignKeyName}`");
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Foreign key might have already been dropped, continue
+                }
+            }
+        }
+
         Schema::table('invoice_items', function (Blueprint $table) {
-            $table->dropForeign(['product_id']);
-            $table->dropColumn('product_id');
+            if (Schema::hasColumn('invoice_items', 'product_id')) {
+                $table->dropColumn('product_id');
+            }
         });
     }
 };

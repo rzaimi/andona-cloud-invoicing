@@ -8,10 +8,13 @@ return new class extends Migration
 {
     public function up()
     {
-
         Schema::table('products', function (Blueprint $table) {
             // Drop index manually if exists
-            $table->dropIndex(['company_id', 'category']); // Might throw if not present
+            try {
+                $table->dropIndex(['company_id', 'category']);
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Index doesn't exist, continue
+            }
 
             // Drop old category column
             if (Schema::hasColumn('products', 'category')) {
@@ -34,11 +37,71 @@ return new class extends Migration
             return;
         }
 
+        $connection = Schema::getConnection();
+        $driverName = $connection->getDriverName();
+        
+        // Drop foreign keys if they exist
+        if ($driverName === 'mysql' && Schema::hasTable('products')) {
+            $dbName = $connection->getDatabaseName();
+            
+            // Drop category_id foreign key
+            $foreignKeys = $connection->select(
+                "SELECT CONSTRAINT_NAME 
+                FROM information_schema.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = ? 
+                AND TABLE_NAME = 'products' 
+                AND COLUMN_NAME = 'category_id' 
+                AND REFERENCED_TABLE_NAME IS NOT NULL",
+                [$dbName]
+            );
+            
+            if (!empty($foreignKeys)) {
+                $foreignKeyName = $foreignKeys[0]->CONSTRAINT_NAME;
+                try {
+                    $connection->statement("ALTER TABLE `products` DROP FOREIGN KEY `{$foreignKeyName}`");
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Ignore if already dropped
+                }
+            }
+            
+            // Drop default_warehouse_id foreign key
+            $foreignKeys = $connection->select(
+                "SELECT CONSTRAINT_NAME 
+                FROM information_schema.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = ? 
+                AND TABLE_NAME = 'products' 
+                AND COLUMN_NAME = 'default_warehouse_id' 
+                AND REFERENCED_TABLE_NAME IS NOT NULL",
+                [$dbName]
+            );
+            
+            if (!empty($foreignKeys)) {
+                $foreignKeyName = $foreignKeys[0]->CONSTRAINT_NAME;
+                try {
+                    $connection->statement("ALTER TABLE `products` DROP FOREIGN KEY `{$foreignKeyName}`");
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Ignore if already dropped
+                }
+            }
+        }
+
         Schema::table('products', function (Blueprint $table) {
-            $table->dropForeign(['category_id']);
-            $table->dropForeign(['default_warehouse_id']);
-            $table->dropColumn(['category_id', 'default_warehouse_id']);
-            $table->string('category')->nullable();
+            $columnsToDrop = [];
+            if (Schema::hasColumn('products', 'category_id')) {
+                $columnsToDrop[] = 'category_id';
+            }
+            if (Schema::hasColumn('products', 'default_warehouse_id')) {
+                $columnsToDrop[] = 'default_warehouse_id';
+            }
+            
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
+            
+            // Recreate old category column if it doesn't exist
+            if (!Schema::hasColumn('products', 'category')) {
+                $table->string('category')->nullable();
+            }
         });
     }
 };

@@ -24,16 +24,79 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
+        $connection = Schema::getConnection();
+        $driverName = $connection->getDriverName();
+        
+        // Drop foreign keys if they exist
+        if ($driverName === 'mysql' && Schema::hasTable('invoices')) {
+            $dbName = $connection->getDatabaseName();
+            
+            // Drop corrects_invoice_id foreign key
+            $foreignKeys = $connection->select(
+                "SELECT CONSTRAINT_NAME 
+                FROM information_schema.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = ? 
+                AND TABLE_NAME = 'invoices' 
+                AND COLUMN_NAME = 'corrects_invoice_id' 
+                AND REFERENCED_TABLE_NAME IS NOT NULL",
+                [$dbName]
+            );
+            
+            if (!empty($foreignKeys)) {
+                $foreignKeyName = $foreignKeys[0]->CONSTRAINT_NAME;
+                try {
+                    $connection->statement("ALTER TABLE `invoices` DROP FOREIGN KEY `{$foreignKeyName}`");
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Ignore if already dropped
+                }
+            }
+            
+            // Drop corrected_by_invoice_id foreign key
+            $foreignKeys = $connection->select(
+                "SELECT CONSTRAINT_NAME 
+                FROM information_schema.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = ? 
+                AND TABLE_NAME = 'invoices' 
+                AND COLUMN_NAME = 'corrected_by_invoice_id' 
+                AND REFERENCED_TABLE_NAME IS NOT NULL",
+                [$dbName]
+            );
+            
+            if (!empty($foreignKeys)) {
+                $foreignKeyName = $foreignKeys[0]->CONSTRAINT_NAME;
+                try {
+                    $connection->statement("ALTER TABLE `invoices` DROP FOREIGN KEY `{$foreignKeyName}`");
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Ignore if already dropped
+                }
+            }
+        }
+
         Schema::table('invoices', function (Blueprint $table) {
-            $table->dropForeign(['corrects_invoice_id']);
-            $table->dropForeign(['corrected_by_invoice_id']);
-            $table->dropColumn([
-                'is_correction',
-                'corrects_invoice_id',
-                'corrected_by_invoice_id',
-                'correction_reason',
-                'corrected_at',
-            ]);
+            $columnsToDrop = [];
+            if (Schema::hasColumn('invoices', 'is_correction')) {
+                $columnsToDrop[] = 'is_correction';
+            }
+            if (Schema::hasColumn('invoices', 'corrects_invoice_id')) {
+                $columnsToDrop[] = 'corrects_invoice_id';
+            }
+            if (Schema::hasColumn('invoices', 'corrected_by_invoice_id')) {
+                $columnsToDrop[] = 'corrected_by_invoice_id';
+            }
+            if (Schema::hasColumn('invoices', 'correction_reason')) {
+                $columnsToDrop[] = 'correction_reason';
+            }
+            if (Schema::hasColumn('invoices', 'corrected_at')) {
+                $columnsToDrop[] = 'corrected_at';
+            }
+            
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };

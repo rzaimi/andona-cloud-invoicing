@@ -28,15 +28,34 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('companies', function (Blueprint $table) {
-            $table->dropColumn([
-                'smtp_host',
-                'smtp_port',
-                'smtp_username',
-                'smtp_password',
-                'smtp_encryption',
-                'smtp_from_address',
-                'smtp_from_name',
-            ]);
+            // Note: These columns may have been dropped by normalize_company_smtp_bank_to_settings migration
+            // Only drop if they still exist
+            $columnsToDrop = [];
+            if (Schema::hasColumn('companies', 'smtp_host')) {
+                $columnsToDrop[] = 'smtp_host';
+            }
+            if (Schema::hasColumn('companies', 'smtp_port')) {
+                $columnsToDrop[] = 'smtp_port';
+            }
+            if (Schema::hasColumn('companies', 'smtp_username')) {
+                $columnsToDrop[] = 'smtp_username';
+            }
+            if (Schema::hasColumn('companies', 'smtp_password')) {
+                $columnsToDrop[] = 'smtp_password';
+            }
+            if (Schema::hasColumn('companies', 'smtp_encryption')) {
+                $columnsToDrop[] = 'smtp_encryption';
+            }
+            if (Schema::hasColumn('companies', 'smtp_from_address')) {
+                $columnsToDrop[] = 'smtp_from_address';
+            }
+            if (Schema::hasColumn('companies', 'smtp_from_name')) {
+                $columnsToDrop[] = 'smtp_from_name';
+            }
+            
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };

@@ -32,7 +32,23 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->dropColumn(['reminder_level', 'last_reminder_sent_at', 'reminder_fee', 'reminder_history']);
+            $columnsToDrop = [];
+            if (Schema::hasColumn('invoices', 'reminder_level')) {
+                $columnsToDrop[] = 'reminder_level';
+            }
+            if (Schema::hasColumn('invoices', 'last_reminder_sent_at')) {
+                $columnsToDrop[] = 'last_reminder_sent_at';
+            }
+            if (Schema::hasColumn('invoices', 'reminder_fee')) {
+                $columnsToDrop[] = 'reminder_fee';
+            }
+            if (Schema::hasColumn('invoices', 'reminder_history')) {
+                $columnsToDrop[] = 'reminder_history';
+            }
+            
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };

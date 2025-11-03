@@ -26,15 +26,33 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('company_settings', function (Blueprint $table) {
-            $table->dropColumn([
-                'erechnung_enabled',
-                'xrechnung_enabled',
-                'zugferd_enabled',
-                'zugferd_profile',
-                'business_process_id',
-                'electronic_address_scheme',
-                'electronic_address',
-            ]);
+            // Note: company_settings uses key-value structure, these columns may not exist
+            $columnsToDrop = [];
+            if (Schema::hasColumn('company_settings', 'erechnung_enabled')) {
+                $columnsToDrop[] = 'erechnung_enabled';
+            }
+            if (Schema::hasColumn('company_settings', 'xrechnung_enabled')) {
+                $columnsToDrop[] = 'xrechnung_enabled';
+            }
+            if (Schema::hasColumn('company_settings', 'zugferd_enabled')) {
+                $columnsToDrop[] = 'zugferd_enabled';
+            }
+            if (Schema::hasColumn('company_settings', 'zugferd_profile')) {
+                $columnsToDrop[] = 'zugferd_profile';
+            }
+            if (Schema::hasColumn('company_settings', 'business_process_id')) {
+                $columnsToDrop[] = 'business_process_id';
+            }
+            if (Schema::hasColumn('company_settings', 'electronic_address_scheme')) {
+                $columnsToDrop[] = 'electronic_address_scheme';
+            }
+            if (Schema::hasColumn('company_settings', 'electronic_address')) {
+                $columnsToDrop[] = 'electronic_address';
+            }
+            
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };
