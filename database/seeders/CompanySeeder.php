@@ -24,20 +24,32 @@ class CompanySeeder extends Seeder
                 'vat_number' => 'DE369264419',
                 'commercial_register' => 'HRB 100017',
                 'managing_director' => 'Lirim Ziberi',
-                'bank_name' => 'Raiffeisenbank eG, Rodenbach',
-                'bank_iban' => 'DE88506636990001121200',
-                'bank_bic' => 'GENODEF1RDB',
                 'website' => 'https://andona.de',
                 'status' => 'active',
+                // Bank settings (normalized to company_settings)
+                '_bank_settings' => [
+                    'bank_name' => 'Raiffeisenbank eG, Rodenbach',
+                    'bank_iban' => 'DE88506636990001121200',
+                    'bank_bic' => 'GENODEF1RDB',
+                ],
             ],
         ];
 
         foreach ($companies as $companyData) {
+            // Extract bank settings (normalized to company_settings)
+            $bankSettings = $companyData['_bank_settings'] ?? [];
+            unset($companyData['_bank_settings']);
+            
             // Mark first company as default (the system/merchant company)
             if (!Company::where('is_default', true)->exists()) {
                 $companyData['is_default'] = true;
             }
             $company = Company::create($companyData);
+            
+            // Set bank settings after company is created (normalized to company_settings)
+            if (!empty($bankSettings)) {
+                $company->setBankSettings($bankSettings);
+            }
 
             // Create default invoice layouts
             $invoiceLayouts = [
