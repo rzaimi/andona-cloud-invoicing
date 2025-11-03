@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Save, Building2, Mail, Landmark, Settings } from "lucide-react"
+import { ArrowLeft, Save, Building2, Mail, Landmark, Settings, Upload } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { User } from "@/types"
 
@@ -57,13 +57,24 @@ export default function Edit({ auth, company }: EditProps) {
         bank_bic: company.bank_bic || "",
         website: company.website || "",
         status: company.status || "active",
+        logo: null as File | null,
     })
 
     const [activeTab, setActiveTab] = useState("basic")
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        put(route("companies.update", company.id))
+        put(route("companies.update", company.id), {
+            forceFormData: true,
+            preserveScroll: true,
+        })
+    }
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setData("logo", file)
+        }
     }
 
     return (
@@ -209,6 +220,33 @@ export default function Edit({ auth, company }: EditProps) {
                                                 <p className="text-sm text-red-500">{errors.managing_director}</p>
                                             )}
                                         </div>
+                                    </div>
+
+                                    {/* Logo Upload */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="logo">Logo</Label>
+                                        {company.logo && (
+                                            <div className="mb-4">
+                                                <img
+                                                    src={`/storage/${company.logo}`}
+                                                    alt="Current logo"
+                                                    className="h-20 w-auto object-contain border rounded p-2 bg-muted"
+                                                />
+                                            </div>
+                                        )}
+                                        <Input
+                                            id="logo"
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/jpg,image/gif"
+                                            onChange={handleLogoChange}
+                                            className={errors.logo ? "border-red-500" : ""}
+                                        />
+                                        {errors.logo && (
+                                            <p className="text-sm text-red-500">{errors.logo}</p>
+                                        )}
+                                        <p className="text-sm text-muted-foreground">
+                                            Maximale Dateigröße: 2MB. Erlaubte Formate: JPEG, PNG, JPG, GIF
+                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>

@@ -138,4 +138,13 @@
     body {
         @apply bg-background text-foreground;
     }
+
+    /* Ensure title color is correct in dark mode */
+    title {
+        color: oklch(0.985 0 0) !important;
+    }
+
+    .dark title {
+        color: oklch(0.985 0 0) !important;
+    }
 }
