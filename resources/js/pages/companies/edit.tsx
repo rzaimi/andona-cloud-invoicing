@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Save, Building2, Mail, Landmark, Settings, Upload } from "lucide-react"
+import { ArrowLeft, Save, Building2, Mail, Landmark, Settings } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { User } from "@/types"
 
@@ -40,10 +40,7 @@ interface EditProps {
 }
 
 export default function Edit({ auth, company }: EditProps) {
-    const [activeTab, setActiveTab] = useState("basic")
-    const [logoFile, setLogoFile] = useState<File | null>(null)
-
-    const { data, setData, put, processing, errors, transform } = useForm({
+    const { data, setData, put, processing, errors } = useForm({
         name: company.name || "",
         email: company.email || "",
         phone: company.phone || "",
@@ -62,35 +59,11 @@ export default function Edit({ auth, company }: EditProps) {
         status: company.status || "active",
     })
 
-    // Transform data to conditionally include logo only when file is selected
-    transform((data) => {
-        const transformed = { ...data }
-        if (logoFile) {
-            transformed.logo = logoFile
-        } else {
-            // Explicitly remove logo to ensure it's not sent
-            delete transformed.logo
-        }
-        return transformed
-    })
+    const [activeTab, setActiveTab] = useState("basic")
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        
-        // Use forceFormData only when logo file exists
-        put(route("companies.update", company.id), {
-            forceFormData: !!logoFile,
-            preserveScroll: true,
-        })
-    }
-
-    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            setLogoFile(file)
-        } else {
-            setLogoFile(null)
-        }
+        put(route("companies.update", company.id))
     }
 
     return (
@@ -236,33 +209,6 @@ export default function Edit({ auth, company }: EditProps) {
                                                 <p className="text-sm text-red-500">{errors.managing_director}</p>
                                             )}
                                         </div>
-                                    </div>
-
-                                    {/* Logo Upload */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="logo">Logo</Label>
-                                        {company.logo && (
-                                            <div className="mb-4">
-                                                <img
-                                                    src={`/storage/${company.logo}`}
-                                                    alt="Current logo"
-                                                    className="h-20 w-auto object-contain border rounded p-2 bg-muted"
-                                                />
-                                            </div>
-                                        )}
-                                        <Input
-                                            id="logo"
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/jpg,image/gif"
-                                            onChange={handleLogoChange}
-                                            className={errors.logo ? "border-red-500" : ""}
-                                        />
-                                        {errors.logo && (
-                                            <p className="text-sm text-red-500">{errors.logo}</p>
-                                        )}
-                                        <p className="text-sm text-muted-foreground">
-                                            Maximale Dateigröße: 2MB. Erlaubte Formate: JPEG, PNG, JPG, GIF
-                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
