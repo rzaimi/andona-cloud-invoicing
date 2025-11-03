@@ -14,36 +14,42 @@ return new class extends Migration
     public function up(): void
     {
         // Step 1: Migrate existing SMTP and bank data to company_settings
-        $companies = Company::all();
+        // Use raw DB queries to access columns directly (before dropping them)
+        $companies = DB::table('companies')->get();
         
-        foreach ($companies as $company) {
-            // Migrate SMTP settings
+        foreach ($companies as $companyRow) {
+            $company = Company::find($companyRow->id);
+            if (!$company) {
+                continue;
+            }
+            
+            // Migrate SMTP settings (read from raw attributes, not accessors)
             $smtpSettings = [
-                'smtp_host' => $company->smtp_host,
-                'smtp_port' => $company->smtp_port,
-                'smtp_username' => $company->smtp_username,
-                'smtp_password' => $company->smtp_password,
-                'smtp_encryption' => $company->smtp_encryption,
-                'smtp_from_address' => $company->smtp_from_address,
-                'smtp_from_name' => $company->smtp_from_name,
+                'smtp_host' => $companyRow->smtp_host ?? null,
+                'smtp_port' => $companyRow->smtp_port ?? null,
+                'smtp_username' => $companyRow->smtp_username ?? null,
+                'smtp_password' => $companyRow->smtp_password ?? null,
+                'smtp_encryption' => $companyRow->smtp_encryption ?? null,
+                'smtp_from_address' => $companyRow->smtp_from_address ?? null,
+                'smtp_from_name' => $companyRow->smtp_from_name ?? null,
             ];
             
             foreach ($smtpSettings as $key => $value) {
-                if ($value !== null) {
+                if ($value !== null && $value !== '') {
                     $type = $key === 'smtp_port' ? 'integer' : 'string';
                     $company->setSetting($key, $value, $type);
                 }
             }
             
-            // Migrate bank settings
+            // Migrate bank settings (read from raw attributes, not accessors)
             $bankSettings = [
-                'bank_name' => $company->bank_name,
-                'bank_iban' => $company->bank_iban,
-                'bank_bic' => $company->bank_bic,
+                'bank_name' => $companyRow->bank_name ?? null,
+                'bank_iban' => $companyRow->bank_iban ?? null,
+                'bank_bic' => $companyRow->bank_bic ?? null,
             ];
             
             foreach ($bankSettings as $key => $value) {
-                if ($value !== null) {
+                if ($value !== null && $value !== '') {
                     $company->setSetting($key, $value, 'string');
                 }
             }
