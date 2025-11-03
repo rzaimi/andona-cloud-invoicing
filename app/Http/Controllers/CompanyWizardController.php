@@ -186,20 +186,29 @@ class CompanyWizardController extends Controller
                 'tax_number' => $wizardData['company_info']['tax_number'] ?? null,
                 'vat_number' => $wizardData['company_info']['vat_number'] ?? null,
                 'website' => $wizardData['company_info']['website'] ?? null,
-                
-                // SMTP settings
-                'smtp_host' => $wizardData['email_settings']['smtp_host'] ?? null,
-                'smtp_port' => $wizardData['email_settings']['smtp_port'] ?? 587,
-                'smtp_username' => $wizardData['email_settings']['smtp_username'] ?? null,
-                'smtp_password' => $wizardData['email_settings']['smtp_password'] ?? null,
-                'smtp_encryption' => $wizardData['email_settings']['smtp_encryption'] ?? 'tls',
-                'smtp_from_address' => $wizardData['email_settings']['smtp_from_address'] ?? null,
-                'smtp_from_name' => $wizardData['email_settings']['smtp_from_name'] ?? null,
-                
-                // Banking
-                'iban' => $wizardData['banking_info']['iban'] ?? null,
-                'bic' => $wizardData['banking_info']['bic'] ?? null,
             ]);
+
+            // Set SMTP settings (normalized to company_settings)
+            if (!empty($wizardData['email_settings'])) {
+                $company->setSmtpSettings([
+                    'smtp_host' => $wizardData['email_settings']['smtp_host'] ?? null,
+                    'smtp_port' => $wizardData['email_settings']['smtp_port'] ?? 587,
+                    'smtp_username' => $wizardData['email_settings']['smtp_username'] ?? null,
+                    'smtp_password' => $wizardData['email_settings']['smtp_password'] ?? null,
+                    'smtp_encryption' => $wizardData['email_settings']['smtp_encryption'] ?? 'tls',
+                    'smtp_from_address' => $wizardData['email_settings']['smtp_from_address'] ?? null,
+                    'smtp_from_name' => $wizardData['email_settings']['smtp_from_name'] ?? null,
+                ]);
+            }
+
+            // Set bank settings (normalized to company_settings)
+            if (!empty($wizardData['banking_info'])) {
+                $company->setBankSettings([
+                    'bank_name' => $wizardData['banking_info']['bank_name'] ?? null,
+                    'bank_iban' => $wizardData['banking_info']['iban'] ?? null,
+                    'bank_bic' => $wizardData['banking_info']['bic'] ?? null,
+                ]);
+            }
 
             // Save invoice settings
             if (isset($wizardData['invoice_settings']) && is_array($wizardData['invoice_settings'])) {

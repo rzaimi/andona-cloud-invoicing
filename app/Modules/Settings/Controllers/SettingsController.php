@@ -211,7 +211,8 @@ class SettingsController extends Controller
             $validated['smtp_encryption'] = null;
         }
 
-        $company->update($validated);
+        // Use helper method to save SMTP settings (normalized to company_settings)
+        $company->setSmtpSettings($validated);
 
         return redirect()->route('settings.email')
             ->with('success', 'E-Mail Einstellungen wurden erfolgreich aktualisiert.');

@@ -38,21 +38,11 @@ class Company extends Model
         'vat_number',
         'commercial_register',
         'managing_director',
-        'bank_name',
-        'bank_iban',
-        'bank_bic',
         'website',
         'logo',
         'status',
         'is_default',
         'settings',
-        'smtp_host',
-        'smtp_port',
-        'smtp_username',
-        'smtp_password',
-        'smtp_encryption',
-        'smtp_from_address',
-        'smtp_from_name',
     ];
 
     protected $casts = [
@@ -199,5 +189,142 @@ class Company extends Model
     public function scopeDefault($query)
     {
         return $query->where('is_default', true);
+    }
+
+    /**
+     * Accessor methods for SMTP settings (normalized to company_settings)
+     */
+    public function getSmtpHostAttribute(): ?string
+    {
+        return $this->getSetting('smtp_host');
+    }
+
+    public function getSmtpPortAttribute(): ?int
+    {
+        return $this->getSetting('smtp_port');
+    }
+
+    public function getSmtpUsernameAttribute(): ?string
+    {
+        return $this->getSetting('smtp_username');
+    }
+
+    public function getSmtpPasswordAttribute(): ?string
+    {
+        return $this->getSetting('smtp_password');
+    }
+
+    public function getSmtpEncryptionAttribute(): ?string
+    {
+        return $this->getSetting('smtp_encryption');
+    }
+
+    public function getSmtpFromAddressAttribute(): ?string
+    {
+        return $this->getSetting('smtp_from_address');
+    }
+
+    public function getSmtpFromNameAttribute(): ?string
+    {
+        return $this->getSetting('smtp_from_name');
+    }
+
+    /**
+     * Accessor methods for bank settings (normalized to company_settings)
+     */
+    public function getBankNameAttribute(): ?string
+    {
+        return $this->getSetting('bank_name');
+    }
+
+    public function getBankIbanAttribute(): ?string
+    {
+        return $this->getSetting('bank_iban');
+    }
+
+    public function getBankBicAttribute(): ?string
+    {
+        return $this->getSetting('bank_bic');
+    }
+
+    /**
+     * Mutator methods to save SMTP settings to company_settings
+     */
+    public function setSmtpHostAttribute($value): void
+    {
+        $this->setSetting('smtp_host', $value, 'string');
+    }
+
+    public function setSmtpPortAttribute($value): void
+    {
+        $this->setSetting('smtp_port', $value, 'integer');
+    }
+
+    public function setSmtpUsernameAttribute($value): void
+    {
+        $this->setSetting('smtp_username', $value, 'string');
+    }
+
+    public function setSmtpPasswordAttribute($value): void
+    {
+        $this->setSetting('smtp_password', $value, 'string');
+    }
+
+    public function setSmtpEncryptionAttribute($value): void
+    {
+        $this->setSetting('smtp_encryption', $value, 'string');
+    }
+
+    public function setSmtpFromAddressAttribute($value): void
+    {
+        $this->setSetting('smtp_from_address', $value, 'string');
+    }
+
+    public function setSmtpFromNameAttribute($value): void
+    {
+        $this->setSetting('smtp_from_name', $value, 'string');
+    }
+
+    /**
+     * Mutator methods to save bank settings to company_settings
+     */
+    public function setBankNameAttribute($value): void
+    {
+        $this->setSetting('bank_name', $value, 'string');
+    }
+
+    public function setBankIbanAttribute($value): void
+    {
+        $this->setSetting('bank_iban', $value, 'string');
+    }
+
+    public function setBankBicAttribute($value): void
+    {
+        $this->setSetting('bank_bic', $value, 'string');
+    }
+
+    /**
+     * Set SMTP settings from array
+     */
+    public function setSmtpSettings(array $settings): void
+    {
+        foreach ($settings as $key => $value) {
+            if (in_array($key, ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption', 'smtp_from_address', 'smtp_from_name'])) {
+                $type = $key === 'smtp_port' ? 'integer' : 'string';
+                $this->setSetting($key, $value, $type);
+            }
+        }
+    }
+
+    /**
+     * Set bank settings from array
+     */
+    public function setBankSettings(array $settings): void
+    {
+        foreach ($settings as $key => $value) {
+            if (in_array($key, ['bank_name', 'bank_iban', 'bank_bic'])) {
+                $this->setSetting($key, $value, 'string');
+            }
+        }
     }
 }

@@ -157,23 +157,29 @@ class CompanyController extends Controller
                 'tax_number' => $companyInfo['tax_number'] ?? null,
                 'vat_number' => $companyInfo['vat_number'] ?? null,
                 'website' => $companyInfo['website'] ?? null,
-                'iban' => $bankingInfo['iban'] ?? null,
-                'bic' => $bankingInfo['bic'] ?? null,
-                'bank_name' => $bankingInfo['bank_name'] ?? null,
                 'status' => 'active',
             ]);
 
-            // 2. Set up SMTP Settings
+            // 2. Set up SMTP Settings (normalized to company_settings)
             if (!empty($data['email_settings'])) {
                 $emailSettings = $data['email_settings'];
-                $company->update([
-                    'smtp_host' => $emailSettings['smtp_host'],
-                    'smtp_port' => $emailSettings['smtp_port'],
-                    'smtp_username' => $emailSettings['smtp_username'],
-                    'smtp_password' => $emailSettings['smtp_password'],
+                $company->setSmtpSettings([
+                    'smtp_host' => $emailSettings['smtp_host'] ?? null,
+                    'smtp_port' => $emailSettings['smtp_port'] ?? null,
+                    'smtp_username' => $emailSettings['smtp_username'] ?? null,
+                    'smtp_password' => $emailSettings['smtp_password'] ?? null,
                     'smtp_encryption' => $emailSettings['smtp_encryption'] ?? 'tls',
                     'smtp_from_address' => $emailSettings['smtp_from_address'] ?? $company->email,
                     'smtp_from_name' => $emailSettings['smtp_from_name'] ?? $company->name,
+                ]);
+            }
+
+            // Set up Bank Settings (normalized to company_settings)
+            if (!empty($bankingInfo)) {
+                $company->setBankSettings([
+                    'bank_name' => $bankingInfo['bank_name'] ?? null,
+                    'bank_iban' => $bankingInfo['iban'] ?? $bankingInfo['bank_iban'] ?? null,
+                    'bank_bic' => $bankingInfo['bic'] ?? $bankingInfo['bank_bic'] ?? null,
                 ]);
             }
 
@@ -257,13 +263,24 @@ class CompanyController extends Controller
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        // Extract bank settings (normalized to company_settings)
+        $bankSettings = [
+            'bank_name' => $validated['bank_name'] ?? null,
+            'bank_iban' => $validated['bank_iban'] ?? null,
+            'bank_bic' => $validated['bank_bic'] ?? null,
+        ];
+        unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic']);
+
         if ($request->hasFile('logo')) {
             $validated['logo'] = $request->file('logo')->store('company-logos', 'public');
         }
 
         $validated['status'] = 'active';
 
-        Company::create($validated);
+        $company = Company::create($validated);
+        
+        // Set bank settings after creation
+        $company->setBankSettings($bankSettings);
 
         return redirect()->route('companies.index')
             ->with('success', 'Firma wurde erfolgreich erstellt.');
@@ -343,6 +360,14 @@ class CompanyController extends Controller
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        // Extract bank settings (normalized to company_settings)
+        $bankSettings = [
+            'bank_name' => $validated['bank_name'] ?? null,
+            'bank_iban' => $validated['bank_iban'] ?? null,
+            'bank_bic' => $validated['bank_bic'] ?? null,
+        ];
+        unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic']);
+
         if ($request->hasFile('logo')) {
             // Delete old logo if exists
             if ($company->logo) {
@@ -352,6 +377,9 @@ class CompanyController extends Controller
         }
 
         $company->update($validated);
+        
+        // Update bank settings separately (normalized to company_settings)
+        $company->setBankSettings($bankSettings);
 
         return redirect()->route('companies.show', $company->id)
             ->with('success', 'Firma wurde erfolgreich aktualisiert.');
