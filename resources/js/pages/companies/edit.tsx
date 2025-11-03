@@ -40,7 +40,7 @@ interface EditProps {
 }
 
 export default function Edit({ auth, company }: EditProps) {
-    const form = useForm({
+    const { data, setData, put, processing, errors } = useForm({
         name: company.name || "",
         email: company.email || "",
         phone: company.phone || "",
@@ -59,25 +59,22 @@ export default function Edit({ auth, company }: EditProps) {
         status: company.status || "active",
     })
 
-    const { data, setData, put, processing, errors } = form
     const [activeTab, setActiveTab] = useState("basic")
     const [logoFile, setLogoFile] = useState<File | null>(null)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         
+        // Only add logo to form data if a file is selected
         if (logoFile) {
-            // If logo file is selected, include it and use FormData
+            // Add logo to form data and use FormData
+            setData("logo", logoFile)
             put(route("companies.update", company.id), {
-                data: {
-                    ...data,
-                    logo: logoFile,
-                },
                 forceFormData: true,
                 preserveScroll: true,
             })
         } else {
-            // No logo file, send as regular JSON
+            // No logo, submit normally without logo field
             put(route("companies.update", company.id), {
                 preserveScroll: true,
             })
