@@ -40,7 +40,7 @@ interface EditProps {
 }
 
 export default function Edit({ auth, company }: EditProps) {
-    const { data, setData, put, processing, errors } = useForm({
+    const form = useForm({
         name: company.name || "",
         email: company.email || "",
         phone: company.phone || "",
@@ -57,32 +57,39 @@ export default function Edit({ auth, company }: EditProps) {
         bank_bic: company.bank_bic || "",
         website: company.website || "",
         status: company.status || "active",
-        logo: null as File | null,
     })
 
+    const { data, setData, put, processing, errors } = form
     const [activeTab, setActiveTab] = useState("basic")
+    const [logoFile, setLogoFile] = useState<File | null>(null)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         
-        // Transform data to exclude logo if it's null
-        const transformedData = { ...data }
-        if (!transformedData.logo) {
-            delete transformedData.logo
+        if (logoFile) {
+            // If logo file is selected, include it and use FormData
+            put(route("companies.update", company.id), {
+                data: {
+                    ...data,
+                    logo: logoFile,
+                },
+                forceFormData: true,
+                preserveScroll: true,
+            })
+        } else {
+            // No logo file, send as regular JSON
+            put(route("companies.update", company.id), {
+                preserveScroll: true,
+            })
         }
-        
-        // Only use forceFormData if a logo file is actually selected
-        put(route("companies.update", company.id), {
-            data: transformedData,
-            forceFormData: !!data.logo, // Only force FormData if logo exists
-            preserveScroll: true,
-        })
     }
 
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            setData("logo", file)
+            setLogoFile(file)
+        } else {
+            setLogoFile(null)
         }
     }
 
