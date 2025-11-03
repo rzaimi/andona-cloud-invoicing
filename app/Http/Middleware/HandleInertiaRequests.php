@@ -74,18 +74,51 @@ class HandleInertiaRequests extends Middleware
                         'permissions' => $permissions,
                     ]);
                     
+                    // Ensure user always has a company selected
+                    $company = null;
+                    
                     // For super admins with manage_companies permission, use selected company from session if available
                     if (method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('manage_companies')) {
                         $selectedCompanyId = Session::get('selected_company_id');
+                        
+                        // Validate that the selected company from session still exists
                         if ($selectedCompanyId) {
                             $selectedCompany = \App\Modules\Company\Models\Company::find($selectedCompanyId);
-                            if ($selectedCompany) {
-                                $userData['company'] = [
-                                    'id' => $selectedCompany->id,
-                                    'name' => $selectedCompany->name,
-                                ];
+                            if ($selectedCompany && $selectedCompany->status === 'active') {
+                                $company = $selectedCompany;
+                            } else {
+                                // Selected company doesn't exist or is inactive, clear session
+                                Session::forget('selected_company_id');
                             }
                         }
+                        
+                        // If no valid company from session, try to get first available company
+                        if (!$company) {
+                            $firstCompany = \App\Modules\Company\Models\Company::where('status', 'active')
+                                ->orderBy('name')
+                                ->first();
+                            if ($firstCompany) {
+                                $company = $firstCompany;
+                                // Auto-select first company in session for consistency
+                                Session::put('selected_company_id', $firstCompany->id);
+                            }
+                        }
+                    }
+                    
+                    // Fallback to user's own company if no company selected yet
+                    if (!$company && $user->company_id) {
+                        $userCompany = \App\Modules\Company\Models\Company::find($user->company_id);
+                        if ($userCompany && $userCompany->status === 'active') {
+                            $company = $userCompany;
+                        }
+                    }
+                    
+                    // Set company in userData if we found one
+                    if ($company) {
+                        $userData['company'] = [
+                            'id' => $company->id,
+                            'name' => $company->name,
+                        ];
                     }
                     
                     return $userData;

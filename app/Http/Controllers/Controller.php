@@ -51,11 +51,30 @@ abstract class Controller extends BaseController
         // If user has manage_companies permission and has selected a company in session, use that
         if (method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('manage_companies')) {
             $selectedCompanyId = Session::get('selected_company_id');
+            
+            // Validate that the selected company still exists and is active
             if ($selectedCompanyId) {
-                return $selectedCompanyId;
+                $selectedCompany = \App\Modules\Company\Models\Company::find($selectedCompanyId);
+                if ($selectedCompany && $selectedCompany->status === 'active') {
+                    return $selectedCompanyId;
+                } else {
+                    // Company doesn't exist or is inactive, clear session and fallback
+                    Session::forget('selected_company_id');
+                }
+            }
+            
+            // If no valid session company, try to get first available company
+            $firstCompany = \App\Modules\Company\Models\Company::where('status', 'active')
+                ->orderBy('name')
+                ->first();
+            if ($firstCompany) {
+                // Auto-select first company for consistency
+                Session::put('selected_company_id', $firstCompany->id);
+                return $firstCompany->id;
             }
         }
 
+        // Fallback to user's own company
         return $user->company_id;
     }
 

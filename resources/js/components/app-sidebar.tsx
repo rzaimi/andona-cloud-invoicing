@@ -131,10 +131,14 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
 
     useEffect(() => {
         // Initialize selected company ID from user's company
+        // Ensure we always have a valid company selected
         if (user.company?.id) {
             setSelectedCompanyId(user.company.id)
+        } else if (availableCompanies.length > 0 && canSwitchCompany) {
+            // If no company from user, but we have available companies and can switch, select first one
+            setSelectedCompanyId(availableCompanies[0].id)
         }
-    }, [user.company?.id])
+    }, [user.company?.id, availableCompanies, canSwitchCompany])
 
     const isActive = (path: string) => {
         return url.startsWith(path)
