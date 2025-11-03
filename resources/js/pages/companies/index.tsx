@@ -12,15 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye, Building2, Users, Receipt, FileText } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Eye, Building2, Users, Receipt, FileText } from "lucide-react"
 import type { Company, User, PaginatedResponse } from "@/types"
 
 interface CompanyWithStats extends Company {
@@ -111,7 +103,7 @@ export default function CompaniesIndex({ companies }: Props) {
                                         <TableHead>Statistiken</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Erstellt</TableHead>
-                                        <TableHead className="w-[70px]">Aktionen</TableHead>
+                                        <TableHead className="w-[120px]">Aktionen</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -194,34 +186,26 @@ export default function CompaniesIndex({ companies }: Props) {
                                                     {new Date(company.created_at).toLocaleDateString("de-DE")}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                                <span className="sr-only">Aktionen öffnen</span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
-                                                            <DropdownMenuItem asChild>
-                                                                <Link href={route("companies.show", company.id)}>
-                                                                    <Eye className="mr-2 h-4 w-4" />
-                                                                    Anzeigen
-                                                                </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem asChild>
-                                                                <Link href={route("companies.edit", company.id)}>
-                                                                    <Edit className="mr-2 h-4 w-4" />
-                                                                    Bearbeiten
-                                                                </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(company)}>
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Löschen
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button variant="ghost" size="sm" asChild>
+                                                            <Link href={route("companies.show", company.id)}>
+                                                                <Eye className="h-4 w-4" />
+                                                            </Link>
+                                                        </Button>
+                                                        <Button variant="ghost" size="sm" asChild>
+                                                            <Link href={route("companies.edit", company.id)}>
+                                                                <Edit className="h-4 w-4" />
+                                                            </Link>
+                                                        </Button>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm" 
+                                                            onClick={() => handleDelete(company)}
+                                                            className="text-red-600 hover:text-red-700"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))
