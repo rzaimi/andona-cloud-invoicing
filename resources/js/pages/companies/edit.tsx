@@ -64,8 +64,17 @@ export default function Edit({ auth, company }: EditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
+        
+        // Transform data to exclude logo if it's null
+        const transformedData = { ...data }
+        if (!transformedData.logo) {
+            delete transformedData.logo
+        }
+        
+        // Only use forceFormData if a logo file is actually selected
         put(route("companies.update", company.id), {
-            forceFormData: true,
+            data: transformedData,
+            forceFormData: !!data.logo, // Only force FormData if logo exists
             preserveScroll: true,
         })
     }
