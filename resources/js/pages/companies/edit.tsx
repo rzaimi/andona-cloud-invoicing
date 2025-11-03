@@ -40,7 +40,10 @@ interface EditProps {
 }
 
 export default function Edit({ auth, company }: EditProps) {
-    const { data, setData, put, processing, errors } = useForm({
+    const [activeTab, setActiveTab] = useState("basic")
+    const [logoFile, setLogoFile] = useState<File | null>(null)
+
+    const { data, setData, put, processing, errors, transform } = useForm({
         name: company.name || "",
         email: company.email || "",
         phone: company.phone || "",
@@ -59,26 +62,26 @@ export default function Edit({ auth, company }: EditProps) {
         status: company.status || "active",
     })
 
-    const [activeTab, setActiveTab] = useState("basic")
-    const [logoFile, setLogoFile] = useState<File | null>(null)
+    // Transform data to conditionally include logo only when file is selected
+    transform((data) => {
+        const transformed = { ...data }
+        if (logoFile) {
+            transformed.logo = logoFile
+        } else {
+            // Explicitly remove logo to ensure it's not sent
+            delete transformed.logo
+        }
+        return transformed
+    })
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         
-        // Only add logo to form data if a file is selected
-        if (logoFile) {
-            // Add logo to form data and use FormData
-            setData("logo", logoFile)
-            put(route("companies.update", company.id), {
-                forceFormData: true,
-                preserveScroll: true,
-            })
-        } else {
-            // No logo, submit normally without logo field
-            put(route("companies.update", company.id), {
-                preserveScroll: true,
-            })
-        }
+        // Use forceFormData only when logo file exists
+        put(route("companies.update", company.id), {
+            forceFormData: !!logoFile,
+            preserveScroll: true,
+        })
     }
 
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
