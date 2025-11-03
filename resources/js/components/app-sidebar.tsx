@@ -371,6 +371,11 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                                 src={`/storage/${user.company.logo}`} 
                                                 alt={user.company.name}
                                                 className="w-full h-full object-contain"
+                                                onError={(e) => {
+                                                    // Hide image if it fails to load (404/403)
+                                                    const target = e.target as HTMLImageElement
+                                                    target.style.display = 'none'
+                                                }}
                                             />
                                         </div>
                                     ) : (

@@ -81,7 +81,7 @@ export default function Edit({ auth, company }: EditProps) {
     }
 
     return (
-        <AppLayout user={auth.user}>
+        <AppLayout>
             <Head title={`${company.name} bearbeiten`} />
 
             <div className="space-y-6">
@@ -240,6 +240,11 @@ export default function Edit({ auth, company }: EditProps) {
                                                 src={logoPreview || (company.logo ? `/storage/${company.logo}` : "")}
                                                 alt="Aktuelles Firmenlogo"
                                                 className="h-16 w-16 rounded object-contain border"
+                                                onError={(e) => {
+                                                    // Hide image if it fails to load (404/403)
+                                                    const target = e.target as HTMLImageElement
+                                                    target.style.display = 'none'
+                                                }}
                                             />
                                             <div className="text-sm text-muted-foreground">Aktuelles Logo</div>
                                         </div>
