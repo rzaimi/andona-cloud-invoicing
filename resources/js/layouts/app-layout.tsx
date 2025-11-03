@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Settings, Users, Building2, Mail, Bell, FileCheck, LayoutTemplate, CreditCard, HelpCircle, Calendar } from "lucide-react"
 import { Link, usePage } from "@inertiajs/react"
+import AppearanceToggleDropdown from "@/components/appearance-dropdown"
 
 interface AppLayoutProps {
     children: React.ReactNode
@@ -158,7 +159,8 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
                             </Breadcrumb>
                         )}
                     </div>
-                    <div className="px-4">
+                    <div className="flex items-center gap-2 px-4">
+                        <AppearanceToggleDropdown />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
