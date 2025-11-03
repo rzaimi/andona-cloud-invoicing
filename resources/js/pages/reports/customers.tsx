@@ -4,10 +4,11 @@ import { Head, Link } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Users, ArrowLeft, TrendingUp, TrendingDown } from "lucide-react"
+import { Users, ArrowLeft, TrendingUp, TrendingDown, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
 interface TopCustomer {
     customer_id: string
@@ -44,22 +45,52 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
         }).format(amount)
     }
 
+    const handleExport = () => {
+        const headers = ["Rang", "Kunde", "Anzahl Rechnungen", "Gesamtumsatz"]
+        const rows = customerStats.top_customers.map((customer, index) => [
+            (index + 1).toString(),
+            customer.customer_name,
+            customer.invoice_count.toString(),
+            formatCurrency(customer.total_revenue)
+        ])
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.join(","))
+        ].join("\n")
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+        const link = document.createElement("a")
+        const url = URL.createObjectURL(blob)
+        link.setAttribute("href", url)
+        link.setAttribute("download", `kundenbericht-${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = "hidden"
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Kundenberichte" />
 
             <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                    <Link href={route("reports.index")}>
-                        <Button variant="outline" size="sm">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
-                        </Button>
-                    </Link>
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Kundenberichte</h1>
-                        <p className="text-gray-600">Kundenstatistiken und Top-Kunden</p>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Link href={route("reports.index")}>
+                            <Button variant="outline" size="sm">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Zurück
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">Kundenberichte</h1>
+                            <p className="text-gray-600">Kundenstatistiken und Top-Kunden</p>
+                        </div>
                     </div>
+                    <Button variant="outline" onClick={handleExport}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Exportieren
+                    </Button>
                 </div>
 
                 {/* Statistics Cards */}
@@ -120,6 +151,50 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Top Customers Chart */}
+                {customerStats.top_customers.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Top 10 Kunden - Umsatzvergleich</CardTitle>
+                            <CardDescription>Visualisierung der Top-Kunden nach Umsatz</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ResponsiveContainer width="100%" height={350}>
+                                <BarChart 
+                                    data={customerStats.top_customers.slice().reverse().map((c, i) => ({
+                                        name: c.customer_name.length > 20 ? c.customer_name.substring(0, 20) + "..." : c.customer_name,
+                                        umsatz: c.total_revenue,
+                                        rechnungen: c.invoice_count
+                                    }))}
+                                    layout="vertical"
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis 
+                                        type="number"
+                                        tickFormatter={(value) => formatCurrency(value)}
+                                        tick={{ fontSize: 12 }}
+                                    />
+                                    <YAxis 
+                                        type="category"
+                                        dataKey="name"
+                                        tick={{ fontSize: 12 }}
+                                        width={150}
+                                    />
+                                    <Tooltip 
+                                        formatter={(value: number, name: string) => [
+                                            name === "umsatz" ? formatCurrency(value) : value,
+                                            name === "umsatz" ? "Umsatz" : "Rechnungen"
+                                        ]}
+                                        contentStyle={{ backgroundColor: "white", border: "1px solid #e5e7eb" }}
+                                    />
+                                    <Legend />
+                                    <Bar dataKey="umsatz" fill="oklch(0.646 0.222 41.116)" name="Umsatz" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Top Customers Table */}
                 <Card>

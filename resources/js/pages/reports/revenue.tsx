@@ -10,6 +10,7 @@ import { Euro, ArrowLeft, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts"
 
 interface RevenueData {
     period: string
@@ -45,6 +46,37 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
 
     const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0)
     const totalInvoices = revenueData.reduce((sum, item) => sum + item.invoices, 0)
+    const avgRevenue = revenueData.length > 0 ? totalRevenue / revenueData.length : 0
+
+    // Calculate growth percentage
+    const growth = revenueData.length >= 2 
+        ? ((revenueData[revenueData.length - 1].revenue - revenueData[revenueData.length - 2].revenue) / revenueData[revenueData.length - 2].revenue) * 100
+        : 0
+
+    const handleExport = () => {
+        // Simple CSV export
+        const headers = ["Zeitraum", "Anzahl Rechnungen", "Umsatz"]
+        const rows = revenueData.map(item => [
+            item.period,
+            item.invoices.toString(),
+            formatCurrency(item.revenue)
+        ])
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.join(",")),
+            `Gesamt,${totalInvoices},${formatCurrency(totalRevenue)}`
+        ].join("\n")
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+        const link = document.createElement("a")
+        const url = URL.createObjectURL(blob)
+        link.setAttribute("href", url)
+        link.setAttribute("download", `umsatzbericht-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = "hidden"
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -75,16 +107,143 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                                 <SelectItem value="year">Jahr</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">
+                        <Button variant="outline" onClick={handleExport}>
                             <Download className="mr-2 h-4 w-4" />
                             Exportieren
                         </Button>
                     </div>
                 </div>
 
+                {/* Summary Cards */}
+                <div className="grid gap-4 md:grid-cols-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Gesamtumsatz</CardTitle>
+                            <Euro className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {totalInvoices} Rechnungen
+                            </p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Durchschnitt</CardTitle>
+                            <Euro className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{formatCurrency(avgRevenue)}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Pro Periode</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Gesamt Rechnungen</CardTitle>
+                            <Euro className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{totalInvoices}</div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {formatCurrency(totalRevenue / totalInvoices)} Durchschnitt
+                            </p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Wachstum</CardTitle>
+                            <Euro className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className={`text-2xl font-bold ${growth >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                {growth >= 0 ? "+" : ""}{growth.toFixed(1)}%
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">vs. Vorperiode</p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Chart */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Umsatzübersicht</CardTitle>
+                        <CardTitle>Umsatzentwicklung</CardTitle>
+                        <CardDescription>
+                            {selectedPeriod === "month" && "Monatliche Umsätze der letzten 6 Monate"}
+                            {selectedPeriod === "quarter" && "Quartalsumsätze der letzten 4 Quartale"}
+                            {selectedPeriod === "year" && "Jährliche Umsätze der letzten 12 Monate"}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={350}>
+                            <BarChart data={revenueData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                    dataKey="period" 
+                                    tick={{ fontSize: 12 }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={80}
+                                />
+                                <YAxis 
+                                    tick={{ fontSize: 12 }}
+                                    tickFormatter={(value) => formatCurrency(value)}
+                                />
+                                <Tooltip 
+                                    formatter={(value: number) => formatCurrency(value)}
+                                    contentStyle={{ backgroundColor: "white", border: "1px solid #e5e7eb" }}
+                                />
+                                <Legend />
+                                <Bar dataKey="revenue" fill="oklch(0.646 0.222 41.116)" name="Umsatz" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                {/* Line Chart for Trend */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Umsatztrend</CardTitle>
+                        <CardDescription>Verlauf der Umsätze über die Zeit</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={revenueData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                    dataKey="period" 
+                                    tick={{ fontSize: 12 }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={80}
+                                />
+                                <YAxis 
+                                    tick={{ fontSize: 12 }}
+                                    tickFormatter={(value) => formatCurrency(value)}
+                                />
+                                <Tooltip 
+                                    formatter={(value: number) => formatCurrency(value)}
+                                    contentStyle={{ backgroundColor: "white", border: "1px solid #e5e7eb" }}
+                                />
+                                <Legend />
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="revenue" 
+                                    stroke="oklch(0.6 0.118 184.704)" 
+                                    strokeWidth={2}
+                                    name="Umsatz"
+                                    dot={{ r: 4 }}
+                                    activeDot={{ r: 6 }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                {/* Table */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Detaillierte Übersicht</CardTitle>
                         <CardDescription>
                             {selectedPeriod === "month" && "Monatliche Umsätze der letzten 6 Monate"}
                             {selectedPeriod === "quarter" && "Quartalsumsätze der letzten 4 Quartale"}
@@ -98,6 +257,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                                     <TableHead>Zeitraum</TableHead>
                                     <TableHead className="text-right">Anzahl Rechnungen</TableHead>
                                     <TableHead className="text-right">Umsatz</TableHead>
+                                    <TableHead className="text-right">Ø pro Rechnung</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -108,49 +268,24 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                                         <TableCell className="text-right font-bold">
                                             {formatCurrency(item.revenue)}
                                         </TableCell>
+                                        <TableCell className="text-right text-muted-foreground">
+                                            {formatCurrency(item.invoices > 0 ? item.revenue / item.invoices : 0)}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
-                                <TableRow className="font-bold bg-gray-50">
+                                <TableRow className="font-bold bg-gray-50 dark:bg-gray-800">
                                     <TableCell>Gesamt</TableCell>
                                     <TableCell className="text-right">{totalInvoices}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(totalRevenue)}</TableCell>
+                                    <TableCell className="text-right">
+                                        {formatCurrency(totalInvoices > 0 ? totalRevenue / totalInvoices : 0)}
+                                    </TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
                     </CardContent>
                 </Card>
-
-                {/* Summary Cards */}
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium">Gesamtumsatz</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium">Durchschnitt pro Periode</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {formatCurrency(revenueData.length > 0 ? totalRevenue / revenueData.length : 0)}
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium">Gesamt Rechnungen</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalInvoices}</div>
-                        </CardContent>
-                    </Card>
-                </div>
             </div>
         </AppLayout>
     )
 }
-
