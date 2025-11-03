@@ -22,7 +22,9 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['company_id']);
             $table->dropColumn(['company_id', 'role', 'status']);
-            $table->id()->change();
+            // Don't change id column back - users table now uses UUIDs (HasUuids trait)
+            // Cannot convert UUID strings back to auto-incrementing bigint without data loss
+            // If you need to rollback, you'll need to handle the id column separately
         });
     }
 };
