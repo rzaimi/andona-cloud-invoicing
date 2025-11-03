@@ -92,15 +92,22 @@ class HandleInertiaRequests extends Middleware
                             }
                         }
                         
-                        // If no valid company from session, try to get first available company
+                        // If no valid company from session, try to get default company first
                         if (!$company) {
-                            $firstCompany = \App\Modules\Company\Models\Company::where('status', 'active')
-                                ->orderBy('name')
-                                ->first();
-                            if ($firstCompany) {
-                                $company = $firstCompany;
-                                // Auto-select first company in session for consistency
-                                Session::put('selected_company_id', $firstCompany->id);
+                            $defaultCompany = \App\Modules\Company\Models\Company::getDefault();
+                            if ($defaultCompany) {
+                                $company = $defaultCompany;
+                                // Auto-select default company in session for consistency
+                                Session::put('selected_company_id', $defaultCompany->id);
+                            } else {
+                                // Fallback to first available company if no default
+                                $firstCompany = \App\Modules\Company\Models\Company::where('status', 'active')
+                                    ->orderBy('name')
+                                    ->first();
+                                if ($firstCompany) {
+                                    $company = $firstCompany;
+                                    Session::put('selected_company_id', $firstCompany->id);
+                                }
                             }
                         }
                     }

@@ -33,6 +33,10 @@ class CompanySeeder extends Seeder
         ];
 
         foreach ($companies as $companyData) {
+            // Mark first company as default (the system/merchant company)
+            if (!Company::where('is_default', true)->exists()) {
+                $companyData['is_default'] = true;
+            }
             $company = Company::create($companyData);
 
             // Create default invoice layouts

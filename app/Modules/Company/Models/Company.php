@@ -44,6 +44,7 @@ class Company extends Model
         'website',
         'logo',
         'status',
+        'is_default',
         'settings',
         'smtp_host',
         'smtp_port',
@@ -152,5 +153,37 @@ class Company extends Model
                 'description' => $description,
             ]
         );
+    }
+
+    /**
+     * Get the default company (the one super admins should start with)
+     */
+    public static function getDefault(): ?self
+    {
+        return static::where('is_default', true)
+            ->where('status', 'active')
+            ->first();
+    }
+
+    /**
+     * Set this company as default (and unset others)
+     */
+    public function setAsDefault(): void
+    {
+        // Unset all other default companies
+        static::where('is_default', true)
+            ->where('id', '!=', $this->id)
+            ->update(['is_default' => false]);
+        
+        // Set this one as default
+        $this->update(['is_default' => true]);
+    }
+
+    /**
+     * Scope to get default company
+     */
+    public function scopeDefault($query)
+    {
+        return $query->where('is_default', true);
     }
 }

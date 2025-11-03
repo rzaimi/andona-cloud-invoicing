@@ -63,14 +63,21 @@ abstract class Controller extends BaseController
                 }
             }
             
-            // If no valid session company, try to get first available company
-            $firstCompany = \App\Modules\Company\Models\Company::where('status', 'active')
-                ->orderBy('name')
-                ->first();
-            if ($firstCompany) {
-                // Auto-select first company for consistency
-                Session::put('selected_company_id', $firstCompany->id);
-                return $firstCompany->id;
+            // If no valid session company, try to get default company first
+            $defaultCompany = \App\Modules\Company\Models\Company::getDefault();
+            if ($defaultCompany) {
+                // Auto-select default company for consistency
+                Session::put('selected_company_id', $defaultCompany->id);
+                return $defaultCompany->id;
+            } else {
+                // Fallback to first available company if no default
+                $firstCompany = \App\Modules\Company\Models\Company::where('status', 'active')
+                    ->orderBy('name')
+                    ->first();
+                if ($firstCompany) {
+                    Session::put('selected_company_id', $firstCompany->id);
+                    return $firstCompany->id;
+                }
             }
         }
 
