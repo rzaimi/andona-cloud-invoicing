@@ -409,65 +409,6 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                     </div>
                                 </Link>
                             </SidebarMenuButton>
-
-                            {/* More Options Dropdown */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
-                                        <Settings className="h-4 w-4" />
-                                        <span className="sr-only">Einstellungen</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56">
-                                    {/* Administration Section */}
-                                    {(user.permissions?.includes("manage_users")) && (
-                                        <>
-                                            <DropdownMenuLabel>Administration</DropdownMenuLabel>
-                                            <DropdownMenuGroup>
-                                                {adminNavigation
-                                                    .filter((item) => !item.adminOnly || user.permissions?.includes("manage_companies"))
-                                                    .map((item) => (
-                                                        <DropdownMenuItem key={item.title} asChild>
-                                                            <Link href={item.url}>
-                                                                <item.icon className="mr-2 h-4 w-4" />
-                                                                {item.title}
-                                                            </Link>
-                                                        </DropdownMenuItem>
-                                                    ))}
-                                            </DropdownMenuGroup>
-                                            <DropdownMenuSeparator />
-                                        </>
-                                    )}
-
-                                    {/* Settings Section */}
-                                    <DropdownMenuLabel>Einstellungen</DropdownMenuLabel>
-                                    <DropdownMenuGroup>
-                                        {settingsNavigation.map((item) => (
-                                            <DropdownMenuItem key={item.title} asChild>
-                                                <Link href={item.url}>
-                                                    <item.icon className="mr-2 h-4 w-4" />
-                                                    {item.title}
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        ))}
-                                    </DropdownMenuGroup>
-
-                                    <DropdownMenuSeparator />
-
-                                    {/* Support Section */}
-                                    <DropdownMenuLabel>Support</DropdownMenuLabel>
-                                    <DropdownMenuGroup>
-                                        {supportNavigation.map((item) => (
-                                            <DropdownMenuItem key={item.title} asChild>
-                                                <Link href={item.url}>
-                                                    <item.icon className="mr-2 h-4 w-4" />
-                                                    {item.title}
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        ))}
-                                    </DropdownMenuGroup>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
                         </div>
                     </SidebarMenuItem>
                 </SidebarMenu>
