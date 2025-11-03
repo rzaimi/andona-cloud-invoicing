@@ -24,7 +24,6 @@ import {
     Package,
     Tag,
     Warehouse,
-    MoreHorizontal,
     Mail,
     FileCheck,
 } from "lucide-react"
@@ -415,8 +414,8 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">Mehr Optionen</span>
+                                        <Settings className="h-4 w-4" />
+                                        <span className="sr-only">Einstellungen</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56">
