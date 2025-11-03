@@ -41,9 +41,9 @@ interface Company {
     tax_number?: string
     vat_number?: string
     website?: string
-    iban?: string
-    bic?: string
     bank_name?: string
+    bank_iban?: string
+    bank_bic?: string
     smtp_host?: string
     smtp_port?: number
     smtp_username?: string
@@ -337,7 +337,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    {company.iban || company.bic || company.bank_name ? (
+                                    {company.bank_iban || company.bank_bic || company.bank_name ? (
                                         <div className="space-y-3">
                                             {company.bank_name && (
                                                 <div className="flex items-start">
@@ -349,22 +349,22 @@ export default function Show({ auth, company, stats }: ShowProps) {
                                                 </div>
                                             )}
 
-                                            {company.iban && (
+                                            {company.bank_iban && (
                                                 <div className="flex items-start">
                                                     <CreditCard className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
                                                     <div>
                                                         <div className="text-sm font-medium">IBAN</div>
-                                                        <div className="text-sm text-muted-foreground font-mono">{company.iban}</div>
+                                                        <div className="text-sm text-muted-foreground font-mono">{company.bank_iban}</div>
                                                     </div>
                                                 </div>
                                             )}
 
-                                            {company.bic && (
+                                            {company.bank_bic && (
                                                 <div className="flex items-start">
                                                     <CreditCard className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
                                                     <div>
                                                         <div className="text-sm font-medium">BIC</div>
-                                                        <div className="text-sm text-muted-foreground font-mono">{company.bic}</div>
+                                                        <div className="text-sm text-muted-foreground font-mono">{company.bank_bic}</div>
                                                     </div>
                                                 </div>
                                             )}

@@ -49,6 +49,23 @@ class Company extends Model
         'settings' => 'array',
     ];
 
+    /**
+     * The accessors to append to the model's array form.
+     * These ensure SMTP and bank settings are included in JSON serialization.
+     */
+    protected $appends = [
+        'smtp_host',
+        'smtp_port',
+        'smtp_username',
+        'smtp_password',
+        'smtp_encryption',
+        'smtp_from_address',
+        'smtp_from_name',
+        'bank_name',
+        'bank_iban',
+        'bank_bic',
+    ];
+
     protected static function boot()
     {
         parent::boot();
