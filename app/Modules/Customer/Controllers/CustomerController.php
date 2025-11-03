@@ -187,14 +187,14 @@ class CustomerController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
-            'company_name' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:500',
             'postal_code' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
             'tax_number' => 'nullable|string|max:50',
             'vat_number' => 'nullable|string|max:50',
-            'notes' => 'nullable|string|max:1000',
+            'contact_person' => 'nullable|string|max:255',
+            'customer_type' => 'required|in:business,private',
             'status' => 'required|in:active,inactive',
         ]);
 
