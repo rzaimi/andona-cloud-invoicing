@@ -23,15 +23,17 @@ return new class extends Migration
     {
         // Truncate icon values that are longer than 10 characters before shrinking column
         // This prevents data truncation errors when rolling back
+        // Use PHP to check length for database-agnostic compatibility
         $categories = \DB::table('categories')
             ->whereNotNull('icon')
-            ->whereRaw('CHAR_LENGTH(icon) > 10')
             ->get();
         
         foreach ($categories as $category) {
-            \DB::table('categories')
-                ->where('id', $category->id)
-                ->update(['icon' => substr($category->icon, 0, 10)]);
+            if (strlen($category->icon) > 10) {
+                \DB::table('categories')
+                    ->where('id', $category->id)
+                    ->update(['icon' => substr($category->icon, 0, 10)]);
+            }
         }
         
         Schema::table('categories', function (Blueprint $table) {
