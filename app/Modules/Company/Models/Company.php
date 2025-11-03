@@ -52,12 +52,12 @@ class Company extends Model
     /**
      * The accessors to append to the model's array form.
      * These ensure SMTP and bank settings are included in JSON serialization.
+     * Note: smtp_password is excluded for security reasons.
      */
     protected $appends = [
         'smtp_host',
         'smtp_port',
         'smtp_username',
-        'smtp_password',
         'smtp_encryption',
         'smtp_from_address',
         'smtp_from_name',
