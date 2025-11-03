@@ -59,6 +59,20 @@ class Company extends Model
         'settings' => 'array',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Ensure only one default company can exist
+        static::saving(function ($company) {
+            if ($company->is_default && $company->isDirty('is_default')) {
+                static::where('is_default', true)
+                    ->where('id', '!=', $company->id)
+                    ->update(['is_default' => false]);
+            }
+        });
+    }
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
