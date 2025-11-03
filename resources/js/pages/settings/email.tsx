@@ -4,11 +4,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mail, Save, AlertCircle, CheckCircle2 } from "lucide-react"
+import { 
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Mail, Save, AlertCircle, CheckCircle2, Eye, ExternalLink } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { User } from "@/types"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useState } from "react"
+import { route } from "ziggy-js"
 
 interface EmailSettingsProps {
     user: User
@@ -23,10 +32,117 @@ interface EmailSettingsProps {
     }
 }
 
+interface EmailTemplate {
+    id: string
+    name: string
+    description: string
+    route: string
+    category: 'invoice' | 'offer' | 'reminder' | 'general'
+}
+
+const EMAIL_TEMPLATES: EmailTemplate[] = [
+    {
+        id: 'invoice-sent',
+        name: 'Rechnung versendet',
+        description: 'E-Mail-Vorlage für versendete Rechnungen',
+        route: 'settings.emails.preview.invoice-sent',
+        category: 'invoice',
+    },
+    {
+        id: 'invoice-reminder',
+        name: 'Rechnungserinnerung',
+        description: 'Allgemeine Erinnerung für Rechnungen',
+        route: 'settings.emails.preview.invoice-reminder',
+        category: 'invoice',
+    },
+    {
+        id: 'offer-sent',
+        name: 'Angebot versendet',
+        description: 'E-Mail-Vorlage für versendete Angebote',
+        route: 'settings.emails.preview.offer-sent',
+        category: 'offer',
+    },
+    {
+        id: 'offer-accepted',
+        name: 'Angebot angenommen',
+        description: 'E-Mail-Vorlage für angenommene Angebote',
+        route: 'settings.emails.preview.offer-accepted',
+        category: 'offer',
+    },
+    {
+        id: 'offer-reminder',
+        name: 'Angebotserinnerung',
+        description: 'Erinnerung für ablaufende Angebote',
+        route: 'settings.emails.preview.offer-reminder',
+        category: 'offer',
+    },
+    {
+        id: 'payment-received',
+        name: 'Zahlung erhalten',
+        description: 'Bestätigung bei erhaltenen Zahlungen',
+        route: 'settings.emails.preview.payment-received',
+        category: 'invoice',
+    },
+    {
+        id: 'welcome',
+        name: 'Willkommens-E-Mail',
+        description: 'Willkommensnachricht für neue Kunden',
+        route: 'settings.emails.preview.welcome',
+        category: 'general',
+    },
+    {
+        id: 'friendly-reminder',
+        name: 'Freundliche Erinnerung',
+        description: 'Erste freundliche Erinnerung bei überfälligen Rechnungen',
+        route: 'settings.emails.preview.friendly-reminder',
+        category: 'reminder',
+    },
+    {
+        id: 'mahnung-1',
+        name: '1. Mahnung',
+        description: 'Erste offizielle Mahnung',
+        route: 'settings.emails.preview.mahnung-1',
+        category: 'reminder',
+    },
+    {
+        id: 'mahnung-2',
+        name: '2. Mahnung',
+        description: 'Zweite Mahnung',
+        route: 'settings.emails.preview.mahnung-2',
+        category: 'reminder',
+    },
+    {
+        id: 'mahnung-3',
+        name: '3. Mahnung',
+        description: 'Dritte Mahnung',
+        route: 'settings.emails.preview.mahnung-3',
+        category: 'reminder',
+    },
+    {
+        id: 'inkasso',
+        name: 'Inkasso',
+        description: 'Letzte Mahnung vor Inkasso',
+        route: 'settings.emails.preview.inkasso',
+        category: 'reminder',
+    },
+]
+
 export default function EmailSettings({ settings }: Omit<EmailSettingsProps, 'user'>) {
     const { props } = usePage()
     const user = (props as any).auth?.user || (props as any).user
     const [showPassword, setShowPassword] = useState(false)
+    const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null)
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+
+    const handlePreview = (template: EmailTemplate) => {
+        setPreviewTemplate(template)
+        setIsPreviewOpen(true)
+    }
+
+    const handleClosePreview = () => {
+        setIsPreviewOpen(false)
+        setPreviewTemplate(null)
+    }
 
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         smtp_host: settings.smtp_host || "",
@@ -264,6 +380,153 @@ export default function EmailSettings({ settings }: Omit<EmailSettingsProps, 'us
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Email Template Previews */}
+                <Card className="mt-6">
+                    <CardHeader>
+                        <CardTitle>E-Mail-Vorlagen Vorschau</CardTitle>
+                        <CardDescription>
+                            Vorschau aller verfügbaren E-Mail-Vorlagen mit Beispieldaten
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-6">
+                            {/* Rechnungen */}
+                            <div>
+                                <h3 className="font-semibold text-lg mb-3">Rechnungen</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {EMAIL_TEMPLATES.filter(t => t.category === 'invoice').map((template) => (
+                                        <div key={template.id} className="border rounded-lg p-4 flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="font-medium">{template.name}</h4>
+                                                <p className="text-sm text-muted-foreground">{template.description}</p>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handlePreview(template)}
+                                            >
+                                                <Eye className="mr-2 h-4 w-4" />
+                                                Vorschau
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Angebote */}
+                            <div>
+                                <h3 className="font-semibold text-lg mb-3">Angebote</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {EMAIL_TEMPLATES.filter(t => t.category === 'offer').map((template) => (
+                                        <div key={template.id} className="border rounded-lg p-4 flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="font-medium">{template.name}</h4>
+                                                <p className="text-sm text-muted-foreground">{template.description}</p>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handlePreview(template)}
+                                            >
+                                                <Eye className="mr-2 h-4 w-4" />
+                                                Vorschau
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Mahnungen */}
+                            <div>
+                                <h3 className="font-semibold text-lg mb-3">Mahnungen</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {EMAIL_TEMPLATES.filter(t => t.category === 'reminder').map((template) => (
+                                        <div key={template.id} className="border rounded-lg p-4 flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="font-medium">{template.name}</h4>
+                                                <p className="text-sm text-muted-foreground">{template.description}</p>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handlePreview(template)}
+                                            >
+                                                <Eye className="mr-2 h-4 w-4" />
+                                                Vorschau
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Allgemein */}
+                            <div>
+                                <h3 className="font-semibold text-lg mb-3">Allgemein</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {EMAIL_TEMPLATES.filter(t => t.category === 'general').map((template) => (
+                                        <div key={template.id} className="border rounded-lg p-4 flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="font-medium">{template.name}</h4>
+                                                <p className="text-sm text-muted-foreground">{template.description}</p>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handlePreview(template)}
+                                            >
+                                                <Eye className="mr-2 h-4 w-4" />
+                                                Vorschau
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Preview Dialog */}
+                <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <DialogHeader>
+                            <DialogTitle>E-Mail Vorschau: {previewTemplate?.name}</DialogTitle>
+                            <DialogDescription>
+                                Vorschau der E-Mail-Vorlage mit Beispieldaten
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {previewTemplate ? (
+                            <div className="flex-1 overflow-hidden border rounded-lg bg-white">
+                                <iframe
+                                    src={route(previewTemplate.route)}
+                                    className="w-full h-full min-h-[600px] border-0"
+                                    title={`Email Preview: ${previewTemplate.name}`}
+                                    style={{ minHeight: '600px' }}
+                                />
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center py-8">
+                                <p>Vorlage wird geladen...</p>
+                            </div>
+                        )}
+
+                        <DialogFooter>
+                            <Button variant="outline" onClick={handleClosePreview}>
+                                Schließen
+                            </Button>
+                            {previewTemplate && (
+                                <Button 
+                                    variant="outline"
+                                    onClick={() => window.open(route(previewTemplate.route), "_blank")}
+                                >
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    In neuem Tab öffnen
+                                </Button>
+                            )}
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     )

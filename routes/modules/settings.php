@@ -8,6 +8,22 @@ Route::post('/settings/email', [SettingsController::class, 'updateEmail'])->name
 Route::get('/settings/reminders', [SettingsController::class, 'reminders'])->name('settings.reminders');
 Route::post('/settings/reminders', [SettingsController::class, 'updateReminders'])->name('settings.reminders.update');
 Route::get('/settings/email-logs', [SettingsController::class, 'emailLogs'])->name('settings.email-logs');
+
+// Email Template Previews
+Route::prefix('settings/emails/preview')->name('settings.emails.preview.')->middleware(['auth'])->group(function () {
+    Route::get('invoice-sent', [\App\Http\Controllers\EmailTemplateController::class, 'previewInvoiceSent'])->name('invoice-sent');
+    Route::get('invoice-reminder', [\App\Http\Controllers\EmailTemplateController::class, 'previewInvoiceReminder'])->name('invoice-reminder');
+    Route::get('offer-sent', [\App\Http\Controllers\EmailTemplateController::class, 'previewOfferSent'])->name('offer-sent');
+    Route::get('offer-accepted', [\App\Http\Controllers\EmailTemplateController::class, 'previewOfferAccepted'])->name('offer-accepted');
+    Route::get('offer-reminder', [\App\Http\Controllers\EmailTemplateController::class, 'previewOfferReminder'])->name('offer-reminder');
+    Route::get('payment-received', [\App\Http\Controllers\EmailTemplateController::class, 'previewPaymentReceived'])->name('payment-received');
+    Route::get('welcome', [\App\Http\Controllers\EmailTemplateController::class, 'previewWelcome'])->name('welcome');
+    Route::get('friendly-reminder', [\App\Http\Controllers\EmailTemplateController::class, 'previewFriendlyReminder'])->name('friendly-reminder');
+    Route::get('mahnung-1', [\App\Http\Controllers\EmailTemplateController::class, 'previewMahnung1'])->name('mahnung-1');
+    Route::get('mahnung-2', [\App\Http\Controllers\EmailTemplateController::class, 'previewMahnung2'])->name('mahnung-2');
+    Route::get('mahnung-3', [\App\Http\Controllers\EmailTemplateController::class, 'previewMahnung3'])->name('mahnung-3');
+    Route::get('inkasso', [\App\Http\Controllers\EmailTemplateController::class, 'previewInkasso'])->name('inkasso');
+});
 Route::get('/settings/erechnung', [SettingsController::class, 'erechnung'])->name('settings.erechnung');
 Route::post('/settings/erechnung', [SettingsController::class, 'updateErechnung'])->name('settings.erechnung.update');
 // invoice-layouts route moved to routes/modules/invoices.php (redirects to invoice-layouts.index)
