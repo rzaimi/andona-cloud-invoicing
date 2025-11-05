@@ -20,6 +20,7 @@ class InvoiceItem extends Model
         'unit_price',
         'total',
         'unit',
+        'tax_rate',
         'sort_order',
     ];
 
@@ -27,6 +28,7 @@ class InvoiceItem extends Model
         'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
         'total' => 'decimal:2',
+        'tax_rate' => 'decimal:4',
     ];
 
     public function invoice(): BelongsTo
@@ -50,6 +52,7 @@ class InvoiceItem extends Model
         $this->description = $product->name . ($product->description ? "\n" . $product->description : '');
         $this->unit_price = $product->price;
         $this->unit = $product->unit;
+        $this->tax_rate = $product->tax_rate ?? null; // Use product's tax rate if available
         $this->calculateTotal();
     }
 }

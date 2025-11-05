@@ -135,6 +135,7 @@ class InvoiceController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
+                    'tax_rate' => $invoice->tax_rate, // Use invoice tax rate by default
                     'sort_order' => $index,
                 ]);
                 $item->calculateTotal();
@@ -229,6 +230,7 @@ class InvoiceController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
+                    'tax_rate' => $invoice->tax_rate, // Use invoice tax rate by default
                     'sort_order' => $index,
                 ]);
                 $item->calculateTotal();

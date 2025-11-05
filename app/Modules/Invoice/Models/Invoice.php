@@ -5,6 +5,7 @@ namespace App\Modules\Invoice\Models;
 use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\User\Models\User;
+use App\Modules\Invoice\Models\InvoiceItem;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -112,8 +113,24 @@ class Invoice extends Model
 
     public function calculateTotals(): void
     {
+        // Load items if not already loaded
+        if (!$this->relationLoaded('items')) {
+            $this->load('items');
+        }
+        
+        // Calculate subtotal (sum of all items)
         $this->subtotal = $this->items->sum('total');
-        $this->tax_amount = $this->subtotal * $this->tax_rate;
+        
+        // Calculate tax amount
+        // If items have individual tax_rate, calculate per item
+        // Otherwise, use invoice-level tax_rate for all items
+        $taxAmount = 0;
+        foreach ($this->items as $item) {
+            $itemTaxRate = $item->tax_rate ?? $this->tax_rate;
+            $taxAmount += $item->total * $itemTaxRate;
+        }
+        
+        $this->tax_amount = $taxAmount;
         $this->total = $this->subtotal + $this->tax_amount;
     }
 
@@ -196,7 +213,8 @@ class Invoice extends Model
     }
 
     /**
-     * Add reminder to history
+     * Add reminder to history and update invoice
+     * Also creates invoice item for fee if applicable
      */
     public function addReminderToHistory(int $level, float $fee = 0): void
     {
@@ -214,8 +232,45 @@ class Invoice extends Model
         $this->reminder_level = $level;
         
         if ($fee > 0) {
+            // Update cumulative fee tracker
             $this->reminder_fee = ($this->reminder_fee ?? 0) + $fee;
+            
+            // Create invoice item for the fee
+            $this->addReminderFeeItem($level, $fee);
+            
+            // Reload items to include the newly created fee item
+            $this->load('items');
+            
+            // Recalculate totals (fees are net, so they're added to subtotal)
+            $this->calculateTotals();
         }
+    }
+
+    /**
+     * Add a reminder fee as an invoice item
+     * Mahngebühren are VAT-exempt (0% tax) per German law
+     */
+    private function addReminderFeeItem(int $level, float $fee): void
+    {
+        // Get the highest sort_order to add fee at the end
+        $maxSortOrder = $this->items()->max('sort_order') ?? -1;
+        $nextSortOrder = $maxSortOrder + 1;
+        
+        // Get level name for description
+        $levelName = $this->getReminderLevelNameForLevel($level);
+        
+        // Create fee item (fees are VAT-exempt, 0% tax)
+        InvoiceItem::create([
+            'invoice_id' => $this->id,
+            'product_id' => null, // Fees are not products
+            'description' => "Mahngebühr ({$levelName})",
+            'quantity' => 1,
+            'unit_price' => $fee,
+            'unit' => 'Stk.',
+            'tax_rate' => 0, // Mahngebühren are VAT-exempt
+            'total' => $fee,
+            'sort_order' => $nextSortOrder,
+        ]);
     }
 
     /**
