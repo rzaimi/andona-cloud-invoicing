@@ -2,7 +2,7 @@
 <div class="container">
     <!-- Header: Elegant, centered -->
     <div style="text-align: center; margin-bottom: 45px; padding-bottom: 25px; border-bottom: 1px solid {{ $layout->settings['colors']['accent'] ?? '#e5e7eb' }};">
-        @if($company->logo)
+        @if(($layout->settings['branding']['show_logo'] ?? true) && $company->logo)
             <div style="margin-bottom: 20px;">
                 <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 90px; max-width: 250px;">
             </div>
@@ -29,14 +29,25 @@
     <!-- Invoice Title: Elegant, refined -->
     <div style="text-align: center; margin-bottom: 40px;">
         <div style="font-size: {{ $headingFontSize - 2 }}px; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }}; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px;">
-            Rechnung
+            {{ $invoice->is_correction ? 'Stornorechnung' : 'Rechnung' }}
         </div>
-        <div style="font-size: {{ $headingFontSize + 10 }}px; font-weight: 300; color: {{ $layout->settings['colors']['primary'] ?? '#059669' }}; letter-spacing: 1px; margin-bottom: 8px;">
+        <div style="font-size: {{ $headingFontSize + 10 }}px; font-weight: 300; color: {{ $invoice->is_correction ? '#dc2626' : ($layout->settings['colors']['primary'] ?? '#059669') }}; letter-spacing: 1px; margin-bottom: 8px;">
             {{ $invoice->number }}
         </div>
         <div style="font-size: {{ $bodyFontSize }}px; color: {{ $layout->settings['colors']['text'] ?? '#9ca3af' }}; font-style: italic;">
             {{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}
         </div>
+        @if($invoice->is_correction && $invoice->correctsInvoice)
+            <div style="margin-top: 20px; padding: 15px; background-color: #fee2e2; border: 1px solid #dc2626; border-radius: 4px; font-size: {{ $bodyFontSize }}px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                <div style="font-weight: 400; color: #991b1b; margin-bottom: 6px; letter-spacing: 0.5px;">Storniert Rechnung:</div>
+                <div style="color: #7f1d1d; font-weight: 300;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ \Carbon\Carbon::parse($invoice->correctsInvoice->issue_date)->format('d.m.Y') }}</div>
+                @if($invoice->correction_reason)
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #dc2626; font-size: {{ $bodyFontSize - 1 }}px; font-style: italic;">
+                        <strong>Grund:</strong> {{ $invoice->correction_reason }}
+                    </div>
+                @endif
+            </div>
+        @endif
     </div>
 
     <!-- Two Column: Symmetric, elegant spacing -->
@@ -167,15 +178,5 @@
             </div>
         </div>
     @endif
-
-    <!-- Signature: Elegant -->
-    <div style="margin-top: 60px; text-align: center;">
-        <div style="margin-bottom: 60px; font-style: italic; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};">Mit freundlichen Grüßen</div>
-        @if($company->managing_director)
-            <div style="font-size: {{ $headingFontSize + 2 }}px; font-weight: 300; letter-spacing: 1px; color: {{ $layout->settings['colors']['primary'] ?? '#059669' }};">
-                {{ $company->managing_director }}
-            </div>
-        @endif
-    </div>
 </div>
 

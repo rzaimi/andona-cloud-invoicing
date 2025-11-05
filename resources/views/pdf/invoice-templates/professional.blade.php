@@ -4,7 +4,7 @@
     <table style="width: 100%; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid {{ $layout->settings['colors']['primary'] ?? '#2563eb' }};">
         <tr>
             <td style="width: 50%; vertical-align: top;">
-                @if($company->logo)
+                @if(($layout->settings['branding']['show_logo'] ?? true) && $company->logo)
                     <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 70px; max-width: 200px; margin-bottom: 10px;">
                 @endif
             </td>
@@ -38,8 +38,8 @@
     <table style="width: 100%; margin-bottom: 25px;">
         <tr>
             <td style="vertical-align: middle;">
-                <h1 style="font-size: {{ $headingFontSize + 8 }}px; font-weight: bold; color: {{ $layout->settings['colors']['primary'] ?? '#2563eb' }}; margin: 0;">
-                    RECHNUNG
+                <h1 style="font-size: {{ $headingFontSize + 8 }}px; font-weight: bold; color: {{ $invoice->is_correction ? '#dc2626' : ($layout->settings['colors']['primary'] ?? '#2563eb') }}; margin: 0;">
+                    {{ $invoice->is_correction ? 'STORNORECHNUNG' : 'RECHNUNG' }}
                 </h1>
             </td>
             <td style="text-align: right; vertical-align: middle;">
@@ -49,6 +49,17 @@
             </td>
         </tr>
     </table>
+    @if($invoice->is_correction && $invoice->correctsInvoice)
+        <div style="margin-bottom: 20px; padding: 12px; background-color: #fee2e2; border-left: 4px solid #dc2626; font-size: {{ $bodyFontSize }}px;">
+            <div style="font-weight: bold; color: #991b1b; margin-bottom: 5px;">Storniert Rechnung:</div>
+            <div style="color: #7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ \Carbon\Carbon::parse($invoice->correctsInvoice->issue_date)->format('d.m.Y') }}</div>
+            @if($invoice->correction_reason)
+                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #dc2626;">
+                    <strong>Grund:</strong> {{ $invoice->correction_reason }}
+                </div>
+            @endif
+        </div>
+    @endif
 
     <!-- Two Column: Customer and Invoice Details -->
     <table style="width: 100%; margin-bottom: 35px;">
@@ -185,15 +196,5 @@
             </tr>
         </table>
     @endif
-
-    <!-- Signature -->
-    <div style="margin-top: 50px;">
-        <div style="margin-bottom: 50px;">Mit freundlichen Grüßen</div>
-        @if($company->managing_director)
-            <div style="font-size: {{ $headingFontSize }}px; font-weight: bold; color: {{ $layout->settings['colors']['primary'] ?? '#2563eb' }};">
-                {{ $company->managing_director }}
-            </div>
-        @endif
-    </div>
 </div>
 

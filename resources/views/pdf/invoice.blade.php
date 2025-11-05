@@ -300,4 +300,3 @@
 @includeFirst([$templateFile, 'pdf.invoice-templates.minimal'])
 </body>
 </html>
-

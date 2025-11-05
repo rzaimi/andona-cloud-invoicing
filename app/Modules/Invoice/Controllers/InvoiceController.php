@@ -25,7 +25,8 @@ class InvoiceController extends Controller
         $companyId = $this->getEffectiveCompanyId();
         
         $query = Invoice::forCompany($companyId)
-            ->with(['customer:id,name', 'user:id,name']);
+            ->with(['customer:id,name', 'user:id,name'])
+            ->select('invoices.*'); // Ensure all invoice fields including is_correction are selected
         
         // Apply status filter
         if ($request->status && $request->status !== 'all') {
@@ -179,7 +180,7 @@ class InvoiceController extends Controller
             ->orderBy('name')
             ->get();
 
-        $invoice->load('items');
+        $invoice->load(['items', 'correctsInvoice', 'correctedByInvoice']);
 
         return Inertia::render('invoices/edit', [
             'invoice' => $invoice,
@@ -255,7 +256,7 @@ class InvoiceController extends Controller
 
     public function pdf(Invoice $invoice)
     {
-        $invoice->load(['customer', 'items', 'layout', 'user', 'company']);
+        $invoice->load(['customer', 'items', 'layout', 'user', 'company', 'correctsInvoice']);
 
         // Get layout - either assigned to invoice or company default
         if ($invoice->layout) {
@@ -497,7 +498,7 @@ class InvoiceController extends Controller
 
     private function generateInvoicePdf(Invoice $invoice)
     {
-        $invoice->load(['items', 'customer', 'company', 'user']);
+        $invoice->load(['items', 'customer', 'company', 'user', 'correctsInvoice']);
         
         $layout = $invoice->layout ?: InvoiceLayout::forCompany($invoice->company_id)
             ->where('is_default', true)
@@ -774,6 +775,7 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'correction_reason' => 'required|string|max:500',
             'create_new_invoice' => 'boolean',
+            'send_email' => 'boolean',
         ]);
 
         try {
@@ -839,8 +841,56 @@ class InvoiceController extends Controller
 
             DB::commit();
 
+            // Send email if requested
+            $emailSent = false;
+            if ($validated['send_email'] ?? false) {
+                try {
+                    $company = $correctionInvoice->company;
+                    if ($company->smtp_host && $company->smtp_username && $correctionInvoice->customer && $correctionInvoice->customer->email) {
+                        // Configure SMTP settings dynamically
+                        Config::set('mail.default', 'smtp');
+                        Config::set('mail.mailers.smtp.host', $company->smtp_host);
+                        Config::set('mail.mailers.smtp.port', $company->smtp_port);
+                        Config::set('mail.mailers.smtp.username', $company->smtp_username);
+                        Config::set('mail.mailers.smtp.password', $company->smtp_password);
+                        Config::set('mail.mailers.smtp.encryption', $company->smtp_encryption ?: 'tls');
+                        Config::set('mail.from.address', $company->smtp_from_address ?: $company->email);
+                        Config::set('mail.from.name', $company->smtp_from_name ?: $company->name);
+
+                        // Generate PDF
+                        $pdf = $this->generateInvoicePdf($correctionInvoice);
+
+                        // Send email
+                        Mail::send('emails.invoice-sent', [
+                            'invoice' => $correctionInvoice,
+                            'company' => $company,
+                            'customer' => $correctionInvoice->customer,
+                            'message' => 'Die Stornorechnung ' . $correctionInvoice->number . ' wurde erstellt und storniert die Rechnung ' . $invoice->number . '.',
+                        ], function ($message) use ($correctionInvoice, $company, $pdf) {
+                            $message->to($correctionInvoice->customer->email)
+                                ->subject('Stornorechnung ' . $correctionInvoice->number)
+                                ->attachData($pdf->output(), 'Stornorechnung_' . $correctionInvoice->number . '.pdf', [
+                                    'mime' => 'application/pdf',
+                                ]);
+                        });
+
+                        // Log email
+                        $this->logEmail('invoice-sent', $correctionInvoice->customer->email, $correctionInvoice->id, $correctionInvoice->company_id);
+                        $emailSent = true;
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send correction invoice email: ' . $e->getMessage());
+                    // Don't fail the entire operation if email fails
+                }
+            }
+
+            $successMessage = 'Stornorechnung ' . $correctionInvoice->number . ' wurde erfolgreich erstellt. Die ursprüngliche Rechnung ' . $invoice->number . ' wurde storniert.';
+            if ($emailSent) {
+                $successMessage .= ' Die Stornorechnung wurde per E-Mail versendet.';
+            }
+
             return redirect()->route('invoices.edit', $correctionInvoice->id)
-                ->with('success', 'Stornorechnung ' . $correctionInvoice->number . ' wurde erfolgreich erstellt. Die ursprüngliche Rechnung ' . $invoice->number . ' wurde storniert.');
+                ->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollBack();

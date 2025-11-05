@@ -2,7 +2,7 @@
 <div class="container">
     <!-- Header: Centered -->
     <div style="text-align: center; margin-bottom: 35px; padding-bottom: 15px; border-bottom: 1px solid {{ $layout->settings['colors']['primary'] ?? '#1f2937' }};">
-        @if($company->logo)
+        @if(($layout->settings['branding']['show_logo'] ?? true) && $company->logo)
             <div style="margin-bottom: 15px;">
                 <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 60px; max-width: 200px;">
             </div>
@@ -28,12 +28,23 @@
 
     <!-- Invoice Title: Centered -->
     <div style="text-align: center; margin-bottom: 25px;">
-        <h1 style="font-size: {{ $headingFontSize + 10 }}px; font-weight: bold; color: {{ $layout->settings['colors']['primary'] ?? '#1f2937' }}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">
-            RECHNUNG
+        <h1 style="font-size: {{ $headingFontSize + 10 }}px; font-weight: bold; color: {{ $invoice->is_correction ? '#dc2626' : ($layout->settings['colors']['primary'] ?? '#1f2937') }}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">
+            {{ $invoice->is_correction ? 'STORNORECHNUNG' : 'RECHNUNG' }}
         </h1>
         <div style="font-size: {{ $headingFontSize }}px; color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }};">
             Nr. {{ $invoice->number }}
         </div>
+        @if($invoice->is_correction && $invoice->correctsInvoice)
+            <div style="margin-top: 15px; padding: 12px; background-color: #fee2e2; border: 2px solid #dc2626; border-radius: 4px; font-size: {{ $bodyFontSize }}px;">
+                <div style="font-weight: bold; color: #991b1b; margin-bottom: 5px;">Storniert Rechnung:</div>
+                <div style="color: #7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ \Carbon\Carbon::parse($invoice->correctsInvoice->issue_date)->format('d.m.Y') }}</div>
+                @if($invoice->correction_reason)
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #dc2626;">
+                        <strong>Grund:</strong> {{ $invoice->correction_reason }}
+                    </div>
+                @endif
+            </div>
+        @endif
     </div>
 
     <!-- Two Column: Customer Left, Invoice Details Right -->
@@ -160,15 +171,5 @@
             @endif
         </div>
     @endif
-
-    <!-- Signature -->
-    <div style="margin-top: 40px; text-align: center;">
-        <div style="margin-bottom: 50px;">Mit freundlichen Grüßen</div>
-        @if($company->managing_director)
-            <div style="font-size: {{ $headingFontSize }}px; font-weight: bold; color: {{ $layout->settings['colors']['primary'] ?? '#1f2937' }};">
-                {{ $company->managing_director }}
-            </div>
-        @endif
-    </div>
 </div>
 

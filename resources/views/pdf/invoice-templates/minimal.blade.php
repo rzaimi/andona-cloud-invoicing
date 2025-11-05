@@ -2,7 +2,7 @@
 <div class="container">
     <!-- Header: Simple, left-aligned -->
     <div style="margin-bottom: 40px;">
-        @if($company->logo)
+        @if(($layout->settings['branding']['show_logo'] ?? true) && $company->logo)
             <div style="margin-bottom: 15px;">
                 <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 60px; max-width: 200px;">
             </div>
@@ -27,12 +27,23 @@
 
     <!-- Invoice Title: Simple, bold -->
     <div style="margin-bottom: 30px;">
-        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: bold; color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }}; margin-bottom: 5px;">
-            Rechnung {{ $invoice->number }}
+        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: bold; color: {{ $invoice->is_correction ? '#dc2626' : ($layout->settings['colors']['text'] ?? '#1f2937') }}; margin-bottom: 5px;">
+            {{ $invoice->is_correction ? 'Stornorechnung' : 'Rechnung' }} {{ $invoice->number }}
         </div>
         <div style="font-size: {{ $bodyFontSize }}px; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};">
             {{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}
         </div>
+        @if($invoice->is_correction && $invoice->correctsInvoice)
+            <div style="margin-top: 12px; padding: 10px; background-color: #fee2e2; border-left: 3px solid #dc2626; font-size: {{ $bodyFontSize }}px;">
+                <div style="font-weight: bold; color: #991b1b; margin-bottom: 4px;">Storniert Rechnung:</div>
+                <div style="color: #7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ \Carbon\Carbon::parse($invoice->correctsInvoice->issue_date)->format('d.m.Y') }}</div>
+                @if($invoice->correction_reason)
+                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #dc2626; font-size: {{ $bodyFontSize - 1 }}px;">
+                        <strong>Grund:</strong> {{ $invoice->correction_reason }}
+                    </div>
+                @endif
+            </div>
+        @endif
     </div>
 
     <!-- Customer: Simple block -->
@@ -132,15 +143,5 @@
             @endif
         </div>
     @endif
-
-    <!-- Signature: Minimal -->
-    <div style="margin-top: 50px;">
-        <div style="margin-bottom: 40px;">Mit freundlichen Grüßen</div>
-        @if($company->managing_director)
-            <div style="font-size: {{ $bodyFontSize }}px; color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }};">
-                {{ $company->managing_director }}
-            </div>
-        @endif
-    </div>
 </div>
 

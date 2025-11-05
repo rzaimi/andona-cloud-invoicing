@@ -284,7 +284,16 @@ export default function InvoicesIndex() {
                             <TableBody>
                                 {invoices.data.map((invoice) => (
                                     <TableRow key={invoice.id}>
-                                        <TableCell className="font-medium">{invoice.number}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <div className="flex items-center gap-2">
+                                                {invoice.number}
+                                                {invoice.is_correction && (
+                                                    <Badge variant="destructive" className="text-xs">
+                                                        Storno
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         <TableCell>{invoice.customer?.name}</TableCell>
                                         <TableCell>{new Date(invoice.issue_date).toLocaleDateString("de-DE")}</TableCell>
                                         <TableCell>{new Date(invoice.due_date).toLocaleDateString("de-DE")}</TableCell>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import { AlertTriangle } from "lucide-react"
 
 interface Invoice {
@@ -23,15 +24,22 @@ export function InvoiceCorrectionDialog({ open, onOpenChange, invoice }: Invoice
     const { data, setData, post, processing, errors, reset } = useForm({
         correction_reason: "",
         create_new_invoice: false,
+        send_email: false,
     })
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         
         post(route("invoices.create-correction", invoice.id), {
+            preserveScroll: false,
+            only: [], // Don't preserve any props - force full reload after redirect
             onSuccess: () => {
-                reset()
+                // Close dialog - Inertia will automatically follow the server redirect
                 onOpenChange(false)
+                reset()
+            },
+            onError: () => {
+                // Keep dialog open on error so user can see the error message
             },
         })
     }
@@ -83,6 +91,17 @@ export function InvoiceCorrectionDialog({ open, onOpenChange, invoice }: Invoice
                                 <li>Die Stornorechnung referenziert die ursprüngliche Rechnung</li>
                                 <li>Beide Rechnungen bleiben im System für die Buchhaltung</li>
                             </ul>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="send_email"
+                                checked={data.send_email}
+                                onCheckedChange={(checked) => setData("send_email", checked === true)}
+                            />
+                            <Label htmlFor="send_email" className="text-sm font-normal cursor-pointer">
+                                Stornorechnung automatisch per E-Mail an den Kunden senden
+                            </Label>
                         </div>
                     </div>
 

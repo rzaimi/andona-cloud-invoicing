@@ -204,6 +204,13 @@ export interface Invoice {
     payment_method?: string
     payment_terms?: string
     layout_id?: string
+    is_correction?: boolean
+    corrects_invoice_id?: string
+    corrected_by_invoice_id?: string
+    correction_reason?: string
+    corrected_at?: string
+    correctsInvoice?: Invoice
+    correctedByInvoice?: Invoice
     company?: Company
     customer?: Customer
     user?: User
