@@ -155,7 +155,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['customer', 'items', 'layout', 'user']);
+        $invoice->load(['customer', 'items', 'layout', 'user', 'documents']);
 
         return Inertia::render('invoices/show', [
             'invoice' => $invoice,
@@ -181,7 +181,7 @@ class InvoiceController extends Controller
             ->orderBy('name')
             ->get();
 
-        $invoice->load(['items', 'correctsInvoice', 'correctedByInvoice']);
+        $invoice->load(['items', 'correctsInvoice', 'correctedByInvoice', 'documents']);
 
         return Inertia::render('invoices/edit', [
             'invoice' => $invoice,

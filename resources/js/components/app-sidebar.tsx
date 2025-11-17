@@ -26,6 +26,7 @@ import {
     Warehouse,
     Mail,
     FileCheck,
+    Download,
 } from "lucide-react"
 import {
     Sidebar,
@@ -338,6 +339,18 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             url: "/settings/payment-methods",
             icon: CreditCard,
             isActive: isActive("/settings/payment-methods"),
+        },
+        {
+            title: "Import & Export",
+            url: "/settings/import-export",
+            icon: Download,
+            isActive: isActive("/settings/import-export"),
+        },
+        {
+            title: "Dokumente",
+            url: "/settings/documents",
+            icon: FileText,
+            isActive: isActive("/settings/documents"),
         },
     ]
 

@@ -18,7 +18,8 @@ import {
     AlertTriangle,
     Clock,
     CheckCircle,
-    Send
+    Send,
+    Download
 } from "lucide-react"
 import { route } from "ziggy-js"
 import AppLayout from "@/layouts/app-layout"
@@ -125,12 +126,26 @@ export default function OffersIndex() {
                         <h1 className="text-3xl font-bold text-gray-900">Angebote</h1>
                         <p className="text-gray-600">Verwalten Sie Ihre Kundenangebote</p>
                     </div>
-                    <Link href="/offers/create">
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Neues Angebot
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                const params = new URLSearchParams()
+                                if (filters.search) params.append('search', filters.search)
+                                if (filters.status && filters.status !== 'all') params.append('status', filters.status)
+                                window.location.href = route('export.offers') + (params.toString() ? '?' + params.toString() : '')
+                            }}
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Exportieren
                         </Button>
-                    </Link>
+                        <Link href="/offers/create">
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Neues Angebot
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Statistics Cards */}

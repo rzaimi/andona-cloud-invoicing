@@ -142,7 +142,8 @@ class CustomerController extends Controller
             },
             'offers' => function ($query) {
                 $query->orderBy('created_at', 'desc');
-            }
+            },
+            'documents'
         ]);
 
         // Calculate customer statistics
@@ -169,6 +170,8 @@ class CustomerController extends Controller
     public function edit(Customer $customer)
     {
         $this->authorize('update', $customer);
+
+        $customer->load('documents');
 
         return Inertia::render('customers/edit', [
             'customer' => $customer,

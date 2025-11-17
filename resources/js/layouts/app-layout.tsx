@@ -23,7 +23,7 @@ import {
     DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Settings, Users, Building2, Mail, Bell, FileCheck, LayoutTemplate, CreditCard, HelpCircle, Calendar } from "lucide-react"
+import { Settings, Users, Building2, Mail, Bell, FileCheck, LayoutTemplate, CreditCard, HelpCircle, Calendar, Download, FileText } from "lucide-react"
 import { Link, usePage } from "@inertiajs/react"
 import AppearanceToggleDropdown from "@/components/appearance-dropdown"
 
@@ -114,6 +114,18 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
             url: "/settings/payment-methods",
             icon: CreditCard,
             isActive: isActive("/settings/payment-methods"),
+        },
+        {
+            title: "Import & Export",
+            url: "/settings/import-export",
+            icon: Download,
+            isActive: isActive("/settings/import-export"),
+        },
+        {
+            title: "Dokumente",
+            url: "/settings/documents",
+            icon: FileText,
+            isActive: isActive("/settings/documents"),
         },
     ]
 

@@ -10,12 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Search, FileText, Send, Clock, CheckCircle, XCircle, AlertTriangle, Bell, History, FileCheck, ChevronDown } from "lucide-react"
+import { Plus, Edit, Trash2, Search, FileText, Send, Clock, CheckCircle, XCircle, AlertTriangle, Bell, History, FileCheck, ChevronDown, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import { SendEmailDialog } from "@/components/send-email-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { BreadcrumbItem, Invoice } from "@/types"
+import { route } from "ziggy-js"
 
 interface InvoicesIndexProps {
     invoices: {
@@ -142,12 +143,26 @@ export default function InvoicesIndex() {
                         <p className="text-gray-600">Verwalten Sie Ihre Rechnungen und deren Status</p>
                     </div>
 
-                    <Link href="/invoices/create">
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Neue Rechnung
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                const params = new URLSearchParams()
+                                if (filters.search) params.append('search', filters.search)
+                                if (filters.status && filters.status !== 'all') params.append('status', filters.status)
+                                window.location.href = route('export.invoices') + (params.toString() ? '?' + params.toString() : '')
+                            }}
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Exportieren
                         </Button>
-                    </Link>
+                        <Link href="/invoices/create">
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Neue Rechnung
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Statistics Cards */}

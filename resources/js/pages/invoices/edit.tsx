@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Trash2, FileText, FileCheck, ChevronDown, XCircle } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, FileText, FileCheck, ChevronDown, XCircle, Download, ExternalLink } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer, Invoice, InvoiceItem } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
@@ -29,8 +29,21 @@ interface Product {
     number?: string
 }
 
+interface Document {
+    id: string
+    name: string
+    original_filename: string
+    file_size: number
+    mime_type: string
+    category: string
+    description?: string
+    tags?: string[]
+    link_type?: string
+    created_at: string
+}
+
 interface InvoicesEditProps {
-    invoice: Invoice & { items: InvoiceItem[] }
+    invoice: Invoice & { items: InvoiceItem[]; documents?: Document[] }
     customers: Customer[]
     layouts: any[]
     products: Product[]
@@ -485,6 +498,58 @@ export default function InvoicesEdit() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Documents */}
+                    {invoice.documents && invoice.documents.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>Verknüpfte Dokumente</CardTitle>
+                                        <CardDescription>Mit dieser Rechnung verknüpfte Dokumente</CardDescription>
+                                    </div>
+                                    <Link href="/settings/documents">
+                                        <Button variant="outline" size="sm">
+                                            <FileText className="mr-2 h-4 w-4" />
+                                            Alle Dokumente
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    {invoice.documents.map((document) => (
+                                        <div
+                                            key={document.id}
+                                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                                        >
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <FileText className="h-5 w-5 text-gray-400 shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-sm truncate">{document.name}</p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {new Date(document.created_at).toLocaleDateString('de-DE')}
+                                                        {document.link_type && (
+                                                            <> • {document.link_type}</>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => window.open(`/documents/${document.id}/download`, '_blank')}
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Actions */}
                     <div className="flex justify-end space-x-2">

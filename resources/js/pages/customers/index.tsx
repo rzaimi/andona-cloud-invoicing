@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Search, Building2, User, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Building2, User, Eye, Download } from 'lucide-react';
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer } from "@/types"
+import { route } from "ziggy-js"
 
 interface CustomersIndexProps {
     customers: {
@@ -61,12 +62,25 @@ export default function CustomersIndex() {
                         <p className="text-gray-600">Verwalten Sie Ihre Kunden und deren Informationen</p>
                     </div>
 
-                    <Link href="/customers/create">
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Neuer Kunde
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                const params = new URLSearchParams()
+                                if (filters.search) params.append('search', filters.search)
+                                window.location.href = route('export.customers') + (params.toString() ? '?' + params.toString() : '')
+                            }}
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Exportieren
                         </Button>
-                    </Link>
+                        <Link href="/customers/create">
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Neuer Kunde
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Search */}

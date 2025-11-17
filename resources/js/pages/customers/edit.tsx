@@ -9,12 +9,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Building2, User } from "lucide-react"
+import { ArrowLeft, Building2, User, FileText, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer } from "@/types"
 
+interface Document {
+    id: string
+    name: string
+    original_filename: string
+    file_size: number
+    mime_type: string
+    category: string
+    description?: string
+    tags?: string[]
+    link_type?: string
+    created_at: string
+}
+
 interface CustomersEditProps {
-    customer: Customer
+    customer: Customer & { documents?: Document[] }
 }
 
 export default function CustomersEdit() {
@@ -270,6 +283,58 @@ export default function CustomersEdit() {
                                         />
                                         {errors.vat_number && <p className="text-red-600 text-sm">{errors.vat_number}</p>}
                                     </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Documents */}
+                    {customer.documents && customer.documents.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>Verknüpfte Dokumente</CardTitle>
+                                        <CardDescription>Mit diesem Kunden verknüpfte Dokumente</CardDescription>
+                                    </div>
+                                    <Link href="/settings/documents">
+                                        <Button variant="outline" size="sm">
+                                            <FileText className="mr-2 h-4 w-4" />
+                                            Alle Dokumente
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    {customer.documents.map((document) => (
+                                        <div
+                                            key={document.id}
+                                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                                        >
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <FileText className="h-5 w-5 text-gray-400 shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-sm truncate">{document.name}</p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {new Date(document.created_at).toLocaleDateString('de-DE')}
+                                                        {document.link_type && (
+                                                            <> • {document.link_type}</>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => window.open(`/documents/${document.id}/download`, '_blank')}
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </CardContent>
                         </Card>

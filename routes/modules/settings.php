@@ -30,3 +30,6 @@ Route::post('/settings/erechnung', [SettingsController::class, 'updateErechnung'
 // offer-layouts route moved to routes/modules/offers.php (redirects to offer-layouts.index)
 Route::get('/settings/notifications', [SettingsController::class, 'notifications'])->name('settings.notifications');
 Route::get('/settings/payment-methods', [SettingsController::class, 'paymentMethods'])->name('settings.payment-methods');
+Route::middleware('can:manage_settings')->group(function () {
+    Route::get('/settings/import-export', [\App\Http\Controllers\ImportController::class, 'showImportExportPage'])->name('settings.import-export');
+});

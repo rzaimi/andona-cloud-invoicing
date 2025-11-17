@@ -58,6 +58,14 @@ class Customer extends Model
         return $this->hasMany(Offer::class);
     }
 
+    /**
+     * Documents linked to this customer
+     */
+    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(\App\Modules\Document\Models\Document::class, 'linkable');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

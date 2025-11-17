@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Package, Plus, Search, Filter, Edit, Eye, Trash2, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react"
+import { Package, Plus, Search, Filter, Edit, Eye, Trash2, AlertTriangle, TrendingUp, TrendingDown, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { Product, Category, PaginatedResponse, User } from "@/types"
+import { route } from "ziggy-js"
 
 interface ProductsIndexProps {
     user: User
@@ -117,6 +118,19 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
                         <p className="text-muted-foreground">Verwalten Sie Ihre Produkte und Dienstleistungen</p>
                     </div>
                     <div className="flex items-center space-x-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                const params = new URLSearchParams()
+                                if (filters.search) params.append('search', filters.search)
+                                if (filters.category && filters.category !== 'all') params.append('category', filters.category)
+                                if (filters.status && filters.status !== 'all') params.append('status', filters.status)
+                                window.location.href = route('export.products') + (params.toString() ? '?' + params.toString() : '')
+                            }}
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Exportieren
+                        </Button>
                         <Button asChild>
                             <Link href="/products/create">
                                 <Plus className="mr-2 h-4 w-4" />

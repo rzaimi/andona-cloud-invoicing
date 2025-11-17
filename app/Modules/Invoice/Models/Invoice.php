@@ -106,6 +106,14 @@ class Invoice extends Model
         return $this->belongsTo(Invoice::class, 'corrected_by_invoice_id');
     }
 
+    /**
+     * Documents linked to this invoice
+     */
+    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(\App\Modules\Document\Models\Document::class, 'linkable');
+    }
+
     public function scopeForCompany($query, $companyId)
     {
         return $query->where('company_id', $companyId);
