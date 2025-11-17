@@ -32,7 +32,8 @@ return new class extends Migration
             $table->foreignUuid('uploaded_by')->nullable()->constrained('users')->onDelete('set null');
             
             // Polymorphic relationship for linking to entities
-            $table->nullableMorphs('linkable'); // linkable_type, linkable_id
+            $table->string('linkable_type')->nullable();
+            $table->uuid('linkable_id')->nullable();
             $table->string('link_type')->nullable(); // attachment, contract, receipt, etc.
             
             $table->timestamps();
@@ -40,7 +41,7 @@ return new class extends Migration
             // Indexes
             $table->index('company_id');
             $table->index('category');
-            // Note: nullableMorphs() already creates an index on linkable_type and linkable_id
+            $table->index(['linkable_type', 'linkable_id']);
             $table->index('uploaded_by');
         });
     }
