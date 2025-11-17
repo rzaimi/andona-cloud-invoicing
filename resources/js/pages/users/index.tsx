@@ -145,7 +145,6 @@ export default function UsersIndex({ users, can_create, can_manage_companies }: 
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={`/placeholder.svg?height=32&width=32`} />
                                                             <AvatarFallback>
                                                                 {user.name
                                                                     .split(" ")
