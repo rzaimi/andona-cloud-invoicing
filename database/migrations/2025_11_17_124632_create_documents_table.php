@@ -29,7 +29,7 @@ return new class extends Migration
             ])->default('custom');
             $table->text('description')->nullable();
             $table->json('tags')->nullable(); // Array of tags
-            $table->foreignUuid('uploaded_by')->constrained('users')->onDelete('set null');
+            $table->foreignUuid('uploaded_by')->nullable()->constrained('users')->onDelete('set null');
             
             // Polymorphic relationship for linking to entities
             $table->nullableMorphs('linkable'); // linkable_type, linkable_id
