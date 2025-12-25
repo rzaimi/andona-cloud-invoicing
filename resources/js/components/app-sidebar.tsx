@@ -580,7 +580,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                 </Collapsible>
 
                 {/* Payment Management */}
-                <Collapsible className="group/collapsible">
+                <Collapsible defaultOpen className="group/collapsible">
                     <SidebarGroup>
                         <SidebarGroupLabel asChild>
                             <CollapsibleTrigger>
@@ -608,7 +608,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                 </Collapsible>
 
                 {/* Product Management */}
-                <Collapsible className="group/collapsible">
+                <Collapsible defaultOpen className="group/collapsible">
                     <SidebarGroup>
                         <SidebarGroupLabel asChild>
                             <CollapsibleTrigger>
@@ -644,7 +644,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                 </Collapsible>
 
                 {/* Document Management */}
-                <Collapsible className="group/collapsible">
+                <Collapsible defaultOpen className="group/collapsible">
                     <SidebarGroup>
                         <SidebarGroupLabel asChild>
                             <CollapsibleTrigger>
@@ -672,7 +672,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                 </Collapsible>
 
                 {/* Reports & Analytics */}
-                <Collapsible className="group/collapsible">
+                <Collapsible defaultOpen className="group/collapsible">
                     <SidebarGroup>
                         <SidebarGroupLabel asChild>
                             <CollapsibleTrigger>
