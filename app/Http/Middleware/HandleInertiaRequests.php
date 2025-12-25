@@ -147,11 +147,12 @@ class HandleInertiaRequests extends Middleware
                     return [];
                 },
             ],
-            // Ziggy routes are loaded dynamically via API endpoint to hide them from HTML source
-            // 'ziggy' => fn (): array => [
-            //     ...(new Ziggy)->toArray(),
-            //     'location' => $request->url(),
-            // ],
+            // Ziggy routes are included in Inertia props (not in HTML source)
+            // They're loaded via props but not visible in page source HTML
+            'ziggy' => fn (): array => [
+                ...(new Ziggy)->toArray(),
+                'location' => $request->url(),
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

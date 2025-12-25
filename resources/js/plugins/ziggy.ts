@@ -13,33 +13,80 @@ async function loadZiggyRoutes(): Promise<any> {
         return loadingPromise;
     }
 
-    loadingPromise = fetch('/api/routes')
-        .then(response => response.json())
+    loadingPromise = fetch('/api/routes', {
+        credentials: 'same-origin',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+        .then(async response => {
+            // Check if response is HTML (redirect to login) instead of JSON
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                // Likely a redirect to login page - return null to use Inertia props instead
+                const text = await response.text();
+                if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
+                    throw new Error('Authentication required - will use Inertia props');
+                }
+                throw new Error('Response is not JSON');
+            }
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return response.json();
+        })
         .then(config => {
+            // Validate config structure
+            if (!config || typeof config !== 'object') {
+                throw new Error('Invalid routes configuration');
+            }
+            if (!config.routes || typeof config.routes !== 'object') {
+                throw new Error('Routes configuration missing routes object');
+            }
             ziggyConfig = config;
             return config;
         })
         .catch(error => {
-            console.error('Failed to load routes:', error);
+            // Silently fail - routes will be available via Inertia props
+            // Only log if it's not an authentication error
+            if (!error.message.includes('Authentication required')) {
+                console.warn('Failed to load routes from API:', error.message);
+            }
             loadingPromise = null;
-            throw error;
+            return null;
         });
 
     return loadingPromise;
 }
 
-// Initialize Ziggy with routes loaded from API
-export async function initializeZiggy() {
+// Initialize Ziggy with routes loaded from API or Inertia props
+export async function initializeZiggy(ziggyFromProps?: any) {
+    // Try to use routes from Inertia props first (available immediately)
+    if (ziggyFromProps && ziggyFromProps.routes) {
+        ziggyConfig = ziggyFromProps;
+        (window as any).Ziggy = ziggyConfig;
+        (window as any).route = (name: RouteName, params?: RouteParams, absolute?: boolean) => 
+            ziggyRoute(name, params, absolute, ziggyConfig);
+        return;
+    }
+
+    // Fallback to API if props not available
     if (!ziggyConfig) {
         ziggyConfig = await loadZiggyRoutes();
     }
 
-    // Set global Ziggy object that ziggy-js expects
-    (window as any).Ziggy = ziggyConfig;
-    
-    // Make route function available globally
-    (window as any).route = (name: RouteName, params?: RouteParams, absolute?: boolean) => 
-        ziggyRoute(name, params, absolute, ziggyConfig);
+    // Only set up if we have valid config
+    if (ziggyConfig && ziggyConfig.routes) {
+        // Set global Ziggy object that ziggy-js expects
+        (window as any).Ziggy = ziggyConfig;
+        
+        // Make route function available globally
+        (window as any).route = (name: RouteName, params?: RouteParams, absolute?: boolean) => 
+            ziggyRoute(name, params, absolute, ziggyConfig);
+    }
 }
 
 // Export a function to get route that waits for routes to load
