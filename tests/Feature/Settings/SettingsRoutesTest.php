@@ -14,6 +14,9 @@ class SettingsRoutesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutVite();
+        $this->seedRolesAndPermissions();
+        
         $this->company = Company::create([
             'name' => 'Test Company',
             'email' => 'test@company.com',
@@ -22,6 +25,7 @@ class SettingsRoutesTest extends TestCase
         $this->user = User::factory()->create([
             'company_id' => $this->company->id,
         ]);
+        $this->user->assignRole('user');
     }
 
     public function test_settings_profile_route_is_accessible()

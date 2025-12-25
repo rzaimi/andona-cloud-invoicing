@@ -19,10 +19,31 @@
             background: white;
         }
 
+        /* DIN 5008 compliant address block for German envelope windows */
+        /* Standard: 4.5cm from top, 2cm from left, max 8.5cm × 4.5cm */
+        .din-5008-address {
+            position: absolute;
+            top: 45mm; /* 4.5cm from top - DIN 5008 standard for envelope window */
+            left: 20mm; /* 2cm from left - DIN 5008 standard */
+            width: 85mm; /* 8.5cm max width - DIN 5008 standard */
+            max-height: 45mm; /* 4.5cm max height - DIN 5008 standard */
+            font-size: {{ $layout->settings['fonts']['body_size'] ?? 11 }}px;
+            line-height: 1.3;
+            color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
+            z-index: 10;
+            page-break-inside: avoid;
+        }
+        
+        /* Regular address block (for display in document, not envelope window) */
+        .address-block {
+            margin-bottom: 35px;
+        }
+
         .container {
             max-width: 210mm;
             margin: 0 auto;
-            padding: {{ $layout->settings['layout']['margin_top'] ?? '20' }}mm {{ $layout->settings['layout']['margin_right'] ?? '20' }}mm {{ $layout->settings['layout']['margin_bottom'] ?? '20' }}mm {{ $layout->settings['layout']['margin_left'] ?? '20' }}mm;
+            padding: {{ $layout->settings['layout']['margin_top'] ?? '20' }}mm {{ $layout->settings['layout']['margin_right'] ?? '20' }}mm {{ max(($layout->settings['layout']['margin_bottom'] ?? 20) + 60, 80) }}mm {{ $layout->settings['layout']['margin_left'] ?? '20' }}mm;
+            position: relative; /* For absolute positioning of address block */
         }
 
         .header {
@@ -184,15 +205,22 @@
             color: #92400e;
         }
 
-        .footer {
-            margin-top: 50px;
-            padding-top: 20px;
-            @if($layout->settings['branding']['show_footer_line'] ?? true)
-            border-top: 2px solid {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }};
-            @endif
+        .pdf-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            padding: 10px {{ $layout->settings['layout']['margin_right'] ?? 20 }}mm 10px {{ $layout->settings['layout']['margin_left'] ?? 20 }}mm;
+            border-top: 1px solid #e5e7eb;
             font-size: {{ ($layout->settings['fonts']['body_size'] ?? 11) - 1 }}px;
             color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};
-            text-align: center;
+            background-color: white;
+            z-index: 1000;
+        }
+
+        @page {
+            margin-bottom: 50mm; /* Reserve space for fixed footer */
         }
 
         .status-badge {
@@ -232,6 +260,39 @@
     </div>
 @endif
 
+{{-- DIN 5008 compliant address block for envelope window (positioned absolutely) --}}
+@if($layout->settings['content']['use_din_5008_address'] ?? true)
+    @include('pdf.partials.address-block', ['offer' => $offer, 'bodyFontSize' => $layout->settings['fonts']['body_size'] ?? 11, 'invoice' => null])
+@endif
+
+{{-- Footer must be defined early and as direct child of body for DomPDF fixed positioning --}}
+@php
+    // Use saved snapshot instead of live company data to preserve footer information
+    $snapshot = $offer->getCompanySnapshot();
+@endphp
+@if($layout->settings['branding']['show_footer'] ?? true)
+    <div class="pdf-footer" style="border-top: {{ $layout->settings['branding']['show_footer_line'] ?? true ? '2px solid ' . ($layout->settings['colors']['primary'] ?? '#3b82f6') : '1px solid #e5e7eb' }}; text-align: center;">
+        @if($layout->settings['content']['show_bank_details'] ?? true)
+            <p><strong>Bankverbindung:</strong>
+                @if($snapshot['bank_name'] ?? null){{ $snapshot['bank_name'] }} | @endif
+                @if($snapshot['bank_iban'] ?? null)IBAN: {{ $snapshot['bank_iban'] }} | @endif
+                @if($snapshot['bank_bic'] ?? null)BIC: {{ $snapshot['bank_bic'] }}@endif
+            </p>
+        @endif
+        @if($layout->settings['content']['show_company_registration'] ?? true)
+            <p>
+                @if($snapshot['commercial_register'] ?? null){{ $snapshot['commercial_register'] }} | @endif
+                @if($snapshot['tax_number'] ?? null)Steuernummer: {{ $snapshot['tax_number'] }} | @endif
+                @if($snapshot['vat_number'] ?? null)USt-IdNr.: {{ $snapshot['vat_number'] }}@endif
+            </p>
+        @endif
+        @if($snapshot['address'] ?? null){{ $snapshot['address'] }}@endif
+        @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)), {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
+        @if($snapshot['email'] ?? null) · {{ $snapshot['email'] }}@endif
+        @if($snapshot['phone'] ?? null) · {{ $snapshot['phone'] }}@endif
+    </div>
+@endif
+
 <div class="container">
     <!-- Header -->
     <div class="header">
@@ -265,12 +326,22 @@
     <!-- Offer Meta Information -->
     <div class="offer-meta">
         <div class="customer-info">
-            <div class="section-title">Angebotempfänger</div>
-            <strong>{{ $offer->customer->name }}</strong><br>
-            @if($offer->customer->contact_person){{ $offer->customer->contact_person }}<br>@endif
-            {{ $offer->customer->address }}<br>
-            {{ $offer->customer->postal_code }} {{ $offer->customer->city }}<br>
-            @if($offer->customer->country && $offer->customer->country !== 'Deutschland'){{ $offer->customer->country }}@endif
+            @if(!($layout->settings['content']['use_din_5008_address'] ?? true))
+                <div class="section-title">Angebotempfänger</div>
+                <strong>{{ $offer->customer->name }}</strong><br>
+                @if($offer->customer->contact_person){{ $offer->customer->contact_person }}<br>@endif
+                {{ $offer->customer->address }}<br>
+                {{ $offer->customer->postal_code }} {{ $offer->customer->city }}<br>
+                @if($offer->customer->country && $offer->customer->country !== 'Deutschland'){{ $offer->customer->country }}@endif
+            @else
+                {{-- DIN 5008 address is positioned absolutely, show customer number here if needed --}}
+                @if(($layout->settings['content']['show_customer_number'] ?? true) && isset($offer->customer->number) && $offer->customer->number)
+                    <div class="section-title">Angebotempfänger</div>
+                    <div style="margin-top: 60mm; font-size: {{ ($layout->settings['fonts']['body_size'] ?? 11) }}px;">
+                        <strong>Kundennummer:</strong> {{ $offer->customer->number }}
+                    </div>
+                @endif
+            @endif
         </div>
 
         <div class="offer-details">
@@ -372,26 +443,6 @@
         </div>
     @endif
 
-    <!-- Footer -->
-    @if($layout->settings['branding']['show_footer'] ?? true)
-        <div class="footer">
-            @if($layout->settings['content']['show_bank_details'] ?? true)
-                <p><strong>Bankverbindung:</strong>
-                    @if($company->bank_name){{ $company->bank_name }} | @endif
-                    @if($company->iban)IBAN: {{ $company->iban }} | @endif
-                    @if($company->bic)BIC: {{ $company->bic }}@endif
-                </p>
-            @endif
-            @if($layout->settings['content']['show_company_registration'] ?? true)
-                <p>
-                    @if($company->commercial_register){{ $company->commercial_register }} | @endif
-                    @if($company->tax_number)Steuernummer: {{ $company->tax_number }} | @endif
-                    @if($company->vat_number)USt-IdNr.: {{ $company->vat_number }}@endif
-                </p>
-            @endif
-            <p><strong>Hinweis:</strong> Bei Annahme dieses Angebots wird eine entsprechende Rechnung erstellt.</p>
-        </div>
-    @endif
 </div>
 </body>
 </html>

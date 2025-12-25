@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Search, FileText, Send, Clock, CheckCircle, XCircle, AlertTriangle, Bell, History, FileCheck, ChevronDown, Download } from "lucide-react"
+import { Plus, Edit, Trash2, Search, FileText, Send, Clock, CheckCircle, XCircle, AlertTriangle, Bell, History, FileCheck, ChevronDown, Download, Eye } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import { SendEmailDialog } from "@/components/send-email-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -339,6 +339,11 @@ export default function InvoicesIndex() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex space-x-2">
+                                                <Link href={`/invoices/${invoice.id}`}>
+                                                    <Button variant="outline" size="sm" title="Anzeigen">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
                                                 <Link href={`/invoices/${invoice.id}/edit`}>
                                                     <Button variant="outline" size="sm" title="Bearbeiten">
                                                         <Edit className="h-4 w-4" />

@@ -32,6 +32,7 @@ class Offer extends Model
         'terms_conditions',
         'validity_days',
         'layout_id',
+        'company_snapshot',
         'converted_to_invoice_id',
     ];
 
@@ -42,6 +43,7 @@ class Offer extends Model
         'tax_rate' => 'decimal:4',
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'company_snapshot' => 'array',
     ];
 
     public function company(): BelongsTo
@@ -121,5 +123,46 @@ class Offer extends Model
     public function canBeConverted(): bool
     {
         return $this->status === 'accepted' && !$this->converted_to_invoice_id;
+    }
+
+    /**
+     * Create a snapshot of company information for this offer
+     */
+    public function createCompanySnapshot(): array
+    {
+        $company = $this->company;
+        
+        return [
+            'name' => $company->name,
+            'email' => $company->email,
+            'phone' => $company->phone,
+            'address' => $company->address,
+            'postal_code' => $company->postal_code,
+            'city' => $company->city,
+            'country' => $company->country ?? 'Deutschland',
+            'tax_number' => $company->tax_number,
+            'vat_number' => $company->vat_number,
+            'commercial_register' => $company->commercial_register,
+            'managing_director' => $company->managing_director,
+            'website' => $company->website,
+            'logo' => $company->logo,
+            'bank_name' => $company->bank_name,
+            'bank_iban' => $company->bank_iban,
+            'bank_bic' => $company->bank_bic,
+            'snapshot_date' => now()->toDateTimeString(),
+        ];
+    }
+
+    /**
+     * Get company snapshot or fallback to current company data
+     */
+    public function getCompanySnapshot(): array
+    {
+        if ($this->company_snapshot) {
+            return $this->company_snapshot;
+        }
+        
+        // Fallback: create snapshot from current company (for old offers)
+        return $this->createCompanySnapshot();
     }
 }

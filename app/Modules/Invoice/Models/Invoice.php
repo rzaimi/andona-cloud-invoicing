@@ -40,6 +40,7 @@ class Invoice extends Model
         'payment_method',
         'payment_terms',
         'layout_id',
+        'company_snapshot',
         'reminder_level',
         'last_reminder_sent_at',
         'reminder_fee',
@@ -61,6 +62,7 @@ class Invoice extends Model
         'reminder_fee' => 'decimal:2',
         'last_reminder_sent_at' => 'datetime',
         'reminder_history' => 'array',
+        'company_snapshot' => 'array',
         'is_correction' => 'boolean',
         'corrected_at' => 'datetime',
     ];
@@ -112,6 +114,55 @@ class Invoice extends Model
     public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany(\App\Modules\Document\Models\Document::class, 'linkable');
+    }
+
+    /**
+     * Payments for this invoice
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(\App\Modules\Payment\Models\Payment::class);
+    }
+
+    /**
+     * Create a snapshot of company information for this invoice
+     */
+    public function createCompanySnapshot(): array
+    {
+        $company = $this->company;
+        
+        return [
+            'name' => $company->name,
+            'email' => $company->email,
+            'phone' => $company->phone,
+            'address' => $company->address,
+            'postal_code' => $company->postal_code,
+            'city' => $company->city,
+            'country' => $company->country ?? 'Deutschland',
+            'tax_number' => $company->tax_number,
+            'vat_number' => $company->vat_number,
+            'commercial_register' => $company->commercial_register,
+            'managing_director' => $company->managing_director,
+            'website' => $company->website,
+            'logo' => $company->logo,
+            'bank_name' => $company->bank_name,
+            'bank_iban' => $company->bank_iban,
+            'bank_bic' => $company->bank_bic,
+            'snapshot_date' => now()->toDateTimeString(),
+        ];
+    }
+
+    /**
+     * Get company snapshot or fallback to current company data
+     */
+    public function getCompanySnapshot(): array
+    {
+        if ($this->company_snapshot) {
+            return $this->company_snapshot;
+        }
+        
+        // Fallback: create snapshot from current company (for old invoices)
+        return $this->createCompanySnapshot();
     }
 
     public function scopeForCompany($query, $companyId)
@@ -350,5 +401,40 @@ class Invoice extends Model
         $lastNumber = $lastInvoice ? (int) substr($lastInvoice->number, -4) : 0;
 
         return $prefix . 'STORNO-' . $year . '-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Get total amount paid for this invoice
+     */
+    public function getPaidAmount(): float
+    {
+        return $this->payments()
+            ->where('status', 'completed')
+            ->sum('amount');
+    }
+
+    /**
+     * Get remaining balance for this invoice
+     */
+    public function getRemainingBalance(): float
+    {
+        return max(0, $this->total - $this->getPaidAmount());
+    }
+
+    /**
+     * Check if invoice is fully paid
+     */
+    public function isFullyPaid(): bool
+    {
+        return $this->getPaidAmount() >= $this->total;
+    }
+
+    /**
+     * Check if invoice is partially paid
+     */
+    public function isPartiallyPaid(): bool
+    {
+        $paidAmount = $this->getPaidAmount();
+        return $paidAmount > 0 && $paidAmount < $this->total;
     }
 }

@@ -157,6 +157,20 @@ export default function Dashboard() {
         return "text-gray-600"
     }
 
+    const translateStatus = (status: string) => {
+        const statusMap: Record<string, string> = {
+            draft: "Entwurf",
+            sent: "Versendet",
+            paid: "Bezahlt",
+            overdue: "Überfällig",
+            cancelled: "Storniert",
+            accepted: "Angenommen",
+            rejected: "Abgelehnt",
+            expired: "Abgelaufen",
+        }
+        return statusMap[status] || status
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
@@ -401,7 +415,7 @@ export default function Dashboard() {
                                         <div className="text-right">
                                             <p className="font-medium">{formatCurrency(invoice.total)}</p>
                                             <Badge variant="secondary" className={`text-xs ${getStatusColor(invoice.status)}`}>
-                                                {invoice.status}
+                                                {translateStatus(invoice.status)}
                                             </Badge>
                                         </div>
                                     </div>
@@ -435,7 +449,7 @@ export default function Dashboard() {
                                         <div className="text-right">
                                             <p className="font-medium">{formatCurrency(offer.total)}</p>
                                             <Badge variant="secondary" className={`text-xs ${getStatusColor(offer.status)}`}>
-                                                {offer.status}
+                                                {translateStatus(offer.status)}
                                             </Badge>
                                         </div>
                                     </div>

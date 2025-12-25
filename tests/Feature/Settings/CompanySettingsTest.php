@@ -11,6 +11,13 @@ class CompanySettingsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+        $this->seedRolesAndPermissions();
+    }
+
     public function test_company_settings_page_is_displayed()
     {
         $company = Company::create([
@@ -21,6 +28,8 @@ class CompanySettingsTest extends TestCase
         $user = User::factory()->create([
             'company_id' => $company->id,
         ]);
+        $user->assignRole('user');
+        $user->assignRole('user');
 
         $response = $this
             ->actingAs($user)
@@ -72,7 +81,7 @@ class CompanySettingsTest extends TestCase
                 'customer_prefix' => 'KD-',
                 'date_format' => 'd.m.Y',
                 'payment_terms' => 14,
-                'decimal_separator' => ',',
+                'decimal_separator' => '.',
                 'thousands_separator' => '.',
                 'offer_validity_days' => 30,
             ]);
@@ -121,6 +130,7 @@ class CompanySettingsTest extends TestCase
         $user = User::factory()->create([
             'company_id' => $company->id,
         ]);
+        $user->assignRole('user');
 
         $response = $this
             ->actingAs($user)

@@ -128,6 +128,10 @@ class InvoiceController extends Controller
                 'tax_rate' => $company->getSetting('tax_rate', 0.19),
             ]);
 
+            // Save company snapshot
+            $invoice->company_snapshot = $invoice->createCompanySnapshot();
+            $invoice->save();
+
             // Create invoice items
             foreach ($validated['items'] as $index => $itemData) {
                 $item = new InvoiceItem([
@@ -155,11 +159,17 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['customer', 'items', 'layout', 'user', 'documents']);
+        $invoice->load(['customer', 'items', 'layout', 'user', 'documents', 'payments.createdBy']);
+
+        // Calculate payment totals
+        $paidAmount = $invoice->getPaidAmount();
+        $remainingBalance = $invoice->getRemainingBalance();
 
         return Inertia::render('invoices/show', [
             'invoice' => $invoice,
             'settings' => $invoice->company->getDefaultSettings(),
+            'paidAmount' => $paidAmount,
+            'remainingBalance' => $remainingBalance,
         ]);
     }
 
@@ -235,6 +245,11 @@ class InvoiceController extends Controller
                 ]);
                 $item->calculateTotal();
                 $invoice->items()->save($item);
+            }
+
+            // Ensure company snapshot exists (only if missing, to preserve historical data)
+            if (!$invoice->company_snapshot) {
+                $invoice->company_snapshot = $invoice->createCompanySnapshot();
             }
 
             // Recalculate totals
@@ -332,6 +347,7 @@ class InvoiceController extends Controller
                 'defaultFont' => 'DejaVu Sans',
                 'isRemoteEnabled' => true,
                 'isHtml5ParserEnabled' => true,
+                'enable-local-file-access' => true,
             ]);
 
         return $pdf->download("Rechnung-{$invoice->number}.pdf");
@@ -346,15 +362,33 @@ class InvoiceController extends Controller
         // Get layout - either assigned to invoice or company default
         if ($invoice->layout) {
             $layout = $invoice->layout;
+            // Ensure settings and template are properly set
+            if (!$layout->settings) {
+                $layout->settings = [];
+            }
+            if (!$layout->template) {
+                $layout->template = 'clean';
+            }
         } else {
             $layout = InvoiceLayout::forCompany($invoice->company_id)
                 ->where('is_default', true)
                 ->first();
+            
+            if ($layout) {
+                // Ensure settings and template are properly set
+                if (!$layout->settings) {
+                    $layout->settings = [];
+                }
+                if (!$layout->template) {
+                    $layout->template = 'clean';
+                }
+            }
         }
 
         // If no layout exists, create a minimal default layout
         if (!$layout) {
             $layout = (object) [
+                'template' => 'clean',
                 'settings' => [
                     'colors' => [
                         'primary' => '#3b82f6',
@@ -506,9 +540,19 @@ class InvoiceController extends Controller
             ->where('is_default', true)
             ->first();
 
+        if ($layout) {
+            // Ensure settings and template are set
+            if (!$layout->settings) {
+                $layout->settings = [];
+            }
+            if (!$layout->template) {
+                $layout->template = 'clean';
+            }
+        }
+
         if (!$layout) {
             $layout = (object) [
-                'template' => 'minimal',
+                'template' => 'clean',
                 'settings' => [
                     'colors' => [
                         'primary' => '#3B82F6',
@@ -559,6 +603,14 @@ class InvoiceController extends Controller
             'invoice' => $invoice,
             'company' => $invoice->company,
             'customer' => $invoice->customer,
+        ])
+        ->setPaper('a4')
+        ->setOptions([
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+            'enable-local-file-access' => true,
+            'enable-javascript' => false,
         ]);
     }
 

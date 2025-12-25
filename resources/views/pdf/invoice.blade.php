@@ -19,7 +19,24 @@
                 }
             }
             
-            $bodyFontSize = getFontSizePx($layout->settings['fonts']['size'] ?? 'medium');
+            // Safely access layout settings - handle both object and array
+            $layoutSettings = is_object($layout) && isset($layout->settings) ? $layout->settings : (is_array($layout) ? ($layout['settings'] ?? []) : []);
+            
+            // Ensure layoutSettings is always an array
+            if (!is_array($layoutSettings)) {
+                $layoutSettings = [];
+            }
+            
+            // Make layoutSettings available to all templates by ensuring layout->settings exists
+            if (is_object($layout)) {
+                if (!isset($layout->settings) || !is_array($layout->settings)) {
+                    $layout->settings = $layoutSettings;
+                } else {
+                    $layoutSettings = $layout->settings;
+                }
+            }
+            
+            $bodyFontSize = getFontSizePx($layoutSettings['fonts']['size'] ?? 'medium');
             $headingFontSize = $bodyFontSize + 4;
             $titleFontSize = $bodyFontSize + 8;
         @endphp
@@ -30,17 +47,38 @@
         }
 
         body {
-            font-family: {{ $layout->settings['fonts']['body'] ?? 'DejaVu Sans' }}, sans-serif;
+            font-family: {{ $layoutSettings['fonts']['body'] ?? 'DejaVu Sans' }}, sans-serif;
             font-size: {{ $bodyFontSize }}px;
             line-height: 1.4;
-            color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
+            color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
             background: white;
+        }
+
+        /* DIN 5008 compliant address block for German envelope windows */
+        /* Standard: 4.5cm from top, 2cm from left, max 8.5cm × 4.5cm */
+        .din-5008-address {
+            position: absolute;
+            top: 45mm; /* 4.5cm from top - DIN 5008 standard for envelope window */
+            left: 20mm; /* 2cm from left - DIN 5008 standard */
+            width: 85mm; /* 8.5cm max width - DIN 5008 standard */
+            max-height: 45mm; /* 4.5cm max height - DIN 5008 standard */
+            font-size: {{ $bodyFontSize }}px;
+            line-height: 1.3;
+            color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
+            z-index: 10;
+            page-break-inside: avoid;
+        }
+        
+        /* Regular address block (for display in document, not envelope window) */
+        .address-block {
+            margin-bottom: 15px;
         }
 
         .container {
             max-width: 210mm;
             margin: 0 auto;
-            padding: {{ min($layout->settings['layout']['margin_top'] ?? 15, 15) }}mm {{ min($layout->settings['layout']['margin_right'] ?? 15, 15) }}mm {{ min($layout->settings['layout']['margin_bottom'] ?? 15, 15) }}mm {{ min($layout->settings['layout']['margin_left'] ?? 15, 15) }}mm;
+            padding: {{ min($layoutSettings['layout']['margin_top'] ?? 10, 10) }}mm {{ min($layoutSettings['layout']['margin_right'] ?? 15, 15) }}mm {{ max(min($layoutSettings['layout']['margin_bottom'] ?? 15, 15) + 60, 75) }}mm {{ min($layoutSettings['layout']['margin_left'] ?? 15, 15) }}mm;
+            position: relative; /* For absolute positioning of address block */
         }
 
         .header {
@@ -51,7 +89,7 @@
 
         .company-header-line {
             font-size: {{ $bodyFontSize }}px;
-            color: {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }};
+            color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};
             margin-bottom: 20px;
             float: left;
             width: 70%;
@@ -59,13 +97,13 @@
 
         .company-header-line .company-name {
             font-weight: bold;
-            color: {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }};
+            color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};
         }
 
         .logo-container {
             width: 120px;
             height: 60px;
-            background-color: {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }};
+            background-color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};
             float: right;
             text-align: center;
             vertical-align: middle;
@@ -86,13 +124,13 @@
             font-size: {{ $headingFontSize + 4 }}px;
             font-weight: bold;
             margin: 25px 0 15px 0;
-            color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
+            color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
         }
 
         .intro-text {
             margin-bottom: 25px;
             line-height: 1.6;
-            color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
+            color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
         }
 
         .customer-block {
@@ -123,7 +161,7 @@
 
         .meta-label {
             font-size: {{ $bodyFontSize - 1 }}px;
-            color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};
+            color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }};
             margin-bottom: 3px;
         }
 
@@ -136,8 +174,8 @@
             width: 100%;
             border-collapse: collapse;
             margin: 25px 0;
-            border-top: 1px solid {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
-            border-bottom: 1px solid {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
+            border-top: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
+            border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
         }
 
         .items-table th {
@@ -145,8 +183,8 @@
             text-align: left;
             font-weight: bold;
             font-size: {{ $bodyFontSize }}px;
-            border-bottom: 1px solid {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
-            color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
+            border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
+            color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
         }
 
         .items-table td {
@@ -192,8 +230,8 @@
         }
 
         .totals-table .total-row {
-            border-top: 1px solid {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
-            border-bottom: 1px solid {{ $layout->settings['colors']['text'] ?? '#1f2937' }};
+            border-top: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
+            border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
             font-weight: bold;
             font-size: {{ $bodyFontSize + 1 }}px;
             padding-top: 5px;
@@ -217,16 +255,27 @@
         .signature {
             font-size: {{ $headingFontSize }}px;
             font-style: italic;
-            color: {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }};
+            color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};
             margin-top: 40px;
         }
 
-        .footer {
-            margin-top: 50px;
-            padding-top: 15px;
+        .pdf-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            padding: 10px {{ min($layoutSettings['layout']['margin_right'] ?? 15, 15) }}mm 10px {{ min($layoutSettings['layout']['margin_left'] ?? 15, 15) }}mm;
             border-top: 1px solid #e5e7eb;
             font-size: {{ $bodyFontSize - 1 }}px;
-            color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};
+            color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }};
+            background-color: white;
+            z-index: 1000;
+            height: auto;
+        }
+
+        @page {
+            margin-bottom: 50mm; /* Reserve space for fixed footer */
         }
 
         .footer-columns {
@@ -277,6 +326,10 @@
             z-index: 1000;
         }
         @endif
+
+        @page {
+            margin-bottom: 50mm; /* Reserve space for fixed footer */
+        }
     </style>
 </head>
 <body>
@@ -286,17 +339,65 @@
     </div>
 @endif
 
+{{-- DIN 5008 compliant address block for envelope window (positioned absolutely) --}}
+@if($layoutSettings['content']['use_din_5008_address'] ?? true)
+    @include('pdf.partials.address-block', ['invoice' => $invoice, 'bodyFontSize' => $bodyFontSize, 'offer' => null])
+@endif
+
+{{-- Footer must be defined early and as direct child of body for DomPDF fixed positioning --}}
+@php
+    // Use saved snapshot instead of live company data to preserve footer information
+    $snapshot = $invoice->getCompanySnapshot();
+@endphp
+@if($layoutSettings['branding']['show_footer'] ?? true)
+    <div class="pdf-footer" style="border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; color: {{ $layoutSettings['colors']['text'] ?? '#9ca3af' }}; line-height: 1.8;">
+        @if($snapshot['address'] ?? null){{ $snapshot['address'] }}@endif
+        @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)), {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
+        @if($snapshot['email'] ?? null) · {{ $snapshot['email'] }}@endif
+        @if($snapshot['phone'] ?? null) · {{ $snapshot['phone'] }}@endif
+        @if($snapshot['vat_number'] ?? null) · USt-IdNr.: {{ $snapshot['vat_number'] }}@endif
+        @if($layoutSettings['content']['show_bank_details'] ?? true && ($snapshot['bank_iban'] ?? null))
+            <br>IBAN: {{ $snapshot['bank_iban'] }}
+            @if($snapshot['bank_bic'] ?? null) · BIC: {{ $snapshot['bank_bic'] }}@endif
+        @endif
+    </div>
+@endif
+
 @php
     // Get template from layout, ensure it's a valid template name
-    $template = $layout->template ?? 'minimal';
-    $validTemplates = ['modern', 'classic', 'minimal', 'professional', 'creative', 'elegant'];
+    // Check if layout is an object with template property or an array
+    if (is_object($layout)) {
+        $template = $layout->template ?? 'clean';
+        // Ensure settings are accessible
+        if (!isset($layout->settings) || !is_array($layout->settings)) {
+            $layout->settings = [];
+        }
+    } else {
+        $template = $layout['template'] ?? 'clean';
+        // Ensure settings are accessible
+        if (!isset($layout['settings']) || !is_array($layout['settings'])) {
+            $layout['settings'] = [];
+        }
+    }
+    
+    $validTemplates = ['clean', 'modern', 'professional', 'elegant', 'minimal', 'classic'];
     if (!in_array($template, $validTemplates)) {
-        $template = 'minimal'; // Fallback to minimal if invalid
+        $template = 'clean'; // Fallback to clean if invalid
     }
     $templateFile = 'pdf.invoice-templates.' . $template;
+    
+    // Make snapshot available to all templates (use saved snapshot instead of live company data)
+    $snapshot = $invoice->getCompanySnapshot();
 @endphp
 
+{{-- Debug indicator in preview mode --}}
+@if(isset($preview) && $preview)
+    <div style="position: fixed; top: 0; right: 0; background: rgba(59, 130, 246, 0.9); color: white; padding: 5px 10px; font-size: 10px; z-index: 9999; border-bottom-left-radius: 4px; font-weight: bold;">
+        Template: {{ $template }} | Layout: {{ is_object($layout) ? ($layout->name ?? 'N/A') : ($layout['name'] ?? 'N/A') }}
+    </div>
+@endif
+
 {{-- Include the specific template file based on layout->template --}}
-@includeFirst([$templateFile, 'pdf.invoice-templates.minimal'])
+@includeFirst([$templateFile, 'pdf.invoice-templates.clean'])
 </body>
 </html>

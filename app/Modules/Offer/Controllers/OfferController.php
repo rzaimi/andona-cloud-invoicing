@@ -130,6 +130,10 @@ class OfferController extends Controller
                 'tax_rate' => $company->getSetting('tax_rate', 0.19),
             ]);
 
+            // Save company snapshot
+            $offer->company_snapshot = $offer->createCompanySnapshot();
+            $offer->save();
+
             // Create offer items
             foreach ($validated['items'] as $index => $itemData) {
                 $item = new OfferItem([
@@ -241,6 +245,11 @@ class OfferController extends Controller
                 $offer->items()->save($item);
             }
 
+            // Ensure company snapshot exists (only if missing, to preserve historical data)
+            if (!$offer->company_snapshot) {
+                $offer->company_snapshot = $offer->createCompanySnapshot();
+            }
+
             // Recalculate totals
             $offer->calculateTotals();
             $offer->save();
@@ -295,6 +304,10 @@ class OfferController extends Controller
                 'notes' => $offer->notes,
                 'layout_id' => $offer->layout_id,
             ]);
+
+            // Save company snapshot for the new invoice
+            $invoice->company_snapshot = $invoice->createCompanySnapshot();
+            $invoice->save();
 
             // Copy offer items to invoice items
             foreach ($offer->items as $offerItem) {

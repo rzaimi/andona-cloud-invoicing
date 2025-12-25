@@ -11,6 +11,13 @@ class AppearanceTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+        $this->seedRolesAndPermissions();
+    }
+
     public function test_appearance_page_is_displayed()
     {
         $company = Company::create([
@@ -22,6 +29,8 @@ class AppearanceTest extends TestCase
         $user = User::factory()->create([
             'company_id' => $company->id,
         ]);
+        $user->assignRole('user');
+        $user->assignRole('user');
 
         $response = $this
             ->actingAs($user)
@@ -48,6 +57,7 @@ class AppearanceTest extends TestCase
         $user = User::factory()->create([
             'company_id' => $company->id,
         ]);
+        $user->assignRole('user');
 
         $response = $this
             ->actingAs($user)

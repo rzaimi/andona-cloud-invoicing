@@ -152,6 +152,12 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             icon: Home,
             isActive: isActive("/dashboard"),
         },
+        {
+            title: "Dokumentation",
+            url: "/settings/documents",
+            icon: HelpCircle,
+            isActive: isActive("/settings/documents"),
+        },
     ]
 
     const customerManagement = [
@@ -221,6 +227,21 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             isActive: url === "/invoices?status=overdue",
             badge: stats?.invoices?.overdue > 0 ? stats.invoices.overdue : null,
             badgeVariant: "destructive" as const,
+        },
+    ]
+
+    const paymentManagement = [
+        {
+            title: "Alle Zahlungen",
+            url: "/payments",
+            icon: CreditCard,
+            isActive: isActive("/payments"),
+        },
+        {
+            title: "Neue Zahlung",
+            url: "/payments/create",
+            icon: Plus,
+            isActive: isActive("/payments/create"),
         },
     ]
 
@@ -545,6 +566,34 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                                             {item.badge}
                                                         </Badge>
                                                     )}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </CollapsibleContent>
+                    </SidebarGroup>
+                </Collapsible>
+
+                {/* Payment Management */}
+                <Collapsible defaultOpen className="group/collapsible">
+                    <SidebarGroup>
+                        <SidebarGroupLabel asChild>
+                            <CollapsibleTrigger>
+                                Zahlungen
+                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                            </CollapsibleTrigger>
+                        </SidebarGroupLabel>
+                        <CollapsibleContent>
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {paymentManagement.map((item) => (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton asChild isActive={item.isActive}>
+                                                <Link href={item.url} className="flex items-center min-w-0">
+                                                    <item.icon className="shrink-0" />
+                                                    <span className="truncate">{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>

@@ -262,20 +262,63 @@ class OfferLayoutController extends Controller
             abort(403);
         }
 
-        // Return preview data or render preview template
-        return response()->json([
-            'layout' => $offerLayout,
-            'preview_html' => $this->generatePreviewHtml($offerLayout)
-        ]);
-    }
+        // Create sample data objects that match Offer, Customer, and Company models
+        $sampleOffer = (object) [
+            'id' => 'sample-offer-001',
+            'number' => 'AN-2024-0001',
+            'status' => 'sent',
+            'issue_date' => now(),
+            'valid_until' => now()->addDays(30),
+            'subtotal' => 125.00,
+            'tax_rate' => 0.19,
+            'tax_amount' => 23.75,
+            'total' => 148.75,
+            'notes' => null,
+            'terms' => null,
+            'items' => collect([
+                (object) [
+                    'id' => 'item-001',
+                    'description' => 'Beispielprodukt',
+                    'quantity' => 2,
+                    'unit' => 'Stk.',
+                    'unit_price' => 50.00,
+                    'total' => 100.00,
+                ],
+                (object) [
+                    'id' => 'item-002',
+                    'description' => 'Weiteres Produkt',
+                    'quantity' => 1,
+                    'unit' => 'Stk.',
+                    'unit_price' => 25.00,
+                    'total' => 25.00,
+                ],
+            ]),
+        ];
 
-    private function generatePreviewHtml(OfferLayout $layout)
-    {
-        // Generate HTML preview based on layout settings
-        return view('layouts.offer', [
-            'layout' => $layout,
-            'sample_data' => $this->getSampleData()
-        ])->render();
+        $sampleCustomer = (object) [
+            'id' => 'customer-001',
+            'name' => 'Musterkunde GmbH',
+            'contact_person' => 'Herr Mustermann',
+            'address' => 'Kundenstraße 456',
+            'postal_code' => '54321',
+            'city' => 'Kundenstadt',
+            'country' => 'Deutschland',
+            'number' => 'KU-2024-0001',
+        ];
+
+        // Attach customer to offer (as the view expects $offer->customer)
+        $sampleOffer->customer = $sampleCustomer;
+
+        $sampleCompany = \App\Modules\Company\Models\Company::find($companyId);
+        
+        // Use the same PDF view for preview
+        return view('pdf.offer', [
+            'layout' => $offerLayout,
+            'offer' => $sampleOffer,
+            'company' => $sampleCompany,
+            'customer' => $sampleCustomer,
+            'preview' => true,
+        ]);
     }
 
     private function getSampleData()

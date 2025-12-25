@@ -1,47 +1,57 @@
-<!-- Modern Template: Contemporary design with clean lines -->
+{{-- Modern Template: Modern layout with colored left border - DISTINCTIVE FEATURE --}}
+{{-- Template: modern --}}
 <div class="container">
-    <!-- Header: Modern, balanced layout -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px; padding-bottom: 20px; border-bottom: 2px solid {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }};">
-        <div style="flex: 1;">
-            @if(($layout->settings['branding']['show_logo'] ?? true) && $company->logo)
-                <div style="margin-bottom: 15px;">
-                    <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 70px; max-width: 220px;">
-                </div>
-            @endif
-            <div class="company-name" style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 600; color: {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }}; margin-bottom: 10px;">
-                {{ $company->name }}
+    {{-- Header: Logo and company name with colored left border accent --}}
+    <div style="margin-bottom: 10px; padding-left: 12px; border-left: 4px solid {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};">
+        @if(($layoutSettings['branding']['show_logo'] ?? true) && ($snapshot['logo'] ?? null) && \Storage::disk('public')->exists($snapshot['logo']))
+            @php
+                $logoPath = \Storage::disk('public')->path($snapshot['logo']);
+                $logoData = base64_encode(file_get_contents($logoPath));
+                $logoMime = mime_content_type($logoPath);
+            @endphp
+            <div style="margin-bottom: 8px;">
+                <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo" style="max-height: 60px; max-width: 200px;">
             </div>
-            @if($layout->settings['content']['show_company_address'] ?? true)
-                <div style="font-size: {{ $bodyFontSize }}px; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }}; line-height: 1.6;">
-                    @if($company->address){{ $company->address }}@endif
-                    @if($company->postal_code && $company->city), {{ $company->postal_code }} {{ $company->city }}@endif
-                    @if($company->country && $company->country !== 'Deutschland')<br>{{ $company->country }}@endif
-                </div>
-            @endif
-            @if($layout->settings['content']['show_company_contact'] ?? true && ($company->phone || $company->email))
-                <div style="font-size: {{ $bodyFontSize - 1 }}px; color: {{ $layout->settings['colors']['text'] ?? '#9ca3af' }}; margin-top: 8px;">
-                    @if($company->email){{ $company->email }}@endif
-                    @if($company->email && $company->phone) · @endif
-                    @if($company->phone){{ $company->phone }}@endif
-                </div>
-            @endif
+        @endif
+        <div style="font-size: {{ $headingFontSize + 6 }}px; font-weight: 700; color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }}; margin-bottom: 6px;">
+            {{ $snapshot['name'] ?? '' }}
         </div>
+        @if($layoutSettings['content']['show_company_address'] ?? true)
+            <div style="font-size: {{ $bodyFontSize }}px; color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }}; line-height: 1.5;">
+                {{ $snapshot['address'] ?? '' }}
+                @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)), {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
+            </div>
+        @endif
     </div>
 
-    <!-- Invoice Title: Modern, bold -->
-    <div style="margin-bottom: 30px;">
-        <div style="font-size: {{ $headingFontSize + 6 }}px; font-weight: 700; color: {{ $invoice->is_correction ? '#dc2626' : ($layout->settings['colors']['primary'] ?? '#3b82f6') }}; margin-bottom: 8px;">
-            {{ $invoice->is_correction ? 'STORNORECHNUNG' : 'RECHNUNG' }}
+    {{-- Invoice Details Right --}}
+    <div style="text-align: right; font-size: {{ $bodyFontSize }}px; margin-bottom: 10px; padding: 8px; background-color: {{ $layoutSettings['colors']['accent'] ?? '#f3f4f6' }}; border-radius: 4px;">
+        <div style="margin-bottom: 4px;"><strong>RECHNUNGSNR.:</strong> {{ $invoice->number }}</div>
+        <div style="margin-bottom: 4px;"><strong>DATUM:</strong> {{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}</div>
+        <div style="margin-bottom: 4px;"><strong>FÄLLIGKEITSDATUM:</strong> {{ \Carbon\Carbon::parse($invoice->due_date)->format('d.m.Y') }}</div>
+        @if(isset($invoice->customer->number) && $invoice->customer->number)
+            <div><strong>KUNDENNR.:</strong> {{ $invoice->customer->number }}</div>
+        @endif
+    </div>
+
+    {{-- Customer number below address if needed (address is handled in invoice.blade.php) --}}
+    @if(($layoutSettings['content']['show_customer_number'] ?? true) && isset($invoice->customer->number) && $invoice->customer->number && !($layoutSettings['content']['use_din_5008_address'] ?? true))
+        <div style="margin-bottom: 8px; font-size: {{ $bodyFontSize }}px;">
+            <strong>Kundennummer:</strong> {{ $invoice->customer->number }}
         </div>
-        <div style="font-size: {{ $bodyFontSize + 1 }}px; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};">
-            Nr. {{ $invoice->number }} · {{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}
+    @endif
+
+    {{-- Invoice Title --}}
+    <div style="margin-bottom: 8px;">
+        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 700; color: {{ $invoice->is_correction ? '#dc2626' : ($layoutSettings['colors']['primary'] ?? '#3b82f6') }};">
+            {{ $invoice->is_correction ? 'STORNORECHNUNG' : 'Rechnung' }} {{ $invoice->number }}
         </div>
         @if($invoice->is_correction && $invoice->correctsInvoice)
-            <div style="margin-top: 15px; padding: 15px; background-color: #fee2e2; border-left: 4px solid #dc2626; border-radius: 6px; font-size: {{ $bodyFontSize }}px;">
-                <div style="font-weight: 600; color: #991b1b; margin-bottom: 6px;">Storniert Rechnung:</div>
+            <div style="margin-top: 10px; padding: 10px; background-color: #fee2e2; border-left: 4px solid #dc2626; font-size: {{ $bodyFontSize }}px;">
+                <div style="font-weight: 600; color: #991b1b; margin-bottom: 4px;">Storniert Rechnung:</div>
                 <div style="color: #7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ \Carbon\Carbon::parse($invoice->correctsInvoice->issue_date)->format('d.m.Y') }}</div>
                 @if($invoice->correction_reason)
-                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #dc2626;">
+                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #dc2626;">
                         <strong>Grund:</strong> {{ $invoice->correction_reason }}
                     </div>
                 @endif
@@ -49,102 +59,70 @@
         @endif
     </div>
 
-    <!-- Customer: Modern block -->
-    @if(isset($invoice->customer) && $invoice->customer)
-        <div style="margin-bottom: 35px; padding: 15px; background-color: {{ $layout->settings['colors']['accent'] ?? '#f3f4f6' }}; border-left: 4px solid {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }};">
-            <div style="font-size: {{ $bodyFontSize }}px; font-weight: 600; margin-bottom: 8px; color: {{ $layout->settings['colors']['text'] ?? '#1f2937' }};">
-                {{ $invoice->customer->name ?? 'Unbekannt' }}
-            </div>
-            <div style="font-size: {{ $bodyFontSize }}px; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }}; line-height: 1.6;">
-                @if(isset($invoice->customer->contact_person) && $invoice->customer->contact_person)
-                    {{ $invoice->customer->contact_person }}<br>
-                @endif
-                {{ $invoice->customer->address ?? '' }}<br>
-                {{ ($invoice->customer->postal_code ?? '') }} {{ ($invoice->customer->city ?? '') }}
-                @if(isset($invoice->customer->country) && $invoice->customer->country && $invoice->customer->country !== 'Deutschland')
-                    <br>{{ $invoice->customer->country }}
-                @endif
-                @if(($layout->settings['content']['show_customer_number'] ?? true) && isset($invoice->customer->number) && $invoice->customer->number)
-                    <br><br><strong>Kundennummer:</strong> {{ $invoice->customer->number }}
-                @endif
-            </div>
-        </div>
-    @endif
+    {{-- Salutation and Introduction --}}
+    <div style="margin-bottom: 10px; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
+        <div style="margin-bottom: 4px;">Sehr geehrte Damen und Herren,</div>
+        <div>vielen Dank für Ihren Auftrag und das damit verbundene Vertrauen! Hiermit stelle ich Ihnen die folgenden Leistungen in Rechnung:</div>
+    </div>
 
-    <!-- Items Table: Modern, clean -->
-    <table style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+    {{-- Items Table with colored header - DISTINCTIVE: Blue header --}}
+    <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
         <thead>
-            <tr style="background-color: {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }}; color: white;">
-                <th style="padding: 12px 8px; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px;">Pos.</th>
-                <th style="padding: 12px 8px; text-align: left; font-weight: 600;">Beschreibung</th>
-                <th style="padding: 12px 8px; text-align: right; font-weight: 600;">Menge</th>
-                <th style="padding: 12px 8px; text-align: right; font-weight: 600;">Einzelpreis</th>
-                <th style="padding: 12px 8px; text-align: right; font-weight: 600;">Gesamt</th>
+            <tr style="background-color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }}; color: white;">
+                <th style="padding: 10px 8px; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px;">LEISTUNG</th>
+                <th style="padding: 10px 8px; text-align: left; font-weight: 600;">UMFANG</th>
+                <th style="padding: 10px 8px; text-align: right; font-weight: 600;">PREIS</th>
+                <th style="padding: 10px 8px; text-align: right; font-weight: 600;">GESAMT</th>
             </tr>
         </thead>
         <tbody>
             @foreach($invoice->items as $index => $item)
-                <tr style="border-bottom: 1px solid {{ $layout->settings['colors']['accent'] ?? '#e5e7eb' }};">
-                    <td style="padding: 12px 8px; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};">{{ $index + 1 }}</td>
-                    <td style="padding: 12px 8px;">{{ $item->description }}</td>
-                    <td style="padding: 12px 8px; text-align: right;">
+                <tr style="border-bottom: 1px solid #e5e7eb; {{ $index % 2 == 1 ? 'background-color: ' . ($layoutSettings['colors']['accent'] ?? '#f9fafb') . ';' : '' }}">
+                    <td style="padding: 10px 8px;">{{ $item->description }}</td>
+                    <td style="padding: 10px 8px;">
                         {{ number_format($item->quantity, 2, ',', '.') }}
-                        @if($layout->settings['content']['show_unit_column'] ?? true && isset($item->unit) && $item->unit)
+                        @if($layoutSettings['content']['show_unit_column'] ?? true && isset($item->unit) && $item->unit)
                             {{ $item->unit }}
+                        @else
+                            Std.
                         @endif
                     </td>
-                    <td style="padding: 12px 8px; text-align: right;">€ {{ number_format($item->unit_price, 2, ',', '.') }}</td>
-                    <td style="padding: 12px 8px; text-align: right; font-weight: 600;">€ {{ number_format($item->total, 2, ',', '.') }}</td>
+                    <td style="padding: 10px 8px; text-align: right;">à {{ number_format($item->unit_price, 2, ',', '.') }} €</td>
+                    <td style="padding: 10px 8px; text-align: right; font-weight: 600;">{{ number_format($item->total, 2, ',', '.') }} €</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <!-- Totals: Modern, right aligned -->
-    <div style="text-align: right; margin-top: 25px;">
+    {{-- Totals --}}
+    <div style="text-align: right; margin-top: 10px;">
         <table style="width: 280px; margin-left: auto; border-collapse: collapse;">
             <tr>
-                <td style="padding: 8px 12px; text-align: left; border-bottom: 1px solid {{ $layout->settings['colors']['accent'] ?? '#e5e7eb' }}; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};">Zwischensumme</td>
-                <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid {{ $layout->settings['colors']['accent'] ?? '#e5e7eb' }};">€ {{ number_format($invoice->subtotal, 2, ',', '.') }}</td>
+                <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid #e5e7eb;">Gesamtbetrag (netto)</td>
+                <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ number_format($invoice->subtotal, 2, ',', '.') }} €</td>
             </tr>
             <tr>
-                <td style="padding: 8px 12px; text-align: left; border-bottom: 1px solid {{ $layout->settings['colors']['accent'] ?? '#e5e7eb' }}; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};">MwSt. {{ number_format($invoice->tax_rate * 100, 0) }}%</td>
-                <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid {{ $layout->settings['colors']['accent'] ?? '#e5e7eb' }};">€ {{ number_format($invoice->tax_amount, 2, ',', '.') }}</td>
+                <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid #e5e7eb;">{{ number_format($invoice->tax_rate * 100, 0) }}% Umsatzsteuer</td>
+                <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ number_format($invoice->tax_amount, 2, ',', '.') }} €</td>
             </tr>
-            <tr>
-                <td style="padding: 12px; text-align: left; background-color: {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }}; color: white; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">Gesamt</td>
-                <td style="padding: 12px; text-align: right; background-color: {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }}; color: white; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">€ {{ number_format($invoice->total, 2, ',', '.') }}</td>
+            <tr style="background-color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }}; color: white;">
+                <td style="padding: 8px 10px; text-align: left; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">Rechnungsbetrag</td>
+                <td style="padding: 8px 10px; text-align: right; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">{{ number_format($invoice->total, 2, ',', '.') }} €</td>
             </tr>
         </table>
     </div>
 
-    <!-- Payment Terms: Modern styling -->
-    @if($layout->settings['content']['show_payment_terms'] ?? true)
-        <div style="margin-top: 40px; padding: 15px; background-color: {{ $layout->settings['colors']['accent'] ?? '#f9fafb' }}; border-radius: 6px; font-size: {{ $bodyFontSize }}px; line-height: 1.6; color: {{ $layout->settings['colors']['text'] ?? '#6b7280' }};">
-            <strong>Zahlungsbedingungen:</strong> Zahlung innerhalb von {{ \Carbon\Carbon::parse($invoice->due_date)->diffInDays(\Carbon\Carbon::parse($invoice->issue_date)) }} Tagen ohne Abzug.
+    {{-- Payment Instructions --}}
+    @if($layoutSettings['content']['show_payment_terms'] ?? true)
+        <div style="margin-top: 12px; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
+            Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten angegebene Konto. Der Rechnungsbetrag ist sofort fällig.
         </div>
     @endif
 
-    <!-- Notes -->
-    @if(($layout->settings['content']['show_notes'] ?? true) && isset($invoice->notes) && $invoice->notes)
-        <div style="margin-top: 30px; padding: 15px; border-left: 3px solid {{ $layout->settings['colors']['secondary'] ?? '#6366f1' }}; background-color: {{ $layout->settings['colors']['accent'] ?? '#f9fafb' }}; font-size: {{ $bodyFontSize }}px; line-height: 1.6;">
-            {{ $invoice->notes }}
-        </div>
-    @endif
+    {{-- Closing --}}
+    <div style="margin-top: 12px; font-size: {{ $bodyFontSize }}px;">
+        <div style="margin-bottom: 4px;">Mit freundlichen Grüßen</div>
+        <div style="font-weight: 600;">{{ $snapshot['name'] ?? '' }}</div>
+    </div>
 
-    <!-- Footer: Modern -->
-    @if($layout->settings['branding']['show_footer'] ?? true)
-        <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid {{ $layout->settings['colors']['accent'] ?? '#e5e7eb' }}; font-size: {{ $bodyFontSize - 1 }}px; color: {{ $layout->settings['colors']['text'] ?? '#9ca3af' }}; line-height: 1.8;">
-            @if($company->address){{ $company->address }}@endif
-            @if($company->postal_code && $company->city), {{ $company->postal_code }} {{ $company->city }}@endif
-            @if($company->email) · {{ $company->email }}@endif
-            @if($company->phone) · {{ $company->phone }}@endif
-            @if($company->vat_number) · USt-IdNr.: {{ $company->vat_number }}@endif
-            @if($layout->settings['content']['show_bank_details'] ?? true && $company->bank_iban)
-                <br>IBAN: {{ $company->bank_iban }}
-                @if($company->bank_bic) · BIC: {{ $company->bank_bic }}@endif
-            @endif
-        </div>
-    @endif
 </div>
-

@@ -11,9 +11,22 @@ class PasswordUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+        $this->seedRolesAndPermissions();
+    }
+
     public function test_password_can_be_updated()
     {
-        $user = User::factory()->create();
+        $company = \App\Modules\Company\Models\Company::create([
+            'name' => 'Test Company',
+            'email' => 'test@company.com',
+            'status' => 'active',
+        ]);
+        $user = User::factory()->create(['company_id' => $company->id]);
+        $user->assignRole('user');
 
         $response = $this
             ->actingAs($user)
@@ -33,7 +46,13 @@ class PasswordUpdateTest extends TestCase
 
     public function test_correct_password_must_be_provided_to_update_password()
     {
-        $user = User::factory()->create();
+        $company = \App\Modules\Company\Models\Company::create([
+            'name' => 'Test Company',
+            'email' => 'test@company.com',
+            'status' => 'active',
+        ]);
+        $user = User::factory()->create(['company_id' => $company->id]);
+        $user->assignRole('user');
 
         $response = $this
             ->actingAs($user)

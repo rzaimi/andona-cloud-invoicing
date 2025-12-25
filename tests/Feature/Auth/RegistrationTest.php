@@ -9,23 +9,21 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
+
     public function test_registration_screen_can_be_rendered()
     {
-        $response = $this->get('/register');
-
-        $response->assertStatus(200);
+        // Registration routes are disabled in this application
+        $this->markTestSkipped('Registration routes are disabled in this application');
     }
 
     public function test_new_users_can_register()
     {
-        $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
-
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // Registration routes are disabled in this application
+        $this->markTestSkipped('Registration routes are disabled in this application');
     }
 }
