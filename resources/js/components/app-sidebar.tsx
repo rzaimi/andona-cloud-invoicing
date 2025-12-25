@@ -152,12 +152,6 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             icon: Home,
             isActive: isActive("/dashboard"),
         },
-        {
-            title: "Dokumentation",
-            url: "/settings/documents",
-            icon: HelpCircle,
-            isActive: isActive("/settings/documents"),
-        },
     ]
 
     const customerManagement = [
@@ -258,6 +252,15 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             url: "/offers/create",
             icon: Plus,
             isActive: isActive("/offers/create"),
+        },
+    ]
+
+    const documentManagement = [
+        {
+            title: "Dokumente",
+            url: "/settings/documents",
+            icon: HelpCircle,
+            isActive: isActive("/settings/documents"),
         },
     ]
 
@@ -504,42 +507,6 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                     </SidebarGroupContent>
                 </SidebarGroup>
 
-                {/* Product Management */}
-                <Collapsible defaultOpen className="group/collapsible">
-                    <SidebarGroup>
-                        <SidebarGroupLabel asChild>
-                            <CollapsibleTrigger>
-                                Produktverwaltung
-                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                            </CollapsibleTrigger>
-                        </SidebarGroupLabel>
-                        <CollapsibleContent>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {productManagement.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={item.isActive}>
-                                                <Link href={item.url} className="flex items-center min-w-0">
-                                                    <item.icon className="shrink-0" />
-                                                    <span className="truncate">{item.title}</span>
-                                                    {item.badge && (
-                                                        <Badge
-                                                            variant={item.badgeVariant || "secondary"}
-                                                            className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs"
-                                                        >
-                                                            {item.badge}
-                                                        </Badge>
-                                                    )}
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
-
                 {/* Invoice Management */}
                 <Collapsible defaultOpen className="group/collapsible">
                     <SidebarGroup>
@@ -576,34 +543,6 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                     </SidebarGroup>
                 </Collapsible>
 
-                {/* Payment Management */}
-                <Collapsible defaultOpen className="group/collapsible">
-                    <SidebarGroup>
-                        <SidebarGroupLabel asChild>
-                            <CollapsibleTrigger>
-                                Zahlungen
-                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                            </CollapsibleTrigger>
-                        </SidebarGroupLabel>
-                        <CollapsibleContent>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {paymentManagement.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={item.isActive}>
-                                                <Link href={item.url} className="flex items-center min-w-0">
-                                                    <item.icon className="shrink-0" />
-                                                    <span className="truncate">{item.title}</span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
-
                 {/* Offer Management */}
                 <Collapsible defaultOpen className="group/collapsible">
                     <SidebarGroup>
@@ -630,6 +569,98 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                                             {item.badge}
                                                         </Badge>
                                                     )}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </CollapsibleContent>
+                    </SidebarGroup>
+                </Collapsible>
+
+                {/* Payment Management */}
+                <Collapsible className="group/collapsible">
+                    <SidebarGroup>
+                        <SidebarGroupLabel asChild>
+                            <CollapsibleTrigger>
+                                Zahlungen
+                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                            </CollapsibleTrigger>
+                        </SidebarGroupLabel>
+                        <CollapsibleContent>
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {paymentManagement.map((item) => (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton asChild isActive={item.isActive}>
+                                                <Link href={item.url} className="flex items-center min-w-0">
+                                                    <item.icon className="shrink-0" />
+                                                    <span className="truncate">{item.title}</span>
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </CollapsibleContent>
+                    </SidebarGroup>
+                </Collapsible>
+
+                {/* Product Management */}
+                <Collapsible className="group/collapsible">
+                    <SidebarGroup>
+                        <SidebarGroupLabel asChild>
+                            <CollapsibleTrigger>
+                                Produktverwaltung
+                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                            </CollapsibleTrigger>
+                        </SidebarGroupLabel>
+                        <CollapsibleContent>
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {productManagement.map((item) => (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton asChild isActive={item.isActive}>
+                                                <Link href={item.url} className="flex items-center min-w-0">
+                                                    <item.icon className="shrink-0" />
+                                                    <span className="truncate">{item.title}</span>
+                                                    {item.badge && (
+                                                        <Badge
+                                                            variant={item.badgeVariant || "secondary"}
+                                                            className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs"
+                                                        >
+                                                            {item.badge}
+                                                        </Badge>
+                                                    )}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </CollapsibleContent>
+                    </SidebarGroup>
+                </Collapsible>
+
+                {/* Document Management */}
+                <Collapsible className="group/collapsible">
+                    <SidebarGroup>
+                        <SidebarGroupLabel asChild>
+                            <CollapsibleTrigger>
+                                Dokumente
+                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                            </CollapsibleTrigger>
+                        </SidebarGroupLabel>
+                        <CollapsibleContent>
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {documentManagement.map((item) => (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton asChild isActive={item.isActive}>
+                                                <Link href={item.url} className="flex items-center min-w-0">
+                                                    <item.icon className="shrink-0" />
+                                                    <span className="truncate">{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>

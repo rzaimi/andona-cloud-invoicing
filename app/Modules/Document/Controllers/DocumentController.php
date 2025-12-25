@@ -121,10 +121,16 @@ class DocumentController extends Controller
 
         DB::beginTransaction();
         try {
+            // Organize files by company_id/year/month/
+            $year = now()->year;
+            $month = now()->format('m');
+            $storagePath = "{$companyId}/{$year}/{$month}";
+            
             foreach ($files as $file) {
                 try {
-                    // Store file
-                    $filePath = $file->store('documents/' . $companyId, 'public');
+                    // Store file in private documents storage with organized structure
+                    // Structure: company_id/year/month/filename
+                    $filePath = $file->store($storagePath, 'documents');
                     
                     // Use filename without extension as name, or generate from original filename
                     $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -180,13 +186,13 @@ class DocumentController extends Controller
             abort(403);
         }
 
-        if (!Storage::disk('public')->exists($document->file_path)) {
+        // Use documents disk (private, not publicly accessible)
+        if (!Storage::disk('documents')->exists($document->file_path)) {
             abort(404, 'Datei nicht gefunden.');
         }
 
-        $filePath = Storage::disk('public')->path($document->file_path);
-        
-        return response()->download($filePath, $document->original_filename);
+        // Stream the file through Laravel (ensures authentication check)
+        return Storage::disk('documents')->download($document->file_path, $document->original_filename);
     }
 
     /**

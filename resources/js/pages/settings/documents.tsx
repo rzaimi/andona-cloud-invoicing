@@ -75,6 +75,7 @@ interface DocumentsProps {
 
 const CATEGORIES = [
     { value: 'all', label: 'Alle Kategorien' },
+    { value: 'payroll', label: 'Lohnabrechnung' },
     { value: 'employee', label: 'Mitarbeiter' },
     { value: 'customer', label: 'Kunde' },
     { value: 'invoice', label: 'Rechnung' },

@@ -10,6 +10,14 @@ Route::get('/', function () {
     ]);
 });
 
+// API endpoint to load Ziggy routes dynamically (hides routes from HTML source)
+Route::get('/api/routes', function (\Illuminate\Http\Request $request) {
+    return response()->json([
+        ...(new \Tighten\Ziggy\Ziggy)->toArray(),
+        'location' => $request->url(),
+    ]);
+})->middleware('auth');
+
 Route::middleware('auth')->group(function () {
     require __DIR__.'/modules/dashboard.php';
     require __DIR__.'/modules/profile.php';

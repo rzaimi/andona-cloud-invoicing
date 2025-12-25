@@ -75,11 +75,12 @@ class Document extends Model
     }
 
     /**
-     * Get the file URL for download
+     * Get the file URL for download (always goes through authenticated route)
      */
     public function getUrlAttribute(): string
     {
-        return Storage::url($this->file_path);
+        // Always use the authenticated download route, never direct file access
+        return route('documents.download', $this->id);
     }
 
     /**
@@ -121,8 +122,9 @@ class Document extends Model
         parent::boot();
 
         static::deleting(function ($document) {
-            if (Storage::exists($document->file_path)) {
-                Storage::delete($document->file_path);
+            // Delete from documents (private) storage
+            if (Storage::disk('documents')->exists($document->file_path)) {
+                Storage::disk('documents')->delete($document->file_path);
             }
         });
     }

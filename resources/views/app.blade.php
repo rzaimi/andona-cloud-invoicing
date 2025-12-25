@@ -40,7 +40,6 @@
 
         <link rel="stylesheet" href="/fonts/instrument-sans.css" />
 
-        @routes
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         @inertiaHead
