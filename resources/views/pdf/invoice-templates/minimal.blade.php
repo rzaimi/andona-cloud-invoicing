@@ -31,14 +31,17 @@
 
     {{-- Invoice Title - Minimal styling --}}
     <div style="margin-bottom: 10px;">
-        <div style="font-size: {{ $headingFontSize + 2 }}px; font-weight: 600; color: {{ $invoice->is_correction ? '#dc2626' : ($layoutSettings['colors']['text'] ?? '#1f2937') }};">
-            {{ $invoice->is_correction ? 'STORNORECHNUNG' : 'Rechnung' }} {{ $invoice->number }}
+        @php
+            $isCorrection = isset($invoice->is_correction) ? (bool)$invoice->is_correction : false;
+        @endphp
+        <div style="font-size: {{ $headingFontSize + 2 }}px; font-weight: 600; color: {{ $isCorrection ? '#dc2626' : ($layoutSettings['colors']['text'] ?? '#1f2937') }};">
+            {{ $isCorrection ? 'STORNORECHNUNG' : 'Rechnung' }} {{ $invoice->number }}
         </div>
-        @if($invoice->is_correction && $invoice->correctsInvoice)
+        @if($isCorrection && isset($invoice->correctsInvoice) && $invoice->correctsInvoice)
             <div style="margin-top: 8px; padding: 8px; background-color: #fee2e2; border-left: 3px solid #dc2626; font-size: {{ $bodyFontSize }}px;">
                 <div style="font-weight: 600; color: #991b1b; margin-bottom: 3px;">Storniert Rechnung:</div>
                 <div style="color: #7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ \Carbon\Carbon::parse($invoice->correctsInvoice->issue_date)->format('d.m.Y') }}</div>
-                @if($invoice->correction_reason)
+                @if(isset($invoice->correction_reason) && $invoice->correction_reason)
                     <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid #dc2626;">
                         <strong>Grund:</strong> {{ $invoice->correction_reason }}
                     </div>

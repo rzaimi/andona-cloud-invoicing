@@ -71,19 +71,19 @@
         
         /* Regular address block (for display in document, not envelope window) */
         .address-block {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .container {
             max-width: 210mm;
             margin: 0 auto;
-            padding: {{ min($layoutSettings['layout']['margin_top'] ?? 10, 10) }}mm {{ min($layoutSettings['layout']['margin_right'] ?? 15, 15) }}mm {{ max(min($layoutSettings['layout']['margin_bottom'] ?? 15, 15) + 60, 75) }}mm {{ min($layoutSettings['layout']['margin_left'] ?? 15, 15) }}mm;
+            padding: {{ min($layoutSettings['layout']['margin_top'] ?? 15, 20) }}mm {{ min($layoutSettings['layout']['margin_right'] ?? 20, 25) }}mm {{ max(min($layoutSettings['layout']['margin_bottom'] ?? 20, 25) + 60, 80) }}mm {{ min($layoutSettings['layout']['margin_left'] ?? 20, 25) }}mm;
             position: relative; /* For absolute positioning of address block */
         }
 
         .header {
             width: 100%;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             overflow: hidden;
         }
 
@@ -347,7 +347,36 @@
 {{-- Footer must be defined early and as direct child of body for DomPDF fixed positioning --}}
 @php
     // Use saved snapshot instead of live company data to preserve footer information
-    $snapshot = $invoice->getCompanySnapshot();
+    // Handle both model instance and stdClass/array (DomPDF may convert models)
+    if (is_object($invoice) && method_exists($invoice, 'getCompanySnapshot')) {
+        $snapshot = $invoice->getCompanySnapshot();
+    } elseif (isset($invoice->company_snapshot) && is_array($invoice->company_snapshot)) {
+        $snapshot = $invoice->company_snapshot;
+    } elseif (is_array($invoice) && isset($invoice['company_snapshot']) && is_array($invoice['company_snapshot'])) {
+        $snapshot = $invoice['company_snapshot'];
+    } elseif (isset($company)) {
+        // Fallback: create snapshot from current company
+        $snapshot = [
+            'name' => $company->name ?? '',
+            'email' => $company->email ?? '',
+            'phone' => $company->phone ?? '',
+            'address' => $company->address ?? '',
+            'postal_code' => $company->postal_code ?? '',
+            'city' => $company->city ?? '',
+            'country' => $company->country ?? 'Deutschland',
+            'tax_number' => $company->tax_number ?? '',
+            'vat_number' => $company->vat_number ?? '',
+            'commercial_register' => $company->commercial_register ?? '',
+            'managing_director' => $company->managing_director ?? '',
+            'website' => $company->website ?? '',
+            'logo' => $company->logo ?? '',
+            'bank_name' => $company->bank_name ?? '',
+            'bank_iban' => $company->bank_iban ?? '',
+            'bank_bic' => $company->bank_bic ?? '',
+        ];
+    } else {
+        $snapshot = [];
+    }
 @endphp
 @if($layoutSettings['branding']['show_footer'] ?? true)
     <div class="pdf-footer" style="border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; color: {{ $layoutSettings['colors']['text'] ?? '#9ca3af' }}; line-height: 1.8;">
@@ -387,7 +416,7 @@
     $templateFile = 'pdf.invoice-templates.' . $template;
     
     // Make snapshot available to all templates (use saved snapshot instead of live company data)
-    $snapshot = $invoice->getCompanySnapshot();
+    // Snapshot is already set above, no need to recalculate
 @endphp
 
 {{-- Debug indicator in preview mode --}}

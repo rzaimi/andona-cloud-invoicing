@@ -1,76 +1,71 @@
-feat: Add comprehensive test suite for modules and services
+fix: Improve PDF layouts and fix stdClass property access errors
 
-Add extensive test coverage for all modules, services, and multi-tenancy functionality.
-All tests use RefreshDatabase trait which automatically handles database transactions
-for clean test state with automatic rollback.
+## Layout Improvements
 
-## Test Coverage Added
+### Invoice & Offer PDF Layouts
+- **Improved spacing and margins**: Increased container padding (15-20mm) for better breathing room
+- **Better visual hierarchy**: Standardized spacing between sections (15-20px instead of 8-10px)
+- **Enhanced readability**: Improved line-height (1.6 instead of 1.4-1.5) for better text flow
+- **Consistent spacing**: Unified spacing across all templates for professional appearance
 
-### Services Tests (27 tests)
-- ContextServiceTest: User context, company context, dashboard stats, caching
-- SettingsServiceTest: Company/global settings, value casting, cache management
-- ERechnungServiceTest: XRechnung and ZUGFeRD generation
+### Template-Specific Updates
+- **Clean template**: Improved header padding and section spacing
+- **Modern template**: Better info box padding and visual spacing
+- **Offer layout**: Reduced excessive margins (40px → 25px) for better balance
 
-### Module Tests
-- CompanyModuleTest: CRUD operations, settings management, super admin access
-- DashboardModuleTest: Dashboard access, statistics, recent items, alerts
-- DocumentModuleTest: Document upload, linking, deletion, multi-tenancy
-- CalendarModuleTest: Calendar access, invoice due dates, offer expiry
-- ReportsModuleTest: Reports access, revenue, customer, tax reports
+## Bug Fixes
 
-### Multi-Tenancy Tests (39 tests)
-- Data isolation between companies
-- Policy enforcement
-- Company switching for super admins
-- CRUD operations across different companies
+### stdClass Property Access
+- **Fixed `getCompanySnapshot()` error**: Added safe property access for DomPDF-converted models
+- **Fixed `is_correction` property error**: Added isset() checks in all invoice templates
+- **Fixed `correction_reason` property error**: Added safe property access
+- **Fixed `correctsInvoice` relationship**: Added proper null checks
 
-### Settings Tests
-- ProfileUpdateTest: Profile management
-- PasswordUpdateTest: Password updates
-- CompanySettingsTest: Company settings management
-- AppearanceTest: Appearance settings
-
-## Test Infrastructure Improvements
-
-- Added `seedRolesAndPermissions()` helper method to TestCase base class
-- All tests properly seed roles and permissions before execution
-- Added `withoutVite()` to all feature tests to skip frontend asset compilation
-- Fixed permission imports in DocumentModuleTest
-- Updated test data to match actual validation rules
-
-## Test Results
-
-- ✅ 131 tests passing
-- ⏭️ 6 tests skipped (password reset and registration routes disabled)
-- ❌ 0 tests failing
+### EmailLog Model
+- **Created missing EmailLog model**: Added complete model with relationships, scopes, and accessors
+- **Fixed autoload error**: Resolved "Failed to open stream" error for EmailLog class
 
 ## Files Changed
 
-### New Test Files
-- tests/Unit/Services/ContextServiceTest.php
-- tests/Unit/Services/SettingsServiceTest.php
-- tests/Unit/Services/ERechnungServiceTest.php
-- tests/Feature/Modules/CompanyModuleTest.php
-- tests/Feature/Modules/DashboardModuleTest.php
-- tests/Feature/Modules/DocumentModuleTest.php
-- tests/Feature/Modules/CalendarModuleTest.php
-- tests/Feature/Modules/ReportsModuleTest.php
-- tests/TEST_COVERAGE_SUMMARY.md
-- tests/TEST_STATUS.md
+### Layout Improvements
+- `resources/views/pdf/invoice.blade.php` - Improved container padding and spacing
+- `resources/views/pdf/offer.blade.php` - Reduced excessive margins and improved spacing
+- `resources/views/pdf/invoice-templates/clean.blade.php` - Enhanced spacing throughout
+- `resources/views/pdf/invoice-templates/modern.blade.php` - Better visual hierarchy
 
-### Updated Test Files
-- tests/TestCase.php: Added seedRolesAndPermissions() helper
-- tests/Feature/Auth/*: Added permission seeding and company setup
-- tests/Feature/Settings/*: Added permission seeding and fixed validation
-- tests/Feature/DashboardTest.php: Added permission seeding
-- tests/Feature/Modules/*: Added permission seeding and role assignment
+### Bug Fixes
+- `resources/views/pdf/invoice.blade.php` - Safe snapshot access for stdClass objects
+- `resources/views/pdf/offer.blade.php` - Safe snapshot access for stdClass objects
+- `resources/views/pdf/invoice-templates/*.blade.php` - Safe property access for is_correction, correction_reason
+- `app/Models/EmailLog.php` - Created missing model file
 
-## Notes
+## Technical Details
 
-- All tests use RefreshDatabase trait which automatically handles database
-  transactions in SQLite (or truncation in other databases), ensuring clean
-  test state with automatic rollback after each test
-- Tests are organized following Laravel conventions
-- Multi-tenancy tests ensure complete data isolation between companies
-- Service tests validate business logic and data handling
+### Safe Property Access Pattern
+```php
+// Handle both model instance and stdClass/array (DomPDF may convert models)
+if (is_object($invoice) && method_exists($invoice, 'getCompanySnapshot')) {
+    $snapshot = $invoice->getCompanySnapshot();
+} elseif (isset($invoice->company_snapshot) && is_array($invoice->company_snapshot)) {
+    $snapshot = $invoice->company_snapshot;
+} // ... fallback logic
+```
 
+### Layout Spacing Standards
+- Container padding: 15-20mm (was 10-15mm)
+- Section spacing: 15-20px (was 8-10px)
+- Line height: 1.6 (was 1.4-1.5)
+- Table margins: 15px (was 10px)
+
+## Benefits
+✅ **Better visual appearance**: More professional and balanced layouts
+✅ **No more errors**: Fixed all stdClass property access issues
+✅ **Consistent spacing**: Unified spacing across all templates
+✅ **Better readability**: Improved line-height and spacing
+✅ **Complete model**: EmailLog model now available for email logging
+
+## Testing
+- Verified PDF generation works without errors
+- Confirmed safe property access handles all object types
+- Tested layout improvements render correctly
+- Verified EmailLog model loads correctly

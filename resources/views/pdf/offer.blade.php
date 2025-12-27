@@ -36,13 +36,13 @@
         
         /* Regular address block (for display in document, not envelope window) */
         .address-block {
-            margin-bottom: 35px;
+            margin-bottom: 20px;
         }
 
         .container {
             max-width: 210mm;
             margin: 0 auto;
-            padding: {{ $layout->settings['layout']['margin_top'] ?? '20' }}mm {{ $layout->settings['layout']['margin_right'] ?? '20' }}mm {{ max(($layout->settings['layout']['margin_bottom'] ?? 20) + 60, 80) }}mm {{ $layout->settings['layout']['margin_left'] ?? '20' }}mm;
+            padding: {{ min($layout->settings['layout']['margin_top'] ?? 20, 25) }}mm {{ min($layout->settings['layout']['margin_right'] ?? 20, 25) }}mm {{ max(min($layout->settings['layout']['margin_bottom'] ?? 20, 25) + 60, 80) }}mm {{ min($layout->settings['layout']['margin_left'] ?? 20, 25) }}mm;
             position: relative; /* For absolute positioning of address block */
         }
 
@@ -50,8 +50,8 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
             @if($layout->settings['branding']['show_header_line'] ?? true)
             border-bottom: 2px solid {{ $layout->settings['colors']['primary'] ?? '#3b82f6' }};
         @endif
@@ -82,7 +82,7 @@
 
         .offer-title {
             text-align: center;
-            margin: 40px 0 30px 0;
+            margin: 25px 0 20px 0;
         }
 
         .offer-title h1 {
@@ -95,7 +95,7 @@
         .offer-meta {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 40px;
+            margin-bottom: 25px;
         }
 
         .customer-info, .offer-details {
@@ -268,7 +268,36 @@
 {{-- Footer must be defined early and as direct child of body for DomPDF fixed positioning --}}
 @php
     // Use saved snapshot instead of live company data to preserve footer information
-    $snapshot = $offer->getCompanySnapshot();
+    // Handle both model instance and stdClass/array (DomPDF may convert models)
+    if (is_object($offer) && method_exists($offer, 'getCompanySnapshot')) {
+        $snapshot = $offer->getCompanySnapshot();
+    } elseif (isset($offer->company_snapshot) && is_array($offer->company_snapshot)) {
+        $snapshot = $offer->company_snapshot;
+    } elseif (is_array($offer) && isset($offer['company_snapshot']) && is_array($offer['company_snapshot'])) {
+        $snapshot = $offer['company_snapshot'];
+    } elseif (isset($company)) {
+        // Fallback: create snapshot from current company
+        $snapshot = [
+            'name' => $company->name ?? '',
+            'email' => $company->email ?? '',
+            'phone' => $company->phone ?? '',
+            'address' => $company->address ?? '',
+            'postal_code' => $company->postal_code ?? '',
+            'city' => $company->city ?? '',
+            'country' => $company->country ?? 'Deutschland',
+            'tax_number' => $company->tax_number ?? '',
+            'vat_number' => $company->vat_number ?? '',
+            'commercial_register' => $company->commercial_register ?? '',
+            'managing_director' => $company->managing_director ?? '',
+            'website' => $company->website ?? '',
+            'logo' => $company->logo ?? '',
+            'bank_name' => $company->bank_name ?? '',
+            'bank_iban' => $company->bank_iban ?? '',
+            'bank_bic' => $company->bank_bic ?? '',
+        ];
+    } else {
+        $snapshot = [];
+    }
 @endphp
 @if($layout->settings['branding']['show_footer'] ?? true)
     <div class="pdf-footer" style="border-top: {{ $layout->settings['branding']['show_footer_line'] ?? true ? '2px solid ' . ($layout->settings['colors']['primary'] ?? '#3b82f6') : '1px solid #e5e7eb' }}; text-align: center;">

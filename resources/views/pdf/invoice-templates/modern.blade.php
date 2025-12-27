@@ -2,7 +2,7 @@
 {{-- Template: modern --}}
 <div class="container">
     {{-- Header: Logo and company name with colored left border accent --}}
-    <div style="margin-bottom: 10px; padding-left: 12px; border-left: 4px solid {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};">
+    <div style="margin-bottom: 15px; padding-left: 12px; border-left: 4px solid {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};">
         @if(($layoutSettings['branding']['show_logo'] ?? true) && ($snapshot['logo'] ?? null) && \Storage::disk('public')->exists($snapshot['logo']))
             @php
                 $logoPath = \Storage::disk('public')->path($snapshot['logo']);
@@ -25,7 +25,7 @@
     </div>
 
     {{-- Invoice Details Right --}}
-    <div style="text-align: right; font-size: {{ $bodyFontSize }}px; margin-bottom: 10px; padding: 8px; background-color: {{ $layoutSettings['colors']['accent'] ?? '#f3f4f6' }}; border-radius: 4px;">
+    <div style="text-align: right; font-size: {{ $bodyFontSize }}px; margin-bottom: 15px; padding: 10px; background-color: {{ $layoutSettings['colors']['accent'] ?? '#f3f4f6' }}; border-radius: 4px;">
         <div style="margin-bottom: 4px;"><strong>RECHNUNGSNR.:</strong> {{ $invoice->number }}</div>
         <div style="margin-bottom: 4px;"><strong>DATUM:</strong> {{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}</div>
         <div style="margin-bottom: 4px;"><strong>FÄLLIGKEITSDATUM:</strong> {{ \Carbon\Carbon::parse($invoice->due_date)->format('d.m.Y') }}</div>
@@ -42,15 +42,18 @@
     @endif
 
     {{-- Invoice Title --}}
-    <div style="margin-bottom: 8px;">
-        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 700; color: {{ $invoice->is_correction ? '#dc2626' : ($layoutSettings['colors']['primary'] ?? '#3b82f6') }};">
-            {{ $invoice->is_correction ? 'STORNORECHNUNG' : 'Rechnung' }} {{ $invoice->number }}
+    <div style="margin-bottom: 15px;">
+        @php
+            $isCorrection = isset($invoice->is_correction) ? (bool)$invoice->is_correction : false;
+        @endphp
+        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 700; color: {{ $isCorrection ? '#dc2626' : ($layoutSettings['colors']['primary'] ?? '#3b82f6') }};">
+            {{ $isCorrection ? 'STORNORECHNUNG' : 'Rechnung' }} {{ $invoice->number }}
         </div>
-        @if($invoice->is_correction && $invoice->correctsInvoice)
+        @if($isCorrection && isset($invoice->correctsInvoice) && $invoice->correctsInvoice)
             <div style="margin-top: 10px; padding: 10px; background-color: #fee2e2; border-left: 4px solid #dc2626; font-size: {{ $bodyFontSize }}px;">
                 <div style="font-weight: 600; color: #991b1b; margin-bottom: 4px;">Storniert Rechnung:</div>
                 <div style="color: #7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ \Carbon\Carbon::parse($invoice->correctsInvoice->issue_date)->format('d.m.Y') }}</div>
-                @if($invoice->correction_reason)
+                @if(isset($invoice->correction_reason) && $invoice->correction_reason)
                     <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #dc2626;">
                         <strong>Grund:</strong> {{ $invoice->correction_reason }}
                     </div>
@@ -60,13 +63,13 @@
     </div>
 
     {{-- Salutation and Introduction --}}
-    <div style="margin-bottom: 10px; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
+    <div style="margin-bottom: 15px; font-size: {{ $bodyFontSize }}px; line-height: 1.6;">
         <div style="margin-bottom: 4px;">Sehr geehrte Damen und Herren,</div>
         <div>vielen Dank für Ihren Auftrag und das damit verbundene Vertrauen! Hiermit stelle ich Ihnen die folgenden Leistungen in Rechnung:</div>
     </div>
 
     {{-- Items Table with colored header - DISTINCTIVE: Blue header --}}
-    <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+    <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
         <thead>
             <tr style="background-color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }}; color: white;">
                 <th style="padding: 10px 8px; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px;">LEISTUNG</th>
@@ -95,7 +98,7 @@
     </table>
 
     {{-- Totals --}}
-    <div style="text-align: right; margin-top: 10px;">
+    <div style="text-align: right; margin-top: 15px;">
         <table style="width: 280px; margin-left: auto; border-collapse: collapse;">
             <tr>
                 <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid #e5e7eb;">Gesamtbetrag (netto)</td>
@@ -114,13 +117,13 @@
 
     {{-- Payment Instructions --}}
     @if($layoutSettings['content']['show_payment_terms'] ?? true)
-        <div style="margin-top: 12px; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
+        <div style="margin-top: 20px; font-size: {{ $bodyFontSize }}px; line-height: 1.6;">
             Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten angegebene Konto. Der Rechnungsbetrag ist sofort fällig.
         </div>
     @endif
 
     {{-- Closing --}}
-    <div style="margin-top: 12px; font-size: {{ $bodyFontSize }}px;">
+    <div style="margin-top: 20px; font-size: {{ $bodyFontSize }}px;">
         <div style="margin-bottom: 4px;">Mit freundlichen Grüßen</div>
         <div style="font-weight: 600;">{{ $snapshot['name'] ?? '' }}</div>
     </div>

@@ -47,17 +47,20 @@
 
     {{-- Invoice Title - Classic centered style --}}
     <div style="text-align: center; margin-bottom: 10px;">
-        <div style="font-size: {{ $headingFontSize + 6 }}px; font-weight: 700; color: {{ $invoice->is_correction ? '#dc2626' : ($layoutSettings['colors']['text'] ?? '#1f2937') }}; text-transform: uppercase; letter-spacing: 1px;">
-            {{ $invoice->is_correction ? 'STORNORECHNUNG' : 'RECHNUNG' }}
+        @php
+            $isCorrection = isset($invoice->is_correction) ? (bool)$invoice->is_correction : false;
+        @endphp
+        <div style="font-size: {{ $headingFontSize + 6 }}px; font-weight: 700; color: {{ $isCorrection ? '#dc2626' : ($layoutSettings['colors']['text'] ?? '#1f2937') }}; text-transform: uppercase; letter-spacing: 1px;">
+            {{ $isCorrection ? 'STORNORECHNUNG' : 'RECHNUNG' }}
         </div>
         <div style="font-size: {{ $bodyFontSize + 1 }}px; color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }}; margin-top: 4px;">
             Nr. {{ $invoice->number }}
         </div>
-        @if($invoice->is_correction && $invoice->correctsInvoice)
+        @if($isCorrection && isset($invoice->correctsInvoice) && $invoice->correctsInvoice)
             <div style="margin-top: 10px; padding: 10px; background-color: #fee2e2; border: 2px solid #dc2626; border-radius: 4px; font-size: {{ $bodyFontSize }}px; display: inline-block;">
                 <div style="font-weight: 600; color: #991b1b; margin-bottom: 4px;">Storniert Rechnung:</div>
                 <div style="color: #7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ \Carbon\Carbon::parse($invoice->correctsInvoice->issue_date)->format('d.m.Y') }}</div>
-                @if($invoice->correction_reason)
+                @if(isset($invoice->correction_reason) && $invoice->correction_reason)
                     <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #dc2626;">
                         <strong>Grund:</strong> {{ $invoice->correction_reason }}
                     </div>
