@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Receipt, ArrowLeft, Download } from "lucide-react"
+import { EuroIcon, ArrowLeft, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
@@ -123,7 +123,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Gesamt MwSt.</CardTitle>
-                            <Receipt className="h-4 w-4 text-muted-foreground" />
+                            <EuroIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{formatCurrency(totalTax)}</div>
@@ -135,7 +135,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Gesamt Nettobetrag</CardTitle>
-                            <Receipt className="h-4 w-4 text-muted-foreground" />
+                            <EuroIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{formatCurrency(totalSubtotal)}</div>
@@ -145,7 +145,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Gesamt Bruttobetrag</CardTitle>
-                            <Receipt className="h-4 w-4 text-muted-foreground" />
+                            <EuroIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{formatCurrency(totalAmount)}</div>
@@ -155,7 +155,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Durchschnitt MwSt.</CardTitle>
-                            <Receipt className="h-4 w-4 text-muted-foreground" />
+                            <EuroIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">

@@ -49,7 +49,7 @@ export default function CompaniesIndex({ companies }: Props) {
                 {/* Header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Firmenverwaltung</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Firmenverwaltung</h1>
                         <p className="text-gray-600">Verwalten Sie alle Firmen im System</p>
                     </div>
 
@@ -168,7 +168,7 @@ export default function CompaniesIndex({ companies }: Props) {
                                                             {company.customers_count}
                                                         </Badge>
                                                         <Badge variant="secondary" className="text-xs">
-                                                            <Receipt className="mr-1 h-3 w-3" />
+                                                            <EuroIcon className="mr-1 h-3 w-3" />
                                                             {company.invoices_count}
                                                         </Badge>
                                                         <Badge variant="secondary" className="text-xs">

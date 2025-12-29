@@ -7,7 +7,9 @@ use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Offer\Models\Offer;
 use App\Modules\Product\Models\Product;
+use App\Modules\Expense\Models\Expense;
 use App\Services\ContextService;
+use App\Services\ExpenseReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -78,6 +80,22 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        // Get expenses data
+        $expenseReportService = app(ExpenseReportService::class);
+        $currentMonthExpenses = $expenseReportService->getMonthlyTotals(
+            $companyId,
+            now()->startOfMonth()->format('Y-m-d'),
+            now()->endOfMonth()->format('Y-m-d')
+        );
+        
+        // Calculate profit (income from payments - expenses)
+        $currentMonthIncome = $expenseReportService->getIncome(
+            $companyId,
+            now()->startOfMonth()->format('Y-m-d'),
+            now()->endOfMonth()->format('Y-m-d')
+        );
+        $netProfit = $currentMonthIncome - $currentMonthExpenses['total_amount'];
+
         return $this->inertia('dashboard', [
             'stats' => $stats,
             'growth' => $growthData,
@@ -89,6 +107,10 @@ class DashboardController extends Controller
             'alerts' => [
                 'overdue_invoices' => $overdueInvoices,
                 'low_stock_products' => $lowStockProducts,
+            ],
+            'expenses' => [
+                'current_month' => $currentMonthExpenses['total_amount'],
+                'net_profit' => $netProfit,
             ],
         ]);
     }

@@ -13,7 +13,7 @@ import {
     Search,
     BookOpen,
     Users,
-    Receipt,
+    ReceiptEuro,
     FileText,
     Settings,
     Package,
@@ -60,7 +60,7 @@ export default function HelpIndex({ user, stats }: HelpProps) {
             id: "invoices",
             title: "Rechnungen",
             description: "Rechnungen erstellen, versenden und verwalten",
-            icon: Receipt,
+            icon: ReceiptEuro,
             color: "bg-purple-500",
             articles: 15,
         },
@@ -221,7 +221,7 @@ export default function HelpIndex({ user, stats }: HelpProps) {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Hilfe & Support</h1>
+                        <h1 className="text-3xl font-bold tracking-tight dark:text-gray-100">Hilfe & Support</h1>
                         <p className="text-muted-foreground">
                             Finden Sie Antworten auf Ihre Fragen und lernen Sie das System kennen
                         </p>

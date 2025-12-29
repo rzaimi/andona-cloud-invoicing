@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Edit, Trash2, Eye, FileText, Receipt } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, FileText, EuroIcon } from "lucide-react"
 import InvoiceForm from "./invoice-form"
 import InvoicePreview from "./invoice-preview"
 
@@ -163,7 +163,7 @@ export default function InvoiceManagement({ companyId, settings }: InvoiceManage
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="invoices" className="flex items-center gap-2">
-                        <Receipt className="h-4 w-4" />
+                        <EuroIcon className="h-4 w-4" />
                         Invoices
                     </TabsTrigger>
                     <TabsTrigger value="offers" className="flex items-center gap-2">

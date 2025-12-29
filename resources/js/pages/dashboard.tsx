@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge"
 import {
     Users,
     FileText,
-    Receipt,
     Plus,
     Settings,
     Package,
@@ -18,6 +17,7 @@ import {
     Archive,
     Eye,
     Edit,
+    ReceiptText,
 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, User, Customer, Invoice, Offer, Product } from "@/types"
@@ -179,7 +179,7 @@ export default function Dashboard() {
                 {/* Welcome Section */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
                         <p className="text-gray-600">Willkommen zurück, {user.name}</p>
                         <p className="text-sm text-gray-500">{user.company?.name || "Keine Firma"}</p>
                     </div>
@@ -223,7 +223,7 @@ export default function Dashboard() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Rechnungen</CardTitle>
-                            <Receipt className="h-4 w-4 text-muted-foreground" />
+                            <ReceiptText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.invoices.total}</div>

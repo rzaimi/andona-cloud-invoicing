@@ -58,7 +58,7 @@ export default function CustomersIndex() {
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Kundenverwaltung</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Kundenverwaltung</h1>
                         <p className="text-gray-600">Verwalten Sie Ihre Kunden und deren Informationen</p>
                     </div>
 

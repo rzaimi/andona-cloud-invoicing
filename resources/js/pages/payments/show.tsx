@@ -192,7 +192,7 @@ export default function PaymentsShow() {
                                         </div>
                                         <Link href={`/invoices/${payment.invoice_id}`}>
                                             <Button variant="outline">
-                                                <Receipt className="mr-2 h-4 w-4" />
+                                                <EuroIcon className="mr-2 h-4 w-4" />
                                                 Rechnung anzeigen
                                             </Button>
                                         </Link>

@@ -18,6 +18,10 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             InvoiceSeeder::class,
             OfferSeeder::class,
+            ExpenseCategorySeeder::class,
+            ExpenseSeeder::class,
+            PaymentSeeder::class,
+            CalendarEventSeeder::class,
         ]);
     }
 }

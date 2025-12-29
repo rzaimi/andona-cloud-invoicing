@@ -1,18 +1,23 @@
 "use client"
 
 import { useState } from "react"
-import { Head, Link } from "@inertiajs/react"
+import { Head, Link, router, useForm } from "@inertiajs/react"
+import { route } from "ziggy-js"
 import AppLayout from "@/layouts/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
     ChevronLeft,
     ChevronRight,
     Plus,
     Clock,
     Users,
-    Receipt,
+    EuroIcon,
     FileText,
     AlertTriangle,
     CheckCircle,
@@ -45,6 +50,16 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
     const [currentDate, setCurrentDate] = useState(new Date())
     const [selectedView, setSelectedView] = useState("month")
     const [selectedFilter, setSelectedFilter] = useState("all")
+    const [createDialogOpen, setCreateDialogOpen] = useState(false)
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        title: "",
+        type: "appointment",
+        date: new Date().toISOString().split("T")[0],
+        time: "09:00",
+        description: "",
+        location: "",
+    })
 
     // Use events from props, fallback to empty array
     const events = propEvents.length > 0 ? propEvents : []
@@ -53,7 +68,7 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
         invoice_due: {
             label: "Rechnung fällig",
             color: "bg-red-500",
-            icon: Receipt,
+            icon: EuroIcon,
             textColor: "text-red-700",
         },
         offer_expiry: {
@@ -181,7 +196,7 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Kalender</h1>
+                        <h1 className="text-3xl font-bold tracking-tight dark:text-gray-100">Kalender</h1>
                         <p className="text-muted-foreground">Termine, Fristen und wichtige Ereignisse im Überblick</p>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -199,7 +214,7 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                                 <SelectItem value="report">Berichte</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button>
+                        <Button onClick={() => setCreateDialogOpen(true)}>
                             <Plus className="mr-2 h-4 w-4" />
                             Termin hinzufügen
                         </Button>
@@ -374,7 +389,7 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                             <CardContent className="space-y-2">
                                 <Button variant="outline" size="sm" className="w-full justify-start bg-transparent" asChild>
                                     <Link href="/invoices/create">
-                                        <Receipt className="mr-2 h-4 w-4" />
+                                        <EuroIcon className="mr-2 h-4 w-4" />
                                         Neue Rechnung
                                     </Link>
                                 </Button>
@@ -398,6 +413,122 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                         </Card>
                     </div>
                 </div>
+
+                {/* Create Event Dialog */}
+                <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                    <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                            <DialogTitle>Neuen Termin erstellen</DialogTitle>
+                            <DialogDescription>
+                                Erstellen Sie einen neuen Termin oder Ereignis im Kalender
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault()
+                                post(route("calendar.store"), {
+                                    onSuccess: () => {
+                                        reset()
+                                        setCreateDialogOpen(false)
+                                    },
+                                })
+                            }}
+                            className="space-y-4"
+                        >
+                            <div className="space-y-2">
+                                <Label htmlFor="title">Titel *</Label>
+                                <Input
+                                    id="title"
+                                    value={data.title}
+                                    onChange={(e) => setData("title", e.target.value)}
+                                    placeholder="z.B. Kundenbesuch, Meeting, etc."
+                                    required
+                                />
+                                {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="type">Typ *</Label>
+                                <Select value={data.type} onValueChange={(value) => setData("type", value)}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="appointment">Termin</SelectItem>
+                                        <SelectItem value="report">Bericht</SelectItem>
+                                        <SelectItem value="inventory">Lager</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {errors.type && <p className="text-sm text-red-600">{errors.type}</p>}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="date">Datum *</Label>
+                                    <Input
+                                        id="date"
+                                        type="date"
+                                        value={data.date}
+                                        onChange={(e) => setData("date", e.target.value)}
+                                        required
+                                    />
+                                    {errors.date && <p className="text-sm text-red-600">{errors.date}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="time">Uhrzeit *</Label>
+                                    <Input
+                                        id="time"
+                                        type="time"
+                                        value={data.time}
+                                        onChange={(e) => setData("time", e.target.value)}
+                                        required
+                                    />
+                                    {errors.time && <p className="text-sm text-red-600">{errors.time}</p>}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="location">Ort</Label>
+                                <Input
+                                    id="location"
+                                    value={data.location}
+                                    onChange={(e) => setData("location", e.target.value)}
+                                    placeholder="z.B. Büro, Kundenstandort, etc."
+                                />
+                                {errors.location && <p className="text-sm text-red-600">{errors.location}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="description">Beschreibung</Label>
+                                <Textarea
+                                    id="description"
+                                    value={data.description}
+                                    onChange={(e) => setData("description", e.target.value)}
+                                    placeholder="Zusätzliche Informationen zum Termin..."
+                                    rows={3}
+                                />
+                                {errors.description && <p className="text-sm text-red-600">{errors.description}</p>}
+                            </div>
+
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        reset()
+                                        setCreateDialogOpen(false)
+                                    }}
+                                >
+                                    Abbrechen
+                                </Button>
+                                <Button type="submit" disabled={processing}>
+                                    {processing ? "Wird erstellt..." : "Termin erstellen"}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     )

@@ -46,6 +46,14 @@ return [
             'report' => false,
         ],
 
+        'expenses' => [
+            'driver' => 'local',
+            'root' => storage_path('app/expenses'),
+            'serve' => false, // Not publicly accessible
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

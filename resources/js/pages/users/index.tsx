@@ -64,7 +64,7 @@ export default function UsersIndex({ users, can_create, can_manage_companies }: 
                 {/* Header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Benutzerverwaltung</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Benutzerverwaltung</h1>
                         <p className="text-gray-600">Verwalten Sie Benutzer in Ihrem System</p>
                     </div>
 

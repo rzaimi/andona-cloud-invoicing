@@ -6,7 +6,7 @@ import {
     Building2,
     Users,
     FileText,
-    Receipt,
+    EuroIcon,
     Settings,
     LayoutTemplate,
     Bell,
@@ -27,6 +27,9 @@ import {
     Mail,
     FileCheck,
     Download,
+    Folder,
+    ReceiptText,
+    ReceiptEuro,
 } from "lucide-react"
 import {
     Sidebar,
@@ -204,7 +207,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
         {
             title: "Alle Rechnungen",
             url: "/invoices",
-            icon: Receipt,
+            icon: ReceiptText,
             isActive: isActive("/invoices"),
             badge: stats?.invoices?.draft > 0 ? stats.invoices.draft : null,
         },
@@ -236,6 +239,27 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             url: "/payments/create",
             icon: Plus,
             isActive: isActive("/payments/create"),
+        },
+    ]
+
+    const expenseManagement = [
+        {
+            title: "Alle Ausgaben",
+            url: "/expenses",
+            icon: ReceiptEuro,
+            isActive: isActive("/expenses"),
+        },
+        {
+            title: "Neue Ausgabe",
+            url: "/expenses/create",
+            icon: Plus,
+            isActive: isActive("/expenses/create"),
+        },
+        {
+            title: "Kategorien",
+            url: "/expenses/categories",
+            icon: Folder,
+            isActive: isActive("/expenses/categories"),
         },
     ]
 
@@ -276,6 +300,24 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             url: "/reports/revenue",
             icon: Euro,
             isActive: isActive("/reports/revenue"),
+        },
+        {
+            title: "Ausgabenberichte",
+            url: "/reports/expenses",
+            icon: ReceiptEuro,
+            isActive: isActive("/reports/expenses"),
+        },
+        {
+            title: "Gewinn & Verlust",
+            url: "/reports/profit",
+            icon: BarChart3,
+            isActive: isActive("/reports/profit"),
+        },
+        {
+            title: "MwSt.-Bericht",
+            url: "/reports/vat",
+            icon: FileText,
+            isActive: isActive("/reports/vat"),
         },
         {
             title: "Kundenberichte",
@@ -417,7 +459,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                         </div>
                                     ) : (
                                         <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                            <Receipt className="size-4" />
+                                            <EuroIcon className="size-4" />
                                         </div>
                                     )}
                                     <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
@@ -607,8 +649,36 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                     </SidebarGroup>
                 </Collapsible>
 
+                {/* Expense Management */}
+                <Collapsible className="group/collapsible">
+                    <SidebarGroup>
+                        <SidebarGroupLabel asChild>
+                            <CollapsibleTrigger>
+                                Ausgaben
+                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                            </CollapsibleTrigger>
+                        </SidebarGroupLabel>
+                        <CollapsibleContent>
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {expenseManagement.map((item) => (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton asChild isActive={item.isActive}>
+                                                <Link href={item.url} className="flex items-center min-w-0">
+                                                    <item.icon className="shrink-0" />
+                                                    <span className="truncate">{item.title}</span>
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </CollapsibleContent>
+                    </SidebarGroup>
+                </Collapsible>
+
                 {/* Product Management */}
-                <Collapsible defaultOpen className="group/collapsible">
+                <Collapsible className="group/collapsible">
                     <SidebarGroup>
                         <SidebarGroupLabel asChild>
                             <CollapsibleTrigger>
@@ -644,7 +714,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                 </Collapsible>
 
                 {/* Document Management */}
-                <Collapsible defaultOpen className="group/collapsible">
+                <Collapsible className="group/collapsible">
                     <SidebarGroup>
                         <SidebarGroupLabel asChild>
                             <CollapsibleTrigger>
@@ -672,7 +742,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                 </Collapsible>
 
                 {/* Reports & Analytics */}
-                <Collapsible defaultOpen className="group/collapsible">
+                <Collapsible className="group/collapsible">
                     <SidebarGroup>
                         <SidebarGroupLabel asChild>
                             <CollapsibleTrigger>

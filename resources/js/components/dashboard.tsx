@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Building2, Users, FileText, Receipt, Settings } from "lucide-react"
+import { Building2, Users, FileText, EuroIcon, Settings } from "lucide-react"
 import CompanyManagement from "./company-management"
 import UserManagement from "./user-management"
 import CustomerManagement from "./customer-management"
@@ -100,7 +100,7 @@ export default function Dashboard() {
                             className="w-full justify-start"
                             onClick={() => setActiveTab("invoices")}
                         >
-                            <Receipt className="mr-2 h-4 w-4" />
+                            <EuroIcon className="mr-2 h-4 w-4" />
                             Invoices & Offers
                         </Button>
                     </div>
@@ -132,7 +132,7 @@ export default function Dashboard() {
                                 <Card>
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                         <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
-                                        <Receipt className="h-4 w-4 text-muted-foreground" />
+                                        <EuroIcon className="h-4 w-4 text-muted-foreground" />
                                     </CardHeader>
                                     <CardContent>
                                         <div className="text-2xl font-bold">{stats.totalInvoices}</div>
@@ -162,7 +162,7 @@ export default function Dashboard() {
                                 <Card>
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                         <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-                                        <Receipt className="h-4 w-4 text-muted-foreground" />
+                                        <EuroIcon className="h-4 w-4 text-muted-foreground" />
                                     </CardHeader>
                                     <CardContent>
                                         <div className="text-2xl font-bold">${stats.monthlyRevenue.toLocaleString()}</div>

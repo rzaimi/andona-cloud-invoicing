@@ -17,12 +17,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { BreadcrumbItem, Invoice } from "@/types"
 import { route } from "ziggy-js"
+import { Pagination } from "@/components/pagination"
 
 interface InvoicesIndexProps {
     invoices: {
         data: Invoice[]
         links: any[]
-        meta: any
+        meta?: {
+            total: number
+            from: number
+            to: number
+            current_page: number
+            last_page: number
+        }
+        total?: number
     }
     filters: {
         search?: string
@@ -139,7 +147,7 @@ export default function InvoicesIndex() {
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Rechnungsverwaltung</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Rechnungsverwaltung</h1>
                         <p className="text-gray-600">Verwalten Sie Ihre Rechnungen und deren Status</p>
                     </div>
 
@@ -279,7 +287,7 @@ export default function InvoicesIndex() {
                 {/* Invoices Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Rechnungen ()</CardTitle>
+                        <CardTitle>Rechnungen ({stats.total})</CardTitle>
                         <CardDescription>Alle Rechnungen in Ihrem System</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -436,20 +444,7 @@ export default function InvoicesIndex() {
                         )}
 
                         {/* Pagination */}
-                        {invoices.links && invoices.links.length > 3 && (
-                            <div className="flex justify-center mt-6 gap-2">
-                                {invoices.links.map((link, index) => (
-                                    <Button
-                                        key={index}
-                                        variant={link.active ? "default" : "outline"}
-                                        size="sm"
-                                        disabled={!link.url}
-                                        onClick={() => link.url && router.get(link.url)}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                        <Pagination links={invoices.links || []} className="mt-6" />
                     </CardContent>
                 </Card>
             </div>

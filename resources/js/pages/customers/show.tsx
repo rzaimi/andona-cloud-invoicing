@@ -10,7 +10,7 @@ import {
     MapPin,
     Building,
     FileText,
-    Receipt,
+    EuroIcon,
     Euro,
     User,
     Hash,
@@ -134,7 +134,7 @@ export default function CustomerShow() {
                         </Button>
                         <Button variant="outline" asChild>
                             <Link href={`/invoices/create?customer_id=${customer.id}`}>
-                                <Receipt className="w-4 h-4 mr-2" />
+                                <EuroIcon className="w-4 h-4 mr-2" />
                                 Neue Rechnung
                             </Link>
                         </Button>
@@ -182,7 +182,7 @@ export default function CustomerShow() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Rechnungen</CardTitle>
-                            <Receipt className="h-4 w-4 text-muted-foreground" />
+                            <EuroIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.total_invoices}</div>
@@ -349,7 +349,7 @@ export default function CustomerShow() {
                                         </div>
                                     ) : (
                                         <div className="text-center py-8">
-                                            <Receipt className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                            <EuroIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                                             <h3 className="text-lg font-medium mb-2">Keine Rechnungen</h3>
                                             <p className="text-muted-foreground mb-4">
                                                 Für diesen Kunden wurden noch keine Rechnungen erstellt.

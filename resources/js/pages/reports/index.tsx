@@ -2,7 +2,7 @@
 
 import { Head } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, Euro, Users, Receipt, TrendingUp } from "lucide-react"
+import { BarChart3, Euro, Users, EuroIcon, TrendingUp } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 
@@ -93,7 +93,7 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Angebote</CardTitle>
-                            <Receipt className="h-4 w-4 text-muted-foreground" />
+                            <EuroIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.offers.accepted}</div>
@@ -139,7 +139,7 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
                     <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Receipt className="h-5 w-5" />
+                                <EuroIcon className="h-5 w-5" />
                                 Steuerberichte
                             </CardTitle>
                             <CardDescription>Steuerübersicht und MwSt-Berichte</CardDescription>

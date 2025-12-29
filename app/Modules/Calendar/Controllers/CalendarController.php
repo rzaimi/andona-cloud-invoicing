@@ -3,10 +3,12 @@
 namespace App\Modules\Calendar\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Offer\Models\Offer;
 use App\Services\ContextService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CalendarController extends Controller
@@ -35,6 +37,26 @@ class CalendarController extends Controller
     private function getCalendarEvents($companyId)
     {
         $events = collect();
+
+        // Custom calendar events from database
+        $customEvents = CalendarEvent::forCompany($companyId)
+            ->with('user:id,name')
+            ->get();
+
+        foreach ($customEvents as $event) {
+            $events->push([
+                'id' => $event->id,
+                'title' => $event->title,
+                'type' => $event->type,
+                'date' => $event->date->format('Y-m-d'),
+                'time' => $event->time,
+                'description' => $event->description,
+                'location' => $event->location,
+                'user' => $event->user->name ?? null,
+                'is_custom' => true,
+                'calendar_event_id' => $event->id,
+            ]);
+        }
 
         // Invoice due dates (include overdue and upcoming)
         $invoices = Invoice::where('company_id', $companyId)
@@ -101,16 +123,73 @@ class CalendarController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'type' => 'required|string',
+            'type' => 'required|string|in:appointment,invoice_due,offer_expiry,report,inventory',
             'date' => 'required|date',
-            'time' => 'required|string',
+            'time' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
             'description' => 'nullable|string',
+            'location' => 'nullable|string|max:255',
         ]);
 
-        // In a real application, you would store this in a calendar_events table
+        $companyId = $this->getEffectiveCompanyId();
+        $user = $request->user();
+
+        CalendarEvent::create([
+            'company_id' => $companyId,
+            'user_id' => $user->id,
+            'title' => $validated['title'],
+            'type' => $validated['type'],
+            'date' => $validated['date'],
+            'time' => $validated['time'],
+            'description' => $validated['description'] ?? null,
+            'location' => $validated['location'] ?? null,
+        ]);
 
         return redirect()->back()->with('success', 'Termin wurde erfolgreich erstellt.');
+    }
+
+    public function update(Request $request, CalendarEvent $event)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        
+        // Verify event belongs to company
+        if ($event->company_id !== $companyId) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|string|in:appointment,invoice_due,offer_expiry,report,inventory',
+            'date' => 'required|date',
+            'time' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'description' => 'nullable|string',
+            'location' => 'nullable|string|max:255',
+        ]);
+
+        $event->update([
+            'title' => $validated['title'],
+            'type' => $validated['type'],
+            'date' => $validated['date'],
+            'time' => $validated['time'],
+            'description' => $validated['description'] ?? null,
+            'location' => $validated['location'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', 'Termin wurde erfolgreich aktualisiert.');
+    }
+
+    public function destroy(CalendarEvent $event)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        
+        // Verify event belongs to company
+        if ($event->company_id !== $companyId) {
+            abort(403);
+        }
+
+        $event->delete();
+
+        return redirect()->back()->with('success', 'Termin wurde erfolgreich gelöscht.');
     }
 }
