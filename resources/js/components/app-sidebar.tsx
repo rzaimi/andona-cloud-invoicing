@@ -157,12 +157,19 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
         },
     ]
 
-    const customerManagement = [
+    // Compact: Main items only, rest in dropdowns
+    const quickActions = [
         {
-            title: "Alle Kunden",
-            url: "/customers",
-            icon: Users,
-            isActive: isActive("/customers"),
+            title: "Neue Rechnung",
+            url: "/invoices/create",
+            icon: Plus,
+            isActive: isActive("/invoices/create"),
+        },
+        {
+            title: "Neues Angebot",
+            url: "/offers/create",
+            icon: Plus,
+            isActive: isActive("/offers/create"),
         },
         {
             title: "Neuer Kunde",
@@ -172,44 +179,13 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
         },
     ]
 
-    const productManagement = [
-        {
-            title: "Alle Produkte",
-            url: "/products",
-            icon: Package,
-            isActive: isActive("/products"),
-            badge: stats?.products?.low_stock > 0 ? stats.products.low_stock : null,
-            badgeVariant: "destructive" as const,
-        },
-        {
-            title: "Neues Produkt",
-            url: "/products/create",
-            icon: Plus,
-            isActive: isActive("/products/create"),
-        },
-        {
-            title: "Kategorien",
-            url: "/categories",
-            icon: Tag,
-            isActive: isActive("/categories"),
-        },
-        {
-            title: "Lagerbestand",
-            url: "/warehouses",
-            icon: Warehouse,
-            isActive: isActive("/warehouses"),
-            badge: stats?.products?.out_of_stock > 0 ? stats.products.out_of_stock : null,
-            badgeVariant: "destructive" as const,
-        },
-    ]
-
     const invoiceManagement = [
         {
             title: "Alle Rechnungen",
             url: "/invoices",
             icon: ReceiptText,
             isActive: isActive("/invoices"),
-            badge: stats?.invoices?.draft > 0 ? stats.invoices.draft : null,
+            badge: stats?.invoices?.draft && stats.invoices.draft > 0 ? stats.invoices.draft : null,
         },
         {
             title: "Neue Rechnung",
@@ -222,8 +198,39 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             url: "/invoices?status=overdue",
             icon: AlertTriangle,
             isActive: url === "/invoices?status=overdue",
-            badge: stats?.invoices?.overdue > 0 ? stats.invoices.overdue : null,
+            badge: stats?.invoices?.overdue && stats.invoices.overdue > 0 ? stats.invoices.overdue : null,
             badgeVariant: "destructive" as const,
+        },
+    ]
+
+    const offerManagement = [
+        {
+            title: "Alle Angebote",
+            url: "/offers",
+            icon: FileText,
+            isActive: isActive("/offers"),
+            badge: stats?.offers?.draft && stats.offers.draft > 0 ? stats.offers.draft : null,
+        },
+        {
+            title: "Neues Angebot",
+            url: "/offers/create",
+            icon: Plus,
+            isActive: isActive("/offers/create"),
+        },
+    ]
+
+    const customerManagement = [
+        {
+            title: "Alle Kunden",
+            url: "/customers",
+            icon: Users,
+            isActive: isActive("/customers"),
+        },
+        {
+            title: "Neuer Kunde",
+            url: "/customers/create",
+            icon: Plus,
+            isActive: isActive("/customers/create"),
         },
     ]
 
@@ -263,19 +270,34 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
         },
     ]
 
-    const offerManagement = [
+    const productManagement = [
         {
-            title: "Alle Angebote",
-            url: "/offers",
-            icon: FileText,
-            isActive: isActive("/offers"),
-            badge: stats?.offers?.draft > 0 ? stats.offers.draft : null,
+            title: "Alle Produkte",
+            url: "/products",
+            icon: Package,
+            isActive: isActive("/products"),
+            badge: stats?.products?.low_stock && stats.products.low_stock > 0 ? stats.products.low_stock : null,
+            badgeVariant: "destructive" as const,
         },
         {
-            title: "Neues Angebot",
-            url: "/offers/create",
+            title: "Neues Produkt",
+            url: "/products/create",
             icon: Plus,
-            isActive: isActive("/offers/create"),
+            isActive: isActive("/products/create"),
+        },
+        {
+            title: "Kategorien",
+            url: "/categories",
+            icon: Tag,
+            isActive: isActive("/categories"),
+        },
+        {
+            title: "Lagerbestand",
+            url: "/warehouses",
+            icon: Warehouse,
+            isActive: isActive("/warehouses"),
+            badge: stats?.products?.out_of_stock && stats.products.out_of_stock > 0 ? stats.products.out_of_stock : null,
+            badgeVariant: "destructive" as const,
         },
     ]
 
@@ -530,244 +552,232 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
 
                 <SidebarSeparator />
 
-                {/* Customer Management */}
+                {/* Quick Actions - Most Used */}
                 <SidebarGroup>
-                    <SidebarGroupLabel>Kundenverwaltung</SidebarGroupLabel>
+                    <SidebarGroupLabel>Schnellzugriff</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {customerManagement.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton asChild isActive={item.isActive}>
-                                        <Link href={item.url}>
-                                            <item.icon />
-                                            <span className="truncate">{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
+                            <SidebarMenuItem>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <SidebarMenuButton>
+                                            <Plus />
+                                            <span>Neu erstellen</span>
+                                            <ChevronDown className="ml-auto" />
+                                        </SidebarMenuButton>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent side="right" align="start" className="w-48">
+                                        <DropdownMenuLabel>Erstellen</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {quickActions.map((item) => (
+                                            <DropdownMenuItem key={item.title} asChild>
+                                                <Link href={item.url}>
+                                                    <item.icon className="mr-2 h-4 w-4" />
+                                                    {item.title}
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
 
-                {/* Invoice Management */}
-                <Collapsible defaultOpen className="group/collapsible">
-                    <SidebarGroup>
-                        <SidebarGroupLabel asChild>
-                            <CollapsibleTrigger>
-                                Rechnungen
-                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                            </CollapsibleTrigger>
-                        </SidebarGroupLabel>
-                        <CollapsibleContent>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {invoiceManagement.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={item.isActive}>
-                                                <Link href={item.url} className="flex items-center min-w-0">
-                                                    <item.icon className="shrink-0" />
-                                                    <span className="truncate">{item.title}</span>
-                                                    {item.badge && (
-                                                        <Badge
-                                                            variant={item.badgeVariant || "secondary"}
-                                                            className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs"
-                                                        >
-                                                            {item.badge}
-                                                        </Badge>
-                                                    )}
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
+                {/* Core Modules - Always Visible */}
+                <SidebarGroup>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isActive("/invoices")}>
+                                    <Link href="/invoices" className="flex items-center min-w-0">
+                                        <ReceiptText className="shrink-0" />
+                                        <span className="truncate">Rechnungen</span>
+                                        {stats?.invoices?.draft && stats.invoices.draft > 0 && (
+                                            <Badge variant="secondary" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
+                                                {stats.invoices.draft}
+                                            </Badge>
+                                        )}
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isActive("/offers")}>
+                                    <Link href="/offers" className="flex items-center min-w-0">
+                                        <FileText className="shrink-0" />
+                                        <span className="truncate">Angebote</span>
+                                        {stats?.offers?.draft && stats.offers.draft > 0 && (
+                                            <Badge variant="secondary" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
+                                                {stats.offers.draft}
+                                            </Badge>
+                                        )}
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isActive("/customers")}>
+                                    <Link href="/customers">
+                                        <Users />
+                                        <span className="truncate">Kunden</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isActive("/payments")}>
+                                    <Link href="/payments">
+                                        <CreditCard />
+                                        <span className="truncate">Zahlungen</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isActive("/expenses")}>
+                                    <Link href="/expenses">
+                                        <ReceiptEuro />
+                                        <span className="truncate">Ausgaben</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
 
-                {/* Offer Management */}
-                <Collapsible defaultOpen className="group/collapsible">
-                    <SidebarGroup>
-                        <SidebarGroupLabel asChild>
-                            <CollapsibleTrigger>
-                                Angebote
-                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                            </CollapsibleTrigger>
-                        </SidebarGroupLabel>
-                        <CollapsibleContent>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {offerManagement.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={item.isActive}>
-                                                <Link href={item.url} className="flex items-center min-w-0">
-                                                    <item.icon className="shrink-0" />
-                                                    <span className="truncate">{item.title}</span>
-                                                    {item.badge && (
-                                                        <Badge
-                                                            variant="secondary"
-                                                            className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs"
-                                                        >
-                                                            {item.badge}
-                                                        </Badge>
-                                                    )}
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
+                <SidebarSeparator />
 
-                {/* Payment Management */}
-                <Collapsible defaultOpen className="group/collapsible">
-                    <SidebarGroup>
-                        <SidebarGroupLabel asChild>
-                            <CollapsibleTrigger>
-                                Zahlungen
-                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                            </CollapsibleTrigger>
-                        </SidebarGroupLabel>
-                        <CollapsibleContent>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {paymentManagement.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={item.isActive}>
-                                                <Link href={item.url} className="flex items-center min-w-0">
-                                                    <item.icon className="shrink-0" />
-                                                    <span className="truncate">{item.title}</span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
-
-                {/* Expense Management */}
+                {/* Secondary Modules - Collapsible */}
                 <Collapsible className="group/collapsible">
                     <SidebarGroup>
                         <SidebarGroupLabel asChild>
                             <CollapsibleTrigger>
-                                Ausgaben
+                                Weitere Module
                                 <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
                             </CollapsibleTrigger>
                         </SidebarGroupLabel>
                         <CollapsibleContent>
                             <SidebarGroupContent>
                                 <SidebarMenu>
-                                    {expenseManagement.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={item.isActive}>
-                                                <Link href={item.url} className="flex items-center min-w-0">
-                                                    <item.icon className="shrink-0" />
-                                                    <span className="truncate">{item.title}</span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton asChild isActive={isActive("/products")}>
+                                            <Link href="/products" className="flex items-center min-w-0">
+                                                <Package className="shrink-0" />
+                                                <span className="truncate">Produkte</span>
+                                                {stats?.products?.low_stock && stats.products.low_stock > 0 && (
+                                                    <Badge variant="destructive" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
+                                                        {stats.products.low_stock}
+                                                    </Badge>
+                                                )}
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton asChild isActive={isActive("/calendar")}>
+                                            <Link href="/calendar">
+                                                <Calendar />
+                                                <span className="truncate">Kalender</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton asChild isActive={isActive("/settings/documents")}>
+                                            <Link href="/settings/documents">
+                                                <Folder />
+                                                <span className="truncate">Dokumente</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
                                 </SidebarMenu>
                             </SidebarGroupContent>
                         </CollapsibleContent>
                     </SidebarGroup>
                 </Collapsible>
 
-                {/* Product Management */}
-                <Collapsible className="group/collapsible">
-                    <SidebarGroup>
-                        <SidebarGroupLabel asChild>
-                            <CollapsibleTrigger>
-                                Produktverwaltung
-                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                            </CollapsibleTrigger>
-                        </SidebarGroupLabel>
-                        <CollapsibleContent>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {productManagement.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={item.isActive}>
-                                                <Link href={item.url} className="flex items-center min-w-0">
-                                                    <item.icon className="shrink-0" />
-                                                    <span className="truncate">{item.title}</span>
-                                                    {item.badge && (
-                                                        <Badge
-                                                            variant={item.badgeVariant || "secondary"}
-                                                            className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs"
-                                                        >
-                                                            {item.badge}
-                                                        </Badge>
-                                                    )}
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
-
-                {/* Document Management */}
-                <Collapsible className="group/collapsible">
-                    <SidebarGroup>
-                        <SidebarGroupLabel asChild>
-                            <CollapsibleTrigger>
-                                Dokumente
-                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                            </CollapsibleTrigger>
-                        </SidebarGroupLabel>
-                        <CollapsibleContent>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {documentManagement.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={item.isActive}>
-                                                <Link href={item.url} className="flex items-center min-w-0">
-                                                    <item.icon className="shrink-0" />
-                                                    <span className="truncate">{item.title}</span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
-
-                {/* Reports & Analytics */}
-                <Collapsible className="group/collapsible">
-                    <SidebarGroup>
-                        <SidebarGroupLabel asChild>
-                            <CollapsibleTrigger>
-                                Berichte & Analysen
-                                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                            </CollapsibleTrigger>
-                        </SidebarGroupLabel>
-                        <CollapsibleContent>
-                            <SidebarGroupContent>
-                                <SidebarMenu>
-                                    {reportsAndAnalytics.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={item.isActive}>
+                {/* Reports - Dropdown */}
+                <SidebarGroup>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <SidebarMenuButton>
+                                            <BarChart3 />
+                                            <span>Berichte</span>
+                                            <ChevronDown className="ml-auto" />
+                                        </SidebarMenuButton>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent side="right" align="start" className="w-56">
+                                        <DropdownMenuLabel>Berichte & Analysen</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {reportsAndAnalytics.map((item) => (
+                                            <DropdownMenuItem key={item.title} asChild>
                                                 <Link href={item.url}>
-                                                    <item.icon />
-                                                    <span className="truncate">{item.title}</span>
+                                                    <item.icon className="mr-2 h-4 w-4" />
+                                                    {item.title}
                                                 </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </CollapsibleContent>
-                    </SidebarGroup>
-                </Collapsible>
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                {/* Settings & Admin - Dropdown */}
+                <SidebarGroup>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <SidebarMenuButton>
+                                            <Settings />
+                                            <span>Einstellungen</span>
+                                            <ChevronDown className="ml-auto" />
+                                        </SidebarMenuButton>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent side="right" align="start" className="w-56">
+                                        <DropdownMenuLabel>Einstellungen</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {settingsNavigation.map((item) => (
+                                            <DropdownMenuItem key={item.title} asChild>
+                                                <Link href={item.url}>
+                                                    <item.icon className="mr-2 h-4 w-4" />
+                                                    {item.title}
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        ))}
+                                        {((user.permissions?.includes("manage_users") || user.permissions?.includes("manage_companies")) || user.roles?.includes("super_admin")) && (
+                                            <>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuLabel>Administration</DropdownMenuLabel>
+                                                {adminNavigation.map((item) => {
+                                                    if (item.adminOnly && !user.permissions?.includes("manage_companies") && !user.roles?.includes("super_admin")) {
+                                                        return null
+                                                    }
+                                                    return (
+                                                        <DropdownMenuItem key={item.title} asChild>
+                                                            <Link href={item.url}>
+                                                                <item.icon className="mr-2 h-4 w-4" />
+                                                                {item.title}
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    )
+                                                })}
+                                            </>
+                                        )}
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/help">
+                                                <HelpCircle className="mr-2 h-4 w-4" />
+                                                Hilfe & Support
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
             </SidebarContent>
 
             <SidebarFooter>

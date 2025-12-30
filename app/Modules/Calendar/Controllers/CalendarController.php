@@ -127,7 +127,7 @@ class CalendarController extends Controller
             'title' => 'required|string|max:255',
             'type' => 'required|string|in:appointment,invoice_due,offer_expiry,report,inventory',
             'date' => 'required|date',
-            'time' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'time' => ['required', 'string', 'regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/'],
             'description' => 'nullable|string',
             'location' => 'nullable|string|max:255',
         ]);
@@ -162,7 +162,7 @@ class CalendarController extends Controller
             'title' => 'required|string|max:255',
             'type' => 'required|string|in:appointment,invoice_due,offer_expiry,report,inventory',
             'date' => 'required|date',
-            'time' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'time' => ['required', 'string', 'regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/'],
             'description' => 'nullable|string',
             'location' => 'nullable|string|max:255',
         ]);

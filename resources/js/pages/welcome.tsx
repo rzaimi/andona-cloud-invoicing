@@ -1,257 +1,797 @@
-import { Head, Link } from '@inertiajs/react';
-import { FileText, Users, BarChart3, Mail, Clock, Shield, CheckCircle2, ArrowRight, Zap, TrendingUp, Building2 } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
+import { route } from 'ziggy-js';
+import {
+    FileText,
+    ReceiptText,
+    Users,
+    Mail,
+    CreditCard,
+    BarChart3,
+    Calendar,
+    ArrowRight,
+    CheckCircle2,
+    TrendingUp,
+    Shield,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface WelcomeProps {
     canLogin: boolean;
 }
 
 export default function Welcome({ canLogin }: WelcomeProps) {
+    const [impressumOpen, setImpressumOpen] = useState(false);
+    const [datenschutzOpen, setDatenschutzOpen] = useState(false);
+    const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+
+    const demoForm = useForm({
+        name: '',
+        email: '',
+        company: '',
+        phone: '',
+        message: '',
+    });
+
     return (
         <>
-            <Head title="Professionelle Rechnungsverwaltung" />
-            <div className="min-h-screen bg-blue-600">
-                {/* Decorative Background Elements */}
-                <div className="fixed inset-0 overflow-hidden pointer-events-none">
+            <Head title="AndoBill – Rechnungs- und Verwaltungssoftware" />
+            <div
+                className="min-h-screen text-white relative overflow-hidden"
+                style={{
+                    background: '#0B4194',
+                }}
+            >
+                {/* Decorative Elements */}
+                <div className="absolute inset-0">
                     <div className="absolute top-20 left-20 h-72 w-72 rounded-full bg-white/10 blur-3xl"></div>
                     <div className="absolute bottom-20 right-20 h-96 w-96 rounded-full bg-white/10 blur-3xl"></div>
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-white/5 blur-3xl"></div>
                 </div>
-
-                {/* Navigation */}
-                <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/20 bg-white/10 backdrop-blur-xl">
-                    <div className="container mx-auto px-4">
-                        <div className="flex h-16 items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm shadow-lg">
-                                    <FileText className="h-6 w-6 text-white" />
+                {/* Header */}
+                <header className="sticky top-0 z-10 backdrop-blur-md border-b border-white/12 relative" style={{ background: 'rgba(11,65,148,.85)' }}>
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
+                        <nav className="flex items-center justify-between py-4 gap-4">
+                            <Link href="#top" className="flex items-center gap-3 font-bold tracking-wide">
+                                <div
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                    style={{
+                                        background: '#0B4194',
+                                        boxShadow: '0 10px 24px rgba(11,65,148,.35)',
+                                    }}
+                                >
+                                    <FileText className="h-5 w-5 text-white" />
                                 </div>
-                                <span className="text-2xl font-bold text-white">
-                                    AndoBill
-                                </span>
-                            </div>
-                            {canLogin && (
-                                <Link href="/login">
-                                    <Button size="lg" className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-lg">
-                                        Anmelden
-                                        <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Button>
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                </nav>
+                                <span>AndoBill</span>
+                            </Link>
 
-                {/* Hero Section */}
-                <section className="relative overflow-hidden pt-32 pb-20">
-                    <div className="container relative mx-auto px-4">
-                        <div className="mx-auto max-w-4xl text-center text-white">
-                            <div className="mb-6 inline-flex items-center rounded-full border border-white/30 bg-white/10 px-6 py-2.5 text-base font-medium backdrop-blur-sm shadow-lg">
-                                <Shield className="mr-2 h-5 w-5" />
-                                Sichere und zuverlässige Rechnungsverwaltung
+                            <div className="hidden md:flex items-center gap-4 text-sm text-white/80">
+                                <a href="#leistungen" className="hover:text-white transition-colors">
+                                    Leistungen
+                                </a>
+                                <a href="#zielgruppe" className="hover:text-white transition-colors">
+                                    Für wen?
+                                </a>
+                                <a href="#vorteile" className="hover:text-white transition-colors">
+                                    Vorteile
+                                </a>
+                                <a href="#starten" className="hover:text-white transition-colors">
+                                    Starten
+                                </a>
                             </div>
-                            
-                            <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
-                                Professionelle
-                                <span className="block">
-                                    Rechnungsverwaltung
-                                </span>
-                            </h1>
-                            
-                            <p className="mb-10 text-xl leading-relaxed text-white/90">
-                                Erstellen, versenden und verwalten Sie Ihre Rechnungen effizient und sicher. 
-                                Mit AndoBill haben Sie alles unter Kontrolle.
-                            </p>
 
                             {canLogin && (
-                                <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-                                    <Link href="/login">
-                                        <Button size="lg" className="h-14 px-8 text-lg bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 shadow-xl">
-                                            Jetzt starten
-                                            <ArrowRight className="ml-2 h-5 w-5" />
-                                        </Button>
+                                <div className="flex items-center gap-2.5">
+                                    <a
+                                        href="#leistungen"
+                                        className="px-4 py-3 rounded-xl border border-white/12 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:bg-white/10 hover:border-white/18"
+                                        style={{ background: 'rgba(255,255,255,.06)' }}
+                                    >
+                                        Mehr erfahren
+                                    </a>
+                                    <Link
+                                        href="/login"
+                                        className="px-4 py-3 rounded-xl border border-white/12 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:bg-white/10 hover:border-white/18"
+                                        style={{
+                                            background: '#0B4194',
+                                            boxShadow: '0 16px 40px rgba(11,65,148,.32)',
+                                        }}
+                                    >
+                                        Jetzt starten
                                     </Link>
                                 </div>
                             )}
-
-                            <div className="mt-16 grid gap-6 sm:grid-cols-3">
-                                <div className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-sm transition-all hover:bg-white/20">
-                                    <div className="mb-2 inline-flex rounded-lg bg-white/20 p-2.5 shadow-lg">
-                                        <TrendingUp className="h-6 w-6" />
-                                    </div>
-                                    <div className="text-3xl font-bold">99.9%</div>
-                                    <div className="mt-2 text-sm text-white/80">Verfügbarkeit</div>
-                                </div>
-                                <div className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-sm transition-all hover:bg-white/20">
-                                    <div className="mb-2 inline-flex rounded-lg bg-white/20 p-2.5 shadow-lg">
-                                        <Shield className="h-6 w-6" />
-                                    </div>
-                                    <div className="text-3xl font-bold">DSGVO</div>
-                                    <div className="mt-2 text-sm text-white/80">Konform</div>
-                                </div>
-                                <div className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-sm transition-all hover:bg-white/20">
-                                    <div className="mb-2 inline-flex rounded-lg bg-white/20 p-2.5 shadow-lg">
-                                        <Clock className="h-6 w-6" />
-                                    </div>
-                                    <div className="text-3xl font-bold">24/7</div>
-                                    <div className="mt-2 text-sm text-white/80">Verfügbar</div>
-                                </div>
-                            </div>
-                        </div>
+                        </nav>
                     </div>
-                </section>
+                </header>
 
-                {/* Features Section */}
-                <section className="relative py-20">
-                    <div className="container mx-auto px-4">
-                        <div className="mb-16 text-center text-white">
-                            <h2 className="mb-4 text-4xl font-bold">
-                                Alles was Sie brauchen
-                            </h2>
-                            <p className="text-xl text-white/90">
-                                Umfassende Funktionen für Ihre Rechnungsverwaltung
-                            </p>
+                <main id="top" className="relative z-10">
+                    {/* Hero Section */}
+                    <section className="py-16 sm:py-20">
+                        <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
+                            <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8 items-center">
+                                <div>
+                                    <div
+                                        className="inline-flex items-center gap-2.5 text-xs text-white/80 border border-white/12 rounded-full px-3 py-2 mb-3.5"
+                                        style={{ background: 'rgba(255,255,255,.05)' }}
+                                    >
+                                        <span
+                                            className="w-2.5 h-2.5 rounded-full"
+                                            style={{
+                                                background: '#0B4194',
+                                                boxShadow: '0 0 0 4px rgba(11,65,148,.15)',
+                                            }}
+                                        />
+                                        <span>Rechnungen, Angebote, Zahlungen und Reports – zentral verwalten</span>
+                                    </div>
+
+                                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-2.5" style={{ letterSpacing: '-0.6px' }}>
+                                        Die smarte Rechnungs- und Verwaltungssoftware für Ihr Unternehmen
+                                    </h1>
+
+                                    <p className="text-base sm:text-lg text-white/80 mb-5 max-w-[58ch] leading-relaxed">
+                                        <strong>AndoBill</strong> unterstützt Sie dabei, Ihre kaufmännischen Prozesse effizient, übersichtlich und professionell zu verwalten –
+                                        von der Dokumentenerstellung bis zur Auswertung von Umsätzen und Ausgaben.
+                                    </p>
+
+                                    <div className="flex flex-wrap gap-3 mt-5">
+                                        {canLogin && (
+                                            <Link
+                                                href="/login"
+                                                className="px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-105 text-white"
+                                                style={{
+                                                    background: '#0B4194',
+                                                    boxShadow: '0 16px 40px rgba(11,65,148,.32)',
+                                                }}
+                                            >
+                                                Jetzt mit AndoBill starten
+                                            </Link>
+                                        )}
+                                        <a
+                                            href="#leistungen"
+                                            className="px-4 py-3 rounded-xl border border-white/12 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:bg-white/10 hover:border-white/18"
+                                            style={{ background: 'rgba(255,255,255,.06)' }}
+                                        >
+                                            Leistungen ansehen
+                                        </a>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-4 mt-4 text-xs text-white/80">
+                                        <div
+                                            className="flex items-center gap-2.5 px-3 py-2.5 border border-white/12 rounded-xl"
+                                            style={{ background: 'rgba(255,255,255,.04)' }}
+                                        >
+                                            <ReceiptText className="w-4.5 h-4.5 text-white" />
+                                            <span>Professionelle Dokumente</span>
+                                        </div>
+                                        <div
+                                            className="flex items-center gap-2.5 px-3 py-2.5 border border-white/12 rounded-xl"
+                                            style={{ background: 'rgba(255,255,255,.04)' }}
+                                        >
+                                            <CreditCard className="w-4.5 h-4.5 text-white" />
+                                            <span>Übersicht über Zahlungen</span>
+                                        </div>
+                                        <div
+                                            className="flex items-center gap-2.5 px-3 py-2.5 border border-white/12 rounded-xl"
+                                            style={{ background: 'rgba(255,255,255,.04)' }}
+                                        >
+                                            <BarChart3 className="w-4.5 h-4.5 text-white" />
+                                            <span>Reports zu Umsatz & Ausgaben</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Hero Preview Card */}
+                                <aside
+                                    className="border border-white/12 rounded-[18px] p-4.5"
+                                    style={{
+                                        background: 'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))',
+                                        boxShadow: '0 18px 60px rgba(0,0,0,.35)',
+                                    }}
+                                >
+                                    <h3 className="text-base font-semibold mb-2">Vorschau: Geschäft im Blick</h3>
+                                    <p className="text-sm text-white/80 mb-3.5">Einfacher Überblick über Dokumente, Zahlungen und Kennzahlen.</p>
+
+                                    <div
+                                        className="border border-dashed border-white/22 rounded-2xl p-3.5"
+                                        style={{ background: 'rgba(11,18,32,.35)' }}
+                                    >
+                                        <div className="flex items-center justify-between py-2.5 border-b border-white/8 gap-3">
+                                            <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                                Rechnung #2025-0148
+                                            </span>
+                                            <span className="font-bold tracking-wide">1.240,00 €</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-2.5 border-b border-white/8 gap-3">
+                                            <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                                Status
+                                            </span>
+                                            <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                                Teilzahlung
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-2.5 border-b border-white/8 gap-3">
+                                            <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                                Offen
+                                            </span>
+                                            <span className="font-bold tracking-wide">340,00 €</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-2.5 gap-3">
+                                            <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                                Nächste Fälligkeit
+                                            </span>
+                                            <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                                03.01.2026
+                                            </span>
+                                        </div>
+                                    </div>
+                                </aside>
+                            </div>
                         </div>
+                    </section>
 
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {/* Feature 1 */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-8 shadow-xl backdrop-blur-sm transition-all hover:bg-white/20">
-                                <div className="relative">
-                                    <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 shadow-lg">
-                                        <FileText className="h-7 w-7 text-white" />
-                                    </div>
-                                    <h3 className="mb-3 text-xl font-semibold text-white">
-                                        Rechnungen & Angebote
-                                    </h3>
-                                    <p className="text-white/80 text-base">
-                                        Professionelle Dokumente in Sekunden erstellen
-                                    </p>
-                                </div>
+                    {/* Why Section */}
+                    <section className="py-11">
+                        <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
+                            <div className="mb-4.5">
+                                <h2 className="text-2xl font-bold mb-0" style={{ letterSpacing: '-0.2px' }}>
+                                    Warum AndoBill?
+                                </h2>
+                                <p className="text-white/80 text-[15px] max-w-[70ch] mt-0">
+                                    AndoBill wurde für Unternehmen entwickelt, die eine moderne, intuitive und leistungsstarke Lösung für die tägliche Verwaltung benötigen.
+                                    Weniger Aufwand, mehr Übersicht und ein professioneller Außenauftritt.
+                                </p>
                             </div>
 
-                            {/* Feature 2 */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-8 shadow-xl backdrop-blur-sm transition-all hover:bg-white/20">
-                                <div className="relative">
-                                    <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 shadow-lg">
-                                        <Users className="h-7 w-7 text-white" />
-                                    </div>
-                                    <h3 className="mb-3 text-xl font-semibold text-white">
-                                        Kundenverwaltung
-                                    </h3>
-                                    <p className="text-white/80 text-base">
-                                        Zentrale Verwaltung mit Historie und schnellem Zugriff
-                                    </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div
+                                    className="border border-white/12 rounded-[18px] p-4.5"
+                                    style={{ background: 'rgba(255,255,255,.04)' }}
+                                >
+                                    <h3 className="text-base font-semibold mb-2">Fokus auf Effizienz</h3>
+                                    <ul className="list-disc list-inside text-white/80 text-sm space-y-2 ml-0 pl-4">
+                                        <li>Klare Prozesse statt komplizierter Workflows</li>
+                                        <li>Schneller Zugriff auf alle relevanten Informationen</li>
+                                        <li>Übersichtliche Status- und Historienansichten</li>
+                                    </ul>
                                 </div>
-                            </div>
-
-                            {/* Feature 3 */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-8 shadow-xl backdrop-blur-sm transition-all hover:bg-white/20">
-                                <div className="relative">
-                                    <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 shadow-lg">
-                                        <Mail className="h-7 w-7 text-white" />
-                                    </div>
-                                    <h3 className="mb-3 text-xl font-semibold text-white">
-                                        E-Mail Versand
-                                    </h3>
-                                    <p className="text-white/80 text-base">
-                                        Direkter Versand per E-Mail mit professionellen Vorlagen
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Feature 4 */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-8 shadow-xl backdrop-blur-sm transition-all hover:bg-white/20">
-                                <div className="relative">
-                                    <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 shadow-lg">
-                                        <ArrowRight className="h-7 w-7 text-white" />
-                                    </div>
-                                    <h3 className="mb-3 text-xl font-semibold text-white">
-                                        Automatisches Mahnwesen
-                                    </h3>
-                                    <p className="text-white/80 text-base">
-                                        Rechtssicherer Mahnprozess nach deutschem Standard
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Feature 5 */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-8 shadow-xl backdrop-blur-sm transition-all hover:bg-white/20">
-                                <div className="relative">
-                                    <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 shadow-lg">
-                                        <BarChart3 className="h-7 w-7 text-white" />
-                                    </div>
-                                    <h3 className="mb-3 text-xl font-semibold text-white">
-                                        Auswertungen & Reports
-                                    </h3>
-                                    <p className="text-white/80 text-base">
-                                        Umfassende Statistiken zu Umsätzen und offenen Posten
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Feature 6 */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-8 shadow-xl backdrop-blur-sm transition-all hover:bg-white/20">
-                                <div className="relative">
-                                    <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 shadow-lg">
-                                        <Zap className="h-7 w-7 text-white" />
-                                    </div>
-                                    <h3 className="mb-3 text-xl font-semibold text-white">
-                                        Schnell & Effizient
-                                    </h3>
-                                    <p className="text-white/80 text-base">
-                                        Moderne Benutzeroberfläche für maximale Produktivität
-                                    </p>
+                                <div
+                                    className="border border-white/12 rounded-[18px] p-4.5"
+                                    style={{ background: 'rgba(255,255,255,.04)' }}
+                                >
+                                    <h3 className="text-base font-semibold mb-2">Skalierbar für Wachstum</h3>
+                                    <ul className="list-disc list-inside text-white/80 text-sm space-y-2 ml-0 pl-4">
+                                        <li>Geeignet für Selbstständige bis KMU</li>
+                                        <li>Strukturierte Datenbasis für Auswertungen</li>
+                                        <li>Professionelles Auftreten gegenüber Kunden</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                {/* Call to Action Section */}
-                <section className="relative py-20">
-                    <div className="container mx-auto px-4">
-                        <div className="mx-auto max-w-4xl text-center">
-                            <div className="relative overflow-hidden rounded-3xl border border-white/30 bg-white/10 p-12 shadow-2xl backdrop-blur-md">
-                                <div className="relative text-white">
-                                    <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 shadow-lg">
-                                        <Building2 className="h-8 w-8" />
-                                    </div>
-                                    <h2 className="mb-4 text-4xl font-bold">Starten Sie noch heute</h2>
-                                    <p className="mb-8 text-xl text-white/90">
-                                        Verbessern Sie Ihre Rechnungsverwaltung mit AndoBill und konzentrieren Sie sich auf Ihr Kerngeschäft.
+                    {/* Features Section */}
+                    <section id="leistungen" className="py-11">
+                        <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
+                            <div className="mb-4.5">
+                                <h2 className="text-2xl font-bold mb-0" style={{ letterSpacing: '-0.2px' }}>
+                                    Leistungen
+                                </h2>
+                                <p className="text-white/80 text-[15px] max-w-[70ch] mt-0">
+                                    Von Rechnungen und Angeboten über Zahlungsverwaltung bis hin zu Reports und Kalender – AndoBill bündelt Ihre wichtigsten Funktionen in einer Plattform.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {[
+                                    {
+                                        icon: ReceiptText,
+                                        title: 'Rechnungen & Angebote',
+                                        tagline: 'Professionelle Dokumente in Sekunden erstellen',
+                                        description: 'Erstellen Sie Dokumente schnell, einheitlich und übersichtlich – mit klaren Statusansichten.',
+                                        bullets: ['Schnelle Erstellung & Verwaltung', 'Professionelles Layout', 'Status: Entwurf, gesendet, bezahlt'],
+                                    },
+                                    {
+                                        icon: Users,
+                                        title: 'Kundenverwaltung',
+                                        tagline: 'Zentrale Verwaltung mit Historie und schnellem Zugriff',
+                                        description: 'Alle Kundendaten inklusive Vorgangshistorie zentral organisiert – für maximale Transparenz.',
+                                        bullets: ['Zentrale Kundendatenbank', 'Historie zu Dokumenten & Zahlungen', 'Schnelle Suche & Zugriff'],
+                                    },
+                                    {
+                                        icon: Mail,
+                                        title: 'E-Mail Versand',
+                                        tagline: 'Direkter Versand per E-Mail mit professionellen Vorlagen',
+                                        description: 'Versenden Sie Dokumente direkt aus dem System – einheitlich, professionell und effizient.',
+                                        bullets: ['Vorlagen für E-Mails', 'Dokumente automatisch anhängen', 'Einheitlicher Markenauftritt'],
+                                    },
+                                    {
+                                        icon: CreditCard,
+                                        title: 'Zahlungsverwaltung',
+                                        tagline: 'Verwalten Sie Teil- und Vollzahlungen einfach und übersichtlich',
+                                        description: 'Behalten Sie offene Posten im Blick und verwalten Sie Teil- sowie Vollzahlungen strukturiert.',
+                                        bullets: ['Teil- & Vollzahlungen', 'Status und Restbeträge im Blick', 'Übersichtliche Offene-Posten-Liste'],
+                                    },
+                                    {
+                                        icon: BarChart3,
+                                        title: 'Auswertungen & Reports',
+                                        tagline: 'Umfassende Statistiken zu Umsätzen und Ausgaben',
+                                        description: 'Nutzen Sie aussagekräftige Auswertungen als Grundlage für Entscheidungen und Planung.',
+                                        bullets: ['Umsatzübersichten', 'Ausgaben & Kostenkontrolle', 'Zeitraum-basierte Reports'],
+                                    },
+                                    {
+                                        icon: Calendar,
+                                        title: 'Kalender & Termine',
+                                        tagline: 'Behalten Sie Fälligkeiten und Termine im Überblick',
+                                        description: 'Verpassen Sie keine Fristen: Fälligkeiten, Termine und To-dos zentral im Blick.',
+                                        bullets: ['Fälligkeiten übersichtlich dargestellt', 'Terminverwaltung & Erinnerungen', 'Besserer Überblick im Alltag'],
+                                    },
+                                ].map((feature, idx) => {
+                                    const IconComponent = feature.icon;
+                                    return (
+                                        <article
+                                        key={idx}
+                                        className="border border-white/12 rounded-[18px] p-4.5 transition-all hover:translate-y-[-2px] hover:bg-white/6 hover:border-white/18"
+                                        style={{ background: 'rgba(255,255,255,.04)' }}
+                                    >
+                                        <div className="flex gap-3 items-start mb-2">
+                                            <div
+                                                className="w-10 h-10 rounded-xl flex items-center justify-center border"
+                                                style={{
+                                                    background: 'rgba(11,65,148,.18)',
+                                                    borderColor: 'rgba(11,65,148,.25)',
+                                                }}
+                                            >
+                                                <IconComponent className="h-5 w-5 text-white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-base font-semibold mb-0">{feature.title}</h3>
+                                                <p className="text-xs text-white/70 mt-0.5 mb-0">„{feature.tagline}"</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-white/80 mt-2.5 mb-0">{feature.description}</p>
+                                        <ul className="list-disc list-inside text-sm text-white/80 mt-3 mb-0 pl-4.5 space-y-1.5">
+                                            {feature.bullets.map((bullet, i) => (
+                                                <li key={i}>{bullet}</li>
+                                            ))}
+                                        </ul>
+                                    </article>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Audience Section */}
+                    <section id="zielgruppe" className="py-11">
+                        <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
+                            <div className="mb-4.5">
+                                <h2 className="text-2xl font-bold mb-0" style={{ letterSpacing: '-0.2px' }}>
+                                    Für wen ist AndoBill geeignet?
+                                </h2>
+                                <p className="text-white/80 text-[15px] max-w-[70ch] mt-0">
+                                    AndoBill passt sich an Ihre Arbeitsweise an – ideal für Unternehmen, die Struktur, Übersicht und professionelle Dokumente benötigen.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div
+                                    className="border border-white/12 rounded-[18px] p-4.5"
+                                    style={{ background: 'rgba(255,255,255,.04)' }}
+                                >
+                                    <h3 className="text-base font-semibold mb-2">Zielgruppen</h3>
+                                    <ul className="list-disc list-inside text-sm text-white/80 space-y-2 ml-0 pl-4">
+                                        <li>Selbstständige & Freelancer</li>
+                                        <li>Kleine und mittelständische Unternehmen</li>
+                                        <li>Dienstleister & Agenturen</li>
+                                        <li>Startups mit Wachstumspotenzial</li>
+                                    </ul>
+                                </div>
+                                <div
+                                    id="vorteile"
+                                    className="border border-white/12 rounded-[18px] p-4.5"
+                                    style={{ background: 'rgba(255,255,255,.04)' }}
+                                >
+                                    <h3 className="text-base font-semibold mb-2">Ihr Vorteil mit AndoBill</h3>
+                                    <ul className="list-disc list-inside text-sm text-white/80 space-y-2 ml-0 pl-4">
+                                        <li>Weniger Verwaltungsaufwand</li>
+                                        <li>Mehr Zeit für Ihr Kerngeschäft</li>
+                                        <li>Professioneller Außenauftritt</li>
+                                        <li>Volle Kontrolle über Einnahmen & Ausgaben</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* CTA Section */}
+                    <section id="starten" className="py-11 pb-16">
+                        <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
+                            <div
+                                className="border rounded-3xl p-5.5 flex flex-wrap items-center justify-between gap-4"
+                                style={{
+                                    borderColor: 'rgba(255,255,255,.16)',
+                                    background: 'rgba(11,65,148,.18)',
+                                    boxShadow: '0 18px 60px rgba(0,0,0,.35)',
+                                }}
+                            >
+                                <div className="max-w-[70ch]">
+                                    <h2 className="text-2xl font-bold mb-1.5">Jetzt mit AndoBill starten</h2>
+                                    <p className="text-white/80 mb-0">
+                                        Machen Sie Ihre Rechnungs- und Verwaltungsprozesse einfacher, schneller und transparenter.
+                                        AndoBill – Einfach. Übersichtlich. Professionell.
                                     </p>
+                                </div>
+                                <div className="flex flex-wrap gap-2.5">
                                     {canLogin && (
-                                        <Link href="/login">
-                                            <Button size="lg" className="h-14 px-8 text-lg bg-white text-blue-600 hover:bg-gray-100 shadow-xl">
-                                                Zur Anmeldung
-                                                <ArrowRight className="ml-2 h-5 w-5" />
-                                            </Button>
-                                        </Link>
+                                        <button
+                                            onClick={() => setDemoDialogOpen(true)}
+                                            className="px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-105"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #2f7df6, #00c2ff)',
+                                                boxShadow: '0 16px 40px rgba(47,125,246,.32)',
+                                                color: '#071225',
+                                            }}
+                                        >
+                                            Demo anfragen
+                                        </button>
                                     )}
+                                    <a
+                                        href="#leistungen"
+                                        className="px-4 py-3 rounded-xl border border-white/12 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:bg-white/10 hover:border-white/18"
+                                        style={{ background: 'rgba(255,255,255,.06)' }}
+                                    >
+                                        Leistungen ansehen
+                                    </a>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                </main>
 
                 {/* Footer */}
-                <footer className="relative border-t border-white/20 bg-white/5 py-12 backdrop-blur-xl">
-                    <div className="container mx-auto px-4">
-                        <div className="flex flex-col items-center justify-between gap-6 text-white md:flex-row">
-                            <div className="flex items-center space-x-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 shadow-lg">
-                                    <FileText className="h-6 w-6" />
-                                </div>
-                                <span className="text-xl font-bold">
-                                    AndoBill
-                                </span>
+                <footer className="border-t border-white/12 py-4.5 text-sm text-white/80 relative z-10">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
+                        <div className="flex flex-wrap justify-between items-center gap-2.5">
+                            <div>
+                                <strong>AndoBill</strong> – Rechnungs- und Verwaltungssoftware
                             </div>
-                            <p className="text-sm text-white/70">
-                                © {new Date().getFullYear()} AndoBill. Alle Rechte vorbehalten.
-                            </p>
+                            <div className="flex items-center gap-4">
+                                <span>© {new Date().getFullYear()} AndoBill. Alle Rechte vorbehalten.</span>
+                                <button
+                                    onClick={() => setImpressumOpen(true)}
+                                    className="text-white/80 hover:text-white transition-colors cursor-pointer"
+                                >
+                                    Impressum
+                                </button>
+                                <span className="text-white/30">|</span>
+                                <button
+                                    onClick={() => setDatenschutzOpen(true)}
+                                    className="text-white/80 hover:text-white transition-colors cursor-pointer"
+                                >
+                                    Datenschutz
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </footer>
+
+                {/* Impressum Modal */}
+                <Dialog open={impressumOpen} onOpenChange={setImpressumOpen}>
+                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Impressum</DialogTitle>
+                            <DialogDescription>Angaben gemäß § 5 TMG</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-6 text-sm text-gray-700">
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">Verantwortlich für den Inhalt nach § 10 Absatz 3 MDStV:</h3>
+                                <p className="mb-4">
+                                    <strong>Andona GmbH</strong>
+                                    <br />
+                                    Bahnhofstraße 16
+                                    <br />
+                                    63571 Gelnhausen
+                                    <br />
+                                    Deutschland
+                                </p>
+                                <p className="mb-2">
+                                    E-Mail: <a href="mailto:info@andona.de" className="text-blue-600 hover:underline">info@andona.de</a>
+                                    <br />
+                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a>
+                                    <br />
+                                    Fax: +49 (0) 6051 – 53 83 659
+                                </p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">Rechtliche Angaben:</h3>
+                                <p className="mb-2">
+                                    USt-IdNr.: DE369264419
+                                    <br />
+                                    St. Nr.: 019 228 35202
+                                    <br />
+                                    Finanzamt: Gelnhausen
+                                    <br />
+                                    Amtsgericht: Hanau, HRB 100017
+                                    <br />
+                                    Geschäftsführer: Lirim Ziberi
+                                </p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">Entwicklung & Implementierung:</h3>
+                                <p className="mb-2">
+                                    <strong>Andona Cloud</strong>
+                                    <br />
+                                    Digitale Webagentur
+                                    <br />
+                                    Gohlstraße 1
+                                    <br />
+                                    70597 Stuttgart
+                                    <br />
+                                    Deutschland
+                                </p>
+                                <p className="mb-2">
+                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a>
+                                    <br />
+                                    E-Mail: <a href="mailto:info@andona-cloud.de" className="text-blue-600 hover:underline">info@andona-cloud.de</a>
+                                    <br />
+                                    Website:{' '}
+                                    <a href="https://andona-cloud.de" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                        https://andona-cloud.de
+                                    </a>
+                                </p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">Haftungsausschluss:</h3>
+                                <div className="space-y-3">
+                                    <div>
+                                        <h4 className="font-medium text-gray-900 mb-1">Haftung für Inhalte</h4>
+                                        <p>
+                                            Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-medium text-gray-900 mb-1">Haftung für Links</h4>
+                                        <p>
+                                            Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen Einfluss haben. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-medium text-gray-900 mb-1">Urheberrecht</h4>
+                                        <p>
+                                            Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Datenschutz Modal */}
+                <Dialog open={datenschutzOpen} onOpenChange={setDatenschutzOpen}>
+                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Datenschutzerklärung</DialogTitle>
+                            <DialogDescription>Informationen gemäß Art. 13 DSGVO</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-6 text-sm text-gray-700">
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">1. Datenschutz auf einen Blick</h3>
+                                <div className="space-y-3">
+                                    <div>
+                                        <h4 className="font-medium text-gray-900 mb-1">Allgemeine Hinweise</h4>
+                                        <p>
+                                            Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">2. Verantwortliche Stelle</h3>
+                                <p className="mb-4">Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:</p>
+                                <p className="mb-2">
+                                    <strong>Andona GmbH</strong>
+                                    <br />
+                                    Bahnhofstraße 16
+                                    <br />
+                                    63571 Gelnhausen
+                                    <br />
+                                    Deutschland
+                                </p>
+                                <p>
+                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a>
+                                    <br />
+                                    E-Mail: <a href="mailto:info@andona.de" className="text-blue-600 hover:underline">info@andona.de</a>
+                                </p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">3. Datenerfassung auf dieser Website</h3>
+                                <div className="space-y-3">
+                                    <div>
+                                        <h4 className="font-medium text-gray-900 mb-1">Cookies</h4>
+                                        <p>
+                                            Die Internetseiten verwenden teilweise so genannte Cookies. Cookies richten auf Ihrem Rechner keinen Schaden an und enthalten keine Viren. Cookies dienen dazu, unser Angebot nutzerfreundlicher, effektiver und sicherer zu machen.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-medium text-gray-900 mb-1">Server-Log-Dateien</h4>
+                                        <p>
+                                            Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien, die Ihr Browser automatisch an uns übermittelt. Dies sind: Browsertyp und Browserversion, verwendetes Betriebssystem, Referrer URL, Hostname des zugreifenden Rechners, Uhrzeit der Serveranfrage, IP-Adresse.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">4. Ihre Rechte</h3>
+                                <p className="mb-2">Sie haben jederzeit das Recht:</p>
+                                <ul className="list-disc list-inside space-y-1 ml-2">
+                                    <li>Auskunft über Ihre bei uns gespeicherten personenbezogenen Daten zu erhalten</li>
+                                    <li>Berichtigung unrichtiger Daten zu verlangen</li>
+                                    <li>Löschung Ihrer bei uns gespeicherten Daten zu verlangen</li>
+                                    <li>Einschränkung der Datenverarbeitung zu verlangen</li>
+                                    <li>Widerspruch gegen die Verarbeitung Ihrer Daten einzulegen</li>
+                                    <li>Datenübertragbarkeit zu verlangen</li>
+                                    <li>Beschwerde bei einer Aufsichtsbehörde einzulegen</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold text-gray-900 mb-2">5. Technische Umsetzung</h3>
+                                <p>
+                                    Diese Anwendung wurde entwickelt und implementiert von <strong>Andona Cloud</strong>, einer digitalen Webagentur in Stuttgart. Weitere Informationen finden Sie unter{' '}
+                                    <a href="https://andona-cloud.de" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                        https://andona-cloud.de
+                                    </a>
+                                    .
+                                </p>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Demo Request Dialog */}
+                <Dialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen}>
+                    <DialogContent className="sm:max-w-[500px] bg-[#0f1a2e] border-white/12">
+                        <DialogHeader>
+                            <DialogTitle className="text-white">Demo anfragen</DialogTitle>
+                            <DialogDescription className="text-white/80">
+                                Füllen Sie das Formular aus und wir melden uns bei Ihnen für eine persönliche Demo.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                demoForm.post(route('contact.demo'), {
+                                    preserveScroll: true,
+                                    onSuccess: () => {
+                                        setDemoDialogOpen(false);
+                                        demoForm.reset();
+                                    },
+                                });
+                            }}
+                            className="space-y-4"
+                        >
+                            <div className="space-y-2">
+                                <Label htmlFor="demo-name" className="text-white">
+                                    Name *
+                                </Label>
+                                <Input
+                                    id="demo-name"
+                                    value={demoForm.data.name}
+                                    onChange={(e) => demoForm.setData('name', e.target.value)}
+                                    placeholder="Ihr Name"
+                                    required
+                                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                                />
+                                {demoForm.errors.name && (
+                                    <p className="text-sm text-red-400">{demoForm.errors.name}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="demo-email" className="text-white">
+                                    E-Mail *
+                                </Label>
+                                <Input
+                                    id="demo-email"
+                                    type="email"
+                                    value={demoForm.data.email}
+                                    onChange={(e) => demoForm.setData('email', e.target.value)}
+                                    placeholder="ihre@email.de"
+                                    required
+                                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                                />
+                                {demoForm.errors.email && (
+                                    <p className="text-sm text-red-400">{demoForm.errors.email}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="demo-company" className="text-white">
+                                    Unternehmen *
+                                </Label>
+                                <Input
+                                    id="demo-company"
+                                    value={demoForm.data.company}
+                                    onChange={(e) => demoForm.setData('company', e.target.value)}
+                                    placeholder="Ihr Unternehmen"
+                                    required
+                                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                                />
+                                {demoForm.errors.company && (
+                                    <p className="text-sm text-red-400">{demoForm.errors.company}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="demo-phone" className="text-white">
+                                    Telefon
+                                </Label>
+                                <Input
+                                    id="demo-phone"
+                                    type="tel"
+                                    value={demoForm.data.phone}
+                                    onChange={(e) => demoForm.setData('phone', e.target.value)}
+                                    placeholder="+49 123 456789"
+                                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                                />
+                                {demoForm.errors.phone && (
+                                    <p className="text-sm text-red-400">{demoForm.errors.phone}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="demo-message" className="text-white">
+                                    Nachricht
+                                </Label>
+                                <Textarea
+                                    id="demo-message"
+                                    value={demoForm.data.message}
+                                    onChange={(e) => demoForm.setData('message', e.target.value)}
+                                    placeholder="Haben Sie spezielle Fragen oder Anforderungen?"
+                                    rows={4}
+                                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                                />
+                                {demoForm.errors.message && (
+                                    <p className="text-sm text-red-400">{demoForm.errors.message}</p>
+                                )}
+                            </div>
+
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setDemoDialogOpen(false);
+                                        demoForm.reset();
+                                    }}
+                                    className="border-white/20 text-white hover:bg-white/10"
+                                >
+                                    Abbrechen
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={demoForm.processing}
+                                    className="text-white hover:opacity-90"
+                                    style={{ background: '#0B4194' }}
+                                >
+                                    {demoForm.processing ? 'Wird gesendet...' : 'Anfrage senden'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </>
     );

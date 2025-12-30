@@ -40,7 +40,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             
             <div className="flex min-h-screen">
                 {/* Left Side - 70% Image/Branding */}
-                <div className="hidden lg:flex lg:w-[70%] relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700">
+                <div className="hidden lg:flex lg:w-[70%] relative overflow-hidden" style={{ background: '#0B4194' }}>
                     {/* Decorative Elements */}
                     <div className="absolute inset-0">
                         <div className="absolute top-20 left-20 h-72 w-72 rounded-full bg-white/10 blur-3xl"></div>
@@ -99,10 +99,10 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     <div className="w-full max-w-md space-y-8">
                         {/* Mobile Logo */}
                         <div className="lg:hidden flex items-center justify-center space-x-3 mb-8">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl shadow-lg" style={{ background: '#0B4194' }}>
                                 <FileText className="h-6 w-6 text-white" />
                             </div>
-                            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-2xl font-bold text-transparent">
+                            <span className="text-2xl font-bold" style={{ color: '#0B4194' }}>
                                 AndoBill
                             </span>
                         </div>
@@ -187,7 +187,8 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             {/* Submit Button */}
                             <Button 
                                 type="submit" 
-                                className="w-full h-12 text-base font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg" 
+                                className="w-full h-12 text-base font-medium text-white shadow-lg hover:opacity-90" 
+                                style={{ background: '#0B4194' }}
                                 tabIndex={4} 
                                 disabled={processing}
                             >

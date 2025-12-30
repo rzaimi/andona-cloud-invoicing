@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Plus, Search, Edit, Trash2, Eye, Building2, Users, Receipt, FileText } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Eye, Building2, Users, EuroIcon, FileText } from "lucide-react"
 import type { Company, User, PaginatedResponse } from "@/types"
 
 interface CompanyWithStats extends Company {

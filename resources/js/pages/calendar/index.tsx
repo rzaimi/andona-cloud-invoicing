@@ -23,6 +23,8 @@ import {
     CheckCircle,
     Filter,
     Download,
+    Edit,
+    Trash2,
 } from "lucide-react"
 
 interface CalendarEvent {
@@ -35,9 +37,12 @@ interface CalendarEvent {
     amount?: number
     status?: string
     description?: string
+    location?: string
     invoice_id?: string
     offer_id?: string
     recurring?: string
+    is_custom?: boolean
+    calendar_event_id?: string
 }
 
 interface CalendarProps {
@@ -51,12 +56,24 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
     const [selectedView, setSelectedView] = useState("month")
     const [selectedFilter, setSelectedFilter] = useState("all")
     const [createDialogOpen, setCreateDialogOpen] = useState(false)
+    const [editDialogOpen, setEditDialogOpen] = useState(false)
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
 
     const { data, setData, post, processing, errors, reset } = useForm({
         title: "",
         type: "appointment",
         date: new Date().toISOString().split("T")[0],
         time: "09:00",
+        description: "",
+        location: "",
+    })
+
+    const editForm = useForm({
+        title: "",
+        type: "appointment",
+        date: "",
+        time: "",
         description: "",
         location: "",
     })
@@ -167,13 +184,33 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                     <div className="space-y-1">
                         {dayEvents.slice(0, 2).map((event) => {
                             const eventType = eventTypes[event.type as keyof typeof eventTypes]
+                            const canEdit = event.is_custom && event.calendar_event_id
                             return (
                                 <div
                                     key={event.id}
-                                    className={`text-xs p-1 rounded truncate ${eventType.color} text-white`}
+                                    className={`text-xs p-1 rounded truncate ${eventType.color} text-white cursor-pointer hover:opacity-80 transition-opacity group/item relative`}
                                     title={event.title}
+                                    onClick={() => {
+                                        if (canEdit) {
+                                            setSelectedEvent(event)
+                                            editForm.setData({
+                                                title: event.title,
+                                                type: event.type,
+                                                date: event.date,
+                                                time: event.time,
+                                                description: event.description || "",
+                                                location: event.location || "",
+                                            })
+                                            setEditDialogOpen(true)
+                                        }
+                                    }}
                                 >
                                     {event.title}
+                                    {canEdit && (
+                                        <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                            <Edit className="h-2.5 w-2.5 text-white" />
+                                        </div>
+                                    )}
                                 </div>
                             )
                         })}
@@ -339,9 +376,10 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                                 {upcomingEvents.map((event) => {
                                     const eventType = eventTypes[event.type as keyof typeof eventTypes]
                                     const EventIcon = eventType.icon
+                                    const canEdit = event.is_custom && event.calendar_event_id
 
                                     return (
-                                        <div key={event.id} className="flex items-start space-x-3 p-3 rounded-lg border">
+                                        <div key={event.id} className="flex items-start space-x-3 p-3 rounded-lg border group">
                                             <div className={`p-1 rounded ${eventType.color}`}>
                                                 <EventIcon className="h-4 w-4 text-white" />
                                             </div>
@@ -350,11 +388,46 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                                                 <p className="text-xs text-muted-foreground">
                                                     {formatDate(event.date)} um {formatTime(event.time)}
                                                 </p>
+                                                {event.location && <p className="text-xs text-muted-foreground">📍 {event.location}</p>}
                                                 {event.customer && <p className="text-xs text-muted-foreground">{event.customer}</p>}
                                                 {event.amount && (
                                                     <p className="text-xs font-medium text-green-600">{formatCurrency(event.amount)}</p>
                                                 )}
                                             </div>
+                                            {canEdit && (
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 w-7 p-0"
+                                                        onClick={() => {
+                                                            setSelectedEvent(event)
+                                                            editForm.setData({
+                                                                title: event.title,
+                                                                type: event.type,
+                                                                date: event.date,
+                                                                time: event.time,
+                                                                description: event.description || "",
+                                                                location: event.location || "",
+                                                            })
+                                                            setEditDialogOpen(true)
+                                                        }}
+                                                    >
+                                                        <Edit className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                                        onClick={() => {
+                                                            setSelectedEvent(event)
+                                                            setDeleteDialogOpen(true)
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </div>
                                     )
                                 })}
@@ -430,6 +503,7 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                                     onSuccess: () => {
                                         reset()
                                         setCreateDialogOpen(false)
+                                        router.reload({ only: ['events'] })
                                     },
                                 })
                             }}
@@ -527,6 +601,174 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                                 </Button>
                             </div>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Edit Event Dialog */}
+                <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                    <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                            <DialogTitle>Termin bearbeiten</DialogTitle>
+                            <DialogDescription>
+                                Bearbeiten Sie die Termindetails
+                            </DialogDescription>
+                        </DialogHeader>
+                        {selectedEvent && (
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault()
+                                    editForm.put(route("calendar.update", selectedEvent.calendar_event_id || selectedEvent.id), {
+                                        onSuccess: () => {
+                                            setEditDialogOpen(false)
+                                            setSelectedEvent(null)
+                                            router.reload({ only: ['events'] })
+                                        },
+                                    })
+                                }}
+                                className="space-y-4"
+                            >
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-title">Titel *</Label>
+                                    <Input
+                                        id="edit-title"
+                                        value={editForm.data.title}
+                                        onChange={(e) => editForm.setData("title", e.target.value)}
+                                        placeholder="z.B. Kundenbesuch, Meeting, etc."
+                                        required
+                                    />
+                                    {editForm.errors.title && <p className="text-sm text-red-600">{editForm.errors.title}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-type">Typ *</Label>
+                                    <Select value={editForm.data.type} onValueChange={(value) => editForm.setData("type", value)}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="appointment">Termin</SelectItem>
+                                            <SelectItem value="report">Bericht</SelectItem>
+                                            <SelectItem value="inventory">Lager</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {editForm.errors.type && <p className="text-sm text-red-600">{editForm.errors.type}</p>}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-date">Datum *</Label>
+                                        <Input
+                                            id="edit-date"
+                                            type="date"
+                                            value={editForm.data.date}
+                                            onChange={(e) => editForm.setData("date", e.target.value)}
+                                            required
+                                        />
+                                        {editForm.errors.date && <p className="text-sm text-red-600">{editForm.errors.date}</p>}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-time">Uhrzeit *</Label>
+                                        <Input
+                                            id="edit-time"
+                                            type="time"
+                                            value={editForm.data.time}
+                                            onChange={(e) => editForm.setData("time", e.target.value)}
+                                            required
+                                        />
+                                        {editForm.errors.time && <p className="text-sm text-red-600">{editForm.errors.time}</p>}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-location">Ort</Label>
+                                    <Input
+                                        id="edit-location"
+                                        value={editForm.data.location}
+                                        onChange={(e) => editForm.setData("location", e.target.value)}
+                                        placeholder="z.B. Büro, Kundenstandort, etc."
+                                    />
+                                    {editForm.errors.location && <p className="text-sm text-red-600">{editForm.errors.location}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-description">Beschreibung</Label>
+                                    <Textarea
+                                        id="edit-description"
+                                        value={editForm.data.description}
+                                        onChange={(e) => editForm.setData("description", e.target.value)}
+                                        placeholder="Zusätzliche Informationen zum Termin..."
+                                        rows={3}
+                                    />
+                                    {editForm.errors.description && <p className="text-sm text-red-600">{editForm.errors.description}</p>}
+                                </div>
+
+                                <div className="flex justify-end gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setEditDialogOpen(false)
+                                            setSelectedEvent(null)
+                                        }}
+                                    >
+                                        Abbrechen
+                                    </Button>
+                                    <Button type="submit" disabled={editForm.processing}>
+                                        {editForm.processing ? "Wird gespeichert..." : "Speichern"}
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Delete Confirmation Dialog */}
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <DialogContent className="sm:max-w-[400px]">
+                        <DialogHeader>
+                            <DialogTitle>Termin löschen</DialogTitle>
+                            <DialogDescription>
+                                Möchten Sie diesen Termin wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                            </DialogDescription>
+                        </DialogHeader>
+                        {selectedEvent && (
+                            <div className="space-y-4">
+                                <div className="p-3 bg-muted rounded-lg">
+                                    <p className="font-medium">{selectedEvent.title}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {formatDate(selectedEvent.date)} um {formatTime(selectedEvent.time)}
+                                    </p>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setDeleteDialogOpen(false)
+                                            setSelectedEvent(null)
+                                        }}
+                                    >
+                                        Abbrechen
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        onClick={() => {
+                                            router.delete(route("calendar.destroy", selectedEvent.calendar_event_id || selectedEvent.id), {
+                                                onSuccess: () => {
+                                                    setDeleteDialogOpen(false)
+                                                    setSelectedEvent(null)
+                                                    router.reload({ only: ['events'] })
+                                                },
+                                            })
+                                        }}
+                                    >
+                                        Löschen
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </DialogContent>
                 </Dialog>
             </div>
