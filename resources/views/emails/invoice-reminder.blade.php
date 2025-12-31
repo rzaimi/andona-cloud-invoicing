@@ -6,123 +6,117 @@
     <title>Zahlungserinnerung - Rechnung {{ $invoice->number }}</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: #1a1a1a;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 40px 20px;
+            background-color: #ffffff;
         }
         .email-container {
             background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0;
         }
         .header {
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #f59e0b;
-            margin-bottom: 30px;
+            margin-bottom: 48px;
         }
         .header h1 {
-            color: #f59e0b;
-            margin: 0;
-            font-size: 24px;
+            color: #1a1a1a;
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
         }
         .company-name {
-            font-size: 18px;
+            font-size: 13px;
             color: #666;
-            margin-top: 5px;
-        }
-        .urgent-badge {
-            background-color: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        .urgent-badge.overdue {
-            background-color: #fee2e2;
-            border-left-color: #ef4444;
-        }
-        .urgent-badge h3 {
-            margin: 0 0 10px 0;
-            color: #d97706;
-            font-size: 16px;
-        }
-        .urgent-badge.overdue h3 {
-            color: #dc2626;
+            font-weight: 400;
         }
         .content {
-            margin-bottom: 30px;
+            margin-bottom: 48px;
+        }
+        .content p {
+            margin: 0 0 20px 0;
+            color: #1a1a1a;
+            font-size: 15px;
+        }
+        .notice {
+            padding: 20px 0;
+            margin: 32px 0;
+            font-size: 14px;
+        }
+        .notice.overdue {
+            color: #991b1b;
         }
         .invoice-details {
-            background-color: #f8f9fa;
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            margin: 20px 0;
+            background-color: transparent;
+            padding: 0;
+            margin: 32px 0;
         }
         .invoice-details table {
             width: 100%;
             border-collapse: collapse;
         }
         .invoice-details td {
-            padding: 8px 0;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .invoice-details tr:last-child td {
+            border-bottom: none;
         }
         .invoice-details td:first-child {
-            font-weight: 600;
-            color: #555;
-            width: 40%;
-        }
-        .amount-due {
-            background-color: #fef3c7;
-            border: 2px solid #f59e0b;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .amount-due .label {
-            font-size: 14px;
-            color: #92400e;
-            margin-bottom: 5px;
-        }
-        .amount-due .amount {
-            font-size: 32px;
-            font-weight: bold;
-            color: #d97706;
-        }
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            font-size: 12px;
+            font-weight: 400;
             color: #666;
+        }
+        .invoice-details td:last-child {
+            text-align: right;
+            color: #1a1a1a;
+        }
+        .amount-highlight {
+            padding: 24px 0;
             text-align: center;
+            margin: 32px 0;
         }
-        .button {
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #3b82f6;
-            color: #ffffff !important;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-weight: 600;
-        }
-        .contact-info {
-            margin-top: 20px;
+        .amount-highlight .label {
             font-size: 13px;
             color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .amount-highlight .amount {
+            font-size: 36px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        .footer {
+            margin-top: 64px;
+            padding-top: 32px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 12px;
+            color: #999;
+            line-height: 1.6;
+        }
+        .footer p {
+            margin: 0 0 4px 0;
+        }
+        .contact-info {
+            margin-top: 32px;
+            font-size: 13px;
+            color: #666;
+        }
+        .contact-info p {
+            margin: 0 0 6px 0;
         }
     </style>
 </head>
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>⏰ Zahlungserinnerung</h1>
+            <h1>Zahlungserinnerung</h1>
             <div class="company-name">{{ $company->name }}</div>
         </div>
 
@@ -137,16 +131,14 @@
             @endphp
 
             @if($isOverdue)
-                <div class="urgent-badge overdue">
-                    <h3>🚨 Zahlungsverzug</h3>
-                    <p style="margin: 0;">Die Rechnung ist seit {{ abs($daysOverdue) }} Tag{{ abs($daysOverdue) != 1 ? 'en' : '' }} überfällig.</p>
+                <div class="notice overdue">
+                    Die Rechnung ist seit {{ abs($daysOverdue) }} Tag{{ abs($daysOverdue) != 1 ? 'en' : '' }} überfällig.
                 </div>
 
                 <p>leider haben wir bisher keine Zahlung für die nachstehende Rechnung erhalten. Sollte die Zahlung bereits erfolgt sein, betrachten Sie diese E-Mail bitte als gegenstandslos.</p>
             @else
-                <div class="urgent-badge">
-                    <h3>📌 Freundliche Erinnerung</h3>
-                    <p style="margin: 0;">Die Zahlung ist in {{ $daysOverdue }} Tag{{ $daysOverdue != 1 ? 'en' : '' }} fällig.</p>
+                <div class="notice">
+                    Die Zahlung ist in {{ $daysOverdue }} Tag{{ $daysOverdue != 1 ? 'en' : '' }} fällig.
                 </div>
 
                 <p>dies ist eine freundliche Erinnerung an die bevorstehende Zahlung für die nachfolgende Rechnung.</p>
@@ -155,27 +147,27 @@
             <div class="invoice-details">
                 <table>
                     <tr>
-                        <td>Rechnungsnummer:</td>
+                        <td>Rechnungsnummer</td>
                         <td>{{ $invoice->number }}</td>
                     </tr>
                     <tr>
-                        <td>Rechnungsdatum:</td>
+                        <td>Rechnungsdatum</td>
                         <td>{{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}</td>
                     </tr>
                     <tr>
-                        <td>Fälligkeitsdatum:</td>
-                        <td><strong>{{ $dueDate->format('d.m.Y') }}</strong></td>
+                        <td>Fälligkeitsdatum</td>
+                        <td>{{ $dueDate->format('d.m.Y') }}</td>
                     </tr>
                     @if($isOverdue)
                     <tr>
-                        <td style="color: #dc2626;"><strong>Tage überfällig:</strong></td>
-                        <td style="color: #dc2626;"><strong>{{ abs($daysOverdue) }} Tag{{ abs($daysOverdue) != 1 ? 'e' : '' }}</strong></td>
+                        <td>Tage überfällig</td>
+                        <td style="color: #991b1b;"><strong>{{ abs($daysOverdue) }} Tag{{ abs($daysOverdue) != 1 ? 'e' : '' }}</strong></td>
                     </tr>
                     @endif
                 </table>
             </div>
 
-            <div class="amount-due">
+            <div class="amount-highlight">
                 <div class="label">Offener Betrag</div>
                 <div class="amount">{{ number_format($invoice->total, 2, ',', '.') }} €</div>
             </div>
@@ -184,10 +176,6 @@
                 <p><strong>Bitte überweisen Sie den Betrag umgehend</strong> auf das in der Rechnung angegebene Konto. Die Rechnung finden Sie im Anhang dieser E-Mail.</p>
                 
                 <p>Falls Sie Fragen zur Rechnung haben oder bereits eine Zahlung veranlasst haben, informieren Sie uns bitte umgehend.</p>
-                
-                <p style="color: #dc2626; font-size: 14px; background: #fee2e2; padding: 10px; border-radius: 4px;">
-                    <strong>Hinweis:</strong> Bei weiterer Zahlungsverzögerung behalten wir uns vor, Mahngebühren zu erheben und gegebenenfalls rechtliche Schritte einzuleiten.
-                </p>
             @else
                 <p>Bitte überweisen Sie den Betrag bis zum <strong>{{ $dueDate->format('d.m.Y') }}</strong> auf das in der Rechnung angegebene Konto. Die Rechnung finden Sie im Anhang dieser E-Mail.</p>
             @endif
@@ -202,12 +190,11 @@
         </div>
 
         <div class="contact-info">
-            <p><strong>Bei Fragen kontaktieren Sie uns:</strong></p>
             @if($company->email)
-            <p><strong>E-Mail:</strong> {{ $company->email }}</p>
+            <p>{{ $company->email }}</p>
             @endif
             @if($company->phone)
-            <p><strong>Telefon:</strong> {{ $company->phone }}</p>
+            <p>{{ $company->phone }}</p>
             @endif
         </div>
 
@@ -226,5 +213,3 @@
     </div>
 </body>
 </html>
-
-

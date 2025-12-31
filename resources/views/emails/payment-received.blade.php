@@ -6,133 +6,113 @@
     <title>Zahlungsbestätigung - Rechnung {{ $invoice->number }}</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: #1a1a1a;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 40px 20px;
+            background-color: #ffffff;
         }
         .email-container {
             background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0;
         }
         .header {
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #22c55e;
-            margin-bottom: 30px;
+            margin-bottom: 48px;
         }
         .header h1 {
-            color: #22c55e;
-            margin: 0;
-            font-size: 24px;
+            color: #1a1a1a;
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
         }
         .company-name {
-            font-size: 18px;
+            font-size: 13px;
             color: #666;
-            margin-top: 5px;
-        }
-        .success-badge {
-            background-color: #d1fae5;
-            border-left: 4px solid #22c55e;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 4px;
-            text-align: center;
-        }
-        .success-badge .icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-        .success-badge h3 {
-            margin: 0 0 5px 0;
-            color: #15803d;
-            font-size: 18px;
+            font-weight: 400;
         }
         .content {
-            margin-bottom: 30px;
+            margin-bottom: 48px;
+        }
+        .content p {
+            margin: 0 0 20px 0;
+            color: #1a1a1a;
+            font-size: 15px;
         }
         .payment-details {
-            background-color: #f8f9fa;
-            border-left: 4px solid #22c55e;
-            padding: 15px;
-            margin: 20px 0;
+            background-color: transparent;
+            padding: 0;
+            margin: 32px 0;
         }
         .payment-details table {
             width: 100%;
             border-collapse: collapse;
         }
         .payment-details td {
-            padding: 8px 0;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .payment-details tr:last-child td {
+            border-bottom: none;
         }
         .payment-details td:first-child {
-            font-weight: 600;
-            color: #555;
-            width: 40%;
+            font-weight: 400;
+            color: #666;
+        }
+        .payment-details td:last-child {
+            text-align: right;
+            color: #1a1a1a;
         }
         .amount-paid {
-            background-color: #d1fae5;
-            border: 2px solid #22c55e;
-            border-radius: 8px;
-            padding: 20px;
+            padding: 24px 0;
             text-align: center;
-            margin: 20px 0;
+            margin: 32px 0;
         }
         .amount-paid .label {
-            font-size: 14px;
-            color: #15803d;
-            margin-bottom: 5px;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .amount-paid .amount {
-            font-size: 32px;
-            font-weight: bold;
-            color: #16a34a;
+            font-size: 36px;
+            font-weight: 600;
+            color: #1a1a1a;
         }
         .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
+            margin-top: 64px;
+            padding-top: 32px;
+            border-top: 1px solid #f0f0f0;
             font-size: 12px;
-            color: #666;
-            text-align: center;
+            color: #999;
+            line-height: 1.6;
+        }
+        .footer p {
+            margin: 0 0 4px 0;
         }
         .contact-info {
-            margin-top: 20px;
+            margin-top: 32px;
             font-size: 13px;
             color: #666;
         }
-        .thank-you-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .thank-you-box h3 {
-            margin: 0 0 10px 0;
-            font-size: 20px;
+        .contact-info p {
+            margin: 0 0 6px 0;
         }
     </style>
 </head>
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>✅ Zahlungsbestätigung</h1>
+            <h1>Zahlungsbestätigung</h1>
             <div class="company-name">{{ $company->name }}</div>
         </div>
 
         <div class="content">
-            <div class="success-badge">
-                <div class="icon">✓</div>
-                <h3>Zahlung erfolgreich eingegangen</h3>
-                <p style="margin: 5px 0 0 0; color: #15803d;">Vielen Dank für Ihre pünktliche Zahlung!</p>
-            </div>
-
             <p>Sehr geehrte Damen und Herren{{ $invoice->customer ? ' von ' . $invoice->customer->name : '' }},</p>
             
             <p>wir freuen uns, Ihnen bestätigen zu können, dass Ihre Zahlung für die nachstehende Rechnung bei uns eingegangen ist.</p>
@@ -140,20 +120,20 @@
             <div class="payment-details">
                 <table>
                     <tr>
-                        <td>Rechnungsnummer:</td>
+                        <td>Rechnungsnummer</td>
                         <td>{{ $invoice->number }}</td>
                     </tr>
                     <tr>
-                        <td>Rechnungsdatum:</td>
+                        <td>Rechnungsdatum</td>
                         <td>{{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}</td>
                     </tr>
                     <tr>
-                        <td>Zahlungseingang:</td>
+                        <td>Zahlungseingang</td>
                         <td>{{ $paymentDate ?? \Carbon\Carbon::now()->format('d.m.Y') }}</td>
                     </tr>
                     <tr>
-                        <td>Status:</td>
-                        <td><strong style="color: #16a34a;">✓ Bezahlt</strong></td>
+                        <td><strong>Status</strong></td>
+                        <td><strong>Bezahlt</strong></td>
                     </tr>
                 </table>
             </div>
@@ -169,10 +149,7 @@
             <p>Eine detaillierte Zahlungsbestätigung finden Sie im Anhang dieser E-Mail.</p>
             @endif
 
-            <div class="thank-you-box">
-                <h3>🙏 Herzlichen Dank!</h3>
-                <p style="margin: 0;">Wir schätzen Ihre Zuverlässigkeit und freuen uns auf die weitere Zusammenarbeit mit Ihnen.</p>
-            </div>
+            <p>Vielen Dank für Ihre pünktliche Zahlung. Wir freuen uns auf die weitere Zusammenarbeit mit Ihnen.</p>
 
             <p>Falls Sie Fragen haben oder weitere Informationen benötigen, stehen wir Ihnen gerne zur Verfügung.</p>
 
@@ -181,13 +158,13 @@
 
         <div class="contact-info">
             @if($company->email)
-            <p><strong>E-Mail:</strong> {{ $company->email }}</p>
+            <p>{{ $company->email }}</p>
             @endif
             @if($company->phone)
-            <p><strong>Telefon:</strong> {{ $company->phone }}</p>
+            <p>{{ $company->phone }}</p>
             @endif
             @if($company->website)
-            <p><strong>Website:</strong> {{ $company->website }}</p>
+            <p>{{ $company->website }}</p>
             @endif
         </div>
 
@@ -206,5 +183,3 @@
     </div>
 </body>
 </html>
-
-

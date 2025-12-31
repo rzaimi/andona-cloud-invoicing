@@ -6,88 +6,85 @@
     <title>Angebot {{ $offer->number }}</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: #1a1a1a;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 40px 20px;
+            background-color: #ffffff;
         }
         .email-container {
             background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0;
         }
         .header {
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #22c55e;
-            margin-bottom: 30px;
+            margin-bottom: 48px;
         }
         .header h1 {
-            color: #22c55e;
-            margin: 0;
-            font-size: 24px;
+            color: #1a1a1a;
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
         }
         .company-name {
-            font-size: 18px;
+            font-size: 13px;
             color: #666;
-            margin-top: 5px;
+            font-weight: 400;
         }
         .content {
-            margin-bottom: 30px;
+            margin-bottom: 48px;
+        }
+        .content p {
+            margin: 0 0 20px 0;
+            color: #1a1a1a;
+            font-size: 15px;
         }
         .offer-details {
-            background-color: #f8f9fa;
-            border-left: 4px solid #22c55e;
-            padding: 15px;
-            margin: 20px 0;
+            background-color: transparent;
+            padding: 0;
+            margin: 32px 0;
         }
         .offer-details table {
             width: 100%;
             border-collapse: collapse;
         }
         .offer-details td {
-            padding: 8px 0;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .offer-details tr:last-child td {
+            border-bottom: none;
         }
         .offer-details td:first-child {
-            font-weight: 600;
-            color: #555;
-            width: 40%;
+            font-weight: 400;
+            color: #666;
+        }
+        .offer-details td:last-child {
+            text-align: right;
+            color: #1a1a1a;
         }
         .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
+            margin-top: 64px;
+            padding-top: 32px;
+            border-top: 1px solid #f0f0f0;
             font-size: 12px;
-            color: #666;
-            text-align: center;
+            color: #999;
+            line-height: 1.6;
         }
-        .button {
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #22c55e;
-            color: #ffffff !important;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-weight: 600;
-        }
-        .button:hover {
-            background-color: #16a34a;
+        .footer p {
+            margin: 0 0 4px 0;
         }
         .contact-info {
-            margin-top: 20px;
+            margin-top: 32px;
             font-size: 13px;
             color: #666;
         }
-        .highlight {
-            background-color: #fef3c7;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
+        .contact-info p {
+            margin: 0 0 6px 0;
         }
     </style>
 </head>
@@ -106,26 +103,22 @@
             <div class="offer-details">
                 <table>
                     <tr>
-                        <td>Angebotsnummer:</td>
+                        <td>Angebotsnummer</td>
                         <td>{{ $offer->number }}</td>
                     </tr>
                     <tr>
-                        <td>Angebotsdatum:</td>
+                        <td>Angebotsdatum</td>
                         <td>{{ \Carbon\Carbon::parse($offer->issue_date)->format('d.m.Y') }}</td>
                     </tr>
                     <tr>
-                        <td>Gültig bis:</td>
+                        <td>Gültig bis</td>
                         <td>{{ \Carbon\Carbon::parse($offer->valid_until)->format('d.m.Y') }}</td>
                     </tr>
                     <tr>
-                        <td><strong>Gesamtbetrag:</strong></td>
+                        <td><strong>Gesamtbetrag</strong></td>
                         <td><strong>{{ number_format($offer->total, 2, ',', '.') }} €</strong></td>
                     </tr>
                 </table>
-            </div>
-
-            <div class="highlight">
-                <p style="margin: 0;"><strong>⏰ Dieses Angebot ist gültig bis zum {{ \Carbon\Carbon::parse($offer->valid_until)->format('d.m.Y') }}</strong></p>
             </div>
 
             @if($offer->notes)
@@ -141,13 +134,13 @@
 
         <div class="contact-info">
             @if($company->email)
-            <p><strong>E-Mail:</strong> {{ $company->email }}</p>
+            <p>{{ $company->email }}</p>
             @endif
             @if($company->phone)
-            <p><strong>Telefon:</strong> {{ $company->phone }}</p>
+            <p>{{ $company->phone }}</p>
             @endif
             @if($company->website)
-            <p><strong>Website:</strong> {{ $company->website }}</p>
+            <p>{{ $company->website }}</p>
             @endif
         </div>
 
@@ -166,5 +159,3 @@
     </div>
 </body>
 </html>
-
-

@@ -6,61 +6,132 @@
     <title>1. Mahnung</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #1a1a1a;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
+            background: #ffffff;
         }
         .header {
-            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            border-radius: 10px 10px 0 0;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.02em;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            color: #d97706;
+            margin: 0;
         }
         .content {
-            background: #ffffff;
-            padding: 30px;
-            border: 1px solid #e0e0e0;
+            color: #1a1a1a;
+            font-size: 15px;
         }
-        .warning-box {
-            background: #fff3cd;
-            border-left: 4px solid #f39c12;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
+        .content p {
+            margin: 0 0 16px 0;
         }
-        .invoice-details {
-            background: #f8f9fa;
+        .notice {
+            background: #fffbeb;
             padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        .amount {
-            font-size: 32px;
-            font-weight: bold;
-            color: #e67e22;
-            margin: 10px 0;
-        }
-        .footer {
-            background: #f8f9fa;
-            padding: 20px;
-            text-align: center;
-            border-radius: 0 0 10px 10px;
-            color: #666;
+            margin: 24px 0;
             font-size: 14px;
         }
-        .important {
-            color: #e74c3c;
-            font-weight: bold;
+        .notice strong {
+            color: #d97706;
+        }
+        .invoice-details {
+            background: #fafafa;
+            padding: 24px;
+            margin: 32px 0;
+        }
+        .invoice-details table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .invoice-details td {
+            padding: 10px 0;
+            font-size: 14px;
+        }
+        .invoice-details td:first-child {
+            color: #666;
+        }
+        .invoice-details td:last-child {
+            text-align: right;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+        .amount-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e5e5;
+        }
+        .amount-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+        .amount-row.total {
+            padding-top: 16px;
+            border-top: 2px solid #1a1a1a;
+            margin-top: 16px;
+        }
+        .amount-label {
+            color: #666;
+        }
+        .amount-row.total .amount-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #1a1a1a;
+        }
+        .amount-value {
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        .amount-row.total .amount-value {
+            font-size: 28px;
+            color: #d97706;
+        }
+        .payment-info {
+            background: #fafafa;
+            padding: 20px;
+            margin: 32px 0;
+            font-size: 14px;
+        }
+        .payment-info div {
+            margin: 4px 0;
+            color: #1a1a1a;
+        }
+        .payment-info .label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        .footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e5e5;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>⚠️ 1. Mahnung</h1>
+        <h1>1. Mahnung</h1>
+        <p class="subtitle">Zahlungserinnerung mit Mahngebühr</p>
     </div>
 
     <div class="content">
@@ -69,68 +140,67 @@
         <p>trotz Fälligkeit und unserer freundlichen Zahlungserinnerung haben wir bisher keine Zahlung für die folgende Rechnung erhalten:</p>
 
         <div class="invoice-details">
-            <table style="width: 100%; border-collapse: collapse;">
+            <table>
                 <tr>
-                    <td style="padding: 8px 0;"><strong>Rechnungsnummer:</strong></td>
-                    <td style="padding: 8px 0; text-align: right;">{{ $invoice->number }}</td>
+                    <td>Rechnungsnummer</td>
+                    <td>{{ $invoice->number }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px 0;"><strong>Rechnungsdatum:</strong></td>
-                    <td style="padding: 8px 0; text-align: right;">{{ $invoice->issue_date->format('d.m.Y') }}</td>
+                    <td>Rechnungsdatum</td>
+                    <td>{{ $invoice->issue_date->format('d.m.Y') }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px 0;"><strong>Ursprüngliches Fälligkeitsdatum:</strong></td>
-                    <td style="padding: 8px 0; text-align: right;">{{ $invoice->due_date->format('d.m.Y') }}</td>
+                    <td>Ursprüngliches Fälligkeitsdatum</td>
+                    <td>{{ $invoice->due_date->format('d.m.Y') }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px 0;"><strong>Tage überfällig:</strong></td>
-                    <td style="padding: 8px 0; text-align: right;" class="important">{{ $invoice->getDaysOverdue() }} Tage</td>
+                    <td>Tage überfällig</td>
+                    <td>{{ $invoice->getDaysOverdue() }} Tage</td>
                 </tr>
             </table>
 
-            <div style="text-align: center; margin-top: 20px;">
-                <div style="color: #666; font-size: 14px;">Rechnungsbetrag</div>
-                <div style="font-size: 20px; color: #666;">{{ number_format($invoice->total, 2, ',', '.') }} €</div>
-                
+            <div class="amount-section">
+                <div class="amount-row">
+                    <span class="amount-label">Rechnungsbetrag</span>
+                    <span class="amount-value">{{ number_format($invoice->total, 2, ',', '.') }} €</span>
+                </div>
                 @if($fee > 0)
-                <div style="color: #666; font-size: 14px; margin-top: 10px;">Mahngebühr (1. Mahnung)</div>
-                <div style="font-size: 20px; color: #e67e22;">+ {{ number_format($fee, 2, ',', '.') }} €</div>
+                <div class="amount-row">
+                    <span class="amount-label">Mahngebühr (1. Mahnung)</span>
+                    <span class="amount-value">{{ number_format($fee, 2, ',', '.') }} €</span>
+                </div>
                 @endif
-
-                <div style="border-top: 2px solid #333; margin: 15px 50px; padding-top: 10px;">
-                    <div style="color: #666; font-size: 14px;">Gesamtbetrag</div>
-                    <div class="amount">{{ number_format($invoice->total + $fee, 2, ',', '.') }} €</div>
+                <div class="amount-row total">
+                    <span class="amount-label">Gesamtbetrag</span>
+                    <span class="amount-value">{{ number_format($invoice->total + $fee, 2, ',', '.') }} €</span>
                 </div>
             </div>
         </div>
 
-        <div class="warning-box">
-            <strong>⚠️ Wichtig:</strong> Bitte begleichen Sie den offenen Betrag innerhalb der nächsten <strong>7 Tage</strong>, um weitere Mahngebühren und rechtliche Schritte zu vermeiden.
+        <div class="notice">
+            <strong>Wichtig:</strong> Bitte begleichen Sie den offenen Betrag innerhalb der nächsten 7 Tage, um weitere Mahngebühren und rechtliche Schritte zu vermeiden.
         </div>
 
         <p>Falls Sie die Zahlung bereits veranlasst haben, betrachten Sie diese Mahnung bitte als gegenstandslos.</p>
 
         <p>Bei Fragen oder Zahlungsschwierigkeiten kontaktieren Sie uns bitte umgehend, um eine Lösung zu finden.</p>
 
-        <p style="margin-top: 30px;"><strong>Zahlungsdetails:</strong></p>
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 14px;">
-            <div><strong>Bankverbindung:</strong></div>
+        <div class="payment-info">
+            <div class="label">Zahlungsdetails</div>
             <div>{{ $company->name }}</div>
             <div>IBAN: {{ $company->iban ?? 'N/A' }}</div>
             <div>BIC: {{ $company->bic ?? 'N/A' }}</div>
-            <div style="margin-top: 10px;"><strong>Verwendungszweck:</strong> {{ $invoice->number }}</div>
+            <div style="margin-top: 12px;">Verwendungszweck: <strong>{{ $invoice->number }}</strong></div>
         </div>
 
-        <p style="margin-top: 30px;">Mit freundlichen Grüßen,<br>
+        <p style="margin-top: 32px;">Mit freundlichen Grüßen,<br>
         <strong>{{ $company->name }}</strong></p>
     </div>
 
     <div class="footer">
-        <p>{{ $company->name }}<br>
-        {{ $company->address }}<br>
-        Tel: {{ $company->phone }} | E-Mail: {{ $company->email }}</p>
+        <div>{{ $company->name }}</div>
+        <div>{{ $company->address }}</div>
+        <div>Tel: {{ $company->phone }} | E-Mail: {{ $company->email }}</div>
     </div>
 </body>
 </html>
-
-

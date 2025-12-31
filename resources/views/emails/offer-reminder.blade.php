@@ -6,118 +6,98 @@
     <title>Erinnerung - Angebot {{ $offer->number }}</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: #1a1a1a;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 40px 20px;
+            background-color: #ffffff;
         }
         .email-container {
             background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0;
         }
         .header {
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #f59e0b;
-            margin-bottom: 30px;
+            margin-bottom: 48px;
         }
         .header h1 {
-            color: #f59e0b;
-            margin: 0;
-            font-size: 24px;
+            color: #1a1a1a;
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
         }
         .company-name {
-            font-size: 18px;
+            font-size: 13px;
             color: #666;
-            margin-top: 5px;
-        }
-        .reminder-badge {
-            background-color: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        .reminder-badge h3 {
-            margin: 0 0 10px 0;
-            color: #d97706;
-            font-size: 16px;
+            font-weight: 400;
         }
         .content {
-            margin-bottom: 30px;
+            margin-bottom: 48px;
+        }
+        .content p {
+            margin: 0 0 20px 0;
+            color: #1a1a1a;
+            font-size: 15px;
+        }
+        .notice {
+            padding: 20px 0;
+            margin: 32px 0;
+            font-size: 14px;
+            color: #666;
         }
         .offer-details {
-            background-color: #f8f9fa;
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            margin: 20px 0;
+            background-color: transparent;
+            padding: 0;
+            margin: 32px 0;
         }
         .offer-details table {
             width: 100%;
             border-collapse: collapse;
         }
         .offer-details td {
-            padding: 8px 0;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .offer-details tr:last-child td {
+            border-bottom: none;
         }
         .offer-details td:first-child {
-            font-weight: 600;
-            color: #555;
-            width: 40%;
+            font-weight: 400;
+            color: #666;
         }
-        .expiry-warning {
-            background-color: #fee2e2;
-            border: 2px solid #ef4444;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .expiry-warning .label {
-            font-size: 14px;
-            color: #991b1b;
-            margin-bottom: 5px;
-        }
-        .expiry-warning .days {
-            font-size: 28px;
-            font-weight: bold;
-            color: #dc2626;
-        }
-        .cta-box {
-            background-color: #eff6ff;
-            border: 2px solid #3b82f6;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .cta-box h4 {
-            margin: 0 0 10px 0;
-            color: #1e40af;
+        .offer-details td:last-child {
+            text-align: right;
+            color: #1a1a1a;
         }
         .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
+            margin-top: 64px;
+            padding-top: 32px;
+            border-top: 1px solid #f0f0f0;
             font-size: 12px;
-            color: #666;
-            text-align: center;
+            color: #999;
+            line-height: 1.6;
+        }
+        .footer p {
+            margin: 0 0 4px 0;
         }
         .contact-info {
-            margin-top: 20px;
+            margin-top: 32px;
             font-size: 13px;
             color: #666;
+        }
+        .contact-info p {
+            margin: 0 0 6px 0;
         }
     </style>
 </head>
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>⏰ Angebotserinnerung</h1>
+            <h1>Angebotserinnerung</h1>
             <div class="company-name">{{ $company->name }}</div>
         </div>
 
@@ -131,16 +111,14 @@
             @endphp
 
             @if($daysRemaining > 0)
-                <div class="reminder-badge">
-                    <h3>📌 Freundliche Erinnerung</h3>
-                    <p style="margin: 0;">Unser Angebot läuft bald ab. Haben Sie schon eine Entscheidung getroffen?</p>
+                <div class="notice">
+                    Unser Angebot läuft in {{ $daysRemaining }} Tag{{ $daysRemaining != 1 ? 'en' : '' }} ab.
                 </div>
 
                 <p>vor einiger Zeit haben wir Ihnen ein Angebot unterbreitet. Wir möchten Sie freundlich daran erinnern und fragen, ob Sie bereits eine Entscheidung treffen konnten.</p>
             @else
-                <div class="reminder-badge">
-                    <h3>🚨 Angebot abgelaufen</h3>
-                    <p style="margin: 0;">Unser Angebot ist abgelaufen, aber wir können es gerne für Sie verlängern.</p>
+                <div class="notice">
+                    Unser Angebot ist zwischenzeitlich abgelaufen.
                 </div>
 
                 <p>unser Angebot ist zwischenzeitlich abgelaufen. Falls Sie noch Interesse haben, verlängern wir gerne die Gültigkeit oder unterbreiten Ihnen ein aktualisiertes Angebot.</p>
@@ -149,34 +127,22 @@
             <div class="offer-details">
                 <table>
                     <tr>
-                        <td>Angebotsnummer:</td>
+                        <td>Angebotsnummer</td>
                         <td>{{ $offer->number }}</td>
                     </tr>
                     <tr>
-                        <td>Angebotsdatum:</td>
+                        <td>Angebotsdatum</td>
                         <td>{{ \Carbon\Carbon::parse($offer->issue_date)->format('d.m.Y') }}</td>
                     </tr>
                     <tr>
-                        <td>Gültig bis:</td>
+                        <td>Gültig bis</td>
                         <td>{{ $validUntil->format('d.m.Y') }}</td>
                     </tr>
                     <tr>
-                        <td>Gesamtbetrag:</td>
+                        <td><strong>Gesamtbetrag</strong></td>
                         <td><strong>{{ number_format($offer->total, 2, ',', '.') }} €</strong></td>
                     </tr>
                 </table>
-            </div>
-
-            @if($daysRemaining > 0 && $daysRemaining <= 7)
-                <div class="expiry-warning">
-                    <div class="label">⚠️ Angebot läuft ab in</div>
-                    <div class="days">{{ $daysRemaining }} Tag{{ $daysRemaining != 1 ? 'en' : '' }}</div>
-                </div>
-            @endif
-
-            <div class="cta-box">
-                <h4>💬 Haben Sie Fragen?</h4>
-                <p style="margin: 0;">Wir stehen Ihnen gerne für Rückfragen zur Verfügung und beraten Sie bei Ihrer Entscheidung.</p>
             </div>
 
             @if($daysRemaining > 0)
@@ -189,15 +155,14 @@
         </div>
 
         <div class="contact-info">
-            <p><strong>Kontaktieren Sie uns:</strong></p>
             @if($company->email)
-            <p><strong>E-Mail:</strong> {{ $company->email }}</p>
+            <p>{{ $company->email }}</p>
             @endif
             @if($company->phone)
-            <p><strong>Telefon:</strong> {{ $company->phone }}</p>
+            <p>{{ $company->phone }}</p>
             @endif
             @if($company->website)
-            <p><strong>Website:</strong> {{ $company->website }}</p>
+            <p>{{ $company->website }}</p>
             @endif
         </div>
 
@@ -216,5 +181,3 @@
     </div>
 </body>
 </html>
-
-
