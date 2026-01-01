@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -89,6 +90,8 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Invoice::class);
+        
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'issue_date' => 'required|date',
@@ -106,6 +109,20 @@ class InvoiceController extends Controller
             $user = $request->user();
             $effectiveCompanyId = $this->getEffectiveCompanyId();
             $company = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
+
+            // Security: Verify customer belongs to the same company
+            $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
+            if (!$customer) {
+                abort(403, 'Customer does not belong to your company');
+            }
+
+            // Security: Verify layout belongs to the same company if provided
+            if (!empty($validated['layout_id'])) {
+                $layout = InvoiceLayout::forCompany($effectiveCompanyId)->find($validated['layout_id']);
+                if (!$layout) {
+                    abort(403, 'Layout does not belong to your company');
+                }
+            }
 
             // Generate invoice number before creating
             $prefix = $company->getSetting('invoice_prefix', 'RE-');
@@ -220,7 +237,22 @@ class InvoiceController extends Controller
             'items.*.unit' => 'nullable|string|max:10',
         ]);
 
-        DB::transaction(function () use ($validated, $invoice) {
+        DB::transaction(function () use ($validated, $invoice, $request) {
+            $effectiveCompanyId = $this->getEffectiveCompanyId();
+            
+            // Security: Verify customer belongs to the same company
+            $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
+            if (!$customer) {
+                abort(403, 'Customer does not belong to your company');
+            }
+
+            // Security: Verify layout belongs to the same company if provided
+            if (!empty($validated['layout_id'])) {
+                $layout = InvoiceLayout::forCompany($effectiveCompanyId)->find($validated['layout_id']);
+                if (!$layout) {
+                    abort(403, 'Layout does not belong to your company');
+                }
+            }
             // Update invoice
             $invoice->update([
                 'customer_id' => $validated['customer_id'],
@@ -273,6 +305,8 @@ class InvoiceController extends Controller
 
     public function pdf(Invoice $invoice)
     {
+        $this->authorize('view', $invoice);
+        
         $invoice->load(['customer', 'items', 'layout', 'user', 'company', 'correctsInvoice']);
 
         // Get layout - either assigned to invoice or company default
@@ -534,7 +568,7 @@ class InvoiceController extends Controller
             return redirect()->back()->with('success', 'Rechnung wurde erfolgreich per E-Mail versendet.');
 
         } catch (\Exception $e) {
-            \Log::error('Failed to send invoice email: ' . $e->getMessage());
+            Log::error('Failed to send invoice email: ' . $e->getMessage());
             return back()->withErrors(['email' => 'E-Mail konnte nicht versendet werden: ' . $e->getMessage()]);
         }
     }
@@ -682,7 +716,7 @@ class InvoiceController extends Controller
             return redirect()->back()->with('success', "{$levelName} wurde erfolgreich versendet.");
 
         } catch (\Exception $e) {
-            \Log::error("Manual reminder failed: {$e->getMessage()}", [
+            Log::error("Manual reminder failed: {$e->getMessage()}", [
                 'invoice_id' => $invoice->id,
             ]);
             return redirect()->back()->with('error', 'Fehler beim Versenden der Mahnung: ' . $e->getMessage());
@@ -856,7 +890,7 @@ class InvoiceController extends Controller
             $correctionInvoice = new Invoice();
             $correctionInvoice->company_id = $invoice->company_id;
             $correctionInvoice->customer_id = $invoice->customer_id;
-            $correctionInvoice->user_id = auth()->id();
+            $correctionInvoice->user_id = $request->user()->id;
             $correctionInvoice->status = 'sent'; // Correction invoices are immediately sent
             $correctionInvoice->issue_date = now();
             $correctionInvoice->due_date = now()->addDays(14);
@@ -947,7 +981,7 @@ class InvoiceController extends Controller
                         $emailSent = true;
                     }
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send correction invoice email: ' . $e->getMessage());
+                    Log::error('Failed to send correction invoice email: ' . $e->getMessage());
                     // Don't fail the entire operation if email fails
                 }
             }
@@ -962,7 +996,7 @@ class InvoiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Invoice correction failed: ' . $e->getMessage());
+            Log::error('Invoice correction failed: ' . $e->getMessage());
             return back()->with('error', 'Fehler beim Erstellen der Stornorechnung: ' . $e->getMessage());
         }
     }

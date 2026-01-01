@@ -170,6 +170,31 @@ class Invoice extends Model
         return $query->where('company_id', $companyId);
     }
 
+    /**
+     * Resolve route model binding with company security check
+     * This ensures that even if a UUID is guessed, the invoice must belong to the user's company
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $invoice = parent::resolveRouteBinding($value, $field);
+        
+        // If invoice not found, return null (Laravel will handle 404)
+        if (!$invoice) {
+            return null;
+        }
+        
+        // Additional security: Check if user is authenticated and has access
+        if (auth()->check()) {
+            $user = auth()->user();
+            // Allow access if user belongs to same company OR has manage_companies permission
+            if ($user->company_id !== $invoice->company_id && !$user->hasPermissionTo('manage_companies')) {
+                abort(403, 'Unauthorized access to invoice');
+            }
+        }
+        
+        return $invoice;
+    }
+
     public function calculateTotals(): void
     {
         // Load items if not already loaded
