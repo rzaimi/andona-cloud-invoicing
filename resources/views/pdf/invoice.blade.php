@@ -389,6 +389,11 @@
             <br>IBAN: {{ $snapshot['bank_iban'] }}
             @if($snapshot['bank_bic'] ?? null) · BIC: {{ $snapshot['bank_bic'] }}@endif
         @endif
+        @if(isset($settings['invoice_footer']) && !empty($settings['invoice_footer']))
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; font-size: {{ $bodyFontSize - 1 }}px;">
+                {{ $settings['invoice_footer'] }}
+            </div>
+        @endif
     </div>
 @endif
 

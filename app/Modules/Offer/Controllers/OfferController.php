@@ -335,11 +335,18 @@ class OfferController extends Controller
 
         $layout = $offer->layout ?? $offer->company->defaultOfferLayout;
 
+        // Get company settings for formatting
+        $settingsService = app(\App\Services\SettingsService::class);
+        $settings = $settingsService->getAll($offer->company_id);
+        $formattingService = app(\App\Services\FormattingService::class);
+
         $html = view('pdf.offer', [
             'layout' => $layout,
             'offer' => $offer,
             'company' => $offer->company,
             'customer' => $offer->customer,
+            'settings' => $settings,
+            'formattingService' => $formattingService,
         ])->render();
 
         $pdf = Pdf::loadHTML($html)
@@ -361,11 +368,18 @@ class OfferController extends Controller
 
         $layout = $offer->layout ?? $offer->company->defaultOfferLayout;
 
+        // Get company settings for formatting
+        $settingsService = app(\App\Services\SettingsService::class);
+        $settings = $settingsService->getAll($offer->company_id);
+        $formattingService = app(\App\Services\FormattingService::class);
+
         return view('pdf.offer', [
             'layout' => $layout,
             'offer' => $offer,
             'company' => $offer->company,
             'customer' => $offer->customer,
+            'settings' => $settings,
+            'formattingService' => $formattingService,
             'preview' => true,
         ]);
     }
@@ -495,11 +509,18 @@ class OfferController extends Controller
             ];
         }
 
+        // Get company settings for formatting
+        $settingsService = app(\App\Services\SettingsService::class);
+        $settings = $settingsService->getAll($offer->company_id);
+        $formattingService = app(\App\Services\FormattingService::class);
+
         return Pdf::loadView('pdf.offer', [
             'layout' => $layout,
             'offer' => $offer,
             'company' => $offer->company,
             'customer' => $offer->customer,
+            'settings' => $settings,
+            'formattingService' => $formattingService,
         ]);
     }
 }

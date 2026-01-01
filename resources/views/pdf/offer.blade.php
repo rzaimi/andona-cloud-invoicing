@@ -298,6 +298,18 @@
     } else {
         $snapshot = [];
     }
+    
+    // Get date format from settings or use default
+    $dateFormat = $settings['date_format'] ?? 'd.m.Y';
+    
+    // Helper function for date formatting
+    if (!function_exists('formatInvoiceDate')) {
+        function formatInvoiceDate($date, $format = 'd.m.Y') {
+            return \Carbon\Carbon::parse($date)->format($format);
+        }
+    }
+@endphp
+    $bodyFontSize = isset($layout->settings['fonts']['size']) ? getFontSizePx($layout->settings['fonts']['size']) : 12;
 @endphp
 @if($layout->settings['branding']['show_footer'] ?? true)
     <div class="pdf-footer" style="border-top: {{ $layout->settings['branding']['show_footer_line'] ?? true ? '2px solid ' . ($layout->settings['colors']['primary'] ?? '#3b82f6') : '1px solid #e5e7eb' }}; text-align: center;">
@@ -317,6 +329,11 @@
         @endif
         @if($snapshot['address'] ?? null){{ $snapshot['address'] }}@endif
         @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)), {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
+        @if(isset($settings['offer_footer']) && !empty($settings['offer_footer']))
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid {{ $layout->settings['colors']['accent'] ?? '#e5e7eb' }}; font-size: {{ $bodyFontSize - 1 }}px;">
+                {{ $settings['offer_footer'] }}
+            </div>
+        @endif
         @if($snapshot['email'] ?? null) · {{ $snapshot['email'] }}@endif
         @if($snapshot['phone'] ?? null) · {{ $snapshot['phone'] }}@endif
     </div>
@@ -381,11 +398,11 @@
             </div>
             <div class="info-row">
                 <span class="info-label">Angebotsdatum:</span>
-                <span>{{ \Carbon\Carbon::parse($offer->issue_date)->format('d.m.Y') }}</span>
+                <span>{{ formatInvoiceDate($offer->issue_date, $dateFormat ?? 'd.m.Y') }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Gültig bis:</span>
-                <span>{{ \Carbon\Carbon::parse($offer->valid_until)->format('d.m.Y') }}</span>
+                <span>{{ formatInvoiceDate($offer->valid_until, $dateFormat ?? 'd.m.Y') }}</span>
             </div>
             @if($layout->settings['content']['show_customer_number'] ?? true && $offer->customer->customer_number)
                 <div class="info-row">
@@ -404,7 +421,7 @@
 
     <!-- Validity Notice -->
     <div class="validity-notice">
-        <strong>Gültigkeitsdauer:</strong> Dieses Angebot ist gültig bis zum {{ \Carbon\Carbon::parse($offer->valid_until)->format('d.m.Y') }}
+        <strong>Gültigkeitsdauer:</strong> Dieses Angebot ist gültig bis zum {{ formatInvoiceDate($offer->valid_until, $dateFormat ?? 'd.m.Y') }}
         @if(\Carbon\Carbon::parse($offer->valid_until)->isPast())
             <br><span style="color: #dc2626;">⚠️ Dieses Angebot ist abgelaufen</span>
         @endif

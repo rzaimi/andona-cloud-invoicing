@@ -49,8 +49,87 @@ class SettingsController extends Controller
 
         // Get all settings for this company (company-specific + global + defaults)
         $settings = $this->settingsService->getAll($companyId);
+        
+        // Get active tab from request
+        $activeTab = $request->get('tab', 'company');
 
-        return Inertia::render('settings/company', [
+        // Load all settings data for unified page
+        $emailSettings = [
+            'smtp_host' => $company->smtp_host ?? '',
+            'smtp_port' => $company->smtp_port ?? 587,
+            'smtp_username' => $company->smtp_username ?? '',
+            'smtp_password' => $company->smtp_password ? '••••••••' : '',
+            'smtp_encryption' => $company->smtp_encryption ?? 'tls',
+            'smtp_from_address' => $company->smtp_from_address ?? $company->email,
+            'smtp_from_name' => $company->smtp_from_name ?? $company->name,
+        ];
+
+        $reminderSettings = [
+            'reminder_friendly_days' => $settings['reminder_friendly_days'] ?? 7,
+            'reminder_mahnung1_days' => $settings['reminder_mahnung1_days'] ?? 14,
+            'reminder_mahnung2_days' => $settings['reminder_mahnung2_days'] ?? 21,
+            'reminder_mahnung3_days' => $settings['reminder_mahnung3_days'] ?? 30,
+            'reminder_inkasso_days' => $settings['reminder_inkasso_days'] ?? 45,
+            'reminder_mahnung1_fee' => $settings['reminder_mahnung1_fee'] ?? 5.00,
+            'reminder_mahnung2_fee' => $settings['reminder_mahnung2_fee'] ?? 10.00,
+            'reminder_mahnung3_fee' => $settings['reminder_mahnung3_fee'] ?? 15.00,
+            'reminder_interest_rate' => $settings['reminder_interest_rate'] ?? 9.00,
+            'reminder_auto_send' => $settings['reminder_auto_send'] ?? true,
+        ];
+
+        $erechnungSettings = [
+            'erechnung_enabled' => $this->settingsService->get('erechnung_enabled', false, $companyId),
+            'xrechnung_enabled' => $this->settingsService->get('xrechnung_enabled', true, $companyId),
+            'zugferd_enabled' => $this->settingsService->get('zugferd_enabled', true, $companyId),
+            'zugferd_profile' => $this->settingsService->get('zugferd_profile', 'EN16931', $companyId),
+            'business_process_id' => $this->settingsService->get('business_process_id', null, $companyId),
+            'electronic_address_scheme' => $this->settingsService->get('electronic_address_scheme', 'EM', $companyId),
+            'electronic_address' => $this->settingsService->get('electronic_address', null, $companyId),
+        ];
+
+        $notificationSettings = [
+            'notify_on_invoice_created' => $settings['notify_on_invoice_created'] ?? false,
+            'notify_on_invoice_sent' => $settings['notify_on_invoice_sent'] ?? true,
+            'notify_on_payment_received' => $settings['notify_on_payment_received'] ?? true,
+            'notify_on_offer_created' => $settings['notify_on_offer_created'] ?? false,
+            'notify_on_offer_accepted' => $settings['notify_on_offer_accepted'] ?? true,
+            'notify_on_offer_rejected' => $settings['notify_on_offer_rejected'] ?? false,
+            'email_notifications_enabled' => $settings['email_notifications_enabled'] ?? true,
+        ];
+
+        $paymentMethodSettings = [
+            'payment_methods' => $settings['payment_methods'] ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
+            'default_payment_method' => $settings['default_payment_method'] ?? 'Überweisung',
+            'payment_terms' => $settings['payment_terms'] ?? 14,
+        ];
+
+        // Load email logs if on email-logs tab
+        $emailLogs = null;
+        if ($activeTab === 'email-logs') {
+            $query = \App\Models\EmailLog::forCompany($companyId)
+                ->with(['customer:id,name,email'])
+                ->orderBy('sent_at', 'desc');
+
+            if ($request->type && $request->type !== 'all') {
+                $query->where('type', $request->type);
+            }
+
+            if ($request->status && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->search) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('recipient_email', 'like', "%{$request->search}%")
+                        ->orWhere('recipient_name', 'like', "%{$request->search}%")
+                        ->orWhere('subject', 'like', "%{$request->search}%");
+                });
+            }
+
+            $emailLogs = $query->paginate(20)->withQueryString();
+        }
+
+        return Inertia::render('settings/index', [
             'company' => [
                 'id' => $company->id,
                 'name' => $company->name,
@@ -64,6 +143,14 @@ class SettingsController extends Controller
                 'vat_number' => $company->vat_number,
             ],
             'settings' => $settings,
+            'emailSettings' => $emailSettings,
+            'reminderSettings' => $reminderSettings,
+            'erechnungSettings' => $erechnungSettings,
+            'notificationSettings' => $notificationSettings,
+            'paymentMethodSettings' => $paymentMethodSettings,
+            'emailLogs' => $emailLogs,
+            'user' => $request->user(),
+            'activeTab' => $activeTab,
         ]);
     }
 

@@ -1,12 +1,21 @@
 <?php
 use App\Modules\Settings\Controllers\SettingsController;
 
+// Unified settings page with tabs
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
-Route::get('/settings/email', [SettingsController::class, 'email'])->name('settings.email');
+
+// Redirect old routes to unified page with tab parameter
+Route::get('/settings/email', function () {
+    return redirect()->route('settings.index', ['tab' => 'email']);
+})->name('settings.email');
 Route::post('/settings/email', [SettingsController::class, 'updateEmail'])->name('settings.email.update');
-Route::get('/settings/reminders', [SettingsController::class, 'reminders'])->name('settings.reminders');
+
+Route::get('/settings/reminders', function () {
+    return redirect()->route('settings.index', ['tab' => 'reminders']);
+})->name('settings.reminders');
 Route::post('/settings/reminders', [SettingsController::class, 'updateReminders'])->name('settings.reminders.update');
+
 Route::get('/settings/email-logs', [SettingsController::class, 'emailLogs'])->name('settings.email-logs');
 
 // Email Template Previews
@@ -24,12 +33,19 @@ Route::prefix('settings/emails/preview')->name('settings.emails.preview.')->midd
     Route::get('mahnung-3', [\App\Http\Controllers\EmailTemplateController::class, 'previewMahnung3'])->name('mahnung-3');
     Route::get('inkasso', [\App\Http\Controllers\EmailTemplateController::class, 'previewInkasso'])->name('inkasso');
 });
-Route::get('/settings/erechnung', [SettingsController::class, 'erechnung'])->name('settings.erechnung');
+// Redirect old routes to unified page with tab parameter
+Route::get('/settings/erechnung', function () {
+    return redirect()->route('settings.index', ['tab' => 'erechnung']);
+})->name('settings.erechnung');
 Route::post('/settings/erechnung', [SettingsController::class, 'updateErechnung'])->name('settings.erechnung.update');
-// invoice-layouts route moved to routes/modules/invoices.php (redirects to invoice-layouts.index)
-// offer-layouts route moved to routes/modules/offers.php (redirects to offer-layouts.index)
-Route::get('/settings/notifications', [SettingsController::class, 'notifications'])->name('settings.notifications');
-Route::get('/settings/payment-methods', [SettingsController::class, 'paymentMethods'])->name('settings.payment-methods');
+
+Route::get('/settings/notifications', function () {
+    return redirect()->route('settings.index', ['tab' => 'notifications']);
+})->name('settings.notifications');
+
+Route::get('/settings/payment-methods', function () {
+    return redirect()->route('settings.index', ['tab' => 'payment-methods']);
+})->name('settings.payment-methods');
 Route::middleware('can:manage_settings')->group(function () {
     Route::get('/settings/import-export', [\App\Http\Controllers\ImportController::class, 'showImportExportPage'])->name('settings.import-export');
 });

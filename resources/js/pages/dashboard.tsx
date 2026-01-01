@@ -22,6 +22,7 @@ import {
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, User, Customer, Invoice, Offer, Product } from "@/types"
 import { Head, Link, usePage } from "@inertiajs/react"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface DashboardStats {
     customers: {
@@ -135,10 +136,7 @@ export default function Dashboard() {
     }
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: user.company?.settings?.default_currency || "EUR",
-        }).format(amount)
+        return formatCurrencyUtil(amount, user.company?.settings)
     }
 
     const formatDate = (dateString: string) => {

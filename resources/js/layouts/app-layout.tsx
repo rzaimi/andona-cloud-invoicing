@@ -23,7 +23,7 @@ import {
     DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Settings, Users, Building2, Mail, Bell, FileCheck, LayoutTemplate, CreditCard, HelpCircle, Calendar, Download, FileText } from "lucide-react"
+import { Settings, Users, Building2, HelpCircle, Calendar, LayoutTemplate } from "lucide-react"
 import { Link, usePage } from "@inertiajs/react"
 import AppearanceToggleDropdown from "@/components/appearance-dropdown"
 
@@ -33,7 +33,7 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps) {
-    const { props, url } = usePage()
+    const { props, url } = usePage() as any
     const user = props.auth?.user || props.user
 
     if (!user) {
@@ -57,75 +57,6 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
             icon: Building2,
             isActive: isActive("/companies"),
             adminOnly: true,
-        },
-    ]
-
-    const settingsNavigation = [
-        {
-            title: "Firmeneinstellungen",
-            url: "/settings",
-            icon: Settings,
-            isActive: isActive("/settings"),
-        },
-        {
-            title: "E-Mail Einstellungen",
-            url: "/settings/email",
-            icon: Mail,
-            isActive: isActive("/settings/email"),
-        },
-        {
-            title: "Mahnungseinstellungen",
-            url: "/settings/reminders",
-            icon: Bell,
-            isActive: isActive("/settings/reminders"),
-        },
-        {
-            title: "E-Rechnung",
-            url: "/settings/erechnung",
-            icon: FileCheck,
-            isActive: isActive("/settings/erechnung"),
-        },
-        {
-            title: "E-Mail-Verlauf",
-            url: "/settings/email-logs",
-            icon: Mail,
-            isActive: isActive("/settings/email-logs"),
-        },
-        {
-            title: "Rechnungslayouts",
-            url: "/invoice-layouts",
-            icon: LayoutTemplate,
-            isActive: isActive("/settings/invoice-layouts"),
-        },
-        {
-            title: "Angebotslayouts",
-            url: "/offer-layouts",
-            icon: LayoutTemplate,
-            isActive: isActive("/offer-layouts"),
-        },
-        {
-            title: "Benachrichtigungen",
-            url: "/settings/notifications",
-            icon: Bell,
-            isActive: isActive("/settings/notifications"),
-        },
-        {
-            title: "Zahlungsmethoden",
-            url: "/settings/payment-methods",
-            icon: CreditCard,
-            isActive: isActive("/settings/payment-methods"),
-        },
-        {
-            title: "Import & Export",
-            url: "/settings/import-export",
-            icon: Download,
-            isActive: isActive("/settings/import-export"),
-        },
-        {
-            title: "Dokumente",
-            url: "/settings/documents",
-            icon: FileText,
-            isActive: isActive("/settings/documents"),
         },
     ]
 
@@ -181,13 +112,42 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
-                                {/* Administration Section */}
-                                {(user.permissions?.includes("manage_users")) && (
+                                {/* Settings Section */}
+                                <DropdownMenuLabel>Einstellungen</DropdownMenuLabel>
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/settings">
+                                            <Settings className="mr-2 h-4 w-4" />
+                                            Einstellungen
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/invoice-layouts">
+                                            <LayoutTemplate className="mr-2 h-4 w-4" />
+                                            Rechnungslayouts
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/offer-layouts">
+                                            <LayoutTemplate className="mr-2 h-4 w-4" />
+                                            Angebotslayouts
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
+
+                                {/* Administration Section - After settings, like in sidebar */}
+                                {((user.permissions?.includes("manage_users") || user.permissions?.includes("manage_companies")) || user.roles?.includes("super_admin")) && (
                                     <>
+                                        <DropdownMenuSeparator />
                                         <DropdownMenuLabel>Administration</DropdownMenuLabel>
                                         <DropdownMenuGroup>
                                             {adminNavigation
-                                                .filter((item) => !item.adminOnly || user.permissions?.includes("manage_companies"))
+                                                .filter((item) => {
+                                                    if (item.adminOnly && !user.permissions?.includes("manage_companies") && !user.roles?.includes("super_admin")) {
+                                                        return false
+                                                    }
+                                                    return true
+                                                })
                                                 .map((item) => (
                                                     <DropdownMenuItem key={item.title} asChild>
                                                         <Link href={item.url}>
@@ -197,37 +157,17 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
                                                     </DropdownMenuItem>
                                                 ))}
                                         </DropdownMenuGroup>
-                                        <DropdownMenuSeparator />
                                     </>
                                 )}
 
-                                {/* Settings Section */}
-                                <DropdownMenuLabel>Einstellungen</DropdownMenuLabel>
-                                <DropdownMenuGroup>
-                                    {settingsNavigation.map((item) => (
-                                        <DropdownMenuItem key={item.title} asChild>
-                                            <Link href={item.url}>
-                                                <item.icon className="mr-2 h-4 w-4" />
-                                                {item.title}
-                                            </Link>
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuGroup>
-
+                                {/* Help & Support - Last, like in sidebar */}
                                 <DropdownMenuSeparator />
-
-                                {/* Support Section */}
-                                <DropdownMenuLabel>Support</DropdownMenuLabel>
-                                <DropdownMenuGroup>
-                                    {supportNavigation.map((item) => (
-                                        <DropdownMenuItem key={item.title} asChild>
-                                            <Link href={item.url}>
-                                                <item.icon className="mr-2 h-4 w-4" />
-                                                {item.title}
-                                            </Link>
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuGroup>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/help">
+                                        <HelpCircle className="mr-2 h-4 w-4" />
+                                        Hilfe & Support
+                                    </Link>
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>

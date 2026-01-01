@@ -123,10 +123,15 @@ class HandleInertiaRequests extends Middleware
                     
                     // Set company in userData if we found one
                     if ($company) {
+                        // Get company settings
+                        $settingsService = app(\App\Services\SettingsService::class);
+                        $settings = $settingsService->getAll($company->id);
+                        
                         $userData['company'] = [
                             'id' => $company->id,
                             'name' => $company->name,
                             'logo' => $company->logo,
+                            'settings' => $settings,
                         ];
                     }
                     

@@ -334,11 +334,18 @@ class InvoiceController extends Controller
             ];
         }
 
+        // Get company settings for formatting
+        $settingsService = app(\App\Services\SettingsService::class);
+        $settings = $settingsService->getAll($invoice->company_id);
+        $formattingService = app(\App\Services\FormattingService::class);
+
         $html = view('pdf.invoice', [
             'layout' => $layout,
             'invoice' => $invoice,
             'company' => $invoice->company,
             'customer' => $invoice->customer,
+            'settings' => $settings,
+            'formattingService' => $formattingService,
         ])->render();
 
         $pdf = Pdf::loadHTML($html)
@@ -598,11 +605,18 @@ class InvoiceController extends Controller
             ];
         }
 
+        // Get company settings for formatting
+        $settingsService = app(\App\Services\SettingsService::class);
+        $settings = $settingsService->getAll($invoice->company_id);
+        $formattingService = app(\App\Services\FormattingService::class);
+
         return Pdf::loadView('pdf.invoice', [
             'layout' => $layout,
             'invoice' => $invoice,
             'company' => $invoice->company,
             'customer' => $invoice->customer,
+            'settings' => $settings,
+            'formattingService' => $formattingService,
         ])
         ->setPaper('a4')
         ->setOptions([
