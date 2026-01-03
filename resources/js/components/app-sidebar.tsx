@@ -29,6 +29,7 @@ import {
     Folder,
     ReceiptText,
     ReceiptEuro,
+    Activity,
 } from "lucide-react"
 import {
     Sidebar,
@@ -367,6 +368,13 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             url: "/companies",
             icon: Building2,
             isActive: isActive("/companies"),
+            adminOnly: true,
+        },
+        {
+            title: "System Gesundheit",
+            url: "/system-health",
+            icon: Activity,
+            isActive: isActive("/system-health"),
             adminOnly: true,
         },
     ]

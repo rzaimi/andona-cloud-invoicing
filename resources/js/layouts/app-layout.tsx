@@ -23,7 +23,7 @@ import {
     DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Settings, Users, Building2, HelpCircle, Calendar, LayoutTemplate } from "lucide-react"
+import { Settings, Users, Building2, HelpCircle, Calendar, LayoutTemplate, Activity } from "lucide-react"
 import { Link, usePage } from "@inertiajs/react"
 import AppearanceToggleDropdown from "@/components/appearance-dropdown"
 
@@ -56,6 +56,13 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
             url: "/companies",
             icon: Building2,
             isActive: isActive("/companies"),
+            adminOnly: true,
+        },
+        {
+            title: "System Gesundheit",
+            url: "/system-health",
+            icon: Activity,
+            isActive: isActive("/system-health"),
             adminOnly: true,
         },
     ]

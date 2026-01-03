@@ -45,4 +45,9 @@ Route::middleware('can:manage_companies')->group(function () {
     // Company context switching for super admins
     Route::post('company-context/switch', [\App\Modules\User\Controllers\CompanyContextController::class, 'switch'])->name('company-context.switch');
     Route::get('company-context/current', [\App\Modules\User\Controllers\CompanyContextController::class, 'getCurrent'])->name('company-context.current');
+    
+    // System Health (super admin only)
+    Route::get('system-health', [\App\Http\Controllers\SystemHealthController::class, 'index'])->name('system-health.index');
+    Route::post('system-health/run-command', [\App\Http\Controllers\SystemHealthController::class, 'runCommand'])->name('system-health.run-command');
+    Route::get('system-health/logs', [\App\Http\Controllers\SystemHealthController::class, 'getLogs'])->name('system-health.logs');
 });
