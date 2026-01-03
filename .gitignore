@@ -24,3 +24,4 @@ node_modules.zip
 /.nova
 /.vscode
 /.zed
+.DS_Store
