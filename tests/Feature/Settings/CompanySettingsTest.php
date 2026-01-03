@@ -137,7 +137,7 @@ class CompanySettingsTest extends TestCase
             ->get('/settings');
 
         $response->assertInertia(fn ($page) => 
-            $page->component('settings/company')
+            $page->component('settings/index')
                 ->has('company')
                 ->has('settings')
         );

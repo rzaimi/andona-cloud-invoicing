@@ -36,9 +36,8 @@ class ShareUserContext
                     'info' => $request->session()->get('info'),
                 ];
             },
-            'stats' => function () {
-                return $this->contextService->getDashboardStats();
-            },
+            // Note: stats are only shared on dashboard page, not globally
+            // This reduces payload size on other pages
         ]);
 
         return $next($request);

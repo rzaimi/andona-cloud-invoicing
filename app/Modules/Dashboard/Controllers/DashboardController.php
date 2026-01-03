@@ -32,13 +32,13 @@ class DashboardController extends Controller
 
         // Get recent activities
         $recentInvoices = Invoice::where('company_id', $companyId)
-            ->with(['customer'])
+            ->with(['customer:id,name,email'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
         $recentOffers = Offer::where('company_id', $companyId)
-            ->with(['customer'])
+            ->with(['customer:id,name,email'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
@@ -67,7 +67,7 @@ class DashboardController extends Controller
         // Get overdue invoices for alerts
         $overdueInvoices = Invoice::where('company_id', $companyId)
             ->where('status', 'overdue')
-            ->with(['customer'])
+            ->with(['customer:id,name,email'])
             ->orderBy('due_date', 'asc')
             ->limit(10)
             ->get();

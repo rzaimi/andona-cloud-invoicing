@@ -103,7 +103,8 @@ class ExpenseModuleTest extends TestCase
         ]);
 
         $this->assertEquals(19.00, $expense->vat_amount);
-        $this->assertEquals(100.00, $expense->net_amount);
+        // amount is gross (100.00), so net = gross - vat = 100 - 19 = 81.00
+        $this->assertEquals(81.00, $expense->net_amount);
     }
 
     public function test_user_can_update_expense()

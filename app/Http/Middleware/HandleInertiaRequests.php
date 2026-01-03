@@ -6,7 +6,6 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Inertia\Middleware;
-use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -70,10 +69,20 @@ class HandleInertiaRequests extends Middleware
                         $permissions = $user->getPermissionNames();
                     }
                     
-                    $userData = array_merge($user->toArray(), [
+                    // Only include essential user fields to reduce payload
+                    $userData = [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'email_verified_at' => $user->email_verified_at,
+                        'created_at' => $user->created_at,
+                        'updated_at' => $user->updated_at,
+                        'company_id' => $user->company_id,
+                        'role' => $user->role ?? 'user',
+                        'status' => $user->status ?? 'active',
                         'roles' => $roles,
                         'permissions' => $permissions,
-                    ]);
+                    ];
                     
                     // Ensure user always has a company selected
                     $company = null;
@@ -121,17 +130,27 @@ class HandleInertiaRequests extends Middleware
                         }
                     }
                     
-                    // Set company in userData if we found one
+                    // Set company in userData if we found one - only essential fields
                     if ($company) {
-                        // Get company settings
+                        // Only include essential company settings, not all settings
                         $settingsService = app(\App\Services\SettingsService::class);
-                        $settings = $settingsService->getAll($company->id);
+                        $allSettings = $settingsService->getAll($company->id);
+                        
+                        // Only include frequently used settings to reduce payload
+                        $essentialSettings = [
+                            'currency' => $allSettings['currency'] ?? 'EUR',
+                            'tax_rate' => $allSettings['tax_rate'] ?? 0.19,
+                            'invoice_prefix' => $allSettings['invoice_prefix'] ?? 'RE-',
+                            'offer_prefix' => $allSettings['offer_prefix'] ?? 'AN-',
+                            'date_format' => $allSettings['date_format'] ?? 'd.m.Y',
+                            'language' => $allSettings['language'] ?? 'de',
+                        ];
                         
                         $userData['company'] = [
                             'id' => $company->id,
                             'name' => $company->name,
                             'logo' => $company->logo,
-                            'settings' => $settings,
+                            'settings' => $essentialSettings,
                         ];
                     }
                     
@@ -152,12 +171,9 @@ class HandleInertiaRequests extends Middleware
                     return [];
                 },
             ],
-            // Ziggy routes are included in Inertia props (not in HTML source)
-            // They're loaded via props but not visible in page source HTML
-            'ziggy' => fn (): array => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
-            ],
+            // Ziggy routes are loaded from generated resources/js/ziggy.js file
+            // This removes routes from HTML payload (generated via: php artisan ziggy:generate)
+            // No need to include routes in Inertia props anymore
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

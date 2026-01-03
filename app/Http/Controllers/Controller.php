@@ -124,7 +124,7 @@ abstract class Controller extends BaseController
     {
         return Inertia::render($component, array_merge([
             'user' => $this->getUserContext(),
-            'stats' => $this->getDashboardStats(),
+            // Note: stats are only included on dashboard page to reduce payload size
         ], $props));
     }
 

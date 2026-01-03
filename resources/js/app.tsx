@@ -16,18 +16,10 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        // Initialize Ziggy with routes from Inertia props (available immediately)
-        // This hides routes from HTML source while ensuring they're available
-        if (props.initialPage?.props?.ziggy) {
-            initializeZiggy(props.initialPage.props.ziggy).catch(error => {
-                console.error('Failed to initialize routes from props:', error);
-            });
-        } else {
-            // Fallback: try to load from API (may fail if not authenticated)
-            initializeZiggy().catch(error => {
-                console.warn('Routes not available yet, will load on next page navigation');
-            });
-        }
+        // Initialize Ziggy with routes from generated file
+        // Routes are loaded from resources/js/ziggy.js (generated via: php artisan ziggy:generate)
+        // This completely removes routes from HTML payload
+        initializeZiggy();
 
         root.render(<App {...props} />);
     },

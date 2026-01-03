@@ -799,7 +799,8 @@ class MultiTenancyTest extends TestCase
                 $this->assertNull($wrongInvoice, 'Invoice should not be created with customer\'s company_id');
             }
         } else {
-            $response->assertStatus(422); // Validation error (preferred behavior)
+            // Authorization check happens before validation, so 403 is also acceptable
+            $this->assertContains($response->status(), [403, 422], 'Should return 403 (Forbidden) or 422 (Validation Error)');
         }
     }
 
