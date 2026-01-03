@@ -11,8 +11,11 @@ export function initializeZiggy() {
 
     // Use routes from generated ziggy.js file
     // This file is generated via: php artisan ziggy:generate
+    // Override URL with current window location to avoid CORS issues
     ziggyConfig = {
         ...Ziggy,
+        url: window.location.origin, // Use current origin instead of hardcoded URL
+        port: window.location.port ? parseInt(window.location.port) : null,
         location: window.location.href,
     };
 
