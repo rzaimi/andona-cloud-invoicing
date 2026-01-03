@@ -207,7 +207,7 @@ The system supports automated German dunning process:
 - Access reports
 - Cannot manage settings or users
 
-See [ROLES_AND_PERMISSIONS.md](ROLES_AND_PERMISSIONS.md) for detailed permissions.
+See [COMPLETE_DOCUMENTATION.md](COMPLETE_DOCUMENTATION.md) for detailed permissions and role information.
 
 ## 📁 Project Structure
 
@@ -278,11 +278,20 @@ composer dev
 
 ## 📄 Documentation
 
-- [Company Setup Wizard](COMPANY_WIZARD.md)
-- [E-Rechnung Implementation](E-RECHNUNG_IMPLEMENTATION.md)
-- [Reminder System](MAHNUNG_SYSTEM.md)
-- [Roles & Permissions](ROLES_AND_PERMISSIONS.md)
-- [Invoice Corrections](RECHNUNGSKORREKTUR_IMPLEMENTATION.md)
+For complete documentation including implementation details, security audits, feature documentation, and more, see [COMPLETE_DOCUMENTATION.md](COMPLETE_DOCUMENTATION.md).
+
+This comprehensive documentation includes:
+- System architecture and implementation details
+- Security audits and Phase 1 security implementation
+- E-Rechnung implementation
+- Reminder system (Mahnungen)
+- Roles & permissions
+- Invoice corrections
+- Expense management
+- Document security
+- Deployment guides
+- Testing documentation
+- And much more...
 
 ## 🔒 Security
 
@@ -295,7 +304,7 @@ composer dev
 
 ## 🚀 Deployment
 
-For detailed deployment instructions, especially for hosting environments with Node.js version constraints, see [DEPLOYMENT.md](DEPLOYMENT.md).
+For detailed deployment instructions, especially for hosting environments with Node.js version constraints, see [COMPLETE_DOCUMENTATION.md](COMPLETE_DOCUMENTATION.md).
 
 ## 🆘 Support
 
