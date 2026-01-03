@@ -21,7 +21,7 @@ Route::get('/api/routes', function (\Illuminate\Http\Request $request) {
     ]);
 })->middleware('auth');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'session.timeout'])->group(function () {
     require __DIR__.'/modules/dashboard.php';
     require __DIR__.'/modules/profile.php';
     require __DIR__.'/modules/customers.php';

@@ -31,7 +31,16 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // Enhanced session security
         $request->session()->regenerate();
+        
+        // Set session timeout (30 minutes of inactivity)
+        $request->session()->put('last_activity', now()->timestamp);
+        
+        // Store IP address and user agent for session validation
+        $request->session()->put('login_ip', $request->ip());
+        $request->session()->put('login_user_agent', $request->userAgent());
+        $request->session()->put('login_at', now()->timestamp);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
