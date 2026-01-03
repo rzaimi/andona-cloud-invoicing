@@ -23,7 +23,7 @@ class OfferController extends Controller
         $companyId = $this->getEffectiveCompanyId();
 
         $query = Offer::forCompany($companyId)
-            ->with(['customer:id,name,email', 'user:id,name']);
+            ->with(['customer:id,name,email', 'user:id,name', 'convertedToInvoice:id,number']);
         
         // Apply status filter
         if ($request->status && $request->status !== 'all') {
@@ -160,7 +160,7 @@ class OfferController extends Controller
     {
         $this->authorize('view', $offer);
 
-        $offer->load(['customer', 'items', 'layout', 'user']);
+        $offer->load(['customer', 'items', 'layout', 'user', 'convertedToInvoice:id,number']);
 
         $companyId = $this->getEffectiveCompanyId();
         return Inertia::render('offers/show', [
@@ -321,10 +321,43 @@ class OfferController extends Controller
                     'sort_order' => $offerItem->sort_order,
                 ]);
             }
+
+            // Mark offer as converted
+            $offer->update(['converted_to_invoice_id' => $invoice->id]);
         });
 
         return redirect()->route('invoices.index')
             ->with('success', 'Angebot wurde erfolgreich in eine Rechnung umgewandelt.');
+    }
+
+    public function accept(Offer $offer)
+    {
+        $this->authorize('update', $offer);
+
+        if ($offer->status !== 'sent') {
+            return redirect()->back()
+                ->with('error', 'Nur versendete Angebote können als angenommen markiert werden.');
+        }
+
+        $offer->update(['status' => 'accepted']);
+
+        return redirect()->route('offers.show', $offer)
+            ->with('success', 'Angebot wurde als angenommen markiert.');
+    }
+
+    public function reject(Offer $offer)
+    {
+        $this->authorize('update', $offer);
+
+        if ($offer->status !== 'sent') {
+            return redirect()->back()
+                ->with('error', 'Nur versendete Angebote können als abgelehnt markiert werden.');
+        }
+
+        $offer->update(['status' => 'rejected']);
+
+        return redirect()->route('offers.show', $offer)
+            ->with('success', 'Angebot wurde als abgelehnt markiert.');
     }
 
     public function pdf(Offer $offer)

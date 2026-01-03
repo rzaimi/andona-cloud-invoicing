@@ -19,7 +19,8 @@ import {
     Clock,
     CheckCircle,
     Send,
-    Download
+    Download,
+    Eye
 } from "lucide-react"
 import { route } from "ziggy-js"
 import AppLayout from "@/layouts/app-layout"
@@ -326,6 +327,11 @@ export default function OffersIndex() {
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex space-x-2">
+                                                            <Link href={route("offers.show", offer.id)}>
+                                                                <Button variant="outline" size="sm" title="Anzeigen">
+                                                                    <Eye className="h-4 w-4" />
+                                                                </Button>
+                                                            </Link>
                                                             <Link href={route("offers.edit", offer.id)}>
                                                                 <Button variant="outline" size="sm" title="Bearbeiten">
                                                                     <Edit className="h-4 w-4" />
@@ -353,7 +359,7 @@ export default function OffersIndex() {
                                                                     <Send className="h-4 w-4" />
                                                                 </Button>
                                                             )}
-                                                            {offer.status === "accepted" && (
+                                                            {offer.status === "accepted" && !offer.converted_to_invoice_id && (
                                                                 <Button
                                                                     variant="outline"
                                                                     size="sm"
