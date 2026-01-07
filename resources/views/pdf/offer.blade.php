@@ -308,8 +308,21 @@
             return \Carbon\Carbon::parse($date)->format($format);
         }
     }
-@endphp
-    $bodyFontSize = isset($layout->settings['fonts']['size']) ? getFontSizePx($layout->settings['fonts']['size']) : 12;
+    
+    // Helper function to convert font size string to pixels
+    if (!function_exists('getFontSizePx')) {
+        function getFontSizePx($size) {
+            switch($size) {
+                case 'small': return 11;
+                case 'large': return 14;
+                case 'medium':
+                default: return 12;
+            }
+        }
+    }
+    
+    // Calculate body font size
+    $bodyFontSize = isset($layout->settings['fonts']['size']) ? getFontSizePx($layout->settings['fonts']['size']) : (isset($layout->settings['fonts']['body_size']) ? (int)$layout->settings['fonts']['body_size'] : 12);
 @endphp
 @if($layout->settings['branding']['show_footer'] ?? true)
     <div class="pdf-footer" style="border-top: {{ $layout->settings['branding']['show_footer_line'] ?? true ? '2px solid ' . ($layout->settings['colors']['primary'] ?? '#3b82f6') : '1px solid #e5e7eb' }}; text-align: center;">

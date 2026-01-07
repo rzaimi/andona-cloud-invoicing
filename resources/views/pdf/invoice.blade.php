@@ -377,6 +377,19 @@
     } else {
         $snapshot = [];
     }
+    
+    // Get date format from settings or use default
+    $dateFormat = $settings['date_format'] ?? 'd.m.Y';
+    
+    // Helper function for date formatting
+    if (!function_exists('formatInvoiceDate')) {
+        function formatInvoiceDate($date, $format = 'd.m.Y') {
+            if (!$date) {
+                return '';
+            }
+            return \Carbon\Carbon::parse($date)->format($format);
+        }
+    }
 @endphp
 @if($layoutSettings['branding']['show_footer'] ?? true)
     <div class="pdf-footer" style="border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; color: {{ $layoutSettings['colors']['text'] ?? '#9ca3af' }}; line-height: 1.8;">
