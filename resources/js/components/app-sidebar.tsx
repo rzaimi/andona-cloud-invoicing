@@ -353,6 +353,12 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
             icon: FileText,
             isActive: isActive("/reports/tax"),
         },
+        {
+            title: "DATEV Export",
+            url: "/datev",
+            icon: Download,
+            isActive: isActive("/datev"),
+        },
     ]
 
     // Moved to dropdown

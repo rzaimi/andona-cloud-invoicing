@@ -46,6 +46,7 @@ import EmailLogsTab from "./tabs/email-logs"
 import ProfileSettingsTab from "./tabs/profile"
 import PasswordSettingsTab from "./tabs/password"
 import AppearanceSettingsTab from "./tabs/appearance"
+import DatevSettingsTab from "./tabs/datev"
 
 interface SettingsPageProps {
     company: any
@@ -55,6 +56,7 @@ interface SettingsPageProps {
     erechnungSettings: any
     notificationSettings: any
     paymentMethodSettings: any
+    datevSettings: any
     emailLogs?: any
     user?: any
     activeTab?: string
@@ -75,6 +77,7 @@ export default function SettingsIndex() {
         erechnungSettings,
         notificationSettings,
         paymentMethodSettings,
+        datevSettings,
         emailLogs,
         user,
         activeTab = "company",
@@ -85,7 +88,7 @@ export default function SettingsIndex() {
     const validTabs = [
         'company', 'email', 'reminders', 'erechnung', 
         'notifications', 'payment-methods', 'email-logs', 
-        'profile', 'password', 'appearance'
+        'datev', 'profile', 'password', 'appearance'
     ]
 
     // Get tab from URL - prioritize URL over prop
@@ -215,6 +218,13 @@ export default function SettingsIndex() {
                                 <span>E-Mail-Verlauf</span>
                             </TabsTrigger>
                             <TabsTrigger 
+                                value="datev" 
+                                className="w-full justify-start gap-2 data-[state=active]:bg-background"
+                            >
+                                <Database className="h-4 w-4" />
+                                <span>DATEV</span>
+                            </TabsTrigger>
+                            <TabsTrigger 
                                 value="profile" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
@@ -266,6 +276,10 @@ export default function SettingsIndex() {
 
                         <TabsContent value="email-logs" className="space-y-6 mt-0">
                             <EmailLogsTab emailLogs={emailLogs} />
+                        </TabsContent>
+
+                        <TabsContent value="datev" className="space-y-6 mt-0">
+                            <DatevSettingsTab datevSettings={datevSettings} />
                         </TabsContent>
 
                         <TabsContent value="profile" className="space-y-6 mt-0">
