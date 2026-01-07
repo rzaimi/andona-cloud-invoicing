@@ -141,3 +141,5 @@ export function getDateFormat(settings?: CompanySettings): string {
     return settings?.date_format || 'd.m.Y'
 }
 
+
+

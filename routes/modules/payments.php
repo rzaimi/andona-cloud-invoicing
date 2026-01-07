@@ -10,3 +10,5 @@ Route::put('payments/{payment}', [PaymentController::class, 'update'])->name('pa
 Route::delete('payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
 
 
+
+

@@ -58,3 +58,5 @@ export function Pagination({ links, variant = "default", className = "" }: Pagin
     )
 }
 
+
+

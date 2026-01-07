@@ -100,3 +100,5 @@ class EmailLog extends Model
     }
 }
 
+
+
