@@ -406,18 +406,28 @@ class SystemHealthController extends Controller
                 $files = File::files($logsPath);
                 
                 foreach ($files as $file) {
-                    $logFiles[] = [
-                        'name' => $file->getFilename(),
-                        'path' => $file->getPathname(),
-                        'size' => $file->getSize(),
-                        'size_formatted' => $this->formatBytes($file->getSize()),
-                        'modified' => $file->getMTime(),
-                        'modified_formatted' => date('Y-m-d H:i:s', $file->getMTime()),
-                    ];
+                    $filename = $file->getFilename();
+                    
+                    // Only include log files (exclude .gitignore, etc.)
+                    if (preg_match('/\.log$/', $filename)) {
+                        $logFiles[] = [
+                            'name' => $filename,
+                            'path' => $file->getPathname(),
+                            'size' => $file->getSize(),
+                            'size_formatted' => $this->formatBytes($file->getSize()),
+                            'modified' => $file->getMTime(),
+                            'modified_formatted' => date('Y-m-d H:i:s', $file->getMTime()),
+                            'is_today' => $this->isTodayLogFile($filename),
+                        ];
+                    }
                 }
                 
-                // Sort by modified time (newest first)
+                // Sort by modified time (newest first), with today's log first
                 usort($logFiles, function($a, $b) {
+                    // Today's log file first
+                    if ($a['is_today'] && !$b['is_today']) return -1;
+                    if (!$a['is_today'] && $b['is_today']) return 1;
+                    // Then by modified time
                     return $b['modified'] - $a['modified'];
                 });
             }
@@ -425,6 +435,7 @@ class SystemHealthController extends Controller
             return [
                 'log_files' => $logFiles,
                 'total_files' => count($logFiles),
+                'today_log' => $this->getTodayLogFileName(),
             ];
         } catch (\Exception $e) {
             return [
@@ -433,6 +444,18 @@ class SystemHealthController extends Controller
                 'total_files' => 0,
             ];
         }
+    }
+
+    private function isTodayLogFile(string $filename): bool
+    {
+        $todayLogName = $this->getTodayLogFileName();
+        return $filename === $todayLogName || $filename === 'laravel.log';
+    }
+
+    private function getTodayLogFileName(): string
+    {
+        // Daily logs are named: laravel-YYYY-MM-DD.log
+        return 'laravel-' . date('Y-m-d') . '.log';
     }
 
     private function formatBytes(int $bytes, int $precision = 2): string

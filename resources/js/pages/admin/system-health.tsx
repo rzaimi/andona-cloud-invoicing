@@ -139,11 +139,13 @@ interface LogFile {
     size_formatted: string
     modified: number
     modified_formatted: string
+    is_today?: boolean
 }
 
 interface LogsInfo {
     log_files: LogFile[]
     total_files: number
+    today_log?: string
     error?: string
 }
 
@@ -204,6 +206,20 @@ export default function SystemHealth({ health }: Props) {
             setTimeout(() => setMessage(null), 5000)
         }
     }, [props.flash])
+
+    // Auto-select today's log file on mount
+    useEffect(() => {
+        if (!selectedLogFile && health.logs.today_log) {
+            // Check if today's log file exists in the list
+            const todayFile = health.logs.log_files.find(f => f.name === health.logs.today_log || f.is_today)
+            if (todayFile) {
+                setSelectedLogFile(todayFile.name)
+            } else if (health.logs.log_files.length > 0) {
+                // Fallback to newest log file
+                setSelectedLogFile(health.logs.log_files[0].name)
+            }
+        }
+    }, [health.logs])
 
     // Load logs when file or type changes
     useEffect(() => {
@@ -678,7 +694,7 @@ export default function SystemHealth({ health }: Props) {
                                             <SelectContent>
                                                 {health.logs.log_files.map((file) => (
                                                     <SelectItem key={file.name} value={file.name}>
-                                                        {file.name} ({file.size_formatted}) - {file.modified_formatted}
+                                                        {file.name} {file.is_today && '(Heute)'} ({file.size_formatted}) - {file.modified_formatted}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
