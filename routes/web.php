@@ -40,6 +40,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     require __DIR__.'/modules/help.php';
     require __DIR__.'/modules/calendar.php';
     require __DIR__.'/modules/reports.php';
+    require __DIR__.'/modules/datev.php';
 });
 
 require __DIR__.'/auth.php';

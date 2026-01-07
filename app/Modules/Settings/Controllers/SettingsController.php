@@ -103,6 +103,15 @@ class SettingsController extends Controller
             'payment_terms' => $settings['payment_terms'] ?? 14,
         ];
 
+        $datevSettings = [
+            'datev_revenue_account' => $this->settingsService->get('datev_revenue_account', '8400', $companyId),
+            'datev_receivables_account' => $this->settingsService->get('datev_receivables_account', '1200', $companyId),
+            'datev_bank_account' => $this->settingsService->get('datev_bank_account', '1800', $companyId),
+            'datev_expenses_account' => $this->settingsService->get('datev_expenses_account', '6000', $companyId),
+            'datev_vat_account' => $this->settingsService->get('datev_vat_account', '1776', $companyId),
+            'datev_customer_account_prefix' => $this->settingsService->get('datev_customer_account_prefix', '1000', $companyId),
+        ];
+
         // Load email logs if on email-logs tab
         $emailLogs = null;
         if ($activeTab === 'email-logs') {
@@ -148,6 +157,7 @@ class SettingsController extends Controller
             'erechnungSettings' => $erechnungSettings,
             'notificationSettings' => $notificationSettings,
             'paymentMethodSettings' => $paymentMethodSettings,
+            'datevSettings' => $datevSettings,
             'emailLogs' => $emailLogs,
             'user' => $request->user(),
             'activeTab' => $activeTab,

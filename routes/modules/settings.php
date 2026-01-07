@@ -38,6 +38,7 @@ Route::get('/settings/erechnung', function () {
     return redirect()->route('settings.index', ['tab' => 'erechnung']);
 })->name('settings.erechnung');
 Route::post('/settings/erechnung', [SettingsController::class, 'updateErechnung'])->name('settings.erechnung.update');
+Route::post('/settings/datev', [SettingsController::class, 'updateDatev'])->name('settings.datev.update');
 
 Route::get('/settings/notifications', function () {
     return redirect()->route('settings.index', ['tab' => 'notifications']);
