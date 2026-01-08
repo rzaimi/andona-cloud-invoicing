@@ -100,7 +100,6 @@ class SettingsController extends Controller
         $paymentMethodSettings = [
             'payment_methods' => $settings['payment_methods'] ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
             'default_payment_method' => $settings['default_payment_method'] ?? 'Überweisung',
-            'payment_terms' => $settings['payment_terms'] ?? 14,
         ];
 
         $datevSettings = [
@@ -114,6 +113,8 @@ class SettingsController extends Controller
 
         // Load email logs if on email-logs tab
         $emailLogs = null;
+        $emailLogsStats = null;
+        $emailLogsFilters = null;
         if ($activeTab === 'email-logs') {
             $query = \App\Models\EmailLog::forCompany($companyId)
                 ->with(['customer:id,name,email'])
@@ -136,6 +137,17 @@ class SettingsController extends Controller
             }
 
             $emailLogs = $query->paginate(20)->withQueryString();
+            
+            // Calculate statistics
+            $emailLogsStats = [
+                'total' => \App\Models\EmailLog::forCompany($companyId)->count(),
+                'invoice' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'invoice')->count(),
+                'offer' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'offer')->count(),
+                'mahnung' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'mahnung')->count(),
+                'failed' => \App\Models\EmailLog::forCompany($companyId)->where('status', 'failed')->count(),
+            ];
+            
+            $emailLogsFilters = $request->only(['type', 'status', 'search']);
         }
 
         return Inertia::render('settings/index', [
@@ -159,6 +171,8 @@ class SettingsController extends Controller
             'paymentMethodSettings' => $paymentMethodSettings,
             'datevSettings' => $datevSettings,
             'emailLogs' => $emailLogs,
+            'emailLogsStats' => $emailLogsStats,
+            'emailLogsFilters' => $emailLogsFilters,
             'user' => $request->user(),
             'activeTab' => $activeTab,
         ]);
@@ -459,5 +473,65 @@ class SettingsController extends Controller
 
         return redirect()->route('settings.erechnung')
             ->with('success', 'E-Rechnung Einstellungen wurden erfolgreich aktualisiert.');
+    }
+
+    /**
+     * Update Notifications settings
+     */
+    public function updateNotifications(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        
+        $validated = $request->validate([
+            'notify_on_invoice_created' => 'boolean',
+            'notify_on_invoice_sent' => 'boolean',
+            'notify_on_payment_received' => 'boolean',
+            'notify_on_offer_created' => 'boolean',
+            'notify_on_offer_accepted' => 'boolean',
+            'notify_on_offer_rejected' => 'boolean',
+            'email_notifications_enabled' => 'boolean',
+        ]);
+
+        // Update each setting using the service
+        foreach ($validated as $key => $value) {
+            $this->settingsService->setCompany($key, $value, $companyId, 'boolean');
+        }
+
+        // Clear cache
+        $this->settingsService->clearCompanyCache($companyId);
+
+        return redirect()->route('settings.index', ['tab' => 'notifications'])
+            ->with('success', 'Benachrichtigungseinstellungen wurden erfolgreich aktualisiert.');
+    }
+
+    /**
+     * Update Payment Methods settings
+     */
+    public function updatePaymentMethods(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        
+        $validated = $request->validate([
+            'payment_methods' => 'required|array|min:1',
+            'payment_methods.*' => 'required|string|max:255',
+            'default_payment_method' => 'required|string|max:255',
+        ]);
+
+        // Ensure default_payment_method is in the payment_methods array
+        if (!in_array($validated['default_payment_method'], $validated['payment_methods'])) {
+            return redirect()->back()
+                ->withErrors(['default_payment_method' => 'Die Standard-Zahlungsmethode muss in der Liste der verfügbaren Zahlungsmethoden enthalten sein.'])
+                ->withInput();
+        }
+
+        // Update each setting using the service
+        $this->settingsService->setCompany('payment_methods', $validated['payment_methods'], $companyId, 'json');
+        $this->settingsService->setCompany('default_payment_method', $validated['default_payment_method'], $companyId, 'string');
+
+        // Clear cache
+        $this->settingsService->clearCompanyCache($companyId);
+
+        return redirect()->route('settings.index', ['tab' => 'payment-methods'])
+            ->with('success', 'Zahlungsmethoden wurden erfolgreich aktualisiert.');
     }
 }

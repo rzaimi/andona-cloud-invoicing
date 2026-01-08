@@ -52,7 +52,8 @@ class SettingsRoutesTest extends TestCase
             ->actingAs($this->user)
             ->get('/settings/appearance');
 
-        $response->assertOk();
+        // The route now redirects to the unified settings page with appearance tab
+        $response->assertRedirect(route('settings.index', ['tab' => 'appearance']));
     }
 
     public function test_settings_company_route_is_accessible()

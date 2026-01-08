@@ -58,6 +58,8 @@ interface SettingsPageProps {
     paymentMethodSettings: any
     datevSettings: any
     emailLogs?: any
+    emailLogsStats?: any
+    emailLogsFilters?: any
     user?: any
     activeTab?: string
 }
@@ -79,6 +81,8 @@ export default function SettingsIndex() {
         paymentMethodSettings,
         datevSettings,
         emailLogs,
+        emailLogsStats,
+        emailLogsFilters,
         user,
         activeTab = "company",
         flash
@@ -275,7 +279,11 @@ export default function SettingsIndex() {
                         </TabsContent>
 
                         <TabsContent value="email-logs" className="space-y-6 mt-0">
-                            <EmailLogsTab emailLogs={emailLogs} />
+                            <EmailLogsTab 
+                                emailLogs={emailLogs} 
+                                emailLogsStats={emailLogsStats}
+                                emailLogsFilters={emailLogsFilters}
+                            />
                         </TabsContent>
 
                         <TabsContent value="datev" className="space-y-6 mt-0">

@@ -36,7 +36,8 @@ class AppearanceTest extends TestCase
             ->actingAs($user)
             ->get('/settings/appearance');
 
-        $response->assertOk();
+        // The route now redirects to the unified settings page with appearance tab
+        $response->assertRedirect(route('settings.index', ['tab' => 'appearance']));
     }
 
     public function test_appearance_page_requires_authentication()
@@ -59,11 +60,17 @@ class AppearanceTest extends TestCase
         ]);
         $user->assignRole('user');
 
+        // Follow the redirect to the unified settings page
         $response = $this
             ->actingAs($user)
             ->get('/settings/appearance');
 
-        $response->assertInertia(fn ($page) => $page->component('settings/appearance'));
+        // Follow redirect and check it renders the unified settings page with appearance tab
+        $response = $this->followRedirects($response);
+        $response->assertInertia(fn ($page) => 
+            $page->component('settings/index')
+                ->where('activeTab', 'appearance')
+        );
     }
 }
 

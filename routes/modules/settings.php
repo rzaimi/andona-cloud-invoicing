@@ -47,6 +47,9 @@ Route::get('/settings/notifications', function () {
 Route::get('/settings/payment-methods', function () {
     return redirect()->route('settings.index', ['tab' => 'payment-methods']);
 })->name('settings.payment-methods');
+Route::post('/settings/payment-methods', [SettingsController::class, 'updatePaymentMethods'])->name('settings.payment-methods.update');
+
+Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
 Route::middleware('can:manage_settings')->group(function () {
     Route::get('/settings/import-export', [\App\Http\Controllers\ImportController::class, 'showImportExportPage'])->name('settings.import-export');
 });

@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CheckCircle2 } from "lucide-react"
 import { route } from "ziggy-js"
 
 interface NotificationsSettingsTabProps {
@@ -12,7 +14,7 @@ interface NotificationsSettingsTabProps {
 }
 
 export default function NotificationsSettingsTab({ notificationSettings }: NotificationsSettingsTabProps) {
-    const { data, setData, post, processing } = useForm({
+    const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         notify_on_invoice_created: notificationSettings?.notify_on_invoice_created ?? false,
         notify_on_invoice_sent: notificationSettings?.notify_on_invoice_sent ?? true,
         notify_on_payment_received: notificationSettings?.notify_on_payment_received ?? true,
@@ -24,12 +26,20 @@ export default function NotificationsSettingsTab({ notificationSettings }: Notif
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        // TODO: Create update route for notifications
-        // post(route("settings.notifications.update"))
+        post(route("settings.notifications.update"))
     }
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            {recentlySuccessful && (
+                <Alert className="border-green-500 bg-green-50">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-600">
+                        Benachrichtigungseinstellungen wurden erfolgreich aktualisiert.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <Card>
                 <CardHeader>
                     <CardTitle>E-Mail-Benachrichtigungen</CardTitle>

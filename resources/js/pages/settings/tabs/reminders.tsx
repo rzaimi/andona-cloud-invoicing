@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -7,7 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Info } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Info, Eye, ExternalLink } from "lucide-react"
 import { route } from "ziggy-js"
 
 interface RemindersSettingsTabProps {
@@ -15,6 +17,7 @@ interface RemindersSettingsTabProps {
 }
 
 export default function RemindersSettingsTab({ reminderSettings }: RemindersSettingsTabProps) {
+    const [previewTemplate, setPreviewTemplate] = useState<string | null>(null)
     const { data, setData, post, processing, errors } = useForm({
         reminder_friendly_days: reminderSettings?.reminder_friendly_days || 7,
         reminder_mahnung1_days: reminderSettings?.reminder_mahnung1_days || 14,
@@ -33,7 +36,16 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
         post(route("settings.reminders.update"))
     }
 
+    const mahnungTemplates = [
+        { id: 'mahnung-1', name: '1. Mahnung', route: 'settings.emails.preview.mahnung-1' },
+        { id: 'mahnung-2', name: '2. Mahnung', route: 'settings.emails.preview.mahnung-2' },
+        { id: 'mahnung-3', name: '3. Mahnung', route: 'settings.emails.preview.mahnung-3' },
+        { id: 'friendly-reminder', name: 'Freundliche Erinnerung', route: 'settings.emails.preview.friendly-reminder' },
+        { id: 'inkasso', name: 'Inkasso', route: 'settings.emails.preview.inkasso' },
+    ]
+
     return (
+        <>
         <form onSubmit={handleSubmit} className="space-y-6">
             <Alert>
                 <Info className="h-4 w-4" />
@@ -52,7 +64,19 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="reminder_friendly_days">Freundliche Erinnerung (Tage)</Label>
+                            <div className="flex items-center justify-between mb-2">
+                                <Label htmlFor="reminder_friendly_days">Freundliche Erinnerung (Tage)</Label>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setPreviewTemplate('friendly-reminder')}
+                                    className="h-7 text-xs"
+                                >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    Vorschau
+                                </Button>
+                            </div>
                             <Input
                                 id="reminder_friendly_days"
                                 type="number"
@@ -65,7 +89,19 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                         </div>
 
                         <div>
-                            <Label htmlFor="reminder_mahnung1_days">1. Mahnung (Tage)</Label>
+                            <div className="flex items-center justify-between mb-2">
+                                <Label htmlFor="reminder_mahnung1_days">1. Mahnung (Tage)</Label>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setPreviewTemplate('mahnung-1')}
+                                    className="h-7 text-xs"
+                                >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    Vorschau
+                                </Button>
+                            </div>
                             <Input
                                 id="reminder_mahnung1_days"
                                 type="number"
@@ -78,7 +114,19 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                         </div>
 
                         <div>
-                            <Label htmlFor="reminder_mahnung2_days">2. Mahnung (Tage)</Label>
+                            <div className="flex items-center justify-between mb-2">
+                                <Label htmlFor="reminder_mahnung2_days">2. Mahnung (Tage)</Label>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setPreviewTemplate('mahnung-2')}
+                                    className="h-7 text-xs"
+                                >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    Vorschau
+                                </Button>
+                            </div>
                             <Input
                                 id="reminder_mahnung2_days"
                                 type="number"
@@ -91,7 +139,19 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                         </div>
 
                         <div>
-                            <Label htmlFor="reminder_mahnung3_days">3. Mahnung (Tage)</Label>
+                            <div className="flex items-center justify-between mb-2">
+                                <Label htmlFor="reminder_mahnung3_days">3. Mahnung (Tage)</Label>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setPreviewTemplate('mahnung-3')}
+                                    className="h-7 text-xs"
+                                >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    Vorschau
+                                </Button>
+                            </div>
                             <Input
                                 id="reminder_mahnung3_days"
                                 type="number"
@@ -104,7 +164,19 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                         </div>
 
                         <div>
-                            <Label htmlFor="reminder_inkasso_days">Inkasso (Tage)</Label>
+                            <div className="flex items-center justify-between mb-2">
+                                <Label htmlFor="reminder_inkasso_days">Inkasso (Tage)</Label>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setPreviewTemplate('inkasso')}
+                                    className="h-7 text-xs"
+                                >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    Vorschau
+                                </Button>
+                            </div>
                             <Input
                                 id="reminder_inkasso_days"
                                 type="number"
@@ -217,6 +289,42 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                 </Button>
             </div>
         </form>
+
+        {/* Email Preview Dialog */}
+        <Dialog open={previewTemplate !== null} onOpenChange={(open) => !open && setPreviewTemplate(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+                <DialogHeader>
+                    <DialogTitle>
+                        E-Mail Vorschau: {mahnungTemplates.find(t => t.id === previewTemplate)?.name || ''}
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="overflow-auto max-h-[calc(90vh-100px)]">
+                    {previewTemplate && (
+                        <iframe
+                            src={route(mahnungTemplates.find(t => t.id === previewTemplate)?.route || '')}
+                            className="w-full h-[600px] border-0"
+                            title={`Email Preview: ${mahnungTemplates.find(t => t.id === previewTemplate)?.name}`}
+                        />
+                    )}
+                </div>
+                {previewTemplate && (
+                    <div className="flex justify-end gap-2 pt-4 border-t">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(route(mahnungTemplates.find(t => t.id === previewTemplate)?.route || ''), "_blank")}
+                        >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            In neuem Tab öffnen
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setPreviewTemplate(null)}>
+                            Schließen
+                        </Button>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
+        </>
     )
 }
 
