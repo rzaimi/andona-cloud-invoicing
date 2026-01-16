@@ -28,6 +28,7 @@
         <div style="text-align: right; font-size: {{ $bodyFontSize }}px;">
             <div style="margin-bottom: 4px;"><strong>Rechnungsnummer:</strong> {{ $invoice->number }}</div>
             <div style="margin-bottom: 4px;"><strong>Rechnungsdatum:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
+            <div style="margin-bottom: 4px;"><strong>Leistungsdatum:</strong> entspricht Rechnungsdatum</div>
             <div style="margin-bottom: 4px;"><strong>Fälligkeitsdatum:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
             @if(isset($invoice->customer->number) && $invoice->customer->number)
                 <div style="margin-bottom: 4px;"><strong>Kundennummer:</strong> {{ $invoice->customer->number }}</div>
@@ -88,6 +89,13 @@
         </thead>
         <tbody>
             @foreach($invoice->items as $index => $item)
+                @php
+                    $discountAmount = (float)($item->discount_amount ?? 0);
+                    $hasDiscount = $discountAmount > 0.0001;
+                    $baseTotal = (float)($item->quantity ?? 0) * (float)($item->unit_price ?? 0);
+                    $discountType = $item->discount_type ?? null;
+                    $discountValue = $item->discount_value ?? null;
+                @endphp
                 <tr style="border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">
                     <td style="padding: 8px 6px; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ $index + 1 }}</td>
                     <td style="padding: 8px 6px; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ $item->description }}</td>
@@ -99,8 +107,10 @@
                             Std.
                         @endif
                     </td>
-                    <td style="padding: 8px 6px; text-align: right; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">à {{ number_format($item->unit_price, 2, ',', '.') }} €</td>
-                    <td style="padding: 8px 6px; text-align: right; font-weight: 600;">{{ number_format($item->total, 2, ',', '.') }} €</td>
+                    <td style="padding: 8px 6px; text-align: right; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
+                    <td style="padding: 8px 6px; text-align: right; font-weight: 600;">
+                        <div>{{ number_format($item->total, 2, ',', '.') }} €</div>
+                    </td>
                 </tr>
             @endforeach
         </tbody>
@@ -108,7 +118,23 @@
 
     {{-- Totals - Classic boxed style --}}
     <div style="text-align: right; margin-top: 10px;">
+        @php
+            $totalDiscount = 0;
+            foreach ($invoice->items as $it) {
+                $totalDiscount += (float)($it->discount_amount ?? 0);
+            }
+        @endphp
         <table style="width: 300px; margin-left: auto; border-collapse: collapse; border: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">
+            @if($totalDiscount > 0.0001)
+                <tr>
+                    <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">Zwischensumme (vor Rabatt)</td>
+                    <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($invoice->subtotal + $totalDiscount, 2, ',', '.') }} €</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">Gesamtrabatt</td>
+                    <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }}; color: #dc2626;">-{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
+                </tr>
+            @endif
             <tr>
                 <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">Gesamtbetrag (netto)</td>
                 <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($invoice->subtotal, 2, ',', '.') }} €</td>
@@ -125,6 +151,14 @@
     </div>
 
     {{-- Payment Instructions --}}
+    @php
+        $taxNote = $settings['invoice_tax_note'] ?? null;
+    @endphp
+    @if($taxNote)
+        <div style="margin-top: 12px; font-size: {{ $bodyFontSize ?? 11 }}px; line-height: 1.5;">
+            {{ $taxNote }}
+        </div>
+    @endif
     @if($layoutSettings['content']['show_payment_terms'] ?? true)
         <div style="margin-top: 12px; padding: 8px; background-color: {{ $layoutSettings['colors']['accent'] ?? '#f9fafb' }}; border-left: 4px solid {{ $layoutSettings['colors']['primary'] ?? '#1f2937' }}; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
             <strong>Zahlungsbedingungen:</strong> Der Rechnungsbetrag ist innerhalb von {{ \Carbon\Carbon::parse($invoice->due_date)->diffInDays(\Carbon\Carbon::parse($invoice->issue_date)) }} Tagen nach Rechnungseingang fällig und ohne Abzug auf das unten angegebene Konto zu überweisen.

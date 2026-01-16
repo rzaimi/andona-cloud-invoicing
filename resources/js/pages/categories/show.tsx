@@ -86,7 +86,7 @@ export default function CategoryShow({ user, category, stats }: CategoryShowProp
                                 <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: category.color }} />
                             )}
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight">{category.name}</h1>
+                                <h1 className="text-1xl font-bold tracking-tight">{category.name}</h1>
                                 <p className="text-muted-foreground">
                                     {category.parent ? `Unterkategorie von ${category.parent.name}` : "Hauptkategorie"}
                                 </p>

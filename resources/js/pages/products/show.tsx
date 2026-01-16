@@ -197,7 +197,7 @@ export default function ProductShow({ user, product, warehouses = [], stock_move
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">{product.name}</h1>
+                            <h1 className="text-1xl font-bold tracking-tight">{product.name}</h1>
                             <p className="text-muted-foreground">
                                 {product.number} {product.sku && `• SKU: ${product.sku}`}
                             </p>

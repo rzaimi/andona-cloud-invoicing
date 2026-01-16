@@ -837,5 +837,412 @@ class MultiTenancyTest extends TestCase
             ->where('stats.customers.total', 1) // Only customer1
         );
     }
+
+    // ==================== DISCOUNT FUNCTIONALITY TESTS ====================
+
+    public function test_invoice_creation_with_percentage_discount()
+    {
+        $this->actingAs($this->user1);
+
+        $response = $this->post('/invoices', [
+            'customer_id' => $this->customer1->id,
+            'issue_date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(14)->format('Y-m-d'),
+            'notes' => null,
+            'layout_id' => null,
+            'items' => [
+                [
+                    'description' => 'Test Item with 10% Discount',
+                    'quantity' => 2,
+                    'unit_price' => 100.00,
+                    'unit' => 'Stk.',
+                    'discount_type' => 'percentage',
+                    'discount_value' => 10,
+                ],
+            ],
+        ]);
+
+        // Check for validation errors
+        if ($response->status() === 422) {
+            $errors = $response->json();
+            $this->fail('Validation failed: ' . json_encode($errors));
+        }
+        
+        // Check for server errors
+        if ($response->status() === 500) {
+            $this->fail('Server error occurred');
+        }
+        
+        $response->assertRedirect();
+        
+        // Check if invoice was created
+        $invoice = Invoice::where('company_id', $this->company1->id)
+            ->where('customer_id', $this->customer1->id)
+            ->where('number', 'like', 'RE-%')
+            // setUp() already creates a "sent" invoice for this customer; the newly created one is "draft"
+            ->where('status', 'draft')
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($invoice, 'Invoice should be created');
+        
+        // Check if items exist in database directly
+        $itemsCount = InvoiceItem::where('invoice_id', $invoice->id)->count();
+        $this->assertEquals(1, $itemsCount, "Expected 1 item, found {$itemsCount}. Invoice ID: {$invoice->id}");
+        
+        // Load items relationship
+        $invoice->load('items');
+        $this->assertCount(1, $invoice->items);
+        
+        $item = $invoice->items->first();
+        $this->assertEquals('percentage', $item->discount_type);
+        $this->assertEquals(10, $item->discount_value);
+        // Base total: 2 * 100 = 200, Discount: 200 * 0.1 = 20, Total: 200 - 20 = 180
+        $this->assertEquals(20.00, $item->discount_amount);
+        $this->assertEquals(180.00, $item->total);
+    }
+
+    public function test_invoice_creation_with_fixed_discount()
+    {
+        $this->actingAs($this->user1);
+
+        $response = $this->post('/invoices', [
+            'customer_id' => $this->customer1->id,
+            'issue_date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(14)->format('Y-m-d'),
+            'notes' => null,
+            'layout_id' => null,
+            'items' => [
+                [
+                    'description' => 'Test Item with Fixed Discount',
+                    'quantity' => 1,
+                    'unit_price' => 100.00,
+                    'unit' => 'Stk.',
+                    'discount_type' => 'fixed',
+                    'discount_value' => 25.00,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        
+        $invoice = Invoice::where('company_id', $this->company1->id)
+            ->where('customer_id', $this->customer1->id)
+            ->where('number', 'like', 'RE-%')
+            ->where('status', 'draft')
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($invoice);
+        
+        // Load items relationship
+        $invoice->load('items');
+        $this->assertCount(1, $invoice->items);
+        
+        $item = $invoice->items->first();
+        $this->assertEquals('fixed', $item->discount_type);
+        $this->assertEquals(25.00, $item->discount_value);
+        $this->assertEquals(25.00, $item->discount_amount);
+        // Base total: 1 * 100 = 100, Discount: 25, Total: 100 - 25 = 75
+        $this->assertEquals(75.00, $item->total);
+    }
+
+    public function test_invoice_update_with_discount()
+    {
+        $this->actingAs($this->user1);
+
+        // Create invoice first
+        $invoice = Invoice::create([
+            'company_id' => $this->company1->id,
+            'customer_id' => $this->customer1->id,
+            'user_id' => $this->user1->id,
+            'number' => 'RE-2024-TEST',
+            'status' => 'draft',
+            'issue_date' => now(),
+            'due_date' => now()->addDays(14),
+            'subtotal' => 100.00,
+            'tax_rate' => 0.19,
+            'tax_amount' => 19.00,
+            'total' => 119.00,
+        ]);
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'description' => 'Original Item',
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'unit' => 'Stk.',
+            'total' => 100.00,
+            'tax_rate' => 0.19,
+            'sort_order' => 0,
+        ]);
+
+        // Update invoice with discount
+        $response = $this->put("/invoices/{$invoice->id}", [
+            'customer_id' => $this->customer1->id,
+            'issue_date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(14)->format('Y-m-d'),
+            'notes' => null,
+            'layout_id' => null,
+            'status' => 'draft',
+            'items' => [
+                [
+                    'description' => 'Updated Item with Discount',
+                    'quantity' => 2,
+                    'unit_price' => 100.00,
+                    'unit' => 'Stk.',
+                    'discount_type' => 'percentage',
+                    'discount_value' => 15,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        
+        $invoice->refresh();
+        $invoice->load('items');
+        
+        $this->assertCount(1, $invoice->items);
+        
+        $item = $invoice->items->first();
+        $this->assertEquals('percentage', $item->discount_type);
+        $this->assertEquals(15, $item->discount_value);
+        // Base total: 2 * 100 = 200, Discount: 200 * 0.15 = 30, Total: 200 - 30 = 170
+        $this->assertEquals(30.00, $item->discount_amount);
+        $this->assertEquals(170.00, $item->total);
+    }
+
+    public function test_offer_creation_with_percentage_discount()
+    {
+        $this->actingAs($this->user1);
+
+        $response = $this->post('/offers', [
+            'customer_id' => $this->customer1->id,
+            'issue_date' => now()->format('Y-m-d'),
+            'valid_until' => now()->addDays(30)->format('Y-m-d'),
+            'notes' => null,
+            'terms' => null,
+            'layout_id' => null,
+            'items' => [
+                [
+                    'description' => 'Test Offer Item with 20% Discount',
+                    'quantity' => 3,
+                    'unit_price' => 50.00,
+                    'unit' => 'Stk.',
+                    'discount_type' => 'percentage',
+                    'discount_value' => 20,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        
+        $offer = Offer::where('company_id', $this->company1->id)
+            ->where('customer_id', $this->customer1->id)
+            ->where('number', 'like', 'AN-%')
+            // setUp() already creates a "sent" offer for this customer; the newly created one is "draft"
+            ->where('status', 'draft')
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($offer);
+        
+        // Load items relationship
+        $offer->load('items');
+        $this->assertCount(1, $offer->items);
+        
+        $item = $offer->items->first();
+        $this->assertEquals('percentage', $item->discount_type);
+        $this->assertEquals(20, $item->discount_value);
+        // Base total: 3 * 50 = 150, Discount: 150 * 0.2 = 30, Total: 150 - 30 = 120
+        $this->assertEquals(30.00, $item->discount_amount);
+        $this->assertEquals(120.00, $item->total);
+    }
+
+    public function test_offer_creation_with_fixed_discount()
+    {
+        $this->actingAs($this->user1);
+
+        $response = $this->post('/offers', [
+            'customer_id' => $this->customer1->id,
+            'issue_date' => now()->format('Y-m-d'),
+            'valid_until' => now()->addDays(30)->format('Y-m-d'),
+            'notes' => null,
+            'terms' => null,
+            'layout_id' => null,
+            'items' => [
+                [
+                    'description' => 'Test Offer Item with Fixed Discount',
+                    'quantity' => 1,
+                    'unit_price' => 200.00,
+                    'unit' => 'Stk.',
+                    'discount_type' => 'fixed',
+                    'discount_value' => 50.00,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        
+        $offer = Offer::where('company_id', $this->company1->id)
+            ->where('customer_id', $this->customer1->id)
+            ->where('number', 'like', 'AN-%')
+            ->where('status', 'draft')
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($offer);
+        
+        // Load items relationship
+        $offer->load('items');
+        $this->assertCount(1, $offer->items);
+        
+        $item = $offer->items->first();
+        $this->assertEquals('fixed', $item->discount_type);
+        $this->assertEquals(50.00, $item->discount_value);
+        $this->assertEquals(50.00, $item->discount_amount);
+        // Base total: 1 * 200 = 200, Discount: 50, Total: 200 - 50 = 150
+        $this->assertEquals(150.00, $item->total);
+    }
+
+    public function test_offer_update_with_discount()
+    {
+        $this->actingAs($this->user1);
+
+        // Create offer first
+        $offer = Offer::create([
+            'company_id' => $this->company1->id,
+            'customer_id' => $this->customer1->id,
+            'user_id' => $this->user1->id,
+            'number' => 'AN-2024-TEST',
+            'status' => 'draft',
+            'issue_date' => now(),
+            'valid_until' => now()->addDays(30),
+            'subtotal' => 100.00,
+            'tax_rate' => 0.19,
+            'tax_amount' => 19.00,
+            'total' => 119.00,
+        ]);
+
+        \App\Modules\Offer\Models\OfferItem::create([
+            'offer_id' => $offer->id,
+            'description' => 'Original Offer Item',
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'unit' => 'Stk.',
+            'total' => 100.00,
+            'sort_order' => 0,
+        ]);
+
+        // Update offer with discount
+        $response = $this->put("/offers/{$offer->id}", [
+            'customer_id' => $this->customer1->id,
+            'issue_date' => now()->format('Y-m-d'),
+            'valid_until' => now()->addDays(30)->format('Y-m-d'),
+            'notes' => null,
+            'terms' => null,
+            'layout_id' => null,
+            'status' => 'draft',
+            'items' => [
+                [
+                    'description' => 'Updated Offer Item with Discount',
+                    'quantity' => 4,
+                    'unit_price' => 75.00,
+                    'unit' => 'Stk.',
+                    'discount_type' => 'fixed',
+                    'discount_value' => 50.00,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        
+        $offer->refresh();
+        $offer->load('items');
+        
+        $this->assertCount(1, $offer->items);
+        
+        $item = $offer->items->first();
+        $this->assertEquals('fixed', $item->discount_type);
+        $this->assertEquals(50.00, $item->discount_value);
+        // Base total: 4 * 75 = 300, Discount: 50, Total: 300 - 50 = 250
+        $this->assertEquals(50.00, $item->discount_amount);
+        $this->assertEquals(250.00, $item->total);
+    }
+
+    public function test_invoice_item_discount_calculation_with_multiple_items()
+    {
+        $this->actingAs($this->user1);
+
+        $response = $this->post('/invoices', [
+            'customer_id' => $this->customer1->id,
+            'issue_date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(14)->format('Y-m-d'),
+            'notes' => null,
+            'layout_id' => null,
+            'items' => [
+                [
+                    'description' => 'Item 1 - No Discount',
+                    'quantity' => 2,
+                    'unit_price' => 100.00,
+                    'unit' => 'Stk.',
+                ],
+                [
+                    'description' => 'Item 2 - 10% Discount',
+                    'quantity' => 1,
+                    'unit_price' => 200.00,
+                    'unit' => 'Stk.',
+                    'discount_type' => 'percentage',
+                    'discount_value' => 10,
+                ],
+                [
+                    'description' => 'Item 3 - Fixed Discount',
+                    'quantity' => 3,
+                    'unit_price' => 50.00,
+                    'unit' => 'Stk.',
+                    'discount_type' => 'fixed',
+                    'discount_value' => 25.00,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        
+        $invoice = Invoice::where('company_id', $this->company1->id)
+            ->where('customer_id', $this->customer1->id)
+            ->where('number', 'like', 'RE-%')
+            ->where('status', 'draft')
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($invoice);
+        
+        // Load items relationship
+        $invoice->load('items');
+        $this->assertCount(3, $invoice->items);
+        
+        $items = $invoice->items->sortBy('sort_order');
+        
+        // Item 1: No discount
+        $item1 = $items->get(0);
+        $this->assertNull($item1->discount_type);
+        $this->assertEquals(200.00, $item1->total); // 2 * 100
+        
+        // Item 2: 10% discount
+        $item2 = $items->get(1);
+        $this->assertEquals('percentage', $item2->discount_type);
+        $this->assertEquals(20.00, $item2->discount_amount); // 200 * 0.1
+        $this->assertEquals(180.00, $item2->total); // 200 - 20
+        
+        // Item 3: Fixed discount
+        $item3 = $items->get(2);
+        $this->assertEquals('fixed', $item3->discount_type);
+        $this->assertEquals(25.00, $item3->discount_amount);
+        $this->assertEquals(125.00, $item3->total); // (3 * 50) - 25
+        
+        // Total subtotal should be sum of all item totals
+        $expectedSubtotal = 200.00 + 180.00 + 125.00; // 505.00
+        $this->assertEquals($expectedSubtotal, $invoice->subtotal);
+    }
 }
 

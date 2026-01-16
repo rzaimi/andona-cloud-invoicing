@@ -92,7 +92,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight dark:text-gray-100">Lagerbestand</h1>
+                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">Lagerbestand</h1>
                         <p className="text-muted-foreground">Verwalten Sie Ihre Lager und Bestände</p>
                     </div>
                     <Button asChild>

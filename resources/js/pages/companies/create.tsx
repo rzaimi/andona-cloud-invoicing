@@ -82,7 +82,7 @@ export default function CompaniesCreate() {
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Neue Firma erstellen</h1>
+                        <h1 className="text-1xl font-bold text-gray-900">Neue Firma erstellen</h1>
                         <p className="text-gray-600">Erstellen Sie eine neue Firma im System</p>
                     </div>
                 </div>

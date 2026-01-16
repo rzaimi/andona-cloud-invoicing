@@ -34,9 +34,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function PaymentsCreate() {
     const { invoices, selectedInvoice } = usePage<PaymentCreateProps>().props
 
+    const toNumber = (v: any) => {
+        const n = typeof v === "number" ? v : parseFloat(String(v ?? "0"))
+        return Number.isFinite(n) ? n : 0
+    }
+
     const { data, setData, post, processing, errors } = useForm({
         invoice_id: selectedInvoice?.id || "",
-        amount: selectedInvoice ? (selectedInvoice.total - (selectedInvoice.payments?.reduce((sum, p) => sum + (p.status === 'completed' ? p.amount : 0), 0) || 0)) : 0,
+        amount: selectedInvoice
+            ? toNumber(selectedInvoice.total) -
+              (selectedInvoice.payments?.reduce((sum, p) => sum + (p.status === "completed" ? toNumber(p.amount) : 0), 0) || 0)
+            : 0,
         payment_date: new Date().toISOString().split("T")[0],
         payment_method: "",
         reference: "",
@@ -70,11 +78,12 @@ export default function PaymentsCreate() {
 
     const calculateRemainingBalance = () => {
         if (!selectedInvoiceData) return 0
-        const totalPaid = selectedInvoiceData.payments?.reduce(
-            (sum, p) => sum + (p.status === 'completed' ? p.amount : 0),
+        const totalPaid =
+            selectedInvoiceData.payments?.reduce(
+                (sum, p) => sum + (p.status === "completed" ? toNumber(p.amount) : 0),
             0
-        ) || 0
-        return selectedInvoiceData.total - totalPaid
+            ) || 0
+        return toNumber(selectedInvoiceData.total) - totalPaid
     }
 
     return (
@@ -90,7 +99,7 @@ export default function PaymentsCreate() {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Neue Zahlung</h1>
+                        <h1 className="text-1xl font-bold text-gray-900">Neue Zahlung</h1>
                         <p className="text-gray-600">Erfassen Sie eine neue Zahlung für eine Rechnung</p>
                     </div>
                 </div>
@@ -113,11 +122,12 @@ export default function PaymentsCreate() {
                                                 setData("invoice_id", value)
                                                 const invoice = invoices.find((inv) => inv.id === value)
                                                 if (invoice) {
-                                                    const totalPaid = invoice.payments?.reduce(
-                                                        (sum, p) => sum + (p.status === 'completed' ? p.amount : 0),
+                                                    const totalPaid =
+                                                        invoice.payments?.reduce(
+                                                            (sum, p) => sum + (p.status === "completed" ? toNumber(p.amount) : 0),
                                                         0
-                                                    ) || 0
-                                                    setData("amount", invoice.total - totalPaid)
+                                                        ) || 0
+                                                    setData("amount", toNumber(invoice.total) - totalPaid)
                                                 }
                                             }}
                                         >
@@ -146,7 +156,7 @@ export default function PaymentsCreate() {
                                                     Bereits gezahlt:{" "}
                                                     {formatCurrency(
                                                         selectedInvoiceData.payments?.reduce(
-                                                            (sum, p) => sum + (p.status === 'completed' ? p.amount : 0),
+                                                            (sum, p) => sum + (p.status === "completed" ? toNumber(p.amount) : 0),
                                                             0
                                                         ) || 0
                                                     )}

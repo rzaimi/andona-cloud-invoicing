@@ -5,7 +5,10 @@ namespace App\Modules\Settings\Controllers;
 use App\Http\Controllers\Controller;
 use App\Services\SettingsService;
 use App\Modules\Invoice\Models\InvoiceLayout;
+use App\Modules\Company\Models\CompanySetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class SettingsController extends Controller
@@ -23,7 +26,7 @@ class SettingsController extends Controller
             $companyId = $this->getEffectiveCompanyId();
             
             if (!$companyId) {
-                \Log::error('SettingsController::index - No company ID found for user', [
+                Log::error('SettingsController::index - No company ID found for user', [
                     'user_id' => $request->user()?->id,
                     'user_email' => $request->user()?->email,
                 ]);
@@ -33,14 +36,14 @@ class SettingsController extends Controller
             $company = \App\Modules\Company\Models\Company::find($companyId);
 
             if (!$company) {
-                \Log::error('SettingsController::index - Company not found', [
+                Log::error('SettingsController::index - Company not found', [
                     'company_id' => $companyId,
                     'user_id' => $request->user()?->id,
                 ]);
                 abort(404, 'Company not found. Please contact support.');
             }
         } catch (\Exception $e) {
-            \Log::error('SettingsController::index - Error', [
+            Log::error('SettingsController::index - Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -49,6 +52,24 @@ class SettingsController extends Controller
 
         // Get all settings for this company (company-specific + global + defaults)
         $settings = $this->settingsService->getAll($companyId);
+
+        // Raw company_settings list for management UI tab
+        $companySettings = CompanySetting::where('company_id', $companyId)
+            ->orderBy('key')
+            ->get()
+            ->map(function (CompanySetting $s) {
+                return [
+                    'id' => $s->id,
+                    'key' => $s->key,
+                    'type' => $s->type,
+                    // Use accessor-cast value for display, plus raw for editing JSON/strings
+                    'value' => $s->value,
+                    'raw_value' => $s->getRawOriginal('value'),
+                    'description' => $s->description,
+                    'updated_at' => optional($s->updated_at)->toISOString(),
+                    'created_at' => optional($s->created_at)->toISOString(),
+                ];
+            });
         
         // Get active tab from request
         $activeTab = $request->get('tab', 'company');
@@ -78,13 +99,13 @@ class SettingsController extends Controller
         ];
 
         $erechnungSettings = [
-            'erechnung_enabled' => $this->settingsService->get('erechnung_enabled', false, $companyId),
-            'xrechnung_enabled' => $this->settingsService->get('xrechnung_enabled', true, $companyId),
-            'zugferd_enabled' => $this->settingsService->get('zugferd_enabled', true, $companyId),
-            'zugferd_profile' => $this->settingsService->get('zugferd_profile', 'EN16931', $companyId),
-            'business_process_id' => $this->settingsService->get('business_process_id', null, $companyId),
-            'electronic_address_scheme' => $this->settingsService->get('electronic_address_scheme', 'EM', $companyId),
-            'electronic_address' => $this->settingsService->get('electronic_address', null, $companyId),
+            'erechnung_enabled' => $this->settingsService->get('erechnung_enabled', $companyId, false),
+            'xrechnung_enabled' => $this->settingsService->get('xrechnung_enabled', $companyId, true),
+            'zugferd_enabled' => $this->settingsService->get('zugferd_enabled', $companyId, true),
+            'zugferd_profile' => $this->settingsService->get('zugferd_profile', $companyId, 'EN16931'),
+            'business_process_id' => $this->settingsService->get('business_process_id', $companyId, null),
+            'electronic_address_scheme' => $this->settingsService->get('electronic_address_scheme', $companyId, 'EM'),
+            'electronic_address' => $this->settingsService->get('electronic_address', $companyId, null),
         ];
 
         $notificationSettings = [
@@ -103,12 +124,12 @@ class SettingsController extends Controller
         ];
 
         $datevSettings = [
-            'datev_revenue_account' => $this->settingsService->get('datev_revenue_account', '8400', $companyId),
-            'datev_receivables_account' => $this->settingsService->get('datev_receivables_account', '1200', $companyId),
-            'datev_bank_account' => $this->settingsService->get('datev_bank_account', '1800', $companyId),
-            'datev_expenses_account' => $this->settingsService->get('datev_expenses_account', '6000', $companyId),
-            'datev_vat_account' => $this->settingsService->get('datev_vat_account', '1776', $companyId),
-            'datev_customer_account_prefix' => $this->settingsService->get('datev_customer_account_prefix', '1000', $companyId),
+            'datev_revenue_account' => $this->settingsService->get('datev_revenue_account', $companyId, '8400'),
+            'datev_receivables_account' => $this->settingsService->get('datev_receivables_account', $companyId, '1200'),
+            'datev_bank_account' => $this->settingsService->get('datev_bank_account', $companyId, '1800'),
+            'datev_expenses_account' => $this->settingsService->get('datev_expenses_account', $companyId, '6000'),
+            'datev_vat_account' => $this->settingsService->get('datev_vat_account', $companyId, '1776'),
+            'datev_customer_account_prefix' => $this->settingsService->get('datev_customer_account_prefix', $companyId, '1000'),
         ];
 
         // Load email logs if on email-logs tab
@@ -164,6 +185,7 @@ class SettingsController extends Controller
                 'vat_number' => $company->vat_number,
             ],
             'settings' => $settings,
+            'companySettings' => $companySettings,
             'emailSettings' => $emailSettings,
             'reminderSettings' => $reminderSettings,
             'erechnungSettings' => $erechnungSettings,
@@ -196,6 +218,7 @@ class SettingsController extends Controller
             'decimal_separator' => 'required|string|in:.,,',
             'thousands_separator' => 'required|string|in:.,,',
             'invoice_footer' => 'nullable|string|max:500',
+            'invoice_tax_note' => 'nullable|string|max:500',
             'offer_footer' => 'nullable|string|max:500',
             'payment_methods' => 'nullable|array',
             'offer_validity_days' => 'required|integer|min:1|max:365',
@@ -212,6 +235,124 @@ class SettingsController extends Controller
 
         return redirect()->route('settings.index')
             ->with('success', 'Firmeneinstellungen wurden erfolgreich aktualisiert.');
+    }
+
+    /**
+     * CRUD: Company settings management (key/value store)
+     */
+    public function storeCompanySetting(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+
+        $validated = $request->validate([
+            'key' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9_\\.\\-]+$/'],
+            'type' => 'required|string|in:string,integer,decimal,boolean,json',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $valueRules = $this->getCompanySettingValueRules($validated['type']);
+        $valuePayload = $request->validate($valueRules);
+        $value = $this->normalizeSettingValue($validated['type'], $valuePayload['value'] ?? null);
+
+        $this->settingsService->setCompany(
+            $validated['key'],
+            $value,
+            $companyId,
+            $validated['type'],
+            $validated['description'] ?? null
+        );
+
+        $this->settingsService->clearCompanyCache($companyId);
+
+        return redirect()->route('settings.index', ['tab' => 'company-settings'])
+            ->with('success', 'Setting wurde erstellt.');
+    }
+
+    public function updateCompanySetting(Request $request, CompanySetting $companySetting)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        if ($companySetting->company_id !== $companyId) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|string|in:string,integer,decimal,boolean,json',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $valueRules = $this->getCompanySettingValueRules($validated['type']);
+        $valuePayload = $request->validate($valueRules);
+        $value = $this->normalizeSettingValue($validated['type'], $valuePayload['value'] ?? null);
+
+        // Key is immutable here; use existing key
+        $this->settingsService->setCompany(
+            $companySetting->key,
+            $value,
+            $companyId,
+            $validated['type'],
+            $validated['description'] ?? null
+        );
+
+        $this->settingsService->clearCompanyCache($companyId);
+
+        return redirect()->route('settings.index', ['tab' => 'company-settings'])
+            ->with('success', 'Setting wurde aktualisiert.');
+    }
+
+    public function destroyCompanySetting(Request $request, CompanySetting $companySetting)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        if ($companySetting->company_id !== $companyId) {
+            abort(404);
+        }
+
+        $key = $companySetting->key;
+        $companySetting->delete();
+        $this->settingsService->clearCompanyCache($companyId);
+
+        return redirect()->route('settings.index', ['tab' => 'company-settings'])
+            ->with('success', "Setting \"{$key}\" wurde gelöscht.");
+    }
+
+    protected function normalizeSettingValue(string $type, $value)
+    {
+        if ($type === 'boolean') {
+            return (bool)$value;
+        }
+        if ($type === 'integer') {
+            return $value === null || $value === '' ? null : (int)$value;
+        }
+        if ($type === 'decimal') {
+            return $value === null || $value === '' ? null : (float)$value;
+        }
+        if ($type === 'json') {
+            if ($value === null || $value === '') {
+                return null;
+            }
+            if (is_array($value)) {
+                return $value;
+            }
+            $decoded = json_decode((string)$value, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw ValidationException::withMessages([
+                    'value' => 'Ungültiges JSON. Bitte geben Sie gültiges JSON ein.',
+                ]);
+            }
+            return $decoded;
+        }
+        // string
+        return $value === null ? null : (string)$value;
+    }
+
+    protected function getCompanySettingValueRules(string $type): array
+    {
+        return match ($type) {
+            'boolean' => ['value' => ['required', 'boolean']],
+            'integer' => ['value' => ['nullable', 'integer']],
+            'decimal' => ['value' => ['nullable', 'numeric']],
+            'json' => ['value' => ['nullable', 'string']],
+            default => ['value' => ['nullable', 'string']],
+        };
     }
 
     protected function getSettingType(string $key, $value): string
@@ -433,13 +574,13 @@ class SettingsController extends Controller
         $companyId = $this->getEffectiveCompanyId();
         
         $settings = [
-            'erechnung_enabled' => $this->settingsService->get('erechnung_enabled', false, $companyId),
-            'xrechnung_enabled' => $this->settingsService->get('xrechnung_enabled', true, $companyId),
-            'zugferd_enabled' => $this->settingsService->get('zugferd_enabled', true, $companyId),
-            'zugferd_profile' => $this->settingsService->get('zugferd_profile', 'EN16931', $companyId),
-            'business_process_id' => $this->settingsService->get('business_process_id', null, $companyId),
-            'electronic_address_scheme' => $this->settingsService->get('electronic_address_scheme', 'EM', $companyId),
-            'electronic_address' => $this->settingsService->get('electronic_address', null, $companyId),
+            'erechnung_enabled' => $this->settingsService->get('erechnung_enabled', $companyId, false),
+            'xrechnung_enabled' => $this->settingsService->get('xrechnung_enabled', $companyId, true),
+            'zugferd_enabled' => $this->settingsService->get('zugferd_enabled', $companyId, true),
+            'zugferd_profile' => $this->settingsService->get('zugferd_profile', $companyId, 'EN16931'),
+            'business_process_id' => $this->settingsService->get('business_process_id', $companyId, null),
+            'electronic_address_scheme' => $this->settingsService->get('electronic_address_scheme', $companyId, 'EM'),
+            'electronic_address' => $this->settingsService->get('electronic_address', $companyId, null),
         ];
 
         return Inertia::render('settings/erechnung', [

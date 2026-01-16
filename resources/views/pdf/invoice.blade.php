@@ -397,6 +397,7 @@
         @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)), {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
         @if($snapshot['email'] ?? null) · {{ $snapshot['email'] }}@endif
         @if($snapshot['phone'] ?? null) · {{ $snapshot['phone'] }}@endif
+        @if($snapshot['tax_number'] ?? null) · Steuernummer: {{ $snapshot['tax_number'] }}@endif
         @if($snapshot['vat_number'] ?? null) · USt-IdNr.: {{ $snapshot['vat_number'] }}@endif
         @if($layoutSettings['content']['show_bank_details'] ?? true && ($snapshot['bank_iban'] ?? null))
             <br>IBAN: {{ $snapshot['bank_iban'] }}

@@ -97,7 +97,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Steuerberichte</h1>
+                            <h1 className="text-1xl font-bold text-gray-900">Steuerberichte</h1>
                             <p className="text-gray-600">Steuerübersicht und MwSt-Berichte</p>
                         </div>
                     </div>

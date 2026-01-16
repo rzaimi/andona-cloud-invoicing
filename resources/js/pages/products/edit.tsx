@@ -99,7 +99,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Produkt bearbeiten</h1>
+                            <h1 className="text-1xl font-bold tracking-tight">Produkt bearbeiten</h1>
                             <p className="text-muted-foreground">
                                 {product.number} - {product.name}
                             </p>

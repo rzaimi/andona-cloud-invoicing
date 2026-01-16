@@ -93,7 +93,7 @@ export default function ExpensesShow() {
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Ausgabedetails</h1>
+                            <h1 className="text-1xl font-bold text-gray-900">Ausgabedetails</h1>
                             <p className="text-gray-600">Details zur Ausgabe</p>
                         </div>
                     </div>

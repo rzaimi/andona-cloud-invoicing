@@ -177,7 +177,7 @@ export default function Dashboard() {
                 {/* Welcome Section */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
                         <p className="text-gray-600">Willkommen zurück, {user.name}</p>
                         <p className="text-sm text-gray-500">{user.company?.name || "Keine Firma"}</p>
                     </div>

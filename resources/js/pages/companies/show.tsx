@@ -147,7 +147,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">{company.name}</h1>
+                            <h1 className="text-1xl font-bold tracking-tight">{company.name}</h1>
                             <p className="text-muted-foreground">Firmendetails und Einstellungen</p>
                         </div>
                     </div>

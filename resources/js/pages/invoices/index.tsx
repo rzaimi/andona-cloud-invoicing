@@ -10,7 +10,24 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Search, FileText, Send, Clock, CheckCircle, XCircle, AlertTriangle, Bell, History, FileCheck, ChevronDown, Download, Eye } from "lucide-react"
+import {
+    Plus,
+    Edit,
+    Trash2,
+    Search,
+    FileText,
+    Send,
+    Clock,
+    CheckCircle,
+    XCircle,
+    AlertTriangle,
+    Bell,
+    History,
+    FileCheck,
+    Download,
+    Eye,
+    MoreHorizontal,
+} from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import { SendEmailDialog } from "@/components/send-email-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -147,7 +164,7 @@ export default function InvoicesIndex() {
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Rechnungsverwaltung</h1>
+                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Rechnungsverwaltung</h1>
                         <p className="text-gray-600">Verwalten Sie Ihre Rechnungen und deren Status</p>
                     </div>
 
@@ -306,7 +323,7 @@ export default function InvoicesIndex() {
                             </TableHeader>
                             <TableBody>
                                 {invoices.data.map((invoice) => (
-                                    <TableRow key={invoice.id}>
+                                    <TableRow key={invoice.id} className="group">
                                         <TableCell className="font-medium">
                                             <div className="flex items-center gap-2">
                                                 {invoice.number}
@@ -346,80 +363,97 @@ export default function InvoicesIndex() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex space-x-2">
-                                                <Link href={`/invoices/${invoice.id}`}>
-                                                    <Button variant="outline" size="sm" title="Anzeigen">
-                                                        <Eye className="h-4 w-4" />
+                                            <div className="flex items-center justify-end gap-2">
+                                                {/* Quick actions (visible on row hover, like the screenshot) */}
+                                                <div className="hidden items-center gap-2 group-hover:flex">
+                                                    <Link href={`/invoices/${invoice.id}`}>
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9" title="Anzeigen">
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                    </Link>
+                                                    <Link href={`/invoices/${invoice.id}/edit`}>
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9" title="Bearbeiten">
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    </Link>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9"
+                                                        title="PDF öffnen"
+                                                        onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}
+                                                    >
+                                                        <FileText className="h-4 w-4" />
                                                     </Button>
-                                                </Link>
-                                                <Link href={`/invoices/${invoice.id}/edit`}>
-                                                    <Button variant="outline" size="sm" title="Bearbeiten">
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}
-                                                >
-                                                    <FileText className="h-4 w-4 mr-1" />
-                                                    PDF
-                                                </Button>
+                                                </div>
+
+                                                {/* All actions */}
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="outline" size="sm" title="E-Rechnung">
-                                                            <FileCheck className="h-4 w-4 mr-1" />
-                                                            <ChevronDown className="h-3 w-3" />
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 opacity-70 hover:opacity-100"
+                                                            title="Aktionen"
+                                                        >
+                                                            <MoreHorizontal className="h-5 w-5" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            onClick={() => window.open(route("invoices.xrechnung", invoice.id), "_blank")}
-                                                        >
+                                                    <DropdownMenuContent align="end" className="w-56">
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/invoices/${invoice.id}`}>
+                                                                <Eye className="mr-2 h-4 w-4" />
+                                                                Anzeigen
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/invoices/${invoice.id}/edit`}>
+                                                                <Edit className="mr-2 h-4 w-4" />
+                                                                Bearbeiten
+                                                            </Link>
+                                                        </DropdownMenuItem>
+
+                                                        <DropdownMenuItem onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}>
+                                                            <FileText className="mr-2 h-4 w-4" />
+                                                            PDF öffnen
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => window.open(route("invoices.xrechnung", invoice.id), "_blank")}>
                                                             <FileText className="mr-2 h-4 w-4" />
                                                             XRechnung (XML)
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onClick={() => window.open(route("invoices.zugferd", invoice.id), "_blank")}
-                                                        >
+                                                        <DropdownMenuItem onClick={() => window.open(route("invoices.zugferd", invoice.id), "_blank")}>
                                                             <FileCheck className="mr-2 h-4 w-4" />
                                                             ZUGFeRD (PDF+XML)
                                                         </DropdownMenuItem>
+
+                                                        {invoice.status === "draft" && (
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setSelectedInvoice(invoice)
+                                                                    setSendDialogOpen(true)
+                                                                }}
+                                                            >
+                                                                <Send className="mr-2 h-4 w-4" />
+                                                                Versenden
+                                                            </DropdownMenuItem>
+                                                        )}
+
+                                                        {(invoice.status === "overdue" || invoice.status === "sent") && invoice.reminder_level < 5 && (
+                                                            <DropdownMenuItem onClick={() => handleSendReminder(invoice)}>
+                                                                <Bell className="mr-2 h-4 w-4" />
+                                                                Mahnung versenden
+                                                            </DropdownMenuItem>
+                                                        )}
+
+                                                        <DropdownMenuItem
+                                                            className="text-red-600 focus:text-red-600"
+                                                            onClick={() => handleDelete(invoice)}
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Löschen
+                                                        </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
-                                                {invoice.status === "draft" && (
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm" 
-                                                        title="Versenden"
-                                                        onClick={() => {
-                                                            setSelectedInvoice(invoice)
-                                                            setSendDialogOpen(true)
-                                                        }}
-                                                    >
-                                                        <Send className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                                {(invoice.status === "overdue" || invoice.status === "sent") && invoice.reminder_level < 5 && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="bg-orange-50 hover:bg-orange-100"
-                                                        title="Mahnung versenden"
-                                                        onClick={() => handleSendReminder(invoice)}
-                                                    >
-                                                        <Bell className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleDelete(invoice)}
-                                                    className="text-red-600 hover:text-red-700"
-                                                    title="Löschen"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>

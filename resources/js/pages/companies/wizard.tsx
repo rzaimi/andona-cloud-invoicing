@@ -126,7 +126,7 @@ export default function CompanyWizard() {
             <div className="max-w-5xl mx-auto space-y-6">
                 {/* Header */}
                 <div>
-                    <h1 className="text-3xl font-bold">Neue Firma erstellen</h1>
+                    <h1 className="text-1xl font-bold">Neue Firma erstellen</h1>
                     <p className="text-muted-foreground">Folgen Sie den Schritten, um eine neue Firma einzurichten</p>
                 </div>
 

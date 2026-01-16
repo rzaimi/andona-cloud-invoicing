@@ -150,6 +150,7 @@ class SettingsService
             'decimal_separator' => ',',
             'thousands_separator' => '.',
             'invoice_footer' => 'Vielen Dank für Ihr Vertrauen!',
+            'invoice_tax_note' => '',
             'offer_footer' => 'Wir freuen uns auf Ihre Rückmeldung!',
             'payment_methods' => ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
             'offer_validity_days' => 30,

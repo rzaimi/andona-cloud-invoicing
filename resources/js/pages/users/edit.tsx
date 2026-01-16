@@ -61,7 +61,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Benutzer bearbeiten</h1>
+                        <h1 className="text-1xl font-bold text-gray-900">Benutzer bearbeiten</h1>
                         <p className="text-gray-600">Aktualisieren Sie die Benutzerinformationen</p>
                     </div>
                 </div>

@@ -89,7 +89,7 @@ export default function WarehouseEdit() {
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Lager bearbeiten</h1>
+                            <h1 className="text-1xl font-bold tracking-tight">Lager bearbeiten</h1>
                             <p className="text-muted-foreground">{warehouse.name}</p>
                         </div>
                     </div>

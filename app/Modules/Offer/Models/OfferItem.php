@@ -20,6 +20,9 @@ class OfferItem extends Model
         'unit_price',
         'total',
         'unit',
+        'discount_type',
+        'discount_value',
+        'discount_amount',
         'sort_order',
     ];
 
@@ -27,6 +30,8 @@ class OfferItem extends Model
         'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
         'total' => 'decimal:2',
+        'discount_value' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
     ];
 
     public function offer(): BelongsTo
@@ -41,7 +46,22 @@ class OfferItem extends Model
 
     public function calculateTotal(): void
     {
-        $this->total = $this->quantity * $this->unit_price;
+        // Calculate base total
+        $baseTotal = $this->quantity * $this->unit_price;
+        
+        // Calculate discount amount
+        $this->discount_amount = 0;
+        if ($this->discount_type && $this->discount_value) {
+            if ($this->discount_type === 'percentage') {
+                $this->discount_amount = $baseTotal * ($this->discount_value / 100);
+            } else {
+                // Fixed amount
+                $this->discount_amount = min($this->discount_value, $baseTotal);
+            }
+        }
+        
+        // Calculate total after discount
+        $this->total = $baseTotal - $this->discount_amount;
     }
 
     public function loadFromProduct(Product $product): void

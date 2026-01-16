@@ -104,7 +104,7 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Neue Kategorie erstellen</h1>
+                            <h1 className="text-1xl font-bold tracking-tight">Neue Kategorie erstellen</h1>
                             <p className="text-muted-foreground">Erstellen Sie eine neue Produktkategorie</p>
                         </div>
                     </div>

@@ -104,7 +104,7 @@ export default function PaymentsShow() {
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Zahlungsdetails</h1>
+                            <h1 className="text-1xl font-bold text-gray-900">Zahlungsdetails</h1>
                             <p className="text-gray-600">Details zur Zahlung</p>
                         </div>
                     </div>
@@ -192,7 +192,7 @@ export default function PaymentsShow() {
                                         </div>
                                         <Link href={`/invoices/${payment.invoice_id}`}>
                                             <Button variant="outline">
-                                                <EuroIcon className="mr-2 h-4 w-4" />
+                                                <Receipt className="mr-2 h-4 w-4" />
                                                 Rechnung anzeigen
                                             </Button>
                                         </Link>

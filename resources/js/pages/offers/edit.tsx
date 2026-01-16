@@ -24,6 +24,9 @@ interface OfferItem {
     unit_price: number
     unit: string
     total: number
+    discount_type?: "percentage" | "fixed" | null
+    discount_value?: number | null
+    discount_amount?: number
 }
 
 interface Offer {
@@ -86,12 +89,16 @@ export default function OffersEdit() {
             quantity: Number(item.quantity) || 0,
             unit_price: Number(item.unit_price) || 0,
             unit: item.unit || "Stk.",
-            total: Number(item.quantity) * Number(item.unit_price),
+            total: Number(item.total) || 0,
+            discount_type: item.discount_type || null,
+            discount_value: item.discount_value ? Number(item.discount_value) : null,
+            discount_amount: item.discount_amount ? Number(item.discount_amount) : 0,
         })),
     })
 
     const [totals, setTotals] = useState({
         subtotal: 0,
+        total_discount: 0,
         tax_amount: 0,
         total: 0,
     })
@@ -100,11 +107,35 @@ export default function OffersEdit() {
 
     // Calculate totals whenever items change
     useEffect(() => {
-        const subtotal = data.items.reduce((sum, item) => sum + item.total, 0)
+        // Calculate each item's total with discount
+        const itemsWithTotals = data.items.map((item) => {
+            const baseTotal = item.quantity * item.unit_price
+            let discountAmount = 0
+            if (item.discount_type && item.discount_value !== null) {
+                if (item.discount_type === 'percentage') {
+                    discountAmount = baseTotal * (item.discount_value / 100)
+                } else {
+                    discountAmount = Math.min(item.discount_value, baseTotal)
+                }
+            }
+            return {
+                ...item,
+                discount_amount: discountAmount,
+                total: baseTotal - discountAmount,
+            }
+        })
+        
+        const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.total, 0)
+        const totalDiscount = itemsWithTotals.reduce((sum, item) => sum + item.discount_amount, 0)
         const tax_amount = subtotal * settings.tax_rate
         const total = subtotal + tax_amount
 
-        setTotals({ subtotal, tax_amount, total })
+        setTotals({ 
+            subtotal, 
+            total_discount: totalDiscount,
+            tax_amount, 
+            total 
+        })
     }, [data.items, settings.tax_rate])
 
     const addItem = () => {
@@ -115,6 +146,9 @@ export default function OffersEdit() {
             unit_price: 0,
             unit: "Stk.",
             total: 0,
+            discount_type: null,
+            discount_value: null,
+            discount_amount: 0,
         }
         setData("items", [...data.items, newItem])
     }
@@ -128,12 +162,23 @@ export default function OffersEdit() {
         }
     }
 
-    const updateItem = (id: number | string, field: keyof OfferItem, value: string | number) => {
+    const updateItem = (id: number | string, field: keyof OfferItem, value: string | number | null) => {
         const updatedItems = data.items.map((item) => {
             if (item.id === id) {
                 const updatedItem = { ...item, [field]: value }
-                if (field === "quantity" || field === "unit_price") {
-                    updatedItem.total = Number(updatedItem.quantity) * Number(updatedItem.unit_price)
+                // Recalculate total when quantity, unit_price, or discount changes
+                if (field === "quantity" || field === "unit_price" || field === "discount_type" || field === "discount_value") {
+                    const baseTotal = Number(updatedItem.quantity) * Number(updatedItem.unit_price)
+                    let discountAmount = 0
+                    if (updatedItem.discount_type && updatedItem.discount_value !== null) {
+                        if (updatedItem.discount_type === 'percentage') {
+                            discountAmount = baseTotal * (updatedItem.discount_value / 100)
+                        } else {
+                            discountAmount = Math.min(updatedItem.discount_value, baseTotal)
+                        }
+                    }
+                    updatedItem.discount_amount = discountAmount
+                    updatedItem.total = baseTotal - discountAmount
                 }
                 return updatedItem
             }
@@ -181,7 +226,7 @@ export default function OffersEdit() {
                     </Link>
                     <div className="flex-1">
                         <div className="flex items-center gap-3">
-                            <h1 className="text-3xl font-bold text-gray-900">Angebot bearbeiten</h1>
+                            <h1 className="text-1xl font-bold text-gray-900">Angebot bearbeiten</h1>
                             {getStatusBadge(offer.status)}
                         </div>
                         <p className="text-gray-600">{offer.number}</p>
@@ -291,6 +336,9 @@ export default function OffersEdit() {
                                         unit_price: item.unit_price,
                                         unit: item.unit,
                                         total: item.quantity * item.unit_price,
+                                        discount_type: null,
+                                        discount_value: null,
+                                        discount_amount: 0,
                                     }
                                     setData("items", [...data.items, newItem])
                                 }}
@@ -301,11 +349,13 @@ export default function OffersEdit() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="w-[40%]">Beschreibung</TableHead>
-                                            <TableHead className="w-[10%]">Menge</TableHead>
-                                            <TableHead className="w-[10%]">Einheit</TableHead>
-                                            <TableHead className="w-[15%]">Einzelpreis</TableHead>
-                                            <TableHead className="w-[15%]">Gesamtpreis</TableHead>
+                                            <TableHead className="w-[30%]">Beschreibung</TableHead>
+                                            <TableHead className="w-[8%]">Menge</TableHead>
+                                            <TableHead className="w-[8%]">Einheit</TableHead>
+                                            <TableHead className="w-[12%]">Einzelpreis</TableHead>
+                                            <TableHead className="w-[10%]">Rabatt</TableHead>
+                                            <TableHead className="w-[10%]">Rabatt-Wert</TableHead>
+                                            <TableHead className="w-[12%]">Gesamtpreis</TableHead>
                                             <TableHead className="w-[10%]">Aktionen</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -365,7 +415,49 @@ export default function OffersEdit() {
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="font-medium">{formatCurrency(item.total)}</div>
+                                                    <Select 
+                                                        value={item.discount_type || "none"} 
+                                                        onValueChange={(value) => {
+                                                            if (value === "none") {
+                                                                updateItem(item.id, "discount_type", null)
+                                                                updateItem(item.id, "discount_value", null)
+                                                            } else {
+                                                                updateItem(item.id, "discount_type", value as "percentage" | "fixed")
+                                                            }
+                                                        }}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Kein Rabatt" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="none">Kein Rabatt</SelectItem>
+                                                            <SelectItem value="percentage">%</SelectItem>
+                                                            <SelectItem value="fixed">€</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {item.discount_type && (
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.01"
+                                                            max={item.discount_type === 'percentage' ? "100" : undefined}
+                                                            value={item.discount_value ?? ""}
+                                                            onChange={(e) => updateItem(item.id, "discount_value", e.target.value ? Number.parseFloat(e.target.value) : null)}
+                                                            placeholder={item.discount_type === 'percentage' ? "10" : "50.00"}
+                                                        />
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="space-y-1">
+                                                        <div className="font-medium">{formatCurrency(item.total)}</div>
+                                                        {item.discount_amount && item.discount_amount > 0 && (
+                                                            <div className="text-xs text-muted-foreground">
+                                                                Rabatt: -{formatCurrency(item.discount_amount)}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Button
@@ -388,6 +480,12 @@ export default function OffersEdit() {
                             {/* Totals */}
                             <div className="mt-6 flex justify-end">
                                 <div className="w-80 space-y-2">
+                                    {totals.total_discount > 0 && (
+                                        <div className="flex justify-between text-red-600">
+                                            <span>Gesamtrabatt:</span>
+                                            <span className="font-medium">-{formatCurrency(totals.total_discount)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between">
                                         <span>Zwischensumme:</span>
                                         <span className="font-medium">{formatCurrency(totals.subtotal)}</span>

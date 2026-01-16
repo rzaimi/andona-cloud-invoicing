@@ -39,8 +39,28 @@ class OfferController extends Controller
                     });
             });
         }
-        
-        $offers = $query->latest()->paginate(15)->withQueryString();
+
+        // Sorting (whitelisted)
+        $sort = $request->string('sort')->toString() ?: 'issue_date';
+        $direction = strtolower($request->string('direction')->toString() ?: 'desc');
+        $direction = in_array($direction, ['asc', 'desc'], true) ? $direction : 'desc';
+
+        $allowedSorts = ['number', 'issue_date', 'valid_until', 'total', 'status', 'customer'];
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'issue_date';
+        }
+
+        if ($sort === 'customer') {
+            $query->orderBy(
+                Customer::select('name')
+                    ->whereColumn('customers.id', 'offers.customer_id'),
+                $direction
+            );
+        } else {
+            $query->orderBy($sort, $direction);
+        }
+
+        $offers = $query->paginate(15)->withQueryString();
 
         // Calculate statistics
         $stats = [
@@ -57,7 +77,7 @@ class OfferController extends Controller
 
         return Inertia::render('offers/index', [
             'offers' => $offers,
-            'filters' => $request->only(['status', 'search']),
+            'filters' => $request->only(['status', 'search', 'sort', 'direction']),
             'stats' => $stats,
         ]);
     }
@@ -101,6 +121,8 @@ class OfferController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.unit' => 'nullable|string|max:10',
+            'items.*.discount_type' => 'nullable|in:percentage,fixed',
+            'items.*.discount_value' => 'nullable|numeric|min:0',
         ]);
 
         DB::transaction(function () use ($validated, $request) {
@@ -133,21 +155,32 @@ class OfferController extends Controller
             // Save company snapshot
             $offer->company_snapshot = $offer->createCompanySnapshot();
             $offer->save();
-
+            
             // Create offer items
             foreach ($validated['items'] as $index => $itemData) {
+                // Handle discount fields - convert empty strings and 'none' to null
+                $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none' 
+                    ? $itemData['discount_type'] 
+                    : null;
+                $discountValue = isset($itemData['discount_value']) && $itemData['discount_value'] !== '' && $itemData['discount_value'] !== null
+                    ? $itemData['discount_value']
+                    : null;
+                
                 $item = new OfferItem([
+                    'offer_id' => $offer->id,
                     'description' => $itemData['description'],
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
+                    'discount_type' => $discountType,
+                    'discount_value' => $discountValue,
                     'sort_order' => $index,
                 ]);
                 $item->calculateTotal();
-                $offer->items()->save($item);
+                $item->save();
             }
 
-            // Calculate totals
+            // Calculate totals - calculateTotals() will load items if needed
             $offer->calculateTotals();
             $offer->save();
         });
@@ -216,6 +249,8 @@ class OfferController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.unit' => 'nullable|string|max:10',
+            'items.*.discount_type' => 'nullable|in:percentage,fixed',
+            'items.*.discount_value' => 'nullable|numeric|min:0',
         ]);
 
         DB::transaction(function () use ($validated, $offer) {
@@ -234,11 +269,21 @@ class OfferController extends Controller
             $offer->items()->delete();
 
             foreach ($validated['items'] as $index => $itemData) {
+                // Handle discount fields - convert empty strings and 'none' to null
+                $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none' 
+                    ? $itemData['discount_type'] 
+                    : null;
+                $discountValue = isset($itemData['discount_value']) && $itemData['discount_value'] !== '' && $itemData['discount_value'] !== null
+                    ? $itemData['discount_value']
+                    : null;
+                
                 $item = new OfferItem([
                     'description' => $itemData['description'],
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
+                    'discount_type' => $discountType,
+                    'discount_value' => $discountValue,
                     'sort_order' => $index,
                 ]);
                 $item->calculateTotal();

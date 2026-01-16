@@ -50,6 +50,13 @@
         @endif
     </div>
 
+    {{-- Invoice Details (German standard fields) --}}
+    <div style="text-align: right; font-size: {{ $bodyFontSize }}px; margin-bottom: 10px;">
+        <div style="margin-bottom: 3px;"><strong>Rechnungsdatum:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
+        <div style="margin-bottom: 3px;"><strong>Leistungsdatum:</strong> entspricht Rechnungsdatum</div>
+        <div style="margin-bottom: 3px;"><strong>Fälligkeitsdatum:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
+    </div>
+
     {{-- Salutation and Introduction - Minimal --}}
     <div style="margin-bottom: 12px; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
         <div style="margin-bottom: 6px;">Sehr geehrte Damen und Herren,</div>
@@ -68,6 +75,13 @@
         </thead>
         <tbody>
             @foreach($invoice->items as $index => $item)
+                @php
+                    $discountAmount = (float)($item->discount_amount ?? 0);
+                    $hasDiscount = $discountAmount > 0.0001;
+                    $baseTotal = (float)($item->quantity ?? 0) * (float)($item->unit_price ?? 0);
+                    $discountType = $item->discount_type ?? null;
+                    $discountValue = $item->discount_value ?? null;
+                @endphp
                 <tr style="border-bottom: 1px solid #e5e7eb;">
                     <td style="padding: 6px 4px;">{{ $item->description }}</td>
                     <td style="padding: 6px 4px;">
@@ -78,8 +92,10 @@
                             Std.
                         @endif
                     </td>
-                    <td style="padding: 6px 4px; text-align: right;">à {{ number_format($item->unit_price, 2, ',', '.') }} €</td>
-                    <td style="padding: 6px 4px; text-align: right; font-weight: 600;">{{ number_format($item->total, 2, ',', '.') }} €</td>
+                    <td style="padding: 6px 4px; text-align: right;">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
+                    <td style="padding: 6px 4px; text-align: right; font-weight: 600;">
+                        <div>{{ number_format($item->total, 2, ',', '.') }} €</div>
+                    </td>
                 </tr>
             @endforeach
         </tbody>
@@ -87,7 +103,23 @@
 
     {{-- Totals - Minimal styling --}}
     <div style="text-align: right; margin-top: 8px;">
+        @php
+            $totalDiscount = 0;
+            foreach ($invoice->items as $it) {
+                $totalDiscount += (float)($it->discount_amount ?? 0);
+            }
+        @endphp
         <table style="width: 260px; margin-left: auto; border-collapse: collapse;">
+            @if($totalDiscount > 0.0001)
+                <tr>
+                    <td style="padding: 4px 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Zwischensumme (vor Rabatt)</td>
+                    <td style="padding: 4px 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ number_format($invoice->subtotal + $totalDiscount, 2, ',', '.') }} €</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Gesamtrabatt</td>
+                    <td style="padding: 4px 8px; text-align: right; border-bottom: 1px solid #e5e7eb; color: #dc2626;">-{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
+                </tr>
+            @endif
             <tr>
                 <td style="padding: 4px 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Gesamtbetrag (netto)</td>
                 <td style="padding: 4px 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ number_format($invoice->subtotal, 2, ',', '.') }} €</td>
@@ -104,6 +136,14 @@
     </div>
 
     {{-- Payment Instructions - Minimal --}}
+    @php
+        $taxNote = $settings['invoice_tax_note'] ?? null;
+    @endphp
+    @if($taxNote)
+        <div style="margin-top: 12px; font-size: {{ $bodyFontSize ?? 11 }}px; line-height: 1.5;">
+            {{ $taxNote }}
+        </div>
+    @endif
     @if($layoutSettings['content']['show_payment_terms'] ?? true)
         <div style="margin-top: 10px; font-size: {{ $bodyFontSize }}px; line-height: 1.4;">
             Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten angegebene Konto. Der Rechnungsbetrag ist sofort fällig.

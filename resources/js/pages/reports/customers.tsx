@@ -83,7 +83,7 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Kundenberichte</h1>
+                            <h1 className="text-1xl font-bold text-gray-900">Kundenberichte</h1>
                             <p className="text-gray-600">Kundenstatistiken und Top-Kunden</p>
                         </div>
                     </div>

@@ -202,7 +202,15 @@ class Invoice extends Model
             $this->load('items');
         }
         
-        // Calculate subtotal (sum of all items)
+        // If no items, set totals to zero
+        if ($this->items->isEmpty()) {
+            $this->subtotal = 0;
+            $this->tax_amount = 0;
+            $this->total = 0;
+            return;
+        }
+        
+        // Calculate subtotal (sum of all items - items already have discount applied)
         $this->subtotal = $this->items->sum('total');
         
         // Calculate tax amount
@@ -211,6 +219,7 @@ class Invoice extends Model
         $taxAmount = 0;
         foreach ($this->items as $item) {
             $itemTaxRate = $item->tax_rate ?? $this->tax_rate;
+            // Tax is calculated on the item total (which already includes discount)
             $taxAmount += $item->total * $itemTaxRate;
         }
         

@@ -114,7 +114,7 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight dark:text-gray-100">Produktverwaltung</h1>
+                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">Produktverwaltung</h1>
                         <p className="text-muted-foreground">Verwalten Sie Ihre Produkte und Dienstleistungen</p>
                     </div>
                     <div className="flex items-center space-x-2">

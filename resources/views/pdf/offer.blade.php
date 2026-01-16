@@ -440,21 +440,36 @@
         @endif
     </div>
 
+    @php
+        $totalDiscount = 0;
+        foreach ($offer->items as $it) {
+            $totalDiscount += (float)($it->discount_amount ?? 0);
+        }
+    @endphp
+
     <!-- Items Table -->
     <table class="items-table">
         <thead>
         <tr>
-            <th style="width: 50%">Beschreibung</th>
-            <th style="width: 10%" class="text-center">Menge</th>
+            <th style="width: 42%">Beschreibung</th>
+            <th style="width: 8%" class="text-center">Menge</th>
             @if($layout->settings['content']['show_unit_column'] ?? true)
-                <th style="width: 10%" class="text-center">Einheit</th>
+                <th style="width: 8%" class="text-center">Einheit</th>
             @endif
-            <th style="width: 15%" class="text-right">Einzelpreis</th>
+            <th style="width: 14%" class="text-right">Einzelpreis</th>
+            <th style="width: 13%" class="text-right">Rabatt</th>
             <th style="width: 15%" class="text-right">Gesamtpreis</th>
         </tr>
         </thead>
         <tbody>
         @foreach($offer->items as $item)
+            @php
+                $discountAmount = (float)($item->discount_amount ?? 0);
+                $hasDiscount = $discountAmount > 0.0001;
+                $baseTotal = (float)($item->quantity ?? 0) * (float)($item->unit_price ?? 0);
+                $discountType = $item->discount_type ?? null;
+                $discountValue = $item->discount_value ?? null;
+            @endphp
             <tr>
                 <td>{{ $item->description }}</td>
                 <td class="text-center">{{ number_format($item->quantity, 2, ',', '.') }}</td>
@@ -462,6 +477,22 @@
                     <td class="text-center">{{ $item->unit }}</td>
                 @endif
                 <td class="text-right">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
+                <td class="text-right">
+                    @if($hasDiscount)
+                        <div>
+                            @if($discountType === 'percentage')
+                                {{ number_format((float)$discountValue, 0, ',', '.') }}%
+                            @elseif($discountType === 'fixed')
+                                {{ number_format((float)$discountValue, 2, ',', '.') }} €
+                            @else
+                                Rabatt
+                            @endif
+                        </div>
+                        <div style="font-size: 10px; color: #dc2626;">-{{ number_format($discountAmount, 2, ',', '.') }} €</div>
+                    @else
+                        -
+                    @endif
+                </td>
                 <td class="text-right">{{ number_format($item->total, 2, ',', '.') }} €</td>
             </tr>
         @endforeach
@@ -471,6 +502,16 @@
     <!-- Totals -->
     <div class="totals">
         <table class="totals-table">
+            @if($totalDiscount > 0.0001)
+                <tr>
+                    <td><strong>Zwischensumme (vor Rabatt):</strong></td>
+                    <td class="text-right">{{ number_format($offer->subtotal + $totalDiscount, 2, ',', '.') }} €</td>
+                </tr>
+                <tr>
+                    <td><strong>Gesamtrabatt:</strong></td>
+                    <td class="text-right" style="color: #dc2626;">-{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
+                </tr>
+            @endif
             <tr>
                 <td><strong>Zwischensumme:</strong></td>
                 <td class="text-right">{{ number_format($offer->subtotal, 2, ',', '.') }} €</td>

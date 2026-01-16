@@ -50,6 +50,12 @@ Route::get('/settings/payment-methods', function () {
 Route::post('/settings/payment-methods', [SettingsController::class, 'updatePaymentMethods'])->name('settings.payment-methods.update');
 
 Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
+
+// Company settings CRUD (advanced)
+Route::post('/settings/company-settings', [SettingsController::class, 'storeCompanySetting'])->name('settings.company-settings.store');
+Route::put('/settings/company-settings/{companySetting}', [SettingsController::class, 'updateCompanySetting'])->name('settings.company-settings.update');
+Route::delete('/settings/company-settings/{companySetting}', [SettingsController::class, 'destroyCompanySetting'])->name('settings.company-settings.destroy');
+
 Route::middleware('can:manage_settings')->group(function () {
     Route::get('/settings/import-export', [\App\Http\Controllers\ImportController::class, 'showImportExportPage'])->name('settings.import-export');
 });

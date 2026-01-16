@@ -65,7 +65,7 @@ export default function ImportExportSettings() {
 
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Import & Export</h1>
+                    <h1 className="text-1xl font-bold text-gray-900">Import & Export</h1>
                     <p className="text-gray-600 mt-2">
                         Importieren Sie Daten aus alten Systemen oder exportieren Sie Daten für Backup und Analyse
                     </p>

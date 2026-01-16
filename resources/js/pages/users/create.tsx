@@ -54,7 +54,7 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Neuer Benutzer</h1>
+                        <h1 className="text-1xl font-bold text-gray-900">Neuer Benutzer</h1>
                         <p className="text-gray-600">Erstellen Sie einen neuen Benutzer</p>
                     </div>
                 </div>

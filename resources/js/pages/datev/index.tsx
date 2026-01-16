@@ -159,7 +159,7 @@ export default function DatevIndex({ company_id }: Props) {
 
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">DATEV Export</h1>
+                    <h1 className="text-1xl font-bold tracking-tight">DATEV Export</h1>
                     <p className="text-muted-foreground mt-2">
                         Exportieren Sie Ihre Daten im DATEV-Format für die Buchhaltung
                     </p>

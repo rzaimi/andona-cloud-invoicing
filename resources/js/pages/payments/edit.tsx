@@ -41,7 +41,7 @@ export default function PaymentsEdit() {
 
     const { data, setData, put, processing, errors } = useForm({
         invoice_id: payment.invoice_id,
-        amount: payment.amount,
+        amount: typeof payment.amount === "number" ? payment.amount : parseFloat(String(payment.amount ?? "0")) || 0,
         payment_date: payment.payment_date.split("T")[0],
         payment_method: payment.payment_method || "",
         reference: payment.reference || "",
@@ -86,7 +86,7 @@ export default function PaymentsEdit() {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Zahlung bearbeiten</h1>
+                        <h1 className="text-1xl font-bold text-gray-900">Zahlung bearbeiten</h1>
                         <p className="text-gray-600">Bearbeiten Sie die Zahlungsinformationen</p>
                     </div>
                 </div>

@@ -94,7 +94,23 @@ class Offer extends Model
 
     public function calculateTotals(): void
     {
+        // Load items if not already loaded
+        if (!$this->relationLoaded('items')) {
+            $this->load('items');
+        }
+        
+        // If no items, set totals to zero
+        if ($this->items->isEmpty()) {
+            $this->subtotal = 0;
+            $this->tax_amount = 0;
+            $this->total = 0;
+            return;
+        }
+        
+        // Calculate subtotal (sum of all items - items already have discount applied)
         $this->subtotal = $this->items->sum('total');
+        
+        // Calculate tax amount on subtotal (items already have discount applied)
         $this->tax_amount = $this->subtotal * $this->tax_rate;
         $this->total = $this->subtotal + $this->tax_amount;
     }

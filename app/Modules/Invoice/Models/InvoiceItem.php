@@ -21,6 +21,9 @@ class InvoiceItem extends Model
         'total',
         'unit',
         'tax_rate',
+        'discount_type',
+        'discount_value',
+        'discount_amount',
         'sort_order',
     ];
 
@@ -29,6 +32,8 @@ class InvoiceItem extends Model
         'unit_price' => 'decimal:2',
         'total' => 'decimal:2',
         'tax_rate' => 'decimal:4',
+        'discount_value' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
     ];
 
     public function invoice(): BelongsTo
@@ -43,7 +48,22 @@ class InvoiceItem extends Model
 
     public function calculateTotal(): void
     {
-        $this->total = $this->quantity * $this->unit_price;
+        // Calculate base total
+        $baseTotal = $this->quantity * $this->unit_price;
+        
+        // Calculate discount amount
+        $this->discount_amount = 0;
+        if ($this->discount_type && $this->discount_value) {
+            if ($this->discount_type === 'percentage') {
+                $this->discount_amount = $baseTotal * ($this->discount_value / 100);
+            } else {
+                // Fixed amount
+                $this->discount_amount = min($this->discount_value, $baseTotal);
+            }
+        }
+        
+        // Calculate total after discount
+        $this->total = $baseTotal - $this->discount_amount;
     }
 
     public function loadFromProduct(Product $product): void

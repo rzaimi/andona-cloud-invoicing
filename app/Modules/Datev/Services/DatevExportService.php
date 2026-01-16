@@ -26,12 +26,12 @@ class DatevExportService
     private function getAccountConfig(string $companyId): array
     {
         return [
-            'revenue' => $this->settingsService->get('datev_revenue_account', '8400', $companyId),
-            'receivables' => $this->settingsService->get('datev_receivables_account', '1200', $companyId),
-            'bank' => $this->settingsService->get('datev_bank_account', '1800', $companyId),
-            'expenses' => $this->settingsService->get('datev_expenses_account', '6000', $companyId),
-            'vat' => $this->settingsService->get('datev_vat_account', '1776', $companyId),
-            'customer_prefix' => $this->settingsService->get('datev_customer_account_prefix', '1000', $companyId),
+            'revenue' => $this->settingsService->get('datev_revenue_account', $companyId, '8400'),
+            'receivables' => $this->settingsService->get('datev_receivables_account', $companyId, '1200'),
+            'bank' => $this->settingsService->get('datev_bank_account', $companyId, '1800'),
+            'expenses' => $this->settingsService->get('datev_expenses_account', $companyId, '6000'),
+            'vat' => $this->settingsService->get('datev_vat_account', $companyId, '1776'),
+            'customer_prefix' => $this->settingsService->get('datev_customer_account_prefix', $companyId, '1000'),
         ];
     }
     /**

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
     Plus,
     Search,
@@ -20,7 +21,11 @@ import {
     CheckCircle,
     Send,
     Download,
-    Eye
+    Eye,
+    MoreHorizontal,
+    ArrowUpDown,
+    ChevronDown,
+    ChevronUp,
 } from "lucide-react"
 import { route } from "ziggy-js"
 import AppLayout from "@/layouts/app-layout"
@@ -32,6 +37,8 @@ interface OffersIndexProps {
     filters: {
         search?: string
         status?: string
+        sort?: string
+        direction?: "asc" | "desc"
     }
     stats: {
         total: number
@@ -49,6 +56,8 @@ export default function OffersIndex() {
     const { offers, filters, stats } = usePage<OffersIndexProps>().props
     const [search, setSearch] = useState(filters.search || "")
     const [status, setStatus] = useState(filters.status || "all")
+    const sort = filters.sort || "issue_date"
+    const direction = filters.direction || "desc"
     const [sendDialogOpen, setSendDialogOpen] = useState(false)
     const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
 
@@ -56,6 +65,8 @@ export default function OffersIndex() {
         const params: any = {}
         if (search) params.search = search
         if (status && status !== 'all') params.status = status
+        if (sort) params.sort = sort
+        if (direction) params.direction = direction
         router.get("/offers", params, { preserveScroll: true })
     }
 
@@ -64,7 +75,27 @@ export default function OffersIndex() {
         const params: any = {}
         if (search) params.search = search
         if (newStatus && newStatus !== 'all') params.status = newStatus
+        if (sort) params.sort = sort
+        if (direction) params.direction = direction
         router.get("/offers", params, { preserveScroll: true })
+    }
+
+    const handleSort = (column: string) => {
+        const params: any = {}
+        if (search) params.search = search
+        if (status && status !== "all") params.status = status
+
+        const nextDirection =
+            sort === column ? (direction === "asc" ? "desc" : "asc") : "asc"
+
+        params.sort = column
+        params.direction = nextDirection
+        router.get("/offers", params, { preserveScroll: true })
+    }
+
+    const renderSortIcon = (column: string) => {
+        if (sort !== column) return <ArrowUpDown className="h-3.5 w-3.5 opacity-60" />
+        return direction === "asc" ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />
     }
 
     const handleDelete = (offer: Offer) => {
@@ -120,11 +151,11 @@ export default function OffersIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Angebote" />
 
-            <div className="flex flex-1 flex-col gap-6">
+            <div className="flex flex-1 flex-col gap-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Angebote</h1>
+                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Angebote</h1>
                         <p className="text-gray-600">Verwalten Sie Ihre Kundenangebote</p>
                     </div>
                     <div className="flex gap-2">
@@ -262,15 +293,69 @@ export default function OffersIndex() {
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Angebotsnummer</TableHead>
-                                        <TableHead>Kunde</TableHead>
-                                        <TableHead>Datum</TableHead>
-                                        <TableHead>Gültig bis</TableHead>
-                                        <TableHead>Betrag</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Gültigkeit</TableHead>
-                                        <TableHead>Aktionen</TableHead>
+                                    <TableRow className="h-10">
+                                        <TableHead className="py-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort("number")}
+                                                className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                                            >
+                                                Angebotsnummer
+                                                {renderSortIcon("number")}
+                                            </button>
+                                        </TableHead>
+                                        <TableHead className="py-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort("customer")}
+                                                className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                                            >
+                                                Kunde
+                                                {renderSortIcon("customer")}
+                                            </button>
+                                        </TableHead>
+                                        <TableHead className="py-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort("issue_date")}
+                                                className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                                            >
+                                                Datum
+                                                {renderSortIcon("issue_date")}
+                                            </button>
+                                        </TableHead>
+                                        <TableHead className="py-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort("valid_until")}
+                                                className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                                            >
+                                                Gültig bis
+                                                {renderSortIcon("valid_until")}
+                                            </button>
+                                        </TableHead>
+                                        <TableHead className="py-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort("total")}
+                                                className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                                            >
+                                                Betrag
+                                                {renderSortIcon("total")}
+                                            </button>
+                                        </TableHead>
+                                        <TableHead className="py-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort("status")}
+                                                className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                                            >
+                                                Status
+                                                {renderSortIcon("status")}
+                                            </button>
+                                        </TableHead>
+                                        <TableHead className="py-2">Gültigkeit</TableHead>
+                                        <TableHead className="w-[156px] py-2 text-right">Aktionen</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -287,27 +372,22 @@ export default function OffersIndex() {
                                             const isExpired = daysUntilExpiry < 0
 
                                             return (
-                                                <TableRow key={offer.id}>
-                                                    <TableCell className="font-medium">
+                                                <TableRow key={offer.id} className="group h-11">
+                                                    <TableCell className="py-2 text-sm font-medium">
                                                         <Link href={`/offers/${offer.id}`} className="text-blue-600 hover:text-blue-800">
                                                             {offer.number}
                                                         </Link>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <div>
-                                                            <div className="font-medium">{offer.customer.name}</div>
-                                                            <div className="text-sm text-gray-500">{offer.customer.email}</div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>{formatDate(offer.issue_date)}</TableCell>
-                                                    <TableCell>
+                                                    <TableCell className="py-2 text-sm">{offer.customer.name}</TableCell>
+                                                    <TableCell className="py-2 text-sm">{formatDate(offer.issue_date)}</TableCell>
+                                                    <TableCell className="py-2 text-sm">
                                                         <div className={`${isExpired ? "text-red-600" : isExpiringSoon ? "text-orange-600" : ""}`}>
                                                             {formatDate(offer.valid_until)}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="font-medium">{formatCurrency(offer.total)}</TableCell>
-                                                    <TableCell>{getStatusBadge(offer)}</TableCell>
-                                                    <TableCell>
+                                                    <TableCell className="py-2 text-sm font-medium">{formatCurrency(offer.total)}</TableCell>
+                                                    <TableCell className="py-2 text-sm">{getStatusBadge(offer)}</TableCell>
+                                                    <TableCell className="py-2 text-sm">
                                                         {isExpired ? (
                                                             <Badge variant="destructive" className="text-xs">
                                                                 <AlertTriangle className="w-3 h-3 mr-1" />
@@ -325,60 +405,89 @@ export default function OffersIndex() {
                                                             </Badge>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex space-x-2">
-                                                            <Link href={route("offers.show", offer.id)}>
-                                                                <Button variant="outline" size="sm" title="Anzeigen">
-                                                                    <Eye className="h-4 w-4" />
-                                                                </Button>
-                                                            </Link>
-                                                            <Link href={route("offers.edit", offer.id)}>
-                                                                <Button variant="outline" size="sm" title="Bearbeiten">
-                                                                    <Edit className="h-4 w-4" />
-                                                                </Button>
-                                                            </Link>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => window.open(route("offers.pdf", offer.id), "_blank")}
-                                                                title="PDF anzeigen"
-                                                            >
-                                                                <FileText className="h-4 w-4 mr-1" />
-                                                                PDF
-                                                            </Button>
-                                                            {offer.status === "draft" && (
-                                                                <Button 
-                                                                    variant="outline" 
-                                                                    size="sm" 
-                                                                    title="Versenden"
-                                                                    onClick={() => {
-                                                                        setSelectedOffer(offer)
-                                                                        setSendDialogOpen(true)
-                                                                    }}
-                                                                >
-                                                                    <Send className="h-4 w-4" />
-                                                                </Button>
-                                                            )}
-                                                            {offer.status === "accepted" && !offer.converted_to_invoice_id && (
+                                                    <TableCell className="w-[156px] py-2">
+                                                        <div className="flex w-[156px] items-center justify-end gap-2">
+                                                            {/* Quick actions (visible on row hover, like invoices) */}
+                                                            <div className="flex items-center gap-1 invisible group-hover:visible">
+                                                                <Link href={route("offers.show", offer.id)}>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Anzeigen">
+                                                                        <Eye className="h-4 w-4" />
+                                                                    </Button>
+                                                                </Link>
+                                                                <Link href={route("offers.edit", offer.id)}>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Bearbeiten">
+                                                                        <Edit className="h-4 w-4" />
+                                                                    </Button>
+                                                                </Link>
                                                                 <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => handleConvertToInvoice(offer)}
-                                                                    title="In Rechnung umwandeln"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8"
+                                                                    onClick={() => window.open(route("offers.pdf", offer.id), "_blank")}
+                                                                    title="PDF anzeigen"
                                                                 >
-                                                                    <FileText className="h-4 w-4 mr-1" />
-                                                                    Umwandeln
+                                                                    <FileText className="h-4 w-4" />
                                                                 </Button>
-                                                            )}
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => handleDelete(offer)}
-                                                                className="text-red-600 hover:text-red-700"
-                                                                title="Löschen"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
+                                                            </div>
+
+                                                            {/* All actions */}
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 opacity-70 hover:opacity-100"
+                                                                        title="Aktionen"
+                                                                    >
+                                                                        <MoreHorizontal className="h-5 w-5" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-56">
+                                                                    <DropdownMenuItem asChild>
+                                                                        <Link href={route("offers.show", offer.id)}>
+                                                                            <Eye className="mr-2 h-4 w-4" />
+                                                                            Anzeigen
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem asChild>
+                                                                        <Link href={route("offers.edit", offer.id)}>
+                                                                            <Edit className="mr-2 h-4 w-4" />
+                                                                            Bearbeiten
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => window.open(route("offers.pdf", offer.id), "_blank")}>
+                                                                        <FileText className="mr-2 h-4 w-4" />
+                                                                        PDF öffnen
+                                                                    </DropdownMenuItem>
+
+                                                                    {offer.status === "draft" && (
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => {
+                                                                                setSelectedOffer(offer)
+                                                                                setSendDialogOpen(true)
+                                                                            }}
+                                                                        >
+                                                                            <Send className="mr-2 h-4 w-4" />
+                                                                            Versenden
+                                                                        </DropdownMenuItem>
+                                                                    )}
+
+                                                                    {offer.status === "accepted" && !offer.converted_to_invoice_id && (
+                                                                        <DropdownMenuItem onClick={() => handleConvertToInvoice(offer)}>
+                                                                            <FileText className="mr-2 h-4 w-4" />
+                                                                            In Rechnung umwandeln
+                                                                        </DropdownMenuItem>
+                                                                    )}
+
+                                                                    <DropdownMenuItem
+                                                                        className="text-red-600 focus:text-red-600"
+                                                                        onClick={() => handleDelete(offer)}
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        Löschen
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>

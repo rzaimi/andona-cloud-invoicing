@@ -142,7 +142,7 @@ export default function WarehouseShow() {
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">{warehouse.name}</h1>
+                            <h1 className="text-1xl font-bold tracking-tight">{warehouse.name}</h1>
                             <p className="text-muted-foreground">
                                 {warehouse.code} {warehouse.is_default && <Badge variant="outline" className="ml-2">Standard</Badge>}
                             </p>

@@ -181,6 +181,10 @@ export interface InvoiceItem {
     unit_price: number
     total: number
     unit: string
+    tax_rate?: number
+    discount_type?: "percentage" | "fixed" | null
+    discount_value?: number | null
+    discount_amount?: number
     sort_order: number
     product?: Product
     created_at: string
@@ -229,6 +233,10 @@ export interface OfferItem {
     unit_price: number
     total: number
     unit: string
+    tax_rate?: number
+    discount_type?: "percentage" | "fixed" | null
+    discount_value?: number | null
+    discount_amount?: number
     sort_order: number
     product?: Product
     created_at: string

@@ -18,6 +18,9 @@ interface OfferItem {
     unit_price: number
     unit: string
     total: number
+    discount_type?: "percentage" | "fixed" | null
+    discount_value?: number | null
+    discount_amount?: number
 }
 
 interface Offer {
@@ -144,7 +147,7 @@ export default function OffersShow() {
                         </Link>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h1 className="text-3xl font-bold text-gray-900">
+                                <h1 className="text-1xl font-bold text-gray-900">
                                     Angebot {offer.number}
                                 </h1>
                                 {getStatusBadge(offer.status)}
@@ -266,27 +269,83 @@ export default function OffersShow() {
                                             <TableHead>Beschreibung</TableHead>
                                             <TableHead>Menge</TableHead>
                                             <TableHead>Einzelpreis</TableHead>
+                                            <TableHead>Rabatt</TableHead>
+                                            <TableHead>Rabatt-Wert</TableHead>
                                             <TableHead className="text-right">Gesamt</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {offer.items?.map((item) => (
-                                            <TableRow key={item.id}>
-                                                <TableCell>{item.description}</TableCell>
-                                                <TableCell>
-                                                    {item.quantity} {item.unit}
-                                                </TableCell>
-                                                <TableCell>{formatCurrency(item.unit_price)}</TableCell>
-                                                <TableCell className="text-right font-medium">
-                                                    {formatCurrency(item.total)}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                        {offer.items?.map((item) => {
+                                            const hasDiscount = item.discount_type && item.discount_value && item.discount_amount && item.discount_amount > 0
+                                            const baseTotal = Number(item.quantity) * Number(item.unit_price)
+                                            
+                                            return (
+                                                <TableRow key={item.id}>
+                                                    <TableCell>{item.description}</TableCell>
+                                                    <TableCell>
+                                                        {item.quantity} {item.unit}
+                                                    </TableCell>
+                                                    <TableCell>{formatCurrency(item.unit_price)}</TableCell>
+                                                    <TableCell>
+                                                        {hasDiscount ? (
+                                                            <span className="text-sm">
+                                                                {item.discount_type === 'percentage' ? 'Prozent' : 'Fester Betrag'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-400">-</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {hasDiscount ? (
+                                                            <div className="space-y-1">
+                                                                <div className="text-sm">
+                                                                    {item.discount_type === 'percentage' 
+                                                                        ? `${item.discount_value}%`
+                                                                        : formatCurrency(item.discount_value)
+                                                                    }
+                                                                </div>
+                                                                <div className="text-xs text-red-600">
+                                                                    -{formatCurrency(item.discount_amount)}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-400">-</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-medium">
+                                                        <div className="space-y-1">
+                                                            <div>{formatCurrency(item.total)}</div>
+                                                            {hasDiscount && (
+                                                                <div className="text-xs text-gray-500 line-through">
+                                                                    {formatCurrency(baseTotal)}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
                                     </TableBody>
                                 </Table>
 
                                 <div className="mt-4 flex justify-end">
                                     <div className="w-64 space-y-2">
+                                        {(() => {
+                                            const totalDiscount = offer.items?.reduce((sum, item) => {
+                                                return sum + (Number(item.discount_amount) || 0)
+                                            }, 0) || 0
+                                            
+                                            return (
+                                                <>
+                                                    {totalDiscount > 0 && (
+                                                        <div className="flex justify-between text-red-600">
+                                                            <span>Gesamtrabatt</span>
+                                                            <span className="font-medium">-{formatCurrency(totalDiscount)}</span>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )
+                                        })()}
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Zwischensumme (netto)</span>
                                             <span className="font-medium">{formatCurrency(offer.subtotal)}</span>

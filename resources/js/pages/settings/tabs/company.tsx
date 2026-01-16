@@ -31,6 +31,7 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
         decimal_separator: settings?.decimal_separator || ",",
         thousands_separator: settings?.thousands_separator || ".",
         invoice_footer: settings?.invoice_footer || "",
+        invoice_tax_note: settings?.invoice_tax_note || "",
         offer_footer: settings?.offer_footer || "",
         payment_methods: settings?.payment_methods || ["Überweisung", "SEPA-Lastschrift", "PayPal"],
         offer_validity_days: settings?.offer_validity_days || 30,
@@ -299,6 +300,19 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                             maxLength={500}
                         />
                         {errors.invoice_footer && <p className="text-red-600 text-sm">{errors.invoice_footer}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="invoice_tax_note">Steuerhinweis (z.B. §13b / §19 UStG)</Label>
+                        <Textarea
+                            id="invoice_tax_note"
+                            value={data.invoice_tax_note}
+                            onChange={(e) => setData("invoice_tax_note", e.target.value)}
+                            placeholder='Beispiel: "Steuerschuldnerschaft des Leistungsempfängers (§ 13b UStG)."'
+                            rows={3}
+                            maxLength={500}
+                        />
+                        {errors.invoice_tax_note && <p className="text-red-600 text-sm">{errors.invoice_tax_note}</p>}
                     </div>
 
                     <div className="space-y-2">

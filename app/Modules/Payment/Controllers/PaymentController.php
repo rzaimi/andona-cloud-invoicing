@@ -197,7 +197,7 @@ class PaymentController extends Controller
             
             // Update old invoice status if needed
             if ($oldInvoiceId !== $validated['invoice_id']) {
-                $oldInvoice = Invoice::find($oldInvoiceId);
+                $oldInvoice = Invoice::forCompany($companyId)->find($oldInvoiceId);
                 if ($oldInvoice) {
                     $oldInvoiceTotalPaid = $oldInvoice->payments()->where('status', 'completed')->sum('amount');
                     if ($oldInvoiceTotalPaid < $oldInvoice->total && $oldInvoice->status === 'paid') {
@@ -232,10 +232,12 @@ class PaymentController extends Controller
             $payment->delete();
             
             // Update invoice status if needed
-            $totalPaid = $invoice->payments()->where('status', 'completed')->sum('amount');
-            if ($totalPaid < $invoice->total && $invoice->status === 'paid') {
-                $invoice->status = 'sent';
-                $invoice->save();
+            if ($invoice) {
+                $totalPaid = $invoice->payments()->where('status', 'completed')->sum('amount');
+                if ($totalPaid < $invoice->total && $invoice->status === 'paid') {
+                    $invoice->status = 'sent';
+                    $invoice->save();
+                }
             }
         });
         

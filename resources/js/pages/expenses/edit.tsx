@@ -107,7 +107,7 @@ export default function ExpensesEdit() {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Ausgabe bearbeiten</h1>
+                        <h1 className="text-1xl font-bold text-gray-900">Ausgabe bearbeiten</h1>
                         <p className="text-gray-600">Bearbeiten Sie die Ausgabeninformationen</p>
                     </div>
                 </div>

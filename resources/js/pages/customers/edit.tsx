@@ -86,7 +86,7 @@ export default function CustomersEdit() {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Kunde bearbeiten</h1>
+                        <h1 className="text-1xl font-bold text-gray-900">Kunde bearbeiten</h1>
                         <p className="text-gray-600">{customer.name}</p>
                     </div>
                 </div>

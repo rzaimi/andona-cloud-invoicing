@@ -47,10 +47,12 @@ import ProfileSettingsTab from "./tabs/profile"
 import PasswordSettingsTab from "./tabs/password"
 import AppearanceSettingsTab from "./tabs/appearance"
 import DatevSettingsTab from "./tabs/datev"
+import CompanySettingsAdminTab from "./tabs/company-settings"
 
 interface SettingsPageProps {
     company: any
     settings: any
+    companySettings?: any
     emailSettings: any
     reminderSettings: any
     erechnungSettings: any
@@ -74,6 +76,7 @@ export default function SettingsIndex() {
     const { 
         company, 
         settings, 
+        companySettings,
         emailSettings, 
         reminderSettings, 
         erechnungSettings,
@@ -92,7 +95,8 @@ export default function SettingsIndex() {
     const validTabs = [
         'company', 'email', 'reminders', 'erechnung', 
         'notifications', 'payment-methods', 'email-logs', 
-        'datev', 'profile', 'password', 'appearance'
+        'datev', 'profile', 'password', 'appearance',
+        'company-settings'
     ]
 
     // Get tab from URL - prioritize URL over prop
@@ -146,7 +150,7 @@ export default function SettingsIndex() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Einstellungen</h1>
+                        <h1 className="text-1xl font-bold tracking-tight">Einstellungen</h1>
                         <p className="text-muted-foreground">
                             Verwalten Sie alle Einstellungen für Ihr Unternehmen und Ihr Profil
                         </p>
@@ -229,6 +233,13 @@ export default function SettingsIndex() {
                                 <span>DATEV</span>
                             </TabsTrigger>
                             <TabsTrigger 
+                                value="company-settings" 
+                                className="w-full justify-start gap-2 data-[state=active]:bg-background"
+                            >
+                                <Settings className="h-4 w-4" />
+                                <span>Company Settings</span>
+                            </TabsTrigger>
+                            <TabsTrigger 
                                 value="profile" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
@@ -288,6 +299,10 @@ export default function SettingsIndex() {
 
                         <TabsContent value="datev" className="space-y-6 mt-0">
                             <DatevSettingsTab datevSettings={datevSettings} />
+                        </TabsContent>
+
+                        <TabsContent value="company-settings" className="space-y-6 mt-0">
+                            <CompanySettingsAdminTab companySettings={companySettings ?? []} />
                         </TabsContent>
 
                         <TabsContent value="profile" className="space-y-6 mt-0">
