@@ -57,7 +57,7 @@ interface InvoicesEditProps {
 
 export default function InvoicesEdit() {
     // @ts-ignore
-    const { invoice, customers, layouts, products, settings } = usePage<InvoicesEditProps>().props
+    const { invoice, customers, layouts, products, settings } = usePage().props as unknown as InvoicesEditProps
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -65,15 +65,22 @@ export default function InvoicesEdit() {
         { title: invoice.number },
     ]
 
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, processing, errors } = useForm<Record<string, any>>({
         customer_id: invoice.customer_id.toString(),
         issue_date: invoice.issue_date?.split('T')[0] || invoice.issue_date,
+        service_date: invoice.service_date?.split('T')[0] || invoice.service_date || "",
+        service_period_start: invoice.service_period_start?.split('T')[0] || invoice.service_period_start || "",
+        service_period_end: invoice.service_period_end?.split('T')[0] || invoice.service_period_end || "",
         due_date: invoice.due_date?.split('T')[0] || invoice.due_date,
         notes: invoice.notes || "",
         layout_id: invoice.layout_id?.toString() || "",
         status: invoice.status,
+        vat_regime: invoice.vat_regime || "standard",
         items: invoice.items.map((item) => ({
             id: item.id,
+            product_id: item.product_id,
+            product_sku: item.product?.sku,
+            product_number: item.product?.number,
             description: item.description,
             quantity: Number(item.quantity) || 0,
             unit_price: Number(item.unit_price) || 0,
@@ -95,11 +102,12 @@ export default function InvoicesEdit() {
     const [correctionDialogOpen, setCorrectionDialogOpen] = useState(false)
 
     const germanUnits = ["Stk.", "Std.", "Tag", "Monat", "Jahr", "m", "m²", "m³", "kg", "l", "Paket"]
+    const formErrors = errors as Record<string, string>
 
     // Calculate totals whenever items change
     useEffect(() => {
         // Calculate each item's total with discount
-        const itemsWithTotals = data.items.map((item) => {
+        const itemsWithTotals = (data.items as any[]).map((item: any) => {
             const baseTotal = item.quantity * item.unit_price
             let discountAmount = 0
             if (item.discount_type && item.discount_value !== null) {
@@ -116,9 +124,18 @@ export default function InvoicesEdit() {
             }
         })
         
-        const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.total, 0)
-        const totalDiscount = itemsWithTotals.reduce((sum, item) => sum + item.discount_amount, 0)
-        const tax_amount = subtotal * settings.tax_rate
+        const subtotal = itemsWithTotals.reduce((sum: number, item: any) => sum + item.total, 0)
+        const totalDiscount = itemsWithTotals.reduce((sum: number, item: any) => sum + (item.discount_amount || 0), 0)
+        
+        // Calculate tax based on VAT regime
+        let tax_amount = 0
+        if (data.vat_regime === 'standard') {
+            tax_amount = subtotal * settings.tax_rate
+        } else {
+            // All other regimes are tax-exempt or handled by buyer
+            tax_amount = 0
+        }
+        
         const total = subtotal + tax_amount
 
         setTotals({ 
@@ -127,11 +144,14 @@ export default function InvoicesEdit() {
             tax_amount, 
             total 
         })
-    }, [data.items, settings.tax_rate])
+    }, [data.items, data.vat_regime, settings.tax_rate])
 
     const addItem = () => {
         const newItem = {
             id: Date.now(),
+            product_id: undefined,
+            product_sku: undefined,
+            product_number: undefined,
             description: "",
             quantity: 1,
             unit_price: 0,
@@ -141,20 +161,20 @@ export default function InvoicesEdit() {
             discount_value: null,
             discount_amount: 0,
         }
-        setData("items", [...data.items, newItem])
+        setData("items", [...(data.items as any[]), newItem])
     }
 
-    const removeItem = (id: number) => {
-        if (data.items.length > 1) {
+    const removeItem = (id: number | string) => {
+        if ((data.items as any[]).length > 1) {
             setData(
                 "items",
-                data.items.filter((item) => item.id !== id),
+                (data.items as any[]).filter((item: any) => item.id !== id),
             )
         }
     }
 
-    const updateItem = (id: number, field: string, value: string | number | null) => {
-        const updatedItems = data.items.map((item) => {
+    const updateItem = (id: number | string, field: string, value: string | number | null) => {
+        const updatedItems = (data.items as any[]).map((item: any) => {
             if (item.id === id) {
                 const updatedItem = { ...item, [field]: value }
                 // Recalculate total when quantity, unit_price, or discount changes
@@ -325,7 +345,7 @@ export default function InvoicesEdit() {
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.customer_id && <p className="text-red-600 text-sm">{errors.customer_id}</p>}
+                                    {formErrors.customer_id && <p className="text-red-600 text-sm">{formErrors.customer_id}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -359,7 +379,7 @@ export default function InvoicesEdit() {
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.layout_id && <p className="text-red-600 text-sm">{errors.layout_id}</p>}
+                                    {formErrors.layout_id && <p className="text-red-600 text-sm">{formErrors.layout_id}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -371,7 +391,7 @@ export default function InvoicesEdit() {
                                         onChange={(e) => setData("issue_date", e.target.value)}
                                         required
                                     />
-                                    {errors.issue_date && <p className="text-red-600 text-sm">{errors.issue_date}</p>}
+                                    {formErrors.issue_date && <p className="text-red-600 text-sm">{formErrors.issue_date}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -384,6 +404,79 @@ export default function InvoicesEdit() {
                                         required
                                     />
                                     {errors.due_date && <p className="text-red-600 text-sm">{errors.due_date}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="vat_regime">Umsatzsteuer-Regelung *</Label>
+                                    <Select value={data.vat_regime} onValueChange={(value) => setData("vat_regime", value)}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Regelung auswählen" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="standard">Regelbesteuerung (19% / 7%)</SelectItem>
+                                            <SelectItem value="small_business">Kleinunternehmerregelung (§ 19 UStG)</SelectItem>
+                                            <SelectItem value="reverse_charge">Reverse Charge (§ 13b UStG)</SelectItem>
+                                            <SelectItem value="intra_community">Innergemeinschaftliche Lieferung (§ 4 Nr. 1b UStG)</SelectItem>
+                                            <SelectItem value="export">Ausfuhrlieferung (§ 4 Nr. 1a UStG)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.vat_regime && <p className="text-red-600 text-sm">{errors.vat_regime}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="service_date">Leistungsdatum (einzelner Tag)</Label>
+                                    <Input
+                                        id="service_date"
+                                        type="date"
+                                        value={data.service_date}
+                                        onChange={(e) => {
+                                            setData((prev: any) => ({
+                                                ...prev,
+                                                service_date: e.target.value,
+                                                service_period_start: "",
+                                                service_period_end: ""
+                                            }))
+                                        }}
+                                    />
+                                    {errors.service_date && <p className="text-red-600 text-sm">{errors.service_date}</p>}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="service_period_start">Leistungszeitraum von</Label>
+                                        <Input
+                                            id="service_period_start"
+                                            type="date"
+                                            value={data.service_period_start}
+                                            onChange={(e) => {
+                                                setData((prev: any) => ({
+                                                    ...prev,
+                                                    service_period_start: e.target.value,
+                                                    service_date: ""
+                                                }))
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="service_period_end">bis</Label>
+                                        <Input
+                                            id="service_period_end"
+                                            type="date"
+                                            value={data.service_period_end}
+                                            onChange={(e) => {
+                                                setData((prev: any) => ({
+                                                    ...prev,
+                                                    service_period_end: e.target.value,
+                                                    service_date: ""
+                                                }))
+                                            }}
+                                        />
+                                    </div>
+                                    {(errors.service_period_start || errors.service_period_end) && (
+                                        <p className="text-red-600 text-sm col-span-2">
+                                            {errors.service_period_start || errors.service_period_end}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </CardContent>
@@ -401,6 +494,9 @@ export default function InvoicesEdit() {
                                 onSelect={(item) => {
                                     const newItem = {
                                         id: Date.now(),
+                                        product_id: item.product_id,
+                                        product_sku: item.product_sku,
+                                        product_number: item.product_number,
                                         description: item.description,
                                         quantity: item.quantity,
                                         unit_price: item.unit_price,
@@ -410,7 +506,7 @@ export default function InvoicesEdit() {
                                         discount_value: null,
                                         discount_amount: 0,
                                     }
-                                    setData("items", [...data.items, newItem])
+                                    setData("items", [...(data.items as any[]), newItem])
                                 }}
                             />
                         </CardHeader>
@@ -419,9 +515,11 @@ export default function InvoicesEdit() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="w-[30%]">Beschreibung</TableHead>
+                                            <TableHead className="w-[12%]">Produkt-Nr.</TableHead>
+                                            <TableHead className="w-[26%]">Beschreibung</TableHead>
                                             <TableHead className="w-[8%]">Menge</TableHead>
                                             <TableHead className="w-[8%]">Einheit</TableHead>
+                                            <TableHead className="w-[6%]">USt.</TableHead>
                                             <TableHead className="w-[12%]">Einzelpreis</TableHead>
                                             <TableHead className="w-[10%]">Rabatt</TableHead>
                                             <TableHead className="w-[10%]">Rabatt-Wert</TableHead>
@@ -430,8 +528,15 @@ export default function InvoicesEdit() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {data.items.map((item, index) => (
+                                        {(data.items as any[]).map((item: any, index: number) => (
                                             <TableRow key={item.id}>
+                                                <TableCell className="align-top">
+                                                    <div className="text-sm">
+                                                        {item.product_number || item.product_sku || (
+                                                            <span className="text-muted-foreground">-</span>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>
                                                     <Textarea
                                                         value={item.description}
@@ -440,8 +545,8 @@ export default function InvoicesEdit() {
                                                         className="min-h-[60px]"
                                                         required
                                                     />
-                                                    {errors[`items.${index}.description`] && (
-                                                        <p className="text-red-600 text-sm mt-1">{errors[`items.${index}.description`]}</p>
+                                                    {formErrors[`items.${index}.description`] && (
+                                                        <p className="text-red-600 text-sm mt-1">{formErrors[`items.${index}.description`]}</p>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
@@ -453,8 +558,8 @@ export default function InvoicesEdit() {
                                                         onChange={(e) => updateItem(item.id, "quantity", Number.parseFloat(e.target.value) || 0)}
                                                         required
                                                     />
-                                                    {errors[`items.${index}.quantity`] && (
-                                                        <p className="text-red-600 text-sm mt-1">{errors[`items.${index}.quantity`]}</p>
+                                                    {formErrors[`items.${index}.quantity`] && (
+                                                        <p className="text-red-600 text-sm mt-1">{formErrors[`items.${index}.quantity`]}</p>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
@@ -471,6 +576,11 @@ export default function InvoicesEdit() {
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
+                                                <TableCell className="align-top">
+                                                    <div className="text-sm">
+                                                        {data.vat_regime === 'standard' ? `${(settings.tax_rate * 100).toFixed(0)}%` : '0%'}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>
                                                     <Input
                                                         type="number"
@@ -480,8 +590,8 @@ export default function InvoicesEdit() {
                                                         onChange={(e) => updateItem(item.id, "unit_price", Number.parseFloat(e.target.value) || 0)}
                                                         required
                                                     />
-                                                    {errors[`items.${index}.unit_price`] && (
-                                                        <p className="text-red-600 text-sm mt-1">{errors[`items.${index}.unit_price`]}</p>
+                                                    {formErrors[`items.${index}.unit_price`] && (
+                                                        <p className="text-red-600 text-sm mt-1">{formErrors[`items.${index}.unit_price`]}</p>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
@@ -561,7 +671,7 @@ export default function InvoicesEdit() {
                                         </div>
                                     )}
                                     <div className="flex justify-between">
-                                        <span>MwSt. ({(settings.tax_rate * 100).toFixed(0)}%):</span>
+                                        <span>MwSt. ({data.vat_regime === 'standard' ? (settings.tax_rate * 100).toFixed(0) : 0}%):</span>
                                         <span className="font-medium">{formatCurrency(totals.tax_amount)}</span>
                                     </div>
                                     <div className="flex justify-between text-lg font-bold border-t pt-2">
@@ -582,14 +692,14 @@ export default function InvoicesEdit() {
                         <CardContent>
                             <div className="space-y-2">
                                 <Label htmlFor="notes">Notizen</Label>
-                                <Textarea
-                                    id="notes"
-                                    value={data.notes}
-                                    onChange={(e) => setData("notes", e.target.value)}
+                            <Textarea
+                                id="notes"
+                                value={data.notes}
+                                onChange={(e) => setData("notes", e.target.value)}
                                     placeholder="Zusätzliche Informationen, Zahlungsbedingungen, etc..."
                                     rows={4}
                                 />
-                                {errors.notes && <p className="text-red-600 text-sm">{errors.notes}</p>}
+                            {formErrors.notes && <p className="text-red-600 text-sm">{formErrors.notes}</p>}
                             </div>
                         </CardContent>
                     </Card>

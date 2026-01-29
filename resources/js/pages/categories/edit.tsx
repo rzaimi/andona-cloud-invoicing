@@ -115,7 +115,7 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Kategorie bearbeiten</h1>
+                            <h1 className="text-1xl font-bold tracking-tight">Kategorie bearbeiten</h1>
                             <p className="text-muted-foreground">{category.name}</p>
                         </div>
                     </div>

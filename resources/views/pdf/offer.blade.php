@@ -261,8 +261,30 @@
 @endif
 
 {{-- DIN 5008 compliant address block for envelope window (positioned absolutely) --}}
-@if($layout->settings['content']['use_din_5008_address'] ?? true)
-    @include('pdf.partials.address-block', ['offer' => $offer, 'bodyFontSize' => $layout->settings['fonts']['body_size'] ?? 11, 'invoice' => null])
+@php
+    $customer = $offer->customer ?? null;
+    $offerBodyFontSize = isset($layout->settings['fonts']['size']) ? getFontSizePx($layout->settings['fonts']['size']) : (isset($layout->settings['fonts']['body_size']) ? (int)$layout->settings['fonts']['body_size'] : 11);
+@endphp
+@if($customer)
+    <div class="din-5008-address">
+        <div style="font-weight: 600; margin-bottom: 3px; font-size: {{ $offerBodyFontSize }}px; line-height: 1.2;">
+            {{ $customer->name ?? 'Unbekannt' }}
+        </div>
+        @if(isset($customer->contact_person) && $customer->contact_person)
+            <div style="margin-bottom: 2px; font-size: {{ $offerBodyFontSize }}px; line-height: 1.2;">{{ $customer->contact_person }}</div>
+        @endif
+        <div style="font-size: {{ $offerBodyFontSize }}px; line-height: 1.2;">
+            @if($customer->address)
+                {{ $customer->address }}<br>
+            @endif
+            @if($customer->postal_code && $customer->city)
+                {{ $customer->postal_code }} {{ $customer->city }}
+                @if($customer->country && $customer->country !== 'Deutschland')
+                    <br>{{ $customer->country }}
+                @endif
+            @endif
+        </div>
+    </div>
 @endif
 
 {{-- Footer must be defined early and as direct child of body for DomPDF fixed positioning --}}
@@ -350,6 +372,21 @@
         @if($snapshot['email'] ?? null) · {{ $snapshot['email'] }}@endif
         @if($snapshot['phone'] ?? null) · {{ $snapshot['phone'] }}@endif
     </div>
+
+    {{-- Page number (bottom-right inside footer area) --}}
+    <script type="text/php">
+    if (isset($pdf)) {
+        $pdf->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
+            $font = $fontMetrics->get_font("DejaVu Sans", "normal");
+            $size = 7;
+            $text = "Seite {$pageNumber} / {$pageCount}";
+            $w = $fontMetrics->get_text_width($text, $font, $size);
+            $x = $canvas->get_width() - $w - 6;
+            $y = $canvas->get_height() - 14;
+            $canvas->text($x, $y, $text, $font, $size, [0, 0, 0]);
+        });
+    }
+    </script>
 @endif
 
 <div class="container">
@@ -369,9 +406,21 @@
                 @endif
             </div>
         </div>
-        @if(($layout->settings['branding']['show_logo'] ?? true) && $company->logo)
+        @php
+            $logoRelPath = isset($snapshot['logo']) ? ltrim(preg_replace('#^storage/#', '', (string)$snapshot['logo']), '/') : null;
+        @endphp
+        @if(($layout->settings['branding']['show_logo'] ?? true) && $logoRelPath)
             <div class="logo">
-                <img src="{{ public_path('storage/' . $company->logo) }}" alt="Logo" style="max-height: 80px; max-width: 200px;">
+                @if(isset($preview) && $preview)
+                    <img src="{{ asset('storage/' . $logoRelPath) }}" alt="Logo" style="max-height: 80px; max-width: 200px;">
+                @elseif(\Storage::disk('public')->exists($logoRelPath))
+                    @php
+                        $logoPath = \Storage::disk('public')->path($logoRelPath);
+                        $logoData = base64_encode(file_get_contents($logoPath));
+                        $logoMime = mime_content_type($logoPath);
+                    @endphp
+                    <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo" style="max-height: 80px; max-width: 200px;">
+                @endif
             </div>
         @endif
     </div>
@@ -385,22 +434,7 @@
     <!-- Offer Meta Information -->
     <div class="offer-meta">
         <div class="customer-info">
-            @if(!($layout->settings['content']['use_din_5008_address'] ?? true))
-                <div class="section-title">Angebotempfänger</div>
-                <strong>{{ $offer->customer->name }}</strong><br>
-                @if($offer->customer->contact_person){{ $offer->customer->contact_person }}<br>@endif
-                {{ $offer->customer->address }}<br>
-                {{ $offer->customer->postal_code }} {{ $offer->customer->city }}<br>
-                @if($offer->customer->country && $offer->customer->country !== 'Deutschland'){{ $offer->customer->country }}@endif
-            @else
-                {{-- DIN 5008 address is positioned absolutely, show customer number here if needed --}}
-                @if(($layout->settings['content']['show_customer_number'] ?? true) && isset($offer->customer->number) && $offer->customer->number)
-                    <div class="section-title">Angebotempfänger</div>
-                    <div style="margin-top: 60mm; font-size: {{ ($layout->settings['fonts']['body_size'] ?? 11) }}px;">
-                        <strong>Kundennummer:</strong> {{ $offer->customer->number }}
-                    </div>
-                @endif
-            @endif
+            {{-- Receiver address is always rendered in DIN 5008 window (absolute). Nothing to render here. --}}
         </div>
 
         <div class="offer-details">
@@ -451,11 +485,15 @@
     <table class="items-table">
         <thead>
         <tr>
+            @if(($layout->settings['content']['show_item_codes'] ?? false))
+                <th style="width: 12%">Produkt-Nr.</th>
+            @endif
             <th style="width: 42%">Beschreibung</th>
             <th style="width: 8%" class="text-center">Menge</th>
             @if($layout->settings['content']['show_unit_column'] ?? true)
                 <th style="width: 8%" class="text-center">Einheit</th>
             @endif
+            <th style="width: 8%" class="text-right">USt.</th>
             <th style="width: 14%" class="text-right">Einzelpreis</th>
             <th style="width: 13%" class="text-right">Rabatt</th>
             <th style="width: 15%" class="text-right">Gesamtpreis</th>
@@ -469,13 +507,21 @@
                 $baseTotal = (float)($item->quantity ?? 0) * (float)($item->unit_price ?? 0);
                 $discountType = $item->discount_type ?? null;
                 $discountValue = $item->discount_value ?? null;
+                $productCode = data_get($item, 'product.number')
+                    ?? data_get($item, 'product.sku')
+                    ?? data_get($item, 'product_number')
+                    ?? data_get($item, 'product_sku');
             @endphp
             <tr>
+                @if(($layout->settings['content']['show_item_codes'] ?? false))
+                    <td>{{ $productCode ?: '-' }}</td>
+                @endif
                 <td>{{ $item->description }}</td>
                 <td class="text-center">{{ number_format($item->quantity, 2, ',', '.') }}</td>
                 @if($layout->settings['content']['show_unit_column'] ?? true)
                     <td class="text-center">{{ $item->unit }}</td>
                 @endif
+                <td class="text-right">{{ number_format(($offer->tax_rate ?? 0) * 100, 0, ',', '.') }}%</td>
                 <td class="text-right">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
                 <td class="text-right">
                     @if($hasDiscount)
@@ -544,5 +590,6 @@
     @endif
 
 </div>
+
 </body>
 </html>

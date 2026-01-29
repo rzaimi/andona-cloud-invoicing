@@ -31,10 +31,14 @@ class Invoice extends Model
         'user_id',
         'status',
         'issue_date',
+        'service_date',
+        'service_period_start',
+        'service_period_end',
         'due_date',
         'subtotal',
         'tax_rate',
         'tax_amount',
+        'vat_regime',
         'total',
         'notes',
         'payment_method',
@@ -54,6 +58,9 @@ class Invoice extends Model
 
     protected $casts = [
         'issue_date' => 'date',
+        'service_date' => 'date',
+        'service_period_start' => 'date',
+        'service_period_end' => 'date',
         'due_date' => 'date',
         'subtotal' => 'decimal:2',
         'tax_rate' => 'decimal:4',
@@ -214,6 +221,14 @@ class Invoice extends Model
         $this->subtotal = $this->items->sum('total');
         
         // Calculate tax amount
+        // If VAT regime is not standard, tax is always 0
+        if (($this->vat_regime ?? 'standard') !== 'standard') {
+            $this->tax_amount = 0;
+            $this->total = $this->subtotal;
+            return;
+        }
+
+        // Calculate tax amount
         // If items have individual tax_rate, calculate per item
         // Otherwise, use invoice-level tax_rate for all items
         $taxAmount = 0;
@@ -225,6 +240,35 @@ class Invoice extends Model
         
         $this->tax_amount = $taxAmount;
         $this->total = $this->subtotal + $this->tax_amount;
+    }
+
+    /**
+     * Get VAT breakdown by rate
+     */
+    public function getVatBreakdown(): array
+    {
+        if (($this->vat_regime ?? 'standard') !== 'standard') {
+            return [];
+        }
+
+        $breakdown = [];
+        foreach ($this->items as $item) {
+            $rate = (float) ($item->tax_rate ?? $this->tax_rate);
+            $rateKey = number_format($rate * 100, 2);
+            
+            if (!isset($breakdown[$rateKey])) {
+                $breakdown[$rateKey] = [
+                    'rate' => $rate,
+                    'net_amount' => 0,
+                    'tax_amount' => 0,
+                ];
+            }
+            
+            $breakdown[$rateKey]['net_amount'] += $item->total;
+            $breakdown[$rateKey]['tax_amount'] += $item->total * $rate;
+        }
+        
+        return $breakdown;
     }
 
     public function generateNumber(): string

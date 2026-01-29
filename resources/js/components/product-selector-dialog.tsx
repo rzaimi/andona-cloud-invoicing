@@ -21,7 +21,15 @@ interface Product {
 
 interface ProductSelectorDialogProps {
     products: Product[]
-    onSelect: (item: { description: string; quantity: number; unit_price: number; unit: string; product_id?: string }) => void
+    onSelect: (item: {
+        description: string
+        quantity: number
+        unit_price: number
+        unit: string
+        product_id?: string
+        product_sku?: string
+        product_number?: string
+    }) => void
     trigger?: React.ReactNode
 }
 
@@ -49,6 +57,8 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
             unit_price: Number(product.price),
             unit: product.unit,
             product_id: product.id,
+            product_sku: product.sku,
+            product_number: product.number,
         })
         setOpen(false)
         setSearchTerm("")

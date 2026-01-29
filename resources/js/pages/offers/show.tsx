@@ -266,8 +266,10 @@ export default function OffersShow() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead>Produkt-Nr.</TableHead>
                                             <TableHead>Beschreibung</TableHead>
                                             <TableHead>Menge</TableHead>
+                                            <TableHead>USt.</TableHead>
                                             <TableHead>Einzelpreis</TableHead>
                                             <TableHead>Rabatt</TableHead>
                                             <TableHead>Rabatt-Wert</TableHead>
@@ -281,10 +283,14 @@ export default function OffersShow() {
                                             
                                             return (
                                                 <TableRow key={item.id}>
+                                                    <TableCell>
+                                                        {item.product?.number || item.product?.sku || <span className="text-gray-400">-</span>}
+                                                    </TableCell>
                                                     <TableCell>{item.description}</TableCell>
                                                     <TableCell>
                                                         {item.quantity} {item.unit}
                                                     </TableCell>
+                                                    <TableCell>{(Number(offer.tax_rate || 0) * 100).toFixed(0)}%</TableCell>
                                                     <TableCell>{formatCurrency(item.unit_price)}</TableCell>
                                                     <TableCell>
                                                         {hasDiscount ? (

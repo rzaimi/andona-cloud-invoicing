@@ -216,14 +216,44 @@ class ERechnungService
         );
         
         // Add tax breakdown
-        $taxRate = 19.0; // Default German VAT rate
-        $document->addDocumentTax(
-            ZugferdDutyTaxFeeCategories::STANDARD_RATE,
-            'VAT',
-            $subtotal,
-            $taxAmount,
-            $taxRate
-        );
+        $vatBreakdown = $invoice->getVatBreakdown();
+        if (count($vatBreakdown) > 0) {
+            foreach ($vatBreakdown as $data) {
+                $document->addDocumentTax(
+                    $data['rate'] > 0.10 ? ZugferdDutyTaxFeeCategories::STANDARD_RATE : ZugferdDutyTaxFeeCategories::REDUCED_RATE,
+                    'VAT',
+                    $data['net_amount'],
+                    $data['tax_amount'],
+                    $data['rate'] * 100
+                );
+            }
+        } elseif (($invoice->vat_regime ?? 'standard') === 'standard') {
+            $taxRate = ($invoice->tax_rate ?? 0.19) * 100;
+            $document->addDocumentTax(
+                $taxRate > 10 ? ZugferdDutyTaxFeeCategories::STANDARD_RATE : ZugferdDutyTaxFeeCategories::REDUCED_RATE,
+                'VAT',
+                $subtotal,
+                $taxAmount,
+                $taxRate
+            );
+        } else {
+            // Special regimes (tax exempt or reverse charge)
+            $category = match($invoice->vat_regime) {
+                'reverse_charge' => ZugferdDutyTaxFeeCategories::REVERSE_CHARGE,
+                'intra_community' => ZugferdDutyTaxFeeCategories::INTRA_COMMUNITY_SUPPLY,
+                'export' => ZugferdDutyTaxFeeCategories::EXPORT_OUTSIDE_EU,
+                'small_business' => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_GERMAN_USTG_19,
+                default => ZugferdDutyTaxFeeCategories::VAT_EXEMPT,
+            };
+            
+            $document->addDocumentTax(
+                $category,
+                'VAT',
+                $subtotal,
+                0,
+                0
+            );
+        }
         
         // Payment means (if bank details available)
         if ($company->bank_iban) {

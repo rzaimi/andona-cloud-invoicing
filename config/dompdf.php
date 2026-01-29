@@ -233,7 +233,8 @@ return [
          *
          * @var bool
          */
-        'enable_php' => false,
+        // Needed for page numbering via <script type="text/php"> ... </script>
+        'enable_php' => true,
 
         /**
          * Rnable inline JavaScript

@@ -233,7 +233,7 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight dark:text-gray-100">Kalender</h1>
+                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">Kalender</h1>
                         <p className="text-muted-foreground">Termine, Fristen und wichtige Ereignisse im Überblick</p>
                     </div>
                     <div className="flex items-center space-x-2">
