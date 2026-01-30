@@ -1,10 +1,7 @@
 {{-- Classic Template: Traditional German invoice layout with structured design --}}
 {{-- Template: classic - DISTINCTIVE: Full borders, dark header, boxed totals --}}
 <div class="container">
-@php
-    $snapshot = $invoice->getCompanySnapshot();
-    $customer = $invoice->customer ?? null;
-@endphp
+@php $customer = $invoice->customer ?? null; @endphp
 @if($customer)
     <div class="din-5008-address">
         <div style="font-weight: 600; margin-bottom: 3px; font-size: {{ $bodyFontSize }}px; line-height: 1.2;">
@@ -24,11 +21,6 @@
                 @endif
             @endif
         </div>
-        @if(isset($customer->vat_number) && $customer->vat_number)
-            <div style="margin-top: 2px; font-size: {{ $bodyFontSize }}px; line-height: 1.2;">
-                USt-IdNr.: {{ $customer->vat_number }}
-            </div>
-        @endif
     </div>
 @endif
     {{-- Header: Logo and sender address top left, invoice details top right --}}
@@ -66,11 +58,7 @@
         {{-- Right: Invoice details --}}
         <div style="text-align: right; font-size: {{ $bodyFontSize }}px;">
             <div style="margin-bottom: 4px;"><strong>Rechnungsdatum:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
-            @if(isset($invoice->service_date) && $invoice->service_date)
-                <div style="margin-bottom: 4px;"><strong>Leistungsdatum:</strong> {{ formatInvoiceDate($invoice->service_date, $dateFormat ?? 'd.m.Y') }}</div>
-            @else
-                <div style="margin-bottom: 4px;"><strong>Leistungsdatum:</strong> entspricht Rechnungsdatum</div>
-            @endif
+            <div style="margin-bottom: 4px;"><strong>Leistungsdatum:</strong> entspricht Rechnungsdatum</div>
             <div style="margin-bottom: 4px;"><strong>Fälligkeitsdatum:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
             @if(isset($invoice->customer->number) && $invoice->customer->number)
                 <div style="margin-bottom: 4px;"><strong>Kundennummer:</strong> {{ $invoice->customer->number }}</div>
@@ -153,8 +141,7 @@
                             Std.
                         @endif
                     </td>
-                    @php $itemTaxRate = (float)($item->tax_rate ?? $invoice->tax_rate ?? 0); @endphp
-                    <td style="padding: 8px 6px; text-align: right; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($itemTaxRate * 100, 0, ',', '.') }}%</td>
+                    <td style="padding: 8px 6px; text-align: right; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format(($invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}%</td>
                     <td style="padding: 8px 6px; text-align: right; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
                     <td style="padding: 8px 6px; text-align: right; font-weight: 600;">
                         <div>{{ number_format($item->total, 2, ',', '.') }} €</div>
@@ -187,71 +174,16 @@
                 <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">Gesamtbetrag (netto)</td>
                 <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($invoice->subtotal, 2, ',', '.') }} €</td>
             </tr>
-            @php
-                $isSmallBusiness = $snapshot['is_small_business'] ?? false;
-                $isVatFree = $isSmallBusiness || (bool)($invoice->is_reverse_charge ?? false) || (($invoice->vat_exemption_type ?? 'none') !== 'none');
-                $taxRates = [];
-                if (!$isVatFree) {
-                    foreach ($invoice->items as $it) {
-                        $rate = (float)($it->tax_rate ?? $invoice->tax_rate ?? 0);
-                        $taxableAmount = (float)($it->total ?? 0);
-                        if (!isset($taxRates[$rate])) {
-                            $taxRates[$rate] = ['base' => 0, 'amount' => 0];
-                        }
-                        $taxRates[$rate]['base'] += $taxableAmount;
-                        $taxRates[$rate]['amount'] += $taxableAmount * $rate;
-                    }
-                    ksort($taxRates);
-                }
-            @endphp
-            @if(!$isVatFree)
-                @foreach($taxRates as $rate => $data)
-                    @if($rate > 0)
-                        <tr>
-                            <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($rate * 100, 0) }}% Umsatzsteuer</td>
-                            <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($data['amount'], 2, ',', '.') }} €</td>
-                        </tr>
-                    @endif
-                @endforeach
-            @endif
+            <tr>
+                <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($invoice->tax_rate * 100, 0) }}% Umsatzsteuer</td>
+                <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($invoice->tax_amount, 2, ',', '.') }} €</td>
+            </tr>
             <tr style="background-color: {{ $layoutSettings['colors']['primary'] ?? '#1f2937' }}; color: white;">
                 <td style="padding: 8px 10px; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">Rechnungsbetrag</td>
                 <td style="padding: 8px 10px; text-align: right; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">{{ number_format($invoice->total, 2, ',', '.') }} €</td>
             </tr>
         </table>
     </div>
-
-    {{-- Legal notices --}}
-    @if($isSmallBusiness)
-        <div style="margin-top: 12px; padding: 8px; background-color: #fef3c7; border-left: 3px solid #f59e0b; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
-            <strong>Gemäß §19 UStG wird keine Umsatzsteuer ausgewiesen.</strong>
-        </div>
-    @endif
-
-    @if($invoice->is_reverse_charge ?? false)
-        <div style="margin-top: 12px; padding: 8px; background-color: #e0f2fe; border-left: 3px solid #38b2ac; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
-            <strong>Hinweis zum Reverse-Charge-Verfahren:</strong> Die Umsatzsteuer schuldet der Leistungsempfänger.
-            @if($invoice->buyer_vat_id)
-                <br>USt-IdNr. des Leistungsempfängers: {{ $invoice->buyer_vat_id }}
-            @endif
-        </div>
-    @endif
-
-    @if(($invoice->vat_exemption_type ?? 'none') !== 'none')
-        <div style="margin-top: 12px; padding: 8px; background-color: #e6fffa; border-left: 3px solid #319795; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
-            <strong>Umsatzsteuerbefreiung:</strong>
-            @if($invoice->vat_exemption_type === 'eu_intracommunity')
-                Innergemeinschaftliche Lieferung gemäß §4 Nr. 1b UStG
-            @elseif($invoice->vat_exemption_type === 'export')
-                Ausfuhrlieferung gemäß §4 Nr. 1a UStG
-            @else
-                {{ $invoice->vat_exemption_reason ?? 'Gemäß §4 UStG' }}
-            @endif
-            @if($invoice->vat_exemption_reason && $invoice->vat_exemption_type === 'other')
-                <br>Grund: {{ $invoice->vat_exemption_reason }}
-            @endif
-        </div>
-    @endif
 
     {{-- Payment Instructions --}}
     @php

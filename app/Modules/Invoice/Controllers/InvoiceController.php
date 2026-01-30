@@ -115,14 +115,13 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'issue_date' => 'required|date',
-            'service_date' => 'nullable|date|before_or_equal:issue_date',
+            'service_date' => 'nullable|date',
+            'service_period_start' => 'nullable|date',
+            'service_period_end' => 'nullable|date|after_or_equal:service_period_start',
             'due_date' => 'required|date|after_or_equal:issue_date',
             'notes' => 'nullable|string',
             'layout_id' => 'nullable|exists:invoice_layouts,id',
-            'is_reverse_charge' => 'nullable|boolean',
-            'buyer_vat_id' => 'nullable|string|max:50|required_if:is_reverse_charge,true',
-            'vat_exemption_type' => 'nullable|in:none,eu_intracommunity,export,other',
-            'vat_exemption_reason' => 'nullable|string|max:500|required_if:vat_exemption_type,other',
+            'vat_regime' => 'required|in:standard,small_business,reverse_charge,intra_community,export',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'nullable|uuid|exists:products,id',
             'items.*.description' => 'required|string',
@@ -168,21 +167,14 @@ class InvoiceController extends Controller
                 'user_id' => $user->id,
                 'issue_date' => $validated['issue_date'],
                 'service_date' => $validated['service_date'] ?? null,
+                'service_period_start' => $validated['service_period_start'] ?? null,
+                'service_period_end' => $validated['service_period_end'] ?? null,
                 'due_date' => $validated['due_date'],
                 'notes' => $validated['notes'],
-                'payment_method' => $validated['payment_method'] ?? null,
-                'payment_terms' => $validated['payment_terms'] ?? null,
                 'layout_id' => $validated['layout_id'],
-                'is_reverse_charge' => $validated['is_reverse_charge'] ?? false,
-                'buyer_vat_id' => $validated['buyer_vat_id'] ?? null,
-                'vat_exemption_type' => $validated['vat_exemption_type'] ?? 'none',
-                'vat_exemption_reason' => $validated['vat_exemption_reason'] ?? null,
-                'tax_rate' => $company->getSetting('tax_rate', 0.19),
+                'vat_regime' => $validated['vat_regime'] ?? 'standard',
+                'tax_rate' => ($validated['vat_regime'] ?? 'standard') === 'standard' ? $company->getSetting('tax_rate', 0.19) : 0,
             ]);
-
-            $isVatFree = ($company->is_small_business ?? false)
-                || ($invoice->is_reverse_charge ?? false)
-                || (($invoice->vat_exemption_type ?? 'none') !== 'none');
 
             // Save company snapshot
             $invoice->company_snapshot = $invoice->createCompanySnapshot();
@@ -191,7 +183,6 @@ class InvoiceController extends Controller
             // Create invoice items
             foreach ($validated['items'] as $index => $itemData) {
                 $productId = null;
-                $product = null;
                 if (!empty($itemData['product_id'])) {
                     $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
                         ->where('id', $itemData['product_id'])
@@ -217,8 +208,7 @@ class InvoiceController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
-                    // Prefer product tax rate (supports mixed rates); force 0% if VAT-free (reverse charge/exempt/small business)
-                    'tax_rate' => $isVatFree ? 0 : (isset($product) && $product ? $product->tax_rate : $invoice->tax_rate),
+                    'tax_rate' => $invoice->tax_rate, // Use invoice tax rate by default
                     'discount_type' => $discountType,
                     'discount_value' => $discountValue,
                     'sort_order' => $index,
@@ -290,15 +280,14 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'issue_date' => 'required|date',
-            'service_date' => 'nullable|date|before_or_equal:issue_date',
+            'service_date' => 'nullable|date',
+            'service_period_start' => 'nullable|date',
+            'service_period_end' => 'nullable|date|after_or_equal:service_period_start',
             'due_date' => 'required|date|after_or_equal:issue_date',
             'notes' => 'nullable|string',
             'layout_id' => 'nullable|exists:invoice_layouts,id',
             'status' => 'required|in:draft,sent,paid,overdue,cancelled',
-            'is_reverse_charge' => 'nullable|boolean',
-            'buyer_vat_id' => 'nullable|string|max:50|required_if:is_reverse_charge,true',
-            'vat_exemption_type' => 'nullable|in:none,eu_intracommunity,export,other',
-            'vat_exemption_reason' => 'nullable|string|max:500|required_if:vat_exemption_type,other',
+            'vat_regime' => 'required|in:standard,small_business,reverse_charge,intra_community,export',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'nullable|uuid|exists:products,id',
             'items.*.description' => 'required|string',
@@ -330,29 +319,21 @@ class InvoiceController extends Controller
                 'customer_id' => $validated['customer_id'],
                 'issue_date' => $validated['issue_date'],
                 'service_date' => $validated['service_date'] ?? null,
+                'service_period_start' => $validated['service_period_start'] ?? null,
+                'service_period_end' => $validated['service_period_end'] ?? null,
                 'due_date' => $validated['due_date'],
                 'notes' => $validated['notes'],
-                'payment_method' => $validated['payment_method'] ?? null,
-                'payment_terms' => $validated['payment_terms'] ?? null,
                 'layout_id' => $validated['layout_id'],
                 'status' => $validated['status'],
-                'is_reverse_charge' => $validated['is_reverse_charge'] ?? false,
-                'buyer_vat_id' => $validated['buyer_vat_id'] ?? null,
-                'vat_exemption_type' => $validated['vat_exemption_type'] ?? 'none',
-                'vat_exemption_reason' => $validated['vat_exemption_reason'] ?? null,
+                'vat_regime' => $validated['vat_regime'] ?? 'standard',
+                'tax_rate' => ($validated['vat_regime'] ?? 'standard') === 'standard' ? $invoice->company->getSetting('tax_rate', 0.19) : 0,
             ]);
-
-            $company = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
-            $isVatFree = ($company->is_small_business ?? false)
-                || ($invoice->is_reverse_charge ?? false)
-                || (($invoice->vat_exemption_type ?? 'none') !== 'none');
 
             // Delete existing items and create new ones
             $invoice->items()->delete();
 
             foreach ($validated['items'] as $index => $itemData) {
                 $productId = null;
-                $product = null;
                 if (!empty($itemData['product_id'])) {
                     $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
                         ->where('id', $itemData['product_id'])
@@ -377,8 +358,7 @@ class InvoiceController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
-                    // Prefer product tax rate (supports mixed rates); force 0% if VAT-free (reverse charge/exempt/small business)
-                    'tax_rate' => $isVatFree ? 0 : (isset($product) && $product ? $product->tax_rate : $invoice->tax_rate),
+                    'tax_rate' => $invoice->tax_rate, // Use invoice tax rate by default
                     'discount_type' => $discountType,
                     'discount_value' => $discountValue,
                     'sort_order' => $index,

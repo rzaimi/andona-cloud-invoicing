@@ -404,9 +404,50 @@
             return \Carbon\Carbon::parse($date)->format($format);
         }
     }
+
+    // Helper function for VAT regime legal text
+    if (!function_exists('getVatRegimeNote')) {
+        function getVatRegimeNote($regime) {
+            switch ($regime) {
+                case 'small_business':
+                    return 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.';
+                case 'reverse_charge':
+                    return 'Steuerschuldnerschaft des Leistungsempfängers (Reverse Charge).';
+                case 'intra_community':
+                    return 'Innergemeinschaftliche Lieferung. Steuerfrei gem. § 4 Nr. 1b UStG.';
+                case 'export':
+                    return 'Steuerfreie Ausfuhrlieferung gem. § 4 Nr. 1a UStG.';
+                default:
+                    return null;
+            }
+        }
+    }
 @endphp
-@if($layoutSettings['branding']['show_footer'] ?? true)
+    @php
+        // Helper function to get VAT regime text
+        if (!function_exists('getVatRegimeText')) {
+            function getVatRegimeText($regime) {
+                return match($regime) {
+                    'small_business' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
+                    'reverse_charge' => 'Steuerschuldnerschaft des Leistungsempfängers (Reverse Charge) gemäß § 13b UStG.',
+                    'intra_community' => 'Steuerfreie innergemeinschaftliche Lieferung gemäß § 4 Nr. 1b UStG.',
+                    'export' => 'Steuerfreie Ausfuhrlieferung gemäß § 4 Nr. 1a UStG.',
+                    default => null,
+                };
+            }
+        }
+    @endphp
+
+    @if($layoutSettings['branding']['show_footer'] ?? true)
     <div class="pdf-footer" style="border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; color: {{ $layoutSettings['colors']['text'] ?? '#9ca3af' }}; line-height: 1.8;">
+        @php
+            $vatText = getVatRegimeText($invoice->vat_regime ?? 'standard');
+        @endphp
+        @if($vatText)
+            <div style="margin-bottom: 8px; color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }}; font-weight: 600;">
+                {{ $vatText }}
+            </div>
+        @endif
         @if($snapshot['address'] ?? null){{ $snapshot['address'] }}@endif
         @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)), {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
         @if($snapshot['email'] ?? null) · {{ $snapshot['email'] }}@endif

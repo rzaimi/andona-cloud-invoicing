@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer } from "@/types"
@@ -21,7 +20,6 @@ interface InvoiceItem {
     product_id?: string
     product_sku?: string
     product_number?: string
-    tax_rate?: number
     description: string
     quantity: number
     unit_price: number
@@ -70,13 +68,12 @@ export default function InvoicesCreate() {
         customer_id: "",
         issue_date: new Date().toISOString().split("T")[0],
         service_date: "",
+        service_period_start: "",
+        service_period_end: "",
         due_date: new Date(Date.now() + settings.payment_terms * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         notes: "",
         layout_id: layouts.find((l) => l.is_default)?.id || "",
-        is_reverse_charge: false,
-        buyer_vat_id: "",
-        vat_exemption_type: "none",
-        vat_exemption_reason: "",
+        vat_regime: "standard",
         items: [
             {
                 id: 1,
@@ -128,16 +125,16 @@ export default function InvoicesCreate() {
         
         const subtotal = itemsWithTotals.reduce((sum: number, item: InvoiceItem) => sum + item.total, 0)
         const totalDiscount = itemsWithTotals.reduce((sum: number, item: InvoiceItem) => sum + (item.discount_amount || 0), 0)
-        const isVatFree = Boolean(data.is_reverse_charge) || (data.vat_exemption_type ?? "none") !== "none"
-        const tax_amount = isVatFree
-            ? 0
-            : itemsWithTotals.reduce((sum: number, item: InvoiceItem) => {
-                  const productRate =
-                      item.product_id
-                          ? (products.find((p) => p.id.toString() === item.product_id?.toString())?.tax_rate ?? settings.tax_rate)
-                          : settings.tax_rate
-                  return sum + item.total * productRate
-              }, 0)
+        
+        // Calculate tax based on VAT regime
+        let tax_amount = 0
+        if (data.vat_regime === 'standard') {
+            tax_amount = subtotal * settings.tax_rate
+        } else {
+            // All other regimes (small_business, reverse_charge, intra_community, export) are tax-exempt or handled by buyer
+            tax_amount = 0
+        }
+        
         const total = subtotal + tax_amount
 
         setTotals({ 
@@ -146,7 +143,7 @@ export default function InvoicesCreate() {
             tax_amount, 
             total 
         })
-    }, [data.items, settings.tax_rate])
+    }, [data.items, data.vat_regime, settings.tax_rate])
 
     const addItem = () => {
         const newItem: InvoiceItem = {
@@ -292,18 +289,6 @@ export default function InvoicesCreate() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="service_date">Leistungsdatum</Label>
-                                    <Input
-                                        id="service_date"
-                                        type="date"
-                                        value={data.service_date}
-                                        onChange={(e) => setData("service_date", e.target.value)}
-                                        max={data.issue_date}
-                                    />
-                                    {errors.service_date && <p className="text-red-600 text-sm">{errors.service_date}</p>}
-                                </div>
-
-                                <div className="space-y-2">
                                     <Label htmlFor="due_date">Fälligkeitsdatum *</Label>
                                     <Input
                                         id="due_date"
@@ -314,67 +299,79 @@ export default function InvoicesCreate() {
                                     />
                                     {errors.due_date && <p className="text-red-600 text-sm">{errors.due_date}</p>}
                                 </div>
-                            </div>
-
-                            <div className="space-y-4 pt-4 border-t">
-                                <div className="space-y-2">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="is_reverse_charge"
-                                            checked={Boolean(data.is_reverse_charge)}
-                                            onCheckedChange={(checked) => setData("is_reverse_charge", checked === true)}
-                                        />
-                                        <Label htmlFor="is_reverse_charge" className="cursor-pointer">
-                                            Reverse Charge (§13b UStG)
-                                        </Label>
-                                    </div>
-                                    {errors.is_reverse_charge && <p className="text-red-600 text-sm">{errors.is_reverse_charge}</p>}
-                                </div>
-
-                                {data.is_reverse_charge && (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="buyer_vat_id">USt-IdNr. des Leistungsempfängers *</Label>
-                                        <Input
-                                            id="buyer_vat_id"
-                                            type="text"
-                                            value={data.buyer_vat_id}
-                                            onChange={(e) => setData("buyer_vat_id", e.target.value)}
-                                            placeholder="DE123456789"
-                                            required={Boolean(data.is_reverse_charge)}
-                                        />
-                                        {errors.buyer_vat_id && <p className="text-red-600 text-sm">{errors.buyer_vat_id}</p>}
-                                    </div>
-                                )}
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="vat_exemption_type">Umsatzsteuerbefreiung</Label>
-                                    <Select value={data.vat_exemption_type} onValueChange={(value) => setData("vat_exemption_type", value)}>
+                                    <Label htmlFor="vat_regime">Umsatzsteuer-Regelung *</Label>
+                                    <Select value={data.vat_regime} onValueChange={(value) => setData("vat_regime", value)}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Auswählen" />
+                                            <SelectValue placeholder="Regelung auswählen" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none">Keine</SelectItem>
-                                            <SelectItem value="eu_intracommunity">Innergemeinschaftliche Lieferung</SelectItem>
-                                            <SelectItem value="export">Ausfuhrlieferung</SelectItem>
-                                            <SelectItem value="other">Sonstige</SelectItem>
+                                            <SelectItem value="standard">Regelbesteuerung (19% / 7%)</SelectItem>
+                                            <SelectItem value="small_business">Kleinunternehmerregelung (§ 19 UStG)</SelectItem>
+                                            <SelectItem value="reverse_charge">Reverse Charge (§ 13b UStG)</SelectItem>
+                                            <SelectItem value="intra_community">Innergemeinschaftliche Lieferung (§ 4 Nr. 1b UStG)</SelectItem>
+                                            <SelectItem value="export">Ausfuhrlieferung (§ 4 Nr. 1a UStG)</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {errors.vat_exemption_type && <p className="text-red-600 text-sm">{errors.vat_exemption_type}</p>}
+                                    {errors.vat_regime && <p className="text-red-600 text-sm">{errors.vat_regime}</p>}
                                 </div>
 
-                                {data.vat_exemption_type === "other" && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="service_date">Leistungsdatum (einzelner Tag)</Label>
+                                    <Input
+                                        id="service_date"
+                                        type="date"
+                                        value={data.service_date}
+                                        onChange={(e) => {
+                                            setData((prev: any) => ({
+                                                ...prev,
+                                                service_date: e.target.value,
+                                                service_period_start: "",
+                                                service_period_end: ""
+                                            }))
+                                        }}
+                                    />
+                                    {errors.service_date && <p className="text-red-600 text-sm">{errors.service_date}</p>}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="vat_exemption_reason">Grund der Befreiung *</Label>
-                                        <Textarea
-                                            id="vat_exemption_reason"
-                                            value={data.vat_exemption_reason}
-                                            onChange={(e) => setData("vat_exemption_reason", e.target.value)}
-                                            placeholder="z.B. Gemäß §4 UStG"
-                                            required={data.vat_exemption_type === "other"}
+                                        <Label htmlFor="service_period_start">Leistungszeitraum von</Label>
+                                        <Input
+                                            id="service_period_start"
+                                            type="date"
+                                            value={data.service_period_start}
+                                            onChange={(e) => {
+                                                setData((prev: any) => ({
+                                                    ...prev,
+                                                    service_period_start: e.target.value,
+                                                    service_date: ""
+                                                }))
+                                            }}
                                         />
-                                        {errors.vat_exemption_reason && <p className="text-red-600 text-sm">{errors.vat_exemption_reason}</p>}
                                     </div>
-                                )}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="service_period_end">bis</Label>
+                                        <Input
+                                            id="service_period_end"
+                                            type="date"
+                                            value={data.service_period_end}
+                                            onChange={(e) => {
+                                                setData((prev: any) => ({
+                                                    ...prev,
+                                                    service_period_end: e.target.value,
+                                                    service_date: ""
+                                                }))
+                                            }}
+                                        />
+                                    </div>
+                                    {(errors.service_period_start || errors.service_period_end) && (
+                                        <p className="text-red-600 text-sm col-span-2">
+                                            {errors.service_period_start || errors.service_period_end}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -475,15 +472,7 @@ export default function InvoicesCreate() {
                                                 </TableCell>
                                                 <TableCell className="align-top">
                                                     <div className="text-sm">
-                                                        {(() => {
-                                                            const productRate =
-                                                                item.product_id
-                                                                    ? (products.find((p) => p.id.toString() === item.product_id?.toString())?.tax_rate ??
-                                                                          settings.tax_rate)
-                                                                    : settings.tax_rate
-                                                            const isVatFree = Boolean(data.is_reverse_charge) || (data.vat_exemption_type ?? "none") !== "none"
-                                                            return `${((isVatFree ? 0 : productRate) * 100).toFixed(0)}%`
-                                                        })()}
+                                                        {data.vat_regime === 'standard' ? `${(settings.tax_rate * 100).toFixed(0)}%` : '0%'}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
@@ -576,7 +565,7 @@ export default function InvoicesCreate() {
                                         </div>
                                     )}
                                     <div className="flex justify-between">
-                                        <span>MwSt. ({(settings.tax_rate * 100).toFixed(0)}%):</span>
+                                        <span>MwSt. ({data.vat_regime === 'standard' ? (settings.tax_rate * 100).toFixed(0) : 0}%):</span>
                                         <span className="font-medium">{formatCurrency(totals.tax_amount)}</span>
                                     </div>
                                     <div className="flex justify-between text-lg font-bold border-t pt-2">

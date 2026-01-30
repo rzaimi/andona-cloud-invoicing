@@ -32,10 +32,13 @@ class Invoice extends Model
         'status',
         'issue_date',
         'service_date',
+        'service_period_start',
+        'service_period_end',
         'due_date',
         'subtotal',
         'tax_rate',
         'tax_amount',
+        'vat_regime',
         'total',
         'notes',
         'payment_method',
@@ -51,15 +54,13 @@ class Invoice extends Model
         'corrected_by_invoice_id',
         'correction_reason',
         'corrected_at',
-        'is_reverse_charge',
-        'buyer_vat_id',
-        'vat_exemption_type',
-        'vat_exemption_reason',
     ];
 
     protected $casts = [
         'issue_date' => 'date',
         'service_date' => 'date',
+        'service_period_start' => 'date',
+        'service_period_end' => 'date',
         'due_date' => 'date',
         'subtotal' => 'decimal:2',
         'tax_rate' => 'decimal:4',
@@ -71,7 +72,6 @@ class Invoice extends Model
         'company_snapshot' => 'array',
         'is_correction' => 'boolean',
         'corrected_at' => 'datetime',
-        'is_reverse_charge' => 'boolean',
     ];
 
     public function company(): BelongsTo
@@ -155,7 +155,6 @@ class Invoice extends Model
             'bank_name' => $company->bank_name,
             'bank_iban' => $company->bank_iban,
             'bank_bic' => $company->bank_bic,
-            'is_small_business' => $company->is_small_business ?? false,
             'snapshot_date' => now()->toDateTimeString(),
         ];
     }
@@ -222,14 +221,14 @@ class Invoice extends Model
         $this->subtotal = $this->items->sum('total');
         
         // Calculate tax amount
-        // If company is small business, reverse charge, or VAT exemption applies, no tax
-        if (($this->company->is_small_business ?? false) || ($this->is_reverse_charge ?? false) || ($this->vat_exemption_type ?? 'none') !== 'none') {
+        // If VAT regime is not standard, tax is always 0
+        if (($this->vat_regime ?? 'standard') !== 'standard') {
             $this->tax_amount = 0;
-            $this->tax_rate = 0;
             $this->total = $this->subtotal;
             return;
         }
 
+        // Calculate tax amount
         // If items have individual tax_rate, calculate per item
         // Otherwise, use invoice-level tax_rate for all items
         $taxAmount = 0;
@@ -243,20 +242,47 @@ class Invoice extends Model
         $this->total = $this->subtotal + $this->tax_amount;
     }
 
+    /**
+     * Get VAT breakdown by rate
+     */
+    public function getVatBreakdown(): array
+    {
+        if (($this->vat_regime ?? 'standard') !== 'standard') {
+            return [];
+        }
+
+        $breakdown = [];
+        foreach ($this->items as $item) {
+            $rate = (float) ($item->tax_rate ?? $this->tax_rate);
+            $rateKey = number_format($rate * 100, 2);
+            
+            if (!isset($breakdown[$rateKey])) {
+                $breakdown[$rateKey] = [
+                    'rate' => $rate,
+                    'net_amount' => 0,
+                    'tax_amount' => 0,
+                ];
+            }
+            
+            $breakdown[$rateKey]['net_amount'] += $item->total;
+            $breakdown[$rateKey]['tax_amount'] += $item->total * $rate;
+        }
+        
+        return $breakdown;
+    }
+
     public function generateNumber(): string
     {
         $company = $this->company;
         $prefix = $company->getSetting('invoice_prefix', 'RE-');
 
         $year = now()->year;
-        $prefixYear = $prefix . $year . '-';
-
         $lastInvoice = static::where('company_id', $this->company_id)
-            ->where('number', 'like', $prefixYear . '%')
-            ->orderBy('number', 'desc')
+            ->whereYear('created_at', $year)
+            ->orderBy('created_at', 'desc')
             ->first();
 
-        $lastNumber = $lastInvoice ? (int) substr((string) $lastInvoice->number, -4) : 0;
+        $lastNumber = $lastInvoice ? (int) substr($lastInvoice->number, -4) : 0;
 
         return $prefix . $year . '-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
     }

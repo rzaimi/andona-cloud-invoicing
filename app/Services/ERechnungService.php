@@ -12,65 +12,6 @@ use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class ERechnungService
 {
-    private function getSettingsValue($settings, string $key, $default = null)
-    {
-        // Company settings are stored as array casts in this project
-        if (is_array($settings)) {
-            return $settings[$key] ?? $default;
-        }
-
-        if (is_object($settings)) {
-            return $settings->{$key} ?? $default;
-        }
-
-        return $default;
-    }
-
-    private function toPercentRate($rate): float
-    {
-        if ($rate === null) {
-            return 0.0;
-        }
-
-        $r = (float)$rate;
-        // In this project VAT rates are stored as fractions (e.g. 0.19). ZUGFeRD expects percent (e.g. 19.0).
-        return $r <= 1.0 ? $r * 100.0 : $r;
-    }
-
-    private function taxCategory(bool $isReverseCharge, bool $isVatExempt, float $percentRate)
-    {
-        $fallback = ZugferdDutyTaxFeeCategories::STANDARD_RATE;
-
-        $pick = function (array $names) use ($fallback) {
-            foreach ($names as $name) {
-                $constName = ZugferdDutyTaxFeeCategories::class . '::' . $name;
-                if (defined($constName)) {
-                    return constant($constName);
-                }
-            }
-            return $fallback;
-        };
-
-        if ($isReverseCharge) {
-            return $pick(['REVERSE_CHARGE', 'VAT_REVERSE_CHARGE']);
-        }
-
-        if ($isVatExempt) {
-            return $pick(['EXEMPT_FROM_TAX', 'EXEMPT']);
-        }
-
-        if ($percentRate <= 0.00001) {
-            return $pick(['ZERO_RATED_GOODS', 'ZERO_RATE', 'ZERO_RATED']);
-        }
-
-        // Use reduced rate when possible (e.g. 7%)
-        if ($percentRate > 0 && $percentRate < 19.0) {
-            return $pick(['REDUCED_RATE']);
-        }
-
-        return $fallback;
-    }
-
     /**
      * Generate XRechnung (XML only) for an invoice
      */
@@ -150,19 +91,13 @@ class ERechnungService
         $company = $invoice->company;
         $customer = $invoice->customer;
         $settings = $company->settings;
-
-        $isSmallBusiness = (bool)($company->is_small_business ?? false);
-        $isReverseCharge = (bool)($invoice->is_reverse_charge ?? false);
-        $hasVatExemption = (($invoice->vat_exemption_type ?? 'none') !== 'none');
-        $isVatExempt = $isSmallBusiness || $hasVatExemption;
-        $isVatFree = $isReverseCharge || $isVatExempt;
         
         // Document header
         $document->setDocumentInformation(
             $invoice->number ?? 'DRAFT-' . $invoice->id,
             '380', // Invoice type code
             $invoice->issue_date ?? new \DateTime(),
-            $this->getSettingsValue($settings, 'currency', 'EUR')
+            $settings->currency ?? 'EUR'
         );
         
         // Seller (Company) information
@@ -171,12 +106,10 @@ class ERechnungService
             $company->commercial_register ?? null
         );
         
-        if (!empty($company->vat_number)) {
-            $document->addDocumentSellerGlobalId(
-                $company->vat_number,
-                '0088' // VAT registration number scheme
-            );
-        }
+        $document->addDocumentSellerGlobalId(
+            $company->vat_number ?? '',
+            '0088' // VAT registration number scheme
+        );
         
         $document->setDocumentSellerAddress(
             $company->address ?? '',
@@ -201,13 +134,9 @@ class ERechnungService
             $customer->commercial_register ?? null
         );
         
-        $buyerVatId = $isReverseCharge && !empty($invoice->buyer_vat_id)
-            ? $invoice->buyer_vat_id
-            : ($customer->vat_number ?? null);
-
-        if (!empty($buyerVatId)) {
+        if ($customer->vat_number) {
             $document->addDocumentBuyerGlobalId(
-                $buyerVatId,
+                $customer->vat_number,
                 '0088'
             );
         }
@@ -239,7 +168,7 @@ class ERechnungService
         
         // Line items
         foreach ($invoice->items as $index => $item) {
-            $lineTotal = (float)($item->total ?? ($item->quantity * $item->unit_price));
+            $lineTotal = $item->quantity * $item->unit_price;
             
             // Extract name and description from the description field
             $description = $item->description ?? 'Position ' . ($index + 1);
@@ -261,12 +190,11 @@ class ERechnungService
             $document->setDocumentPositionLineSummation($lineTotal);
             
             // Add tax for line item
-            $ratePercent = $this->toPercentRate($isVatFree ? 0 : ($item->tax_rate ?? $invoice->tax_rate ?? 0));
-            $category = $this->taxCategory($isReverseCharge, $isVatExempt, $ratePercent);
+            $taxRate = $item->tax_rate ?? 19.0;
             $document->addDocumentPositionTax(
-                $category,
+                ZugferdDutyTaxFeeCategories::STANDARD_RATE,
                 'VAT',
-                $ratePercent
+                $taxRate
             );
         }
         
@@ -287,41 +215,44 @@ class ERechnungService
             0.0          // Prepaid amount
         );
         
-        // Add tax breakdown per rate (or 0% when VAT-free)
-        if ($isVatFree) {
-            $ratePercent = 0.0;
-            $category = $this->taxCategory($isReverseCharge, $isVatExempt, $ratePercent);
+        // Add tax breakdown
+        $vatBreakdown = $invoice->getVatBreakdown();
+        if (count($vatBreakdown) > 0) {
+            foreach ($vatBreakdown as $data) {
+                $document->addDocumentTax(
+                    $data['rate'] > 0.10 ? ZugferdDutyTaxFeeCategories::STANDARD_RATE : ZugferdDutyTaxFeeCategories::REDUCED_RATE,
+                    'VAT',
+                    $data['net_amount'],
+                    $data['tax_amount'],
+                    $data['rate'] * 100
+                );
+            }
+        } elseif (($invoice->vat_regime ?? 'standard') === 'standard') {
+            $taxRate = ($invoice->tax_rate ?? 0.19) * 100;
+            $document->addDocumentTax(
+                $taxRate > 10 ? ZugferdDutyTaxFeeCategories::STANDARD_RATE : ZugferdDutyTaxFeeCategories::REDUCED_RATE,
+                'VAT',
+                $subtotal,
+                $taxAmount,
+                $taxRate
+            );
+        } else {
+            // Special regimes (tax exempt or reverse charge)
+            $category = match($invoice->vat_regime) {
+                'reverse_charge' => ZugferdDutyTaxFeeCategories::REVERSE_CHARGE,
+                'intra_community' => ZugferdDutyTaxFeeCategories::INTRA_COMMUNITY_SUPPLY,
+                'export' => ZugferdDutyTaxFeeCategories::EXPORT_OUTSIDE_EU,
+                'small_business' => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_GERMAN_USTG_19,
+                default => ZugferdDutyTaxFeeCategories::VAT_EXEMPT,
+            };
+            
             $document->addDocumentTax(
                 $category,
                 'VAT',
-                (float)$subtotal,
-                0.0,
-                $ratePercent
+                $subtotal,
+                0,
+                0
             );
-        } else {
-            $taxRates = [];
-            foreach ($invoice->items as $it) {
-                $rateFraction = (float)($it->tax_rate ?? $invoice->tax_rate ?? 0);
-                $ratePercent = $this->toPercentRate($rateFraction);
-                if (!isset($taxRates[$ratePercent])) {
-                    $taxRates[$ratePercent] = ['base' => 0.0, 'amount' => 0.0];
-                }
-                $base = (float)($it->total ?? 0);
-                $taxRates[$ratePercent]['base'] += $base;
-                $taxRates[$ratePercent]['amount'] += $base * ($rateFraction <= 1.0 ? $rateFraction : ($rateFraction / 100.0));
-            }
-
-            ksort($taxRates);
-            foreach ($taxRates as $ratePercent => $data) {
-                $category = $this->taxCategory(false, false, (float)$ratePercent);
-                $document->addDocumentTax(
-                    $category,
-                    'VAT',
-                    (float)$data['base'],
-                    (float)$data['amount'],
-                    (float)$ratePercent
-                );
-            }
         }
         
         // Payment means (if bank details available)
@@ -345,7 +276,7 @@ class ERechnungService
      */
     private function getProfileFromSettings($settings): int
     {
-        $profile = $this->getSettingsValue($settings, 'zugferd_profile', 'EN16931');
+        $profile = $settings->zugferd_profile ?? 'EN16931';
         
         return match($profile) {
             'MINIMUM' => ZugferdProfiles::PROFILE_MINIMUM,
