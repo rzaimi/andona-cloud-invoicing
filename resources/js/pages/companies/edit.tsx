@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Save, Building2, Mail, Landmark, Settings } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { User } from "@/types"
@@ -25,6 +26,7 @@ interface Company {
     country?: string
     tax_number?: string
     vat_number?: string
+    is_small_business?: boolean
     commercial_register?: string
     managing_director?: string
     bank_name?: string
@@ -51,6 +53,7 @@ export default function Edit({ auth, company }: EditProps) {
         country: company.country || "Deutschland",
         tax_number: company.tax_number || "",
         vat_number: company.vat_number || "",
+        is_small_business: company.is_small_business || false,
         commercial_register: company.commercial_register || "",
         managing_director: company.managing_director || "",
         bank_name: company.bank_name || "",
@@ -196,6 +199,20 @@ export default function Edit({ auth, company }: EditProps) {
                                             )}
                                         </div>
                                     </div>
+
+                                    <div className="flex items-center space-x-2 pt-2">
+                                        <Checkbox
+                                            id="is_small_business"
+                                            checked={Boolean(data.is_small_business)}
+                                            onCheckedChange={(checked) => setData("is_small_business", checked === true)}
+                                        />
+                                        <Label htmlFor="is_small_business" className="cursor-pointer">
+                                            Kleinunternehmerregelung (§19 UStG) – keine Umsatzsteuer ausweisen
+                                        </Label>
+                                    </div>
+                                    {errors.is_small_business && (
+                                        <p className="text-sm text-red-500">{errors.is_small_business}</p>
+                                    )}
 
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <div className="space-y-2">

@@ -9,6 +9,7 @@ export interface Company {
     country: string
     tax_number?: string
     vat_number?: string
+    is_small_business?: boolean
     commercial_register?: string
     managing_director?: string
     bank_name?: string
@@ -199,6 +200,7 @@ export interface Invoice {
     user_id: string
     status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
     issue_date: string
+    service_date?: string
     due_date: string
     subtotal: number
     tax_rate: number
@@ -213,6 +215,10 @@ export interface Invoice {
     corrected_by_invoice_id?: string
     correction_reason?: string
     corrected_at?: string
+    is_reverse_charge?: boolean
+    buyer_vat_id?: string
+    vat_exemption_type?: "none" | "eu_intracommunity" | "export" | "other"
+    vat_exemption_reason?: string
     correctsInvoice?: Invoice
     correctedByInvoice?: Invoice
     company?: Company
