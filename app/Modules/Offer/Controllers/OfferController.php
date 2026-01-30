@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -117,6 +118,7 @@ class OfferController extends Controller
             'terms' => 'nullable|string',
             'layout_id' => 'nullable|exists:offer_layouts,id',
             'items' => 'required|array|min:1',
+            'items.*.product_id' => 'nullable|uuid|exists:products,id',
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
@@ -158,6 +160,17 @@ class OfferController extends Controller
             
             // Create offer items
             foreach ($validated['items'] as $index => $itemData) {
+                $productId = null;
+                if (!empty($itemData['product_id'])) {
+                    $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
+                        ->where('id', $itemData['product_id'])
+                        ->first();
+                    if (!$product) {
+                        abort(403, 'Product does not belong to your company');
+                    }
+                    $productId = $product->id;
+                }
+
                 // Handle discount fields - convert empty strings and 'none' to null
                 $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none' 
                     ? $itemData['discount_type'] 
@@ -168,6 +181,7 @@ class OfferController extends Controller
                 
                 $item = new OfferItem([
                     'offer_id' => $offer->id,
+                    'product_id' => $productId,
                     'description' => $itemData['description'],
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
@@ -193,7 +207,7 @@ class OfferController extends Controller
     {
         $this->authorize('view', $offer);
 
-        $offer->load(['customer', 'items', 'layout', 'user', 'convertedToInvoice:id,number']);
+        $offer->load(['customer', 'items.product', 'layout', 'user', 'convertedToInvoice:id,number']);
 
         $companyId = $this->getEffectiveCompanyId();
         return Inertia::render('offers/show', [
@@ -245,6 +259,7 @@ class OfferController extends Controller
             'layout_id' => 'nullable|exists:offer_layouts,id',
             'status' => 'required|in:draft,sent,accepted,rejected',
             'items' => 'required|array|min:1',
+            'items.*.product_id' => 'nullable|uuid|exists:products,id',
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
@@ -254,6 +269,8 @@ class OfferController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $offer) {
+            $effectiveCompanyId = $this->getEffectiveCompanyId();
+
             // Update offer
             $offer->update([
                 'customer_id' => $validated['customer_id'],
@@ -269,6 +286,17 @@ class OfferController extends Controller
             $offer->items()->delete();
 
             foreach ($validated['items'] as $index => $itemData) {
+                $productId = null;
+                if (!empty($itemData['product_id'])) {
+                    $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
+                        ->where('id', $itemData['product_id'])
+                        ->first();
+                    if (!$product) {
+                        abort(403, 'Product does not belong to your company');
+                    }
+                    $productId = $product->id;
+                }
+
                 // Handle discount fields - convert empty strings and 'none' to null
                 $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none' 
                     ? $itemData['discount_type'] 
@@ -278,6 +306,7 @@ class OfferController extends Controller
                     : null;
                 
                 $item = new OfferItem([
+                    'product_id' => $productId,
                     'description' => $itemData['description'],
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
@@ -409,7 +438,7 @@ class OfferController extends Controller
     {
         $this->authorize('view', $offer);
 
-        $offer->load(['customer', 'items', 'layout', 'user', 'company']);
+        $offer->load(['customer', 'items.product', 'layout', 'user', 'company']);
 
         $layout = $offer->layout ?? $offer->company->defaultOfferLayout;
 
@@ -433,6 +462,7 @@ class OfferController extends Controller
                 'defaultFont' => 'DejaVu Sans',
                 'isRemoteEnabled' => true,
                 'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => true,
             ]);
 
         return $pdf->download("Angebot-{$offer->number}.pdf");
@@ -442,7 +472,7 @@ class OfferController extends Controller
     {
         $this->authorize('view', $offer);
 
-        $offer->load(['customer', 'items', 'layout', 'user', 'company']);
+        $offer->load(['customer', 'items.product', 'layout', 'user', 'company']);
 
         $layout = $offer->layout ?? $offer->company->defaultOfferLayout;
 
@@ -526,14 +556,14 @@ class OfferController extends Controller
             return redirect()->back()->with('success', 'Angebot wurde erfolgreich per E-Mail versendet.');
 
         } catch (\Exception $e) {
-            \Log::error('Failed to send offer email: ' . $e->getMessage());
+            Log::error('Failed to send offer email: ' . $e->getMessage());
             return back()->withErrors(['email' => 'E-Mail konnte nicht versendet werden: ' . $e->getMessage()]);
         }
     }
 
     private function generateOfferPdf(Offer $offer)
     {
-        $offer->load(['items', 'customer', 'company', 'user']);
+        $offer->load(['items.product', 'customer', 'company', 'user']);
         
         $layout = $offer->layout ?: OfferLayout::forCompany($offer->company_id)
             ->where('is_default', true)

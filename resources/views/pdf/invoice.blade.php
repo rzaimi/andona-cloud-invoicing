@@ -39,6 +39,13 @@
             $bodyFontSize = getFontSizePx($layoutSettings['fonts']['size'] ?? 'medium');
             $headingFontSize = $bodyFontSize + 4;
             $titleFontSize = $bodyFontSize + 8;
+
+            // Determine template early (so we can vary DIN-address rendering per template)
+            $template = is_object($layout) ? ($layout->template ?? 'clean') : ($layout['template'] ?? 'clean');
+            $validTemplates = ['clean', 'modern', 'professional', 'elegant', 'minimal', 'classic'];
+            if (!in_array($template, $validTemplates)) {
+                $template = 'clean';
+            }
         @endphp
         * {
             margin: 0;
@@ -77,7 +84,8 @@
         .container {
             max-width: 210mm;
             margin: 0 auto;
-            padding: {{ min($layoutSettings['layout']['margin_top'] ?? 15, 20) }}mm {{ min($layoutSettings['layout']['margin_right'] ?? 20, 25) }}mm {{ max(min($layoutSettings['layout']['margin_bottom'] ?? 20, 25) + 60, 80) }}mm {{ min($layoutSettings['layout']['margin_left'] ?? 20, 25) }}mm;
+            /* Bottom padding should NOT also reserve footer space (that's handled by @page margin-bottom). */
+            padding: {{ min($layoutSettings['layout']['margin_top'] ?? 15, 20) }}mm {{ min($layoutSettings['layout']['margin_right'] ?? 20, 25) }}mm {{ min($layoutSettings['layout']['margin_bottom'] ?? 20, 25) }}mm {{ min($layoutSettings['layout']['margin_left'] ?? 20, 25) }}mm;
             position: relative; /* For absolute positioning of address block */
         }
 
@@ -274,8 +282,15 @@
             height: auto;
         }
 
+        /* Page margins:
+           - Keep page 1 as-is (so DIN address window stays correct)
+           - Add some top margin on following pages so content doesn't start too high */
         @page {
+            margin-top: 15mm;
             margin-bottom: 50mm; /* Reserve space for fixed footer */
+        }
+        @page :first {
+            margin-top: 0mm;
         }
 
         .footer-columns {
@@ -327,9 +342,7 @@
         }
         @endif
 
-        @page {
-            margin-bottom: 50mm; /* Reserve space for fixed footer */
-        }
+        /* @page margin-bottom already defined above */
     </style>
 </head>
 <body>
@@ -339,11 +352,7 @@
     </div>
 @endif
 
-{{-- DIN 5008 compliant address block for envelope window (positioned absolutely) --}}
-@if($layoutSettings['content']['use_din_5008_address'] ?? true)
-    @include('pdf.partials.address-block', ['invoice' => $invoice, 'bodyFontSize' => $bodyFontSize, 'offer' => null])
-@endif
-
+{{-- Receiver address is rendered inside each template to keep layouts independent --}}
 {{-- Footer must be defined early and as direct child of body for DomPDF fixed positioning --}}
 @php
     // Use saved snapshot instead of live company data to preserve footer information
@@ -377,6 +386,11 @@
     } else {
         $snapshot = [];
     }
+
+    // Backwards-compat: older stored snapshots may miss the logo even when the company has one.
+    if (empty($snapshot['logo'] ?? null) && isset($company) && !empty($company->logo ?? null)) {
+        $snapshot['logo'] = $company->logo;
+    }
     
     // Get date format from settings or use default
     $dateFormat = $settings['date_format'] ?? 'd.m.Y';
@@ -398,44 +412,44 @@
         @if($snapshot['email'] ?? null) · {{ $snapshot['email'] }}@endif
         @if($snapshot['phone'] ?? null) · {{ $snapshot['phone'] }}@endif
         @if($snapshot['tax_number'] ?? null) · Steuernummer: {{ $snapshot['tax_number'] }}@endif
-        @if($snapshot['vat_number'] ?? null) · USt-IdNr.: {{ $snapshot['vat_number'] }}@endif
+        <br>
+        @if($snapshot['vat_number'] ?? null)USt-IdNr.: {{ $snapshot['vat_number'] }}@endif
         @if($layoutSettings['content']['show_bank_details'] ?? true && ($snapshot['bank_iban'] ?? null))
-            <br>IBAN: {{ $snapshot['bank_iban'] }}
+            IBAN: {{ $snapshot['bank_iban'] }}
             @if($snapshot['bank_bic'] ?? null) · BIC: {{ $snapshot['bank_bic'] }}@endif
         @endif
-        @if(isset($settings['invoice_footer']) && !empty($settings['invoice_footer']))
-            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; font-size: {{ $bodyFontSize - 1 }}px;">
-                {{ $settings['invoice_footer'] }}
-            </div>
-        @endif
     </div>
+
+    {{-- Page number (bottom-right inside footer area) --}}
+    <script type="text/php">
+    if (isset($pdf)) {
+        $pdf->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
+            $font = $fontMetrics->get_font("DejaVu Sans", "normal");
+            $size = 7;
+            $text = "Seite {$pageNumber} / {$pageCount}";
+            $w = $fontMetrics->get_text_width($text, $font, $size);
+            // simple: bottom-right, aligned to the right edge, slightly above the page bottom
+            $x = $canvas->get_width() - $w - 6;
+            $y = $canvas->get_height() - 14;
+            $canvas->text($x, $y, $text, $font, $size, [0, 0, 0]);
+        });
+    }
+    </script>
 @endif
 
 @php
-    // Get template from layout, ensure it's a valid template name
-    // Check if layout is an object with template property or an array
+    // Ensure settings are accessible (keep behavior, but do not recompute $template here)
     if (is_object($layout)) {
-        $template = $layout->template ?? 'clean';
-        // Ensure settings are accessible
         if (!isset($layout->settings) || !is_array($layout->settings)) {
             $layout->settings = [];
         }
     } else {
-        $template = $layout['template'] ?? 'clean';
-        // Ensure settings are accessible
         if (!isset($layout['settings']) || !is_array($layout['settings'])) {
             $layout['settings'] = [];
         }
     }
-    
-    $validTemplates = ['clean', 'modern', 'professional', 'elegant', 'minimal', 'classic'];
-    if (!in_array($template, $validTemplates)) {
-        $template = 'clean'; // Fallback to clean if invalid
-    }
-    $templateFile = 'pdf.invoice-templates.' . $template;
-    
-    // Make snapshot available to all templates (use saved snapshot instead of live company data)
-    // Snapshot is already set above, no need to recalculate
+
+    $templateFile = 'pdf.invoice-templates.' . ($template ?? 'clean');
 @endphp
 
 {{-- Debug indicator in preview mode --}}

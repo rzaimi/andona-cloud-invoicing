@@ -69,7 +69,7 @@ export default function InvoicePreview({ invoice, settings }: InvoicePreviewProp
                     {/* Header */}
                     <div className="flex justify-between items-start mb-8">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                            <h1 className="text-1xl font-bold text-gray-900 mb-2">
                                 {invoice.type === "invoice" ? "INVOICE" : "OFFER"}
                             </h1>
                             <p className="text-lg font-semibold text-gray-700">{invoice.number}</p>

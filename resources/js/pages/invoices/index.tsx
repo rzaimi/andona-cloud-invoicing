@@ -318,7 +318,7 @@ export default function InvoicesIndex() {
                                     <TableHead>Betrag</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Mahnung</TableHead>
-                                    <TableHead>Aktionen</TableHead>
+                                    <TableHead className="w-[156px] text-right">Aktionen</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -362,10 +362,10 @@ export default function InvoicesIndex() {
                                                 )}
                                             </div>
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center justify-end gap-2">
+                                        <TableCell className="w-[156px]">
+                                            <div className="flex w-[156px] items-center justify-end gap-2">
                                                 {/* Quick actions (visible on row hover, like the screenshot) */}
-                                                <div className="hidden items-center gap-2 group-hover:flex">
+                                                <div className="flex items-center gap-1 invisible pointer-events-none group-hover:visible group-hover:pointer-events-auto">
                                                     <Link href={`/invoices/${invoice.id}`}>
                                                         <Button variant="ghost" size="icon" className="h-9 w-9" title="Anzeigen">
                                                             <Eye className="h-4 w-4" />

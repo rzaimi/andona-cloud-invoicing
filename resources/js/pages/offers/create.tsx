@@ -17,6 +17,9 @@ import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 
 interface OfferItem {
     id: number
+    product_id?: string
+    product_sku?: string
+    product_number?: string
     description: string
     quantity: number
     unit_price: number
@@ -71,6 +74,9 @@ export default function OffersCreate() {
         items: [
             {
                 id: 1,
+                product_id: undefined,
+                product_sku: undefined,
+                product_number: undefined,
                 description: "",
                 quantity: 1,
                 unit_price: 0,
@@ -128,6 +134,9 @@ export default function OffersCreate() {
     const addItem = () => {
         const newItem: OfferItem = {
             id: Date.now(),
+            product_id: undefined,
+            product_sku: undefined,
+            product_number: undefined,
             description: "",
             quantity: 1,
             unit_price: 0,
@@ -287,6 +296,9 @@ export default function OffersCreate() {
                                 onSelect={(item) => {
                                     const newItem = {
                                         id: Date.now(),
+                                        product_id: item.product_id,
+                                        product_sku: item.product_sku,
+                                        product_number: item.product_number,
                                         description: item.description,
                                         quantity: item.quantity,
                                         unit_price: item.unit_price,
@@ -305,9 +317,11 @@ export default function OffersCreate() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="w-[30%]">Beschreibung</TableHead>
+                                            <TableHead className="w-[12%]">Produkt-Nr.</TableHead>
+                                            <TableHead className="w-[26%]">Beschreibung</TableHead>
                                             <TableHead className="w-[8%]">Menge</TableHead>
                                             <TableHead className="w-[8%]">Einheit</TableHead>
+                                            <TableHead className="w-[6%]">USt.</TableHead>
                                             <TableHead className="w-[12%]">Einzelpreis</TableHead>
                                             <TableHead className="w-[10%]">Rabatt</TableHead>
                                             <TableHead className="w-[10%]">Rabatt-Wert</TableHead>
@@ -318,6 +332,13 @@ export default function OffersCreate() {
                                     <TableBody>
                                         {data.items.map((item, index) => (
                                             <TableRow key={item.id}>
+                                                <TableCell className="align-top">
+                                                    <div className="text-sm">
+                                                        {item.product_number || item.product_sku || (
+                                                            <span className="text-muted-foreground">-</span>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>
                                                     <Textarea
                                                         value={item.description}
@@ -356,6 +377,9 @@ export default function OffersCreate() {
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
+                                                </TableCell>
+                                                <TableCell className="align-top">
+                                                    <div className="text-sm">{(settings.tax_rate * 100).toFixed(0)}%</div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Input

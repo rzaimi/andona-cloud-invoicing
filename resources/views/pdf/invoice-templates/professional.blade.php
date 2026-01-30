@@ -1,17 +1,48 @@
 {{-- Professional Template: Corporate design with colored header band - DISTINCTIVE FEATURE --}}
 {{-- Template: professional --}}
 <div class="container">
+@php $customer = $invoice->customer ?? null; @endphp
+@if($customer)
+    <div class="din-5008-address">
+        <div style="font-weight: 600; margin-bottom: 3px; font-size: {{ $bodyFontSize }}px; line-height: 1.2;">
+            {{ $customer->name ?? 'Unbekannt' }}
+        </div>
+        @if(isset($customer->contact_person) && $customer->contact_person)
+            <div style="margin-bottom: 2px; font-size: {{ $bodyFontSize }}px; line-height: 1.2;">{{ $customer->contact_person }}</div>
+        @endif
+        <div style="font-size: {{ $bodyFontSize }}px; line-height: 1.2;">
+            @if($customer->address)
+                {{ $customer->address }}<br>
+            @endif
+            @if($customer->postal_code && $customer->city)
+                {{ $customer->postal_code }} {{ $customer->city }}
+                @if($customer->country && $customer->country !== 'Deutschland')
+                    <br>{{ $customer->country }}
+                @endif
+            @endif
+        </div>
+    </div>
+@endif
     {{-- Header Band: Colored background with company info - DISTINCTIVE: Full-width colored header --}}
-    <div style="background: {{ $layoutSettings['colors']['primary'] ?? '#2563eb' }}; color: white; padding: 12px; margin: -{{ $layoutSettings['layout']['margin_top'] ?? '10' }}mm -{{ $layoutSettings['layout']['margin_right'] ?? '15' }}mm 10px -{{ $layoutSettings['layout']['margin_left'] ?? '15' }}mm; margin-bottom: 8px;">
-        @if(($layoutSettings['branding']['show_logo'] ?? true) && ($snapshot['logo'] ?? null) && \Storage::disk('public')->exists($snapshot['logo']))
-            @php
-                $logoPath = \Storage::disk('public')->path($snapshot['logo']);
-                $logoData = base64_encode(file_get_contents($logoPath));
-                $logoMime = mime_content_type($logoPath);
-            @endphp
-            <div style="margin-bottom: 8px;">
-                <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo" style="max-height: 60px; max-width: 200px; filter: brightness(0) invert(1);">
-            </div>
+    <div style="background: {{ $layoutSettings['colors']['primary'] ?? '#2563eb' }}; color: white; padding: 12px; margin-bottom: 8px; border-radius: 4px;">
+        @php
+            $logoRelPath = isset($snapshot['logo']) ? ltrim(preg_replace('#^storage/#', '', (string)$snapshot['logo']), '/') : null;
+        @endphp
+        @if(($layoutSettings['branding']['show_logo'] ?? true) && $logoRelPath)
+            @if(isset($preview) && $preview)
+                <div style="margin-bottom: 8px;">
+                    <img src="{{ asset('storage/' . $logoRelPath) }}" alt="Logo" style="max-height: 60px; max-width: 200px; filter: brightness(0) invert(1);">
+                </div>
+            @elseif(\Storage::disk('public')->exists($logoRelPath))
+                @php
+                    $logoPath = \Storage::disk('public')->path($logoRelPath);
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $logoMime = mime_content_type($logoPath);
+                @endphp
+                <div style="margin-bottom: 8px;">
+                    <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo" style="max-height: 60px; max-width: 200px; filter: brightness(0) invert(1);">
+                </div>
+            @endif
         @endif
         <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 700; margin-bottom: 4px;">{{ $snapshot['name'] ?? '' }}</div>
         @if($layoutSettings['content']['show_company_address'] ?? true)
@@ -24,7 +55,6 @@
 
     {{-- Invoice Details Right --}}
     <div style="text-align: right; font-size: {{ $bodyFontSize }}px; margin-bottom: 10px;">
-        <div style="margin-bottom: 4px;"><strong>RECHNUNGSNR.:</strong> {{ $invoice->number }}</div>
         <div style="margin-bottom: 4px;"><strong>DATUM:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
         <div style="margin-bottom: 4px;"><strong>LEISTUNGSDATUM:</strong> entspricht Rechnungsdatum</div>
         <div style="margin-bottom: 4px;"><strong>FÄLLIGKEITSDATUM:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
@@ -32,13 +62,6 @@
             <div><strong>KUNDENNR.:</strong> {{ $invoice->customer->number }}</div>
         @endif
     </div>
-
-    {{-- Customer number below address if needed (address is handled in invoice.blade.php) --}}
-    @if(($layoutSettings['content']['show_customer_number'] ?? true) && isset($invoice->customer->number) && $invoice->customer->number && !($layoutSettings['content']['use_din_5008_address'] ?? true))
-        <div style="margin-bottom: 8px; font-size: {{ $bodyFontSize }}px;">
-            <strong>Kundennummer:</strong> {{ $invoice->customer->number }}
-        </div>
-    @endif
 
     {{-- Invoice Title --}}
     <div style="margin-bottom: 8px;">
@@ -71,10 +94,14 @@
     <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
         <thead>
             <tr style="background-color: {{ $layoutSettings['colors']['primary'] ?? '#2563eb' }}; color: white;">
-                <th style="padding: 10px 8px; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px;">LEISTUNG</th>
-                <th style="padding: 10px 8px; text-align: left; font-weight: 600;">UMFANG</th>
-                <th style="padding: 10px 8px; text-align: right; font-weight: 600;">PREIS</th>
-                <th style="padding: 10px 8px; text-align: right; font-weight: 600;">GESAMT</th>
+                @if($layoutSettings['content']['show_item_codes'] ?? false)
+                    <th style="padding: 10px 8px; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; width: 12%;">PRODUKT-NR.</th>
+                @endif
+                <th style="padding: 10px 8px; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; width: {{ ($layoutSettings['content']['show_item_codes'] ?? false) ? '45%' : '55%' }};">LEISTUNG</th>
+                <th style="padding: 10px 8px; text-align: left; font-weight: 600; width: 9%;">MENGE</th>
+                <th style="padding: 10px 8px; text-align: right; font-weight: 600; width: 6%;">UST.</th>
+                <th style="padding: 10px 8px; text-align: right; font-weight: 600; width: 10%;">PREIS</th>
+                <th style="padding: 10px 8px; text-align: right; font-weight: 600; width: 12%;">GESAMT</th>
             </tr>
         </thead>
         <tbody>
@@ -85,8 +112,15 @@
                     $baseTotal = (float)($item->quantity ?? 0) * (float)($item->unit_price ?? 0);
                     $discountType = $item->discount_type ?? null;
                     $discountValue = $item->discount_value ?? null;
+                    $productCode = data_get($item, 'product.number')
+                        ?? data_get($item, 'product.sku')
+                        ?? data_get($item, 'product_number')
+                        ?? data_get($item, 'product_sku');
                 @endphp
                 <tr style="border-bottom: 1px solid #e5e7eb; {{ $index % 2 == 1 ? 'background-color: ' . ($layoutSettings['colors']['accent'] ?? '#f9fafb') . ';' : '' }}">
+                    @if($layoutSettings['content']['show_item_codes'] ?? false)
+                        <td style="padding: 10px 8px;">{{ $productCode ?: '-' }}</td>
+                    @endif
                     <td style="padding: 10px 8px;">{{ $item->description }}</td>
                     <td style="padding: 10px 8px;">
                         {{ number_format($item->quantity, 2, ',', '.') }}
@@ -96,6 +130,7 @@
                             Std.
                         @endif
                     </td>
+                    <td style="padding: 10px 8px; text-align: right;">{{ number_format(($invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}%</td>
                     <td style="padding: 10px 8px; text-align: right;">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
                     <td style="padding: 10px 8px; text-align: right; font-weight: 600;">
                         <div>{{ number_format($item->total, 2, ',', '.') }} €</div>

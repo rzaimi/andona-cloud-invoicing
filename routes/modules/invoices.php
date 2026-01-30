@@ -31,6 +31,8 @@ Route::prefix('invoice-layouts')->name('invoice-layouts.')->group(function () {
     Route::get('/', [InvoiceLayoutController::class, 'index'])->name('index');
     Route::post('/', [InvoiceLayoutController::class, 'store'])->name('store');
     Route::get('/{invoiceLayout}/preview', [InvoiceLayoutController::class, 'preview'])->name('preview');
+    Route::post('/preview-live', [InvoiceLayoutController::class, 'previewLive'])->name('preview-live');
+    Route::post('/preview-live-pdf', [InvoiceLayoutController::class, 'previewLivePdf'])->name('preview-live-pdf');
     Route::put('/{invoiceLayout}', [InvoiceLayoutController::class, 'update'])->name('update');
     Route::delete('/{invoiceLayout}', [InvoiceLayoutController::class, 'destroy'])->name('destroy');
     Route::post('/{invoiceLayout}/set-default', [InvoiceLayoutController::class, 'setDefault'])->name('set-default');

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Head, router, useForm, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Plus, Edit, Trash2, Eye, Copy, Layout, Star, Download, Palette, Type, Settings, FileText, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import AppLayout from "@/layouts/app-layout"
@@ -96,6 +96,7 @@ interface Template {
 }
 
 interface InvoiceLayoutsPageProps {
+    company?: { id?: string | null; logo?: string | null; name?: string | null }
     layouts: InvoiceLayout[]
     templates: Template[]
 }
@@ -423,12 +424,19 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
     }
 }
 
-export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayoutsPageProps) {
-    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props
+export default function InvoiceLayoutsPage({ layouts, templates, company }: InvoiceLayoutsPageProps) {
+    const page = usePage<{ flash?: { success?: string; error?: string }; csrf_token?: string }>()
+    const { flash, csrf_token } = page.props
     const [isLayoutDialogOpen, setIsLayoutDialogOpen] = useState(false)
     const [editingLayout, setEditingLayout] = useState<InvoiceLayout | null>(null)
     const [previewLayout, setPreviewLayout] = useState<InvoiceLayout | null>(null)
     const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+    const [builderTab, setBuilderTab] = useState<"basic" | "design" | "layout" | "content">("basic")
+    const [saveAndPreview, setSaveAndPreview] = useState(false)
+    const [livePreviewHtml, setLivePreviewHtml] = useState<string>("")
+    const [livePreviewLoading, setLivePreviewLoading] = useState(false)
+    const [livePreviewError, setLivePreviewError] = useState<string>("")
+    const [livePreviewPdfUrl, setLivePreviewPdfUrl] = useState<string>("")
 
     const form = useForm({
         name: "",
@@ -443,6 +451,14 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
         template: "minimal",
         settings: getDefaultSettings(),
     })
+
+    const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
+    const logoForm = useForm({
+        _method: "put",
+        logo: null as any,
+    })
+
+    const leftScrollRef = useRef<HTMLDivElement | null>(null)
 
     const resetFormData = () => {
         setLayoutFormData({
@@ -486,6 +502,12 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
         setIsLayoutDialogOpen(false)
         setEditingLayout(null)
         resetFormData()
+        setBuilderTab("basic")
+        setSaveAndPreview(false)
+        setLivePreviewHtml("")
+        setLivePreviewError("")
+        if (livePreviewPdfUrl) URL.revokeObjectURL(livePreviewPdfUrl)
+        setLivePreviewPdfUrl("")
     }
 
     const handleSaveLayout = (e: React.FormEvent) => {
@@ -503,6 +525,7 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
             type: layoutFormData.type,
             template: layoutFormData.template,
             settings: layoutFormData.settings,
+            save_and_preview: saveAndPreview,
         }
 
         // Submit directly using router with the correct data
@@ -538,6 +561,102 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
             })
         }
     }
+
+    const goToStep = (tab: "basic" | "design" | "layout" | "content", anchorId?: string) => {
+        setBuilderTab(tab)
+        if (!anchorId) return
+        // Scroll inside the left panel only (avoid scrolling the whole dialog)
+        window.setTimeout(() => {
+            const container = leftScrollRef.current
+            if (!container) return
+            const el = container.querySelector(`#${anchorId}`) as HTMLElement | null
+            if (!el) return
+            const top = Math.max(0, el.offsetTop - 12)
+            container.scrollTo({ top, behavior: "smooth" })
+        }, 80)
+    }
+
+    // Auto-open preview after redirect (?preview=<layoutId>)
+    useEffect(() => {
+        if (typeof window === "undefined") return
+        const url = new URL(window.location.href)
+        const previewId = url.searchParams.get("preview")
+        if (!previewId) return
+
+        const found = layouts.find((l) => String(l.id) === String(previewId))
+        if (found) {
+            setPreviewLayout(found)
+            setIsPreviewOpen(true)
+        }
+
+        url.searchParams.delete("preview")
+        window.history.replaceState({}, "", url.toString())
+    }, [layouts])
+
+    // Live preview: debounce changes and render a real PDF (DomPDF) into iframe
+    useEffect(() => {
+        if (!isLayoutDialogOpen) return
+
+        const csrf =
+            csrf_token ||
+            (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content
+
+        const controller = new AbortController()
+        const t = window.setTimeout(async () => {
+            try {
+                setLivePreviewLoading(true)
+                setLivePreviewError("")
+
+                const res = await fetch("/invoice-layouts/preview-live-pdf", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(csrf ? { "X-CSRF-TOKEN": csrf } : {}),
+                    },
+                    body: JSON.stringify({
+                        type: layoutFormData.type,
+                        template: layoutFormData.template,
+                        settings: layoutFormData.settings,
+                    }),
+                    credentials: "same-origin",
+                    signal: controller.signal,
+                })
+
+                if (!res.ok) {
+                    setLivePreviewError(`Preview error (${res.status})`)
+                    const errText = await res.text()
+                    setLivePreviewHtml(
+                        `<html><body style="font-family: system-ui; padding:16px;">
+                          <h3 style="margin:0 0 8px;">Live preview failed</h3>
+                          <pre style="white-space:pre-wrap; background:#f5f5f5; padding:12px; border-radius:8px;">${errText.replaceAll(
+                              "<",
+                              "&lt;"
+                          )}</pre>
+                        </body></html>`
+                    )
+                    return
+                }
+
+                const blob = await res.blob()
+                const url = URL.createObjectURL(blob)
+                // swap URLs safely
+                setLivePreviewPdfUrl((prev) => {
+                    if (prev) URL.revokeObjectURL(prev)
+                    return url
+                })
+            } catch (e) {
+                // ignore aborts; keep last preview
+            } finally {
+                setLivePreviewLoading(false)
+            }
+        }, 650)
+
+        return () => {
+            controller.abort()
+            window.clearTimeout(t)
+        }
+        // Intentionally depend on the full form state for live updates
+    }, [isLayoutDialogOpen, layoutFormData])
 
     const handleDeleteLayout = (id: string) => {
         if (confirm("Sind Sie sicher, dass Sie dieses Layout löschen möchten?")) {
@@ -767,7 +886,7 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                 Neues Layout
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="max-w-7xl h-[90vh] overflow-hidden">
                             <DialogHeader>
                                 <DialogTitle>{editingLayout ? "Layout bearbeiten" : "Neues Layout erstellen"}</DialogTitle>
                                 <DialogDescription>
@@ -793,26 +912,39 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                 </Alert>
                             )}
 
-                            <form onSubmit={handleSaveLayout}>
-                                <Tabs defaultValue="basic" className="space-y-4">
-                                    <TabsList className="grid w-full grid-cols-4">
-                                        <TabsTrigger value="basic" className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4" />
-                                            Grundlagen
-                                        </TabsTrigger>
-                                        <TabsTrigger value="design" className="flex items-center gap-2">
-                                            <Palette className="h-4 w-4" />
-                                            Design
-                                        </TabsTrigger>
-                                        <TabsTrigger value="layout" className="flex items-center gap-2">
-                                            <Settings className="h-4 w-4" />
-                                            Layout
-                                        </TabsTrigger>
-                                        <TabsTrigger value="content" className="flex items-center gap-2">
-                                            <Type className="h-4 w-4" />
-                                            Inhalt
-                                        </TabsTrigger>
-                                    </TabsList>
+                            <form onSubmit={handleSaveLayout} className="h-[calc(90vh-140px)]">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                                    {/* Left side: step-by-step configurator */}
+                                    <div className="flex flex-col h-full overflow-hidden">
+                                        <div className="rounded-lg border bg-muted/40 p-3">
+                                            <div className="text-sm font-medium mb-2">Konfigurator</div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("basic")}>
+                                                    1. Choose Layout
+                                                </Button>
+                                                <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("design", "step-colors")}>
+                                                    2. Colors
+                                                </Button>
+                                                <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("design", "step-fonts")}>
+                                                    3. Fonts
+                                                </Button>
+                                                <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-logo")}>
+                                                    4. Logo
+                                                </Button>
+                                                <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-header-footer")}>
+                                                    5. Header/Footer
+                                                </Button>
+                                                <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-margins")}>
+                                                    6. Margins & Padding
+                                                </Button>
+                                                <Button type="button" variant="outline" className="justify-start sm:col-span-2" onClick={() => goToStep("content", "step-additional")}>
+                                                    7. Additional Options
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        <div ref={leftScrollRef} className="flex-1 overflow-y-auto pr-2 mt-4">
+                                            <Tabs value={builderTab} onValueChange={(v) => setBuilderTab(v as any)} className="space-y-4">
 
                                     <TabsContent value="basic" className="space-y-6">
                                         <div className="grid gap-6">
@@ -890,7 +1022,7 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                     {/* Rest of the tabs content remains the same as before but with enhanced styling */}
                                     <TabsContent value="design" className="space-y-4">
                                         <div className="grid gap-6">
-                                            <div>
+                                            <div id="step-colors">
                                                 <h3 className="text-lg font-semibold mb-3">Farben</h3>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="grid gap-2">
@@ -967,7 +1099,7 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                                 </div>
                                             </div>
 
-                                            <div>
+                                            <div id="step-fonts">
                                                 <h3 className="text-lg font-semibold mb-3">Schriftarten</h3>
                                                 <div className="grid grid-cols-3 gap-4">
                                                     <div className="grid gap-2">
@@ -1035,7 +1167,7 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                     {/* Layout and Content tabs remain the same as before */}
                                     <TabsContent value="layout" className="space-y-4">
                                         <div className="grid gap-6">
-                                            <div>
+                                            <div id="step-margins">
                                                 <h3 className="text-lg font-semibold mb-3">Seitenränder (mm)</h3>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="grid gap-2">
@@ -1092,7 +1224,7 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                                 </div>
                                             </div>
 
-                                            <div>
+                                            <div id="step-header-footer">
                                                 <h3 className="text-lg font-semibold mb-3">Bereiche (px)</h3>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="grid gap-2">
@@ -1125,8 +1257,59 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                                 </div>
                                             </div>
 
-                                            <div>
+                                            <div id="step-logo">
                                                 <h3 className="text-lg font-semibold mb-3">Branding</h3>
+                                                <div className="rounded-lg border bg-muted/40 p-4 mb-4">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div className="space-y-1">
+                                                            <div className="text-sm font-medium">Logo (Firma)</div>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                Dieses Layout nutzt das Firmenlogo. Hier können Sie es hochladen/ersetzen.
+                                                            </p>
+                                                        </div>
+                                                        {(logoPreviewUrl || company?.logo) ? (
+                                                            <img
+                                                                src={logoPreviewUrl || (company?.logo ? `/storage/${company.logo}` : "")}
+                                                                alt="Company logo preview"
+                                                                className="h-14 w-auto rounded border bg-white"
+                                                            />
+                                                        ) : null}
+                                                    </div>
+
+                                                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                        <Input
+                                                            type="file"
+                                                            accept="image/png,image/jpeg,image/jpg,image/gif"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0]
+                                                                if (!file) return
+                                                                if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl)
+                                                                const url = URL.createObjectURL(file)
+                                                                setLogoPreviewUrl(url)
+                                                                // @ts-ignore
+                                                                logoForm.setData("logo", file)
+                                                            }}
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            disabled={!company?.id || logoForm.processing || !logoForm.data.logo}
+                                                            onClick={() => {
+                                                                if (!company?.id) return
+                                                                logoForm.post(route("companies.update", company.id), {
+                                                                    forceFormData: true,
+                                                                    preserveScroll: true,
+                                                                    onSuccess: () => {
+                                                                        logoForm.reset("logo")
+                                                                    },
+                                                                })
+                                                            }}
+                                                        >
+                                                            {logoForm.processing ? "Upload..." : "Logo hochladen"}
+                                                        </Button>
+                                                    </div>
+                                                    {logoForm.errors.logo && <p className="mt-2 text-sm text-red-600">{logoForm.errors.logo}</p>}
+                                                </div>
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
@@ -1213,7 +1396,7 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                     </TabsContent>
 
                                     <TabsContent value="content" className="space-y-4">
-                                        <div className="space-y-6">
+                                        <div className="space-y-6" id="step-additional">
                                             <div>
                                                 <h3 className="text-lg font-semibold mb-3">Firmeninformationen</h3>
                                                 <div className="space-y-4">
@@ -1379,16 +1562,45 @@ export default function InvoiceLayoutsPage({ layouts, templates }: InvoiceLayout
                                             </div>
                                         </div>
                                     </TabsContent>
-                                </Tabs>
+                                            </Tabs>
+                                        </div>
 
-                                <DialogFooter className="mt-6">
-                                    <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={form.processing}>
-                                        Abbrechen
-                                    </Button>
-                                    <Button type="submit" disabled={form.processing}>
-                                        {form.processing ? "Speichert..." : editingLayout ? "Layout aktualisieren" : "Layout erstellen"}
-                                    </Button>
-                                </DialogFooter>
+                                        <div className="mt-4 flex items-center justify-between border-t pt-4">
+                                            <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={form.processing}>
+                                                Abbrechen
+                                            </Button>
+                                            <Button
+                                                type="submit"
+                                                disabled={form.processing}
+                                                onClick={() => setSaveAndPreview(true)}
+                                            >
+                                                {form.processing ? "Speichert..." : "Save & Preview"}
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {/* Right side: Live preview */}
+                                    <div className="relative h-full overflow-hidden rounded-lg border bg-white">
+                                        {livePreviewLoading && (
+                                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 text-sm text-muted-foreground">
+                                                Vorschau wird aktualisiert…
+                                            </div>
+                                        )}
+                                        {livePreviewPdfUrl ? (
+                                            <iframe
+                                                src={livePreviewPdfUrl}
+                                                className="w-full h-full border-0"
+                                                title="Invoice Layout Live Preview (PDF)"
+                                            />
+                                        ) : (
+                                            <iframe
+                                                srcDoc={livePreviewHtml || "<html><body></body></html>"}
+                                                className="w-full h-full border-0"
+                                                title="Invoice Layout Live Preview (loading)"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
                             </form>
                         </DialogContent>
                     </Dialog>

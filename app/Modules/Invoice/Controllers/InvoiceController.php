@@ -119,6 +119,7 @@ class InvoiceController extends Controller
             'notes' => 'nullable|string',
             'layout_id' => 'nullable|exists:invoice_layouts,id',
             'items' => 'required|array|min:1',
+            'items.*.product_id' => 'nullable|uuid|exists:products,id',
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
@@ -173,6 +174,17 @@ class InvoiceController extends Controller
             
             // Create invoice items
             foreach ($validated['items'] as $index => $itemData) {
+                $productId = null;
+                if (!empty($itemData['product_id'])) {
+                    $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
+                        ->where('id', $itemData['product_id'])
+                        ->first();
+                    if (!$product) {
+                        abort(403, 'Product does not belong to your company');
+                    }
+                    $productId = $product->id;
+                }
+
                 // Handle discount fields - convert empty strings and 'none' to null
                 $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none' 
                     ? $itemData['discount_type'] 
@@ -183,6 +195,7 @@ class InvoiceController extends Controller
                 
                 $item = new InvoiceItem([
                     'invoice_id' => $invoice->id,
+                    'product_id' => $productId,
                     'description' => $itemData['description'],
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
@@ -209,7 +222,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['customer', 'items', 'layout', 'user', 'documents', 'payments.createdBy']);
+        $invoice->load(['customer', 'items.product', 'layout', 'user', 'documents', 'payments.createdBy']);
 
         // Calculate payment totals
         $paidAmount = $invoice->getPaidAmount();
@@ -241,7 +254,7 @@ class InvoiceController extends Controller
             ->orderBy('name')
             ->get();
 
-        $invoice->load(['items', 'correctsInvoice', 'correctedByInvoice', 'documents']);
+        $invoice->load(['items.product', 'correctsInvoice', 'correctedByInvoice', 'documents']);
 
         return Inertia::render('invoices/edit', [
             'invoice' => $invoice,
@@ -264,6 +277,7 @@ class InvoiceController extends Controller
             'layout_id' => 'nullable|exists:invoice_layouts,id',
             'status' => 'required|in:draft,sent,paid,overdue,cancelled',
             'items' => 'required|array|min:1',
+            'items.*.product_id' => 'nullable|uuid|exists:products,id',
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
@@ -302,6 +316,17 @@ class InvoiceController extends Controller
             $invoice->items()->delete();
 
             foreach ($validated['items'] as $index => $itemData) {
+                $productId = null;
+                if (!empty($itemData['product_id'])) {
+                    $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
+                        ->where('id', $itemData['product_id'])
+                        ->first();
+                    if (!$product) {
+                        abort(403, 'Product does not belong to your company');
+                    }
+                    $productId = $product->id;
+                }
+
                 // Handle discount fields - convert empty strings and 'none' to null
                 $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none' 
                     ? $itemData['discount_type'] 
@@ -311,6 +336,7 @@ class InvoiceController extends Controller
                     : null;
                 
                 $item = new InvoiceItem([
+                    'product_id' => $productId,
                     'description' => $itemData['description'],
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
@@ -352,7 +378,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
         
-        $invoice->load(['customer', 'items', 'layout', 'user', 'company', 'correctsInvoice']);
+        $invoice->load(['customer', 'items.product', 'layout', 'user', 'company', 'correctsInvoice']);
 
         // Get layout - either assigned to invoice or company default
         if ($invoice->layout) {
@@ -434,6 +460,7 @@ class InvoiceController extends Controller
                 'isRemoteEnabled' => true,
                 'isHtml5ParserEnabled' => true,
                 'enable-local-file-access' => true,
+                'isPhpEnabled' => true,
             ]);
 
         return $pdf->download("Rechnung-{$invoice->number}.pdf");
@@ -443,7 +470,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['customer', 'items', 'layout', 'user', 'company']);
+        $invoice->load(['customer', 'items.product', 'layout', 'user', 'company']);
 
         // Get layout - either assigned to invoice or company default
         if ($invoice->layout) {
@@ -620,7 +647,7 @@ class InvoiceController extends Controller
 
     private function generateInvoicePdf(Invoice $invoice)
     {
-        $invoice->load(['items', 'customer', 'company', 'user', 'correctsInvoice']);
+        $invoice->load(['items.product', 'customer', 'company', 'user', 'correctsInvoice']);
         
         $layout = $invoice->layout ?: InvoiceLayout::forCompany($invoice->company_id)
             ->where('is_default', true)
@@ -704,6 +731,7 @@ class InvoiceController extends Controller
             'isHtml5ParserEnabled' => true,
             'enable-local-file-access' => true,
             'enable-javascript' => false,
+            'isPhpEnabled' => true,
         ]);
     }
 
@@ -786,7 +814,7 @@ class InvoiceController extends Controller
      */
     private function sendMahnungEmail(Invoice $invoice, $company, int $level, float $fee)
     {
-        $invoice->load(['items', 'customer', 'company', 'user']);
+        $invoice->load(['items.product', 'customer', 'company', 'user']);
 
         // Determine which email template to use
         $template = match($level) {
@@ -929,7 +957,7 @@ class InvoiceController extends Controller
             DB::beginTransaction();
 
             // Load relationships
-            $invoice->load(['customer', 'items', 'company']);
+            $invoice->load(['customer', 'items.product', 'company']);
 
             // Create the correction invoice (Stornorechnung)
             $correctionInvoice = new Invoice();
