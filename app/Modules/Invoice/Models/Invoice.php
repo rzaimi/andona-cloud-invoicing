@@ -31,6 +31,7 @@ class Invoice extends Model
         'user_id',
         'status',
         'issue_date',
+        'service_date',
         'due_date',
         'subtotal',
         'tax_rate',
@@ -50,10 +51,15 @@ class Invoice extends Model
         'corrected_by_invoice_id',
         'correction_reason',
         'corrected_at',
+        'is_reverse_charge',
+        'buyer_vat_id',
+        'vat_exemption_type',
+        'vat_exemption_reason',
     ];
 
     protected $casts = [
         'issue_date' => 'date',
+        'service_date' => 'date',
         'due_date' => 'date',
         'subtotal' => 'decimal:2',
         'tax_rate' => 'decimal:4',
@@ -65,6 +71,7 @@ class Invoice extends Model
         'company_snapshot' => 'array',
         'is_correction' => 'boolean',
         'corrected_at' => 'datetime',
+        'is_reverse_charge' => 'boolean',
     ];
 
     public function company(): BelongsTo
@@ -148,6 +155,7 @@ class Invoice extends Model
             'bank_name' => $company->bank_name,
             'bank_iban' => $company->bank_iban,
             'bank_bic' => $company->bank_bic,
+            'is_small_business' => $company->is_small_business ?? false,
             'snapshot_date' => now()->toDateTimeString(),
         ];
     }
@@ -214,6 +222,14 @@ class Invoice extends Model
         $this->subtotal = $this->items->sum('total');
         
         // Calculate tax amount
+        // If company is small business, reverse charge, or VAT exemption applies, no tax
+        if (($this->company->is_small_business ?? false) || ($this->is_reverse_charge ?? false) || ($this->vat_exemption_type ?? 'none') !== 'none') {
+            $this->tax_amount = 0;
+            $this->tax_rate = 0;
+            $this->total = $this->subtotal;
+            return;
+        }
+
         // If items have individual tax_rate, calculate per item
         // Otherwise, use invoice-level tax_rate for all items
         $taxAmount = 0;

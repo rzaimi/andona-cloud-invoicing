@@ -47,6 +47,7 @@ class Company extends Model
 
     protected $casts = [
         'settings' => 'array',
+        'is_small_business' => 'boolean',
     ];
 
     /**
