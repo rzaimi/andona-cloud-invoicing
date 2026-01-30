@@ -180,6 +180,10 @@ class InvoiceController extends Controller
                 'tax_rate' => $company->getSetting('tax_rate', 0.19),
             ]);
 
+            $isVatFree = ($company->is_small_business ?? false)
+                || ($invoice->is_reverse_charge ?? false)
+                || (($invoice->vat_exemption_type ?? 'none') !== 'none');
+
             // Save company snapshot
             $invoice->company_snapshot = $invoice->createCompanySnapshot();
             $invoice->save();
@@ -187,6 +191,7 @@ class InvoiceController extends Controller
             // Create invoice items
             foreach ($validated['items'] as $index => $itemData) {
                 $productId = null;
+                $product = null;
                 if (!empty($itemData['product_id'])) {
                     $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
                         ->where('id', $itemData['product_id'])
@@ -212,7 +217,8 @@ class InvoiceController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
-                    'tax_rate' => $invoice->tax_rate, // Use invoice tax rate by default
+                    // Prefer product tax rate (supports mixed rates); force 0% if VAT-free (reverse charge/exempt/small business)
+                    'tax_rate' => $isVatFree ? 0 : (isset($product) && $product ? $product->tax_rate : $invoice->tax_rate),
                     'discount_type' => $discountType,
                     'discount_value' => $discountValue,
                     'sort_order' => $index,
@@ -336,11 +342,17 @@ class InvoiceController extends Controller
                 'vat_exemption_reason' => $validated['vat_exemption_reason'] ?? null,
             ]);
 
+            $company = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
+            $isVatFree = ($company->is_small_business ?? false)
+                || ($invoice->is_reverse_charge ?? false)
+                || (($invoice->vat_exemption_type ?? 'none') !== 'none');
+
             // Delete existing items and create new ones
             $invoice->items()->delete();
 
             foreach ($validated['items'] as $index => $itemData) {
                 $productId = null;
+                $product = null;
                 if (!empty($itemData['product_id'])) {
                     $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
                         ->where('id', $itemData['product_id'])
@@ -365,7 +377,8 @@ class InvoiceController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
-                    'tax_rate' => $invoice->tax_rate, // Use invoice tax rate by default
+                    // Prefer product tax rate (supports mixed rates); force 0% if VAT-free (reverse charge/exempt/small business)
+                    'tax_rate' => $isVatFree ? 0 : (isset($product) && $product ? $product->tax_rate : $invoice->tax_rate),
                     'discount_type' => $discountType,
                     'discount_value' => $discountValue,
                     'sort_order' => $index,

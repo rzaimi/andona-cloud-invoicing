@@ -249,12 +249,14 @@ class Invoice extends Model
         $prefix = $company->getSetting('invoice_prefix', 'RE-');
 
         $year = now()->year;
+        $prefixYear = $prefix . $year . '-';
+
         $lastInvoice = static::where('company_id', $this->company_id)
-            ->whereYear('created_at', $year)
-            ->orderBy('created_at', 'desc')
+            ->where('number', 'like', $prefixYear . '%')
+            ->orderBy('number', 'desc')
             ->first();
 
-        $lastNumber = $lastInvoice ? (int) substr($lastInvoice->number, -4) : 0;
+        $lastNumber = $lastInvoice ? (int) substr((string) $lastInvoice->number, -4) : 0;
 
         return $prefix . $year . '-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
     }

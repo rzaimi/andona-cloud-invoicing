@@ -21,6 +21,7 @@ interface InvoiceItem {
     product_id?: string
     product_sku?: string
     product_number?: string
+    tax_rate?: number
     description: string
     quantity: number
     unit_price: number
@@ -128,7 +129,15 @@ export default function InvoicesCreate() {
         const subtotal = itemsWithTotals.reduce((sum: number, item: InvoiceItem) => sum + item.total, 0)
         const totalDiscount = itemsWithTotals.reduce((sum: number, item: InvoiceItem) => sum + (item.discount_amount || 0), 0)
         const isVatFree = Boolean(data.is_reverse_charge) || (data.vat_exemption_type ?? "none") !== "none"
-        const tax_amount = isVatFree ? 0 : subtotal * settings.tax_rate
+        const tax_amount = isVatFree
+            ? 0
+            : itemsWithTotals.reduce((sum: number, item: InvoiceItem) => {
+                  const productRate =
+                      item.product_id
+                          ? (products.find((p) => p.id.toString() === item.product_id?.toString())?.tax_rate ?? settings.tax_rate)
+                          : settings.tax_rate
+                  return sum + item.total * productRate
+              }, 0)
         const total = subtotal + tax_amount
 
         setTotals({ 
@@ -465,7 +474,17 @@ export default function InvoicesCreate() {
                                                     </Select>
                                                 </TableCell>
                                                 <TableCell className="align-top">
-                                                    <div className="text-sm">{(settings.tax_rate * 100).toFixed(0)}%</div>
+                                                    <div className="text-sm">
+                                                        {(() => {
+                                                            const productRate =
+                                                                item.product_id
+                                                                    ? (products.find((p) => p.id.toString() === item.product_id?.toString())?.tax_rate ??
+                                                                          settings.tax_rate)
+                                                                    : settings.tax_rate
+                                                            const isVatFree = Boolean(data.is_reverse_charge) || (data.vat_exemption_type ?? "none") !== "none"
+                                                            return `${((isVatFree ? 0 : productRate) * 100).toFixed(0)}%`
+                                                        })()}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Input

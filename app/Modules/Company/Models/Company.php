@@ -36,6 +36,7 @@ class Company extends Model
         'country',
         'tax_number',
         'vat_number',
+        'is_small_business',
         'commercial_register',
         'managing_director',
         'website',

@@ -129,7 +129,15 @@ export default function InvoicesEdit() {
         const subtotal = itemsWithTotals.reduce((sum: number, item: any) => sum + item.total, 0)
         const totalDiscount = itemsWithTotals.reduce((sum: number, item: any) => sum + (item.discount_amount || 0), 0)
         const isVatFree = Boolean(data.is_reverse_charge) || (data.vat_exemption_type ?? "none") !== "none"
-        const tax_amount = isVatFree ? 0 : subtotal * settings.tax_rate
+        const tax_amount = isVatFree
+            ? 0
+            : itemsWithTotals.reduce((sum: number, item: any) => {
+                  const productRate =
+                      item.product_id
+                          ? (products.find((p) => p.id.toString() === item.product_id?.toString())?.tax_rate ?? settings.tax_rate)
+                          : settings.tax_rate
+                  return sum + item.total * productRate
+              }, 0)
         const total = subtotal + tax_amount
 
         setTotals({ 
@@ -571,7 +579,17 @@ export default function InvoicesEdit() {
                                                     </Select>
                                                 </TableCell>
                                                 <TableCell className="align-top">
-                                                    <div className="text-sm">{(settings.tax_rate * 100).toFixed(0)}%</div>
+                                                    <div className="text-sm">
+                                                        {(() => {
+                                                            const productRate =
+                                                                item.product_id
+                                                                    ? (products.find((p) => p.id.toString() === item.product_id?.toString())?.tax_rate ??
+                                                                          settings.tax_rate)
+                                                                    : settings.tax_rate
+                                                            const isVatFree = Boolean(data.is_reverse_charge) || (data.vat_exemption_type ?? "none") !== "none"
+                                                            return `${((isVatFree ? 0 : productRate) * 100).toFixed(0)}%`
+                                                        })()}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Input
@@ -663,7 +681,7 @@ export default function InvoicesEdit() {
                                         </div>
                                     )}
                                     <div className="flex justify-between">
-                                        <span>MwSt. ({(settings.tax_rate * 100).toFixed(0)}%):</span>
+                                        <span>MwSt.:</span>
                                         <span className="font-medium">{formatCurrency(totals.tax_amount)}</span>
                                     </div>
                                     <div className="flex justify-between text-lg font-bold border-t pt-2">
