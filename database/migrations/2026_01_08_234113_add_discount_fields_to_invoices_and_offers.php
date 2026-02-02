@@ -17,9 +17,10 @@ return new class extends Migration
 
         // Add discount fields to offer_items
         Schema::table('offer_items', function (Blueprint $table) {
-            $table->enum('discount_type', ['percentage', 'fixed'])->nullable()->after('tax_rate');
-            $table->decimal('discount_value', 10, 2)->nullable()->after('discount_type');
-            $table->decimal('discount_amount', 10, 2)->default(0)->after('discount_value');
+            // Note: Not using after() because tax_rate is added in a later migration
+            $table->enum('discount_type', ['percentage', 'fixed'])->nullable();
+            $table->decimal('discount_value', 10, 2)->nullable();
+            $table->decimal('discount_amount', 10, 2)->default(0);
         });
     }
 
