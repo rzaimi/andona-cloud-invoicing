@@ -39,14 +39,6 @@
                 @if($customer)
                     {{-- DIN 5008 Address Block --}}
                     <div class="din-5008-address">
-                        {{-- Sender return address (small text) - DIN 5008 standard --}}
-                        @if($layoutSettings['content']['show_company_address'] ?? true)
-                            <div class="sender-return-address">
-                                {{ $snapshot['name'] ?? '' }}
-                                @if($snapshot['address'] ?? null) · {{ $snapshot['address'] }}@endif
-                                @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)) · {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
-                            </div>
-                        @endif
                         {{-- Recipient address --}}
                         <div style="font-weight: 600; margin-bottom: 1mm; font-size: {{ $bodyFontSize }}px; line-height: 1.3;">
                             {{ $customer->name ?? 'Unbekannt' }}
@@ -221,6 +213,39 @@
         <div style="margin-bottom: 4px;">Mit freundlichen Grüßen</div>
         <div style="font-weight: 600;">{{ $snapshot['name'] ?? '' }}</div>
     </div>
+
+    {{-- Footer Style C: Multi-column structured (German Example 3) --}}
+    @if($layoutSettings['branding']['show_footer'] ?? true)
+    <div class="pdf-footer" style="margin-top: 15mm; border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; padding-top: 3mm;">
+        <table style="width: 100%; font-size: 7pt; line-height: 1.6; color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }};">
+            <tr>
+                <td style="width: 25%; vertical-align: top;">
+                    <strong>{{ $snapshot['name'] ?? '' }}</strong><br>
+                    @if($snapshot['address'] ?? null){{ $snapshot['address'] }}<br>@endif
+                    @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null))
+                        {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}<br>
+                    @endif
+                </td>
+                <td style="width: 25%; vertical-align: top;">
+                    @if($snapshot['phone'] ?? null)Tel {{ $snapshot['phone'] }}<br>@endif
+                    @if($snapshot['email'] ?? null)Mail {{ $snapshot['email'] }}<br>@endif
+                    @if($snapshot['website'] ?? null)Web {{ $snapshot['website'] }}<br>@endif
+                </td>
+                <td style="width: 25%; vertical-align: top;">
+                    @if($snapshot['tax_number'] ?? null)Steuernummer {{ $snapshot['tax_number'] }}<br>@endif
+                    @if($snapshot['vat_number'] ?? null)USt-ID {{ $snapshot['vat_number'] }}<br>@endif
+                </td>
+                @if($layoutSettings['content']['show_bank_details'] ?? true)
+                <td style="width: 25%; vertical-align: top;">
+                    @if($snapshot['bank_name'] ?? null)Bank {{ $snapshot['bank_name'] }}<br>@endif
+                    @if($snapshot['bank_iban'] ?? null)IBAN {{ $snapshot['bank_iban'] }}<br>@endif
+                    @if($snapshot['bank_bic'] ?? null)BIC {{ $snapshot['bank_bic'] }}<br>@endif
+                </td>
+                @endif
+            </tr>
+        </table>
+    </div>
+    @endif
 
 </div>
 

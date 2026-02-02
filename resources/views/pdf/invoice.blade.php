@@ -446,28 +446,7 @@
         }
     @endphp
 
-    @if($layoutSettings['branding']['show_footer'] ?? true)
-    <div class="pdf-footer" style="border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; color: {{ $layoutSettings['colors']['text'] ?? '#9ca3af' }}; line-height: 1.8;">
-        @php
-            $vatText = getVatRegimeText($invoice->vat_regime ?? 'standard');
-        @endphp
-        @if($vatText)
-            <div style="margin-bottom: 8px; color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }}; font-weight: 600;">
-                {{ $vatText }}
-            </div>
-        @endif
-        @if($snapshot['address'] ?? null){{ $snapshot['address'] }}@endif
-        @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)), {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
-        @if($snapshot['email'] ?? null) · {{ $snapshot['email'] }}@endif
-        @if($snapshot['phone'] ?? null) · {{ $snapshot['phone'] }}@endif
-        @if($snapshot['tax_number'] ?? null) · Steuernummer: {{ $snapshot['tax_number'] }}@endif
-        <br>
-        @if($snapshot['vat_number'] ?? null)USt-IdNr.: {{ $snapshot['vat_number'] }}@endif
-        @if($layoutSettings['content']['show_bank_details'] ?? true && ($snapshot['bank_iban'] ?? null))
-            IBAN: {{ $snapshot['bank_iban'] }}
-            @if($snapshot['bank_bic'] ?? null) · BIC: {{ $snapshot['bank_bic'] }}@endif
-        @endif
-    </div>
+    {{-- Footer moved to individual templates for variety --}}
 
     {{-- Page number (bottom-right inside footer area) --}}
     <script type="text/php">

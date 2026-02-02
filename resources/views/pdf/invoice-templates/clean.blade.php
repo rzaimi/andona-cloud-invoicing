@@ -39,14 +39,6 @@
                 @if($customer)
                     {{-- DIN 5008 Address Block --}}
                     <div class="din-5008-address">
-                        {{-- Sender return address (small text) - DIN 5008 standard --}}
-                        @if($layoutSettings['content']['show_company_address'] ?? true)
-                            <div class="sender-return-address">
-                                {{ $snapshot['name'] ?? '' }}
-                                @if($snapshot['address'] ?? null) · {{ $snapshot['address'] }}@endif
-                                @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)) · {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
-                            </div>
-                        @endif
                         {{-- Recipient address --}}
                         <div style="font-weight: 600; margin-bottom: 1mm; font-size: {{ $bodyFontSize }}px; line-height: 1.3;">
                             {{ $customer->name ?? 'Unbekannt' }}
@@ -237,5 +229,39 @@
         <div style="margin-bottom: 4px;">Mit freundlichen Grüßen</div>
         <div style="font-weight: 600;">{{ $snapshot['name'] ?? '' }}</div>
     </div>
+
+    {{-- Footer Style A: Multi-line right-aligned blocks (German Example 1) --}}
+    @if($layoutSettings['branding']['show_footer'] ?? true)
+    <div class="pdf-footer" style="margin-top: 15mm; border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; padding-top: 3mm;">
+        <div style="text-align: right; font-size: 7pt; line-height: 1.6; color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }};">
+            {{-- Address Block --}}
+            <div style="margin-bottom: 1mm;">
+                @if($snapshot['address'] ?? null)<div>{{ $snapshot['address'] }}</div>@endif
+                @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null))
+                    <div>{{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}</div>
+                @endif
+            </div>
+            {{-- Contact Block --}}
+            <div style="margin-bottom: 1mm;">
+                @if($snapshot['phone'] ?? null)<div><strong>FON</strong>  {{ $snapshot['phone'] }}</div>@endif
+                @if($snapshot['email'] ?? null)<div><strong>MAIL</strong>  {{ $snapshot['email'] }}</div>@endif
+                @if($snapshot['website'] ?? null)<div><strong>WEB</strong>  {{ $snapshot['website'] }}</div>@endif
+            </div>
+            {{-- Banking Block --}}
+            @if($layoutSettings['content']['show_bank_details'] ?? true)
+            <div style="margin-bottom: 1mm;">
+                @if($snapshot['bank_name'] ?? null)<div><strong>BANK</strong>  {{ $snapshot['bank_name'] }}</div>@endif
+                @if($snapshot['bank_iban'] ?? null)<div><strong>IBAN</strong>  {{ $snapshot['bank_iban'] }}</div>@endif
+                @if($snapshot['bank_bic'] ?? null)<div><strong>BIC</strong>  {{ $snapshot['bank_bic'] }}</div>@endif
+            </div>
+            @endif
+            {{-- Tax Block --}}
+            <div>
+                @if($snapshot['tax_number'] ?? null)<div><strong>ST-NR</strong>  {{ $snapshot['tax_number'] }}</div>@endif
+                @if($snapshot['vat_number'] ?? null)<div><strong>UST-ID</strong>  {{ $snapshot['vat_number'] }}</div>@endif
+            </div>
+        </div>
+    </div>
+    @endif
 
 </div>

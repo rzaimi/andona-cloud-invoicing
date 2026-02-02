@@ -40,14 +40,6 @@
                 @if($customer)
                     {{-- DIN 5008 Address Block --}}
                     <div class="din-5008-address">
-                        {{-- Sender return address (small text) - DIN 5008 standard --}}
-                        @if($layoutSettings['content']['show_company_address'] ?? true)
-                            <div class="sender-return-address">
-                                {{ $snapshot['name'] ?? '' }}
-                                @if($snapshot['address'] ?? null) · {{ $snapshot['address'] }}@endif
-                                @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)) · {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
-                            </div>
-                        @endif
                         {{-- Recipient address --}}
                         <div style="font-weight: 600; margin-bottom: 1mm; font-size: {{ $bodyFontSize }}px; line-height: 1.3;">
                             {{ $customer->name ?? 'Unbekannt' }}
@@ -216,6 +208,18 @@
         <div style="margin-bottom: 4px;">Mit freundlichen Grüßen</div>
         <div style="font-weight: 600;">{{ $snapshot['name'] ?? '' }}</div>
     </div>
+
+    {{-- Footer Style B: Compact single-line (German Example 2 & 4) --}}
+    @if($layoutSettings['branding']['show_footer'] ?? true)
+    <div class="pdf-footer" style="margin-top: 15mm; border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; padding-top: 3mm; font-size: 7pt; line-height: 1.8; color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }}; text-align: left;">
+        {{ $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }} 
+        FON {{ $snapshot['phone'] ?? '' }}  MAIL {{ $snapshot['email'] ?? '' }}  @if($snapshot['website'] ?? null)WEB {{ $snapshot['website'] }}@endif
+        @if($layoutSettings['content']['show_bank_details'] ?? true)
+            BANK {{ $snapshot['bank_name'] ?? 'N/A' }}  
+        @endif
+        IBAN {{ $snapshot['bank_iban'] ?? '' }}  @if($snapshot['bank_bic'] ?? null)BIC {{ $snapshot['bank_bic'] }}@endif  @if($snapshot['tax_number'] ?? null)STEUERNUMMER {{ $snapshot['tax_number'] }}@endif  @if($snapshot['vat_number'] ?? null)UST-ID {{ $snapshot['vat_number'] }}@endif
+    </div>
+    @endif
 
 </div>
 
