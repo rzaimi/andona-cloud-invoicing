@@ -294,7 +294,7 @@
            - Keep page 1 as-is (so DIN address window stays correct)
            - Add some top margin on following pages so content doesn't start too high */
         @page {
-            margin-top: 15mm;
+            margin-top: 25mm;
             margin-bottom: 50mm; /* Reserve space for fixed footer */
         }
         @page :first {
@@ -463,7 +463,7 @@
         });
     }
     </script>
-@endif
+
 
 @php
     // Ensure settings are accessible (keep behavior, but do not recompute $template here)
@@ -489,5 +489,22 @@
 
 {{-- Include the specific template file based on layout->template --}}
 @includeFirst([$templateFile, 'pdf.invoice-templates.clean'])
+
+{{-- Page number script (at end of document for all pages) --}}
+<script type="text/php">
+if (isset($pdf)) {
+    $pdf->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
+        $font = $fontMetrics->get_font("DejaVu Sans", "normal");
+        $size = 7;
+        $text = "Seite {$pageNumber} / {$pageCount}";
+        $w = $fontMetrics->get_text_width($text, $font, $size);
+        // Bottom-right corner, slightly above page bottom
+        $x = $canvas->get_width() - $w - 20;
+        $y = $canvas->get_height() - 12;
+        $canvas->text($x, $y, $text, $font, $size, [0, 0, 0]);
+    });
+}
+</script>
+
 </body>
 </html>

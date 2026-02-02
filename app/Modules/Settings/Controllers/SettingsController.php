@@ -220,7 +220,6 @@ class SettingsController extends Controller
             'invoice_footer' => 'nullable|string|max:500',
             'invoice_tax_note' => 'nullable|string|max:500',
             'offer_footer' => 'nullable|string|max:500',
-            'payment_methods' => 'nullable|array',
             'offer_validity_days' => 'required|integer|min:1|max:365',
         ]);
 
@@ -674,5 +673,52 @@ class SettingsController extends Controller
 
         return redirect()->route('settings.index', ['tab' => 'payment-methods'])
             ->with('success', 'Zahlungsmethoden wurden erfolgreich aktualisiert.');
+    }
+
+    /**
+     * Update Company Information (for admins)
+     */
+    public function updateCompanyInfo(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        $company = \App\Modules\Company\Models\Company::findOrFail($companyId);
+        
+        // Admins can only edit their own company
+        $user = $request->user();
+        if ($user->company_id !== $company->id) {
+            abort(403, 'Sie können nur Ihre eigene Firma bearbeiten.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'postal_code' => 'nullable|string|max:20',
+            'city' => 'nullable|string|max:100',
+            'country' => 'required|string|max:100',
+            'tax_number' => 'nullable|string|max:50',
+            'vat_number' => 'nullable|string|max:50',
+            'is_small_business' => 'nullable|boolean',
+            'commercial_register' => 'nullable|string|max:100',
+            'managing_director' => 'nullable|string|max:255',
+            'website' => 'nullable|url|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            // Delete old logo if exists
+            if ($company->logo && \Storage::disk('public')->exists($company->logo)) {
+                \Storage::disk('public')->delete($company->logo);
+            }
+            $validated['logo'] = $request->file('logo')->store('company-logos', 'public');
+        }
+
+        // Update company
+        $company->update($validated);
+
+        return redirect()->route('settings.index', ['tab' => 'company-info'])
+            ->with('success', 'Firmendaten wurden erfolgreich aktualisiert.');
     }
 }

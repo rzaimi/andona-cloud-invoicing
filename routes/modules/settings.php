@@ -51,6 +51,9 @@ Route::post('/settings/payment-methods', [SettingsController::class, 'updatePaym
 
 Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
 
+// Company Information (for admins to edit their own company)
+Route::post('/settings/company-info', [SettingsController::class, 'updateCompanyInfo'])->name('settings.company-info.update');
+
 // Company settings CRUD (advanced)
 Route::post('/settings/company-settings', [SettingsController::class, 'storeCompanySetting'])->name('settings.company-settings.store');
 Route::put('/settings/company-settings/{companySetting}', [SettingsController::class, 'updateCompanySetting'])->name('settings.company-settings.update');

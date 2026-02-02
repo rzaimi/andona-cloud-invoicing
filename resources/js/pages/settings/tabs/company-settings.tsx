@@ -171,9 +171,9 @@ export default function CompanySettingsAdminTab({ companySettings }: CompanySett
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Company Settings (advanced)</CardTitle>
+                    <CardTitle>Erweiterte Einstellungen (Admin)</CardTitle>
                     <CardDescription>
-                        Alle Einträge aus <span className="font-medium">company_settings</span> – mit Filter, CRUD und typabhängiger Bearbeitung.
+                        Alle Einstellungen aus der Datenbank – mit Filter, CRUD und typabhängiger Bearbeitung. Nur für Administratoren.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

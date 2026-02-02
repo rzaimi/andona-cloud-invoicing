@@ -27,6 +27,9 @@ import {
     Download,
     Eye,
     MoreHorizontal,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import { SendEmailDialog } from "@/components/send-email-dialog"
@@ -52,6 +55,8 @@ interface InvoicesIndexProps {
     filters: {
         search?: string
         status?: string
+        sort?: string
+        direction?: string
     }
     stats: {
         total: number
@@ -74,12 +79,16 @@ export default function InvoicesIndex() {
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
     const [reminderHistoryOpen, setReminderHistoryOpen] = useState(false)
     const [reminderHistory, setReminderHistory] = useState<any>(null)
+    const currentSort = filters.sort || "issue_date"
+    const currentDirection = filters.direction || "desc"
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
         const params: any = {}
         if (search) params.search = search
         if (status && status !== 'all') params.status = status
+        if (currentSort) params.sort = currentSort
+        if (currentDirection) params.direction = currentDirection
         router.get("/invoices", params, { preserveScroll: true })
     }
 
@@ -88,7 +97,36 @@ export default function InvoicesIndex() {
         const params: any = {}
         if (search) params.search = search
         if (newStatus && newStatus !== 'all') params.status = newStatus
+        if (currentSort) params.sort = currentSort
+        if (currentDirection) params.direction = currentDirection
         router.get("/invoices", params, { preserveScroll: true })
+    }
+
+    const handleSort = (field: string) => {
+        let direction = "asc"
+        
+        // If clicking the same field, toggle direction
+        if (currentSort === field) {
+            direction = currentDirection === "asc" ? "desc" : "asc"
+        }
+
+        const params: any = {
+            sort: field,
+            direction: direction,
+        }
+        if (search) params.search = search
+        if (status && status !== 'all') params.status = status
+        
+        router.get("/invoices", params, { preserveScroll: true })
+    }
+
+    const getSortIcon = (field: string) => {
+        if (currentSort !== field) {
+            return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+        }
+        return currentDirection === "asc" 
+            ? <ArrowUp className="ml-2 h-4 w-4" />
+            : <ArrowDown className="ml-2 h-4 w-4" />
     }
 
     const handleDelete = (invoice: Invoice) => {
@@ -175,6 +213,8 @@ export default function InvoicesIndex() {
                                 const params = new URLSearchParams()
                                 if (filters.search) params.append('search', filters.search)
                                 if (filters.status && filters.status !== 'all') params.append('status', filters.status)
+                                if (filters.sort) params.append('sort', filters.sort)
+                                if (filters.direction) params.append('direction', filters.direction)
                                 window.location.href = route('export.invoices') + (params.toString() ? '?' + params.toString() : '')
                             }}
                         >
@@ -284,7 +324,7 @@ export default function InvoicesIndex() {
                                 </SelectContent>
                             </Select>
                             <Button type="submit">Suchen</Button>
-                            {(filters.search || filters.status) && (
+                            {(filters.search || filters.status || filters.sort) && (
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -311,12 +351,72 @@ export default function InvoicesIndex() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Rechnungsnummer</TableHead>
-                                    <TableHead>Kunde</TableHead>
-                                    <TableHead>Rechnungsdatum</TableHead>
-                                    <TableHead>Fälligkeitsdatum</TableHead>
-                                    <TableHead>Betrag</TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                            onClick={() => handleSort("number")}
+                                        >
+                                            Rechnungsnummer
+                                            {getSortIcon("number")}
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                            onClick={() => handleSort("customer")}
+                                        >
+                                            Kunde
+                                            {getSortIcon("customer")}
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                            onClick={() => handleSort("issue_date")}
+                                        >
+                                            Rechnungsdatum
+                                            {getSortIcon("issue_date")}
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                            onClick={() => handleSort("due_date")}
+                                        >
+                                            Fälligkeitsdatum
+                                            {getSortIcon("due_date")}
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                            onClick={() => handleSort("total")}
+                                        >
+                                            Betrag
+                                            {getSortIcon("total")}
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                            onClick={() => handleSort("status")}
+                                        >
+                                            Status
+                                            {getSortIcon("status")}
+                                        </Button>
+                                    </TableHead>
                                     <TableHead>Mahnung</TableHead>
                                     <TableHead className="w-[156px] text-right">Aktionen</TableHead>
                                 </TableRow>

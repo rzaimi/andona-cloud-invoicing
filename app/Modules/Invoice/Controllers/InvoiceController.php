@@ -230,7 +230,7 @@ class InvoiceController extends Controller
                 null,
                 'draft',
                 null,
-                'Invoice created with ' . count($validated['items']) . ' items'
+                'Rechnung erstellt mit ' . count($validated['items']) . ' Positionen'
             );
         });
 
@@ -420,11 +420,11 @@ class InvoiceController extends Controller
                 $oldStatus,
                 $validated['status'],
                 !empty($changes) ? $changes : null,
-                'Invoice updated with ' . count($validated['items']) . ' items'
+                'Rechnung aktualisiert mit ' . count($validated['items']) . ' Positionen'
             );
         });
 
-        return redirect()->route('invoices.index')
+        return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Rechnung wurde erfolgreich aktualisiert.');
     }
 
@@ -708,7 +708,7 @@ class InvoiceController extends Controller
                     $oldStatus,
                     'sent',
                     ['email' => $validated['to']],
-                    'Invoice sent via email to ' . $validated['to']
+                    'Rechnung per E-Mail versendet an ' . $validated['to']
                 );
             }
 
@@ -1131,7 +1131,7 @@ class InvoiceController extends Controller
                 $oldInvoiceStatus,
                 'cancelled',
                 ['corrected_by' => $correctionInvoice->id],
-                'Invoice corrected via Stornorechnung. Reason: ' . $validated['correction_reason']
+                'Rechnung korrigiert durch Stornorechnung. Grund: ' . $validated['correction_reason']
             );
 
             // Log new correction invoice creation
@@ -1141,7 +1141,7 @@ class InvoiceController extends Controller
                 null,
                 'sent',
                 ['corrects' => $invoice->id, 'reason' => $validated['correction_reason']],
-                'Stornorechnung created for invoice ' . $invoice->number
+                'Stornorechnung erstellt für Rechnung ' . $invoice->number
             );
 
             DB::commit();

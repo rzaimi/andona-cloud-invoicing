@@ -333,7 +333,7 @@ class OfferController extends Controller
             $offer->save();
         });
 
-        return redirect()->route('offers.index')
+        return redirect()->route('offers.show', $offer)
             ->with('success', 'Angebot wurde erfolgreich aktualisiert.');
     }
 

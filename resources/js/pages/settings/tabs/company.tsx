@@ -33,7 +33,6 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
         invoice_footer: settings?.invoice_footer || "",
         invoice_tax_note: settings?.invoice_tax_note || "",
         offer_footer: settings?.offer_footer || "",
-        payment_methods: settings?.payment_methods || ["Überweisung", "SEPA-Lastschrift", "PayPal"],
         offer_validity_days: settings?.offer_validity_days || 30,
     })
 

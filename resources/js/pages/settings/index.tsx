@@ -37,6 +37,7 @@ import { route } from "ziggy-js"
 
 // Import existing components
 import CompanySettingsTab from "./tabs/company"
+import CompanyInfoTab from "./tabs/company-info"
 import EmailSettingsTab from "./tabs/email"
 import RemindersSettingsTab from "./tabs/reminders"
 import ERechnungSettingsTab from "./tabs/erechnung"
@@ -93,7 +94,7 @@ export default function SettingsIndex() {
 
     // Valid tab values
     const validTabs = [
-        'company', 'email', 'reminders', 'erechnung', 
+        'company', 'company-info', 'email', 'reminders', 'erechnung', 
         'notifications', 'payment-methods', 'email-logs', 
         'datev', 'profile', 'password', 'appearance',
         'company-settings'
@@ -177,11 +178,18 @@ export default function SettingsIndex() {
                     <div className="w-full lg:w-64 flex-shrink-0">
                         <TabsList className="flex flex-col h-auto w-full p-1 bg-muted">
                             <TabsTrigger 
-                                value="company" 
+                                value="company-info" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <Building2 className="h-4 w-4" />
-                                <span>Firma</span>
+                                <span>Firmendaten</span>
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="company" 
+                                className="w-full justify-start gap-2 data-[state=active]:bg-background"
+                            >
+                                <Settings className="h-4 w-4" />
+                                <span>Firmeneinstellungen</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="email" 
@@ -237,7 +245,7 @@ export default function SettingsIndex() {
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <Settings className="h-4 w-4" />
-                                <span>Company Settings</span>
+                                <span>Erweiterte Einstellungen</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="profile" 
@@ -265,6 +273,10 @@ export default function SettingsIndex() {
 
                     {/* Tab Contents */}
                     <div className="flex-1 min-w-0">
+                        <TabsContent value="company-info" className="space-y-6 mt-0">
+                            <CompanyInfoTab company={company} />
+                        </TabsContent>
+
                         <TabsContent value="company" className="space-y-6 mt-0">
                             <CompanySettingsTab company={company} settings={settings} />
                         </TabsContent>
