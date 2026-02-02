@@ -62,18 +62,26 @@
         }
 
         /* DIN 5008 compliant address block for German envelope windows */
-        /* Standard: 4.5cm from top, 2cm from left, max 8.5cm × 4.5cm */
+        /* Standard: Address window 45mm from top, 20mm from left, 85mm × 45mm */
         .din-5008-address {
-            position: absolute;
-            top: 45mm; /* 4.5cm from top - DIN 5008 standard for envelope window */
-            left: 20mm; /* 2cm from left - DIN 5008 standard */
             width: 85mm; /* 8.5cm max width - DIN 5008 standard */
+            min-height: 40mm; /* Minimum height for address block */
             max-height: 45mm; /* 4.5cm max height - DIN 5008 standard */
             font-size: {{ $bodyFontSize }}px;
             line-height: 1.3;
             color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-            z-index: 10;
             page-break-inside: avoid;
+            margin-bottom: 10mm;
+        }
+        
+        /* Company return address (small text above recipient) - DIN 5008 */
+        .sender-return-address {
+            font-size: 7pt;
+            line-height: 1.2;
+            color: #6b7280;
+            border-bottom: 1px solid #d1d5db;
+            padding-bottom: 1mm;
+            margin-bottom: 2mm;
         }
         
         /* Regular address block (for display in document, not envelope window) */
@@ -86,7 +94,7 @@
             margin: 0 auto;
             /* Bottom padding should NOT also reserve footer space (that's handled by @page margin-bottom). */
             padding: {{ min($layoutSettings['layout']['margin_top'] ?? 15, 20) }}mm {{ min($layoutSettings['layout']['margin_right'] ?? 20, 25) }}mm {{ min($layoutSettings['layout']['margin_bottom'] ?? 20, 25) }}mm {{ min($layoutSettings['layout']['margin_left'] ?? 20, 25) }}mm;
-            position: relative; /* For absolute positioning of address block */
+            position: relative;
         }
 
         .header {

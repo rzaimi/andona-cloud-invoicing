@@ -1,37 +1,15 @@
 {{-- Professional Template: Corporate design with colored header band - DISTINCTIVE FEATURE --}}
 {{-- Template: professional --}}
 <div class="container">
-@php $customer = $invoice->customer ?? null; @endphp
-@if($customer)
-    <div class="din-5008-address">
-        <div style="font-weight: 600; margin-bottom: 3px; font-size: {{ $bodyFontSize }}px; line-height: 1.2;">
-            {{ $customer->name ?? 'Unbekannt' }}
-        </div>
-        @if(isset($customer->contact_person) && $customer->contact_person)
-            <div style="margin-bottom: 2px; font-size: {{ $bodyFontSize }}px; line-height: 1.2;">{{ $customer->contact_person }}</div>
-        @endif
-        <div style="font-size: {{ $bodyFontSize }}px; line-height: 1.2;">
-            @if($customer->address)
-                {{ $customer->address }}<br>
-            @endif
-            @if($customer->postal_code && $customer->city)
-                {{ $customer->postal_code }} {{ $customer->city }}
-                @if($customer->country && $customer->country !== 'Deutschland')
-                    <br>{{ $customer->country }}
-                @endif
-            @endif
-        </div>
-    </div>
-@endif
     {{-- Header Band: Colored background with company info - DISTINCTIVE: Full-width colored header --}}
-    <div style="background: {{ $layoutSettings['colors']['primary'] ?? '#2563eb' }}; color: white; padding: 12px; margin-bottom: 8px; border-radius: 4px;">
+    <div style="background: {{ $layoutSettings['colors']['primary'] ?? '#2563eb' }}; color: white; padding: 3mm; margin-bottom: 5mm; border-radius: 2mm;">
         @php
             $logoRelPath = isset($snapshot['logo']) ? ltrim(preg_replace('#^storage/#', '', (string)$snapshot['logo']), '/') : null;
         @endphp
         @if(($layoutSettings['branding']['show_logo'] ?? true) && $logoRelPath)
             @if(isset($preview) && $preview)
-                <div style="margin-bottom: 8px;">
-                    <img src="{{ asset('storage/' . $logoRelPath) }}" alt="Logo" style="max-height: 60px; max-width: 200px; filter: brightness(0) invert(1);">
+                <div style="margin-bottom: 3mm;">
+                    <img src="{{ asset('storage/' . $logoRelPath) }}" alt="Logo" style="max-height: 20mm; max-width: 70mm; filter: brightness(0) invert(1);">
                 </div>
             @elseif(\Storage::disk('public')->exists($logoRelPath))
                 @php
@@ -39,29 +17,70 @@
                     $logoData = base64_encode(file_get_contents($logoPath));
                     $logoMime = mime_content_type($logoPath);
                 @endphp
-                <div style="margin-bottom: 8px;">
-                    <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo" style="max-height: 60px; max-width: 200px; filter: brightness(0) invert(1);">
+                <div style="margin-bottom: 3mm;">
+                    <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo" style="max-height: 20mm; max-width: 70mm; filter: brightness(0) invert(1);">
                 </div>
             @endif
         @endif
-        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 700; margin-bottom: 4px;">{{ $snapshot['name'] ?? '' }}</div>
+        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 700; margin-bottom: 1mm;">{{ $snapshot['name'] ?? '' }}</div>
         @if($layoutSettings['content']['show_company_address'] ?? true)
-            <div style="font-size: {{ $bodyFontSize }}px; color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }}; margin-bottom: 15px; line-height: 1.5;">
+            <div style="font-size: {{ $bodyFontSize }}px; color: rgba(255, 255, 255, 0.9); line-height: 1.5;">
                 {{ $snapshot['address'] ?? '' }}
                 @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)), {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
             </div>
         @endif
     </div>
 
-    {{-- Invoice Details Right --}}
-    <div style="text-align: right; font-size: {{ $bodyFontSize }}px; margin-bottom: 10px;">
-        <div style="margin-bottom: 4px;"><strong>DATUM:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
-        <div style="margin-bottom: 4px;"><strong>LEISTUNGSDATUM:</strong> entspricht Rechnungsdatum</div>
-        <div style="margin-bottom: 4px;"><strong>FÄLLIGKEITSDATUM:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
-        @if(isset($invoice->customer->number) && $invoice->customer->number)
-            <div><strong>KUNDENNR.:</strong> {{ $invoice->customer->number }}</div>
-        @endif
-    </div>
+    {{-- DIN 5008 compliant layout: Address and Invoice Details side by side --}}
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10mm;">
+        <tr>
+            <td style="width: 50%; vertical-align: top; padding-right: 10mm;">
+                @php $customer = $invoice->customer ?? null; @endphp
+                @if($customer)
+                    {{-- DIN 5008 Address Block --}}
+                    <div class="din-5008-address">
+                        {{-- Sender return address (small text) - DIN 5008 standard --}}
+                        @if($layoutSettings['content']['show_company_address'] ?? true)
+                            <div class="sender-return-address">
+                                {{ $snapshot['name'] ?? '' }}
+                                @if($snapshot['address'] ?? null) · {{ $snapshot['address'] }}@endif
+                                @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)) · {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
+                            </div>
+                        @endif
+                        {{-- Recipient address --}}
+                        <div style="font-weight: 600; margin-bottom: 1mm; font-size: {{ $bodyFontSize }}px; line-height: 1.3;">
+                            {{ $customer->name ?? 'Unbekannt' }}
+                        </div>
+                        @if(isset($customer->contact_person) && $customer->contact_person)
+                            <div style="margin-bottom: 1mm; font-size: {{ $bodyFontSize }}px; line-height: 1.3;">{{ $customer->contact_person }}</div>
+                        @endif
+                        <div style="font-size: {{ $bodyFontSize }}px; line-height: 1.3;">
+                            @if($customer->address)
+                                {{ $customer->address }}<br>
+                            @endif
+                            @if($customer->postal_code && $customer->city)
+                                {{ $customer->postal_code }} {{ $customer->city }}
+                                @if($customer->country && $customer->country !== 'Deutschland')
+                                    <br>{{ $customer->country }}
+                                @endif
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </td>
+            <td style="width: 50%; vertical-align: top;">
+                {{-- Invoice Details --}}
+                <div style="text-align: right; font-size: {{ $bodyFontSize }}px;">
+                    <div style="margin-bottom: 2mm;"><strong>DATUM:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
+                    <div style="margin-bottom: 2mm;"><strong>LEISTUNGSDATUM:</strong> entspricht Rechnungsdatum</div>
+                    <div style="margin-bottom: 2mm;"><strong>FÄLLIGKEITSDATUM:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
+                    @if(isset($invoice->customer->number) && $invoice->customer->number)
+                        <div><strong>KUNDENNR.:</strong> {{ $invoice->customer->number }}</div>
+                    @endif
+                </div>
+            </td>
+        </tr>
+    </table>
 
     {{-- Invoice Title --}}
     <div style="margin-bottom: 8px;">

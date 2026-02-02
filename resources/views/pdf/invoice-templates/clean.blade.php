@@ -1,40 +1,15 @@
 {{-- Clean Template: Based on first screenshot - Simple, professional German invoice --}}
 {{-- Template: clean --}}
 <div class="container">
-@php $customer = $invoice->customer ?? null; @endphp
-@if($customer)
-    <div class="din-5008-address">
-        <div style="font-weight: 600; margin-bottom: 3px; font-size: {{ $bodyFontSize }}px; line-height: 1.2;">
-            {{ $customer->name ?? 'Unbekannt' }}
-        </div>
-        @if(isset($customer->contact_person) && $customer->contact_person)
-            <div style="margin-bottom: 2px; font-size: {{ $bodyFontSize }}px; line-height: 1.2;">{{ $customer->contact_person }}</div>
-        @endif
-        <div style="font-size: {{ $bodyFontSize }}px; line-height: 1.2;">
-            @if($customer->address)
-                {{ $customer->address }}<br>
-            @endif
-            @if($customer->postal_code && $customer->city)
-                {{ $customer->postal_code }} {{ $customer->city }}
-                @if($customer->country && $customer->country !== 'Deutschland')
-                    <br>{{ $customer->country }}
-                @endif
-                @if(isset($invoice->customer->vat_number) && $invoice->customer->vat_number)
-                    <br>USt-IdNr.: {{ $invoice->customer->vat_number }}
-                @endif
-            @endif
-        </div>
-    </div>
-@endif
-    {{-- Header: Logo and sender address top left with subtle background --}}
-    <div style="margin-bottom: 15px; padding: 12px; background-color: #f9fafb; border-radius: 4px;">
+    {{-- Header: Logo and sender address with subtle background --}}
+    <div style="margin-bottom: 8mm; padding: 3mm; background-color: #f9fafb; border-radius: 2mm;">
         @php
             $logoRelPath = isset($snapshot['logo']) ? ltrim(preg_replace('#^storage/#', '', (string)$snapshot['logo']), '/') : null;
         @endphp
         @if(($layoutSettings['branding']['show_logo'] ?? true) && $logoRelPath)
             @if(isset($preview) && $preview)
-                <div style="margin-bottom: 8px;">
-                    <img src="{{ asset('storage/' . $logoRelPath) }}" alt="Logo" style="max-height: 60px; max-width: 200px;">
+                <div style="margin-bottom: 3mm;">
+                    <img src="{{ asset('storage/' . $logoRelPath) }}" alt="Logo" style="max-height: 20mm; max-width: 70mm;">
                 </div>
             @elseif(\Storage::disk('public')->exists($logoRelPath))
                 @php
@@ -42,8 +17,8 @@
                     $logoData = base64_encode(file_get_contents($logoPath));
                     $logoMime = mime_content_type($logoPath);
                 @endphp
-                <div style="margin-bottom: 8px;">
-                    <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo" style="max-height: 60px; max-width: 200px;">
+                <div style="margin-bottom: 3mm;">
+                    <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo" style="max-height: 20mm; max-width: 70mm;">
                 </div>
             @endif
         @endif
@@ -56,15 +31,73 @@
         @endif
     </div>
 
-    {{-- Customer number --}}
-    @if(($layoutSettings['content']['show_customer_number'] ?? true) && isset($invoice->customer->number) && $invoice->customer->number)
-        <div style="margin-bottom: 8px; font-size: {{ $bodyFontSize }}px;">
-            <strong>Kundennummer:</strong> {{ $invoice->customer->number }}
-        </div>
-    @endif
+    {{-- DIN 5008 compliant layout: Address and Invoice Details side by side --}}
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10mm;">
+        <tr>
+            <td style="width: 50%; vertical-align: top; padding-right: 10mm;">
+                @php $customer = $invoice->customer ?? null; @endphp
+                @if($customer)
+                    {{-- DIN 5008 Address Block --}}
+                    <div class="din-5008-address">
+                        {{-- Sender return address (small text) - DIN 5008 standard --}}
+                        @if($layoutSettings['content']['show_company_address'] ?? true)
+                            <div class="sender-return-address">
+                                {{ $snapshot['name'] ?? '' }}
+                                @if($snapshot['address'] ?? null) · {{ $snapshot['address'] }}@endif
+                                @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)) · {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
+                            </div>
+                        @endif
+                        {{-- Recipient address --}}
+                        <div style="font-weight: 600; margin-bottom: 1mm; font-size: {{ $bodyFontSize }}px; line-height: 1.3;">
+                            {{ $customer->name ?? 'Unbekannt' }}
+                        </div>
+                        @if(isset($customer->contact_person) && $customer->contact_person)
+                            <div style="margin-bottom: 1mm; font-size: {{ $bodyFontSize }}px; line-height: 1.3;">{{ $customer->contact_person }}</div>
+                        @endif
+                        <div style="font-size: {{ $bodyFontSize }}px; line-height: 1.3;">
+                            @if($customer->address)
+                                {{ $customer->address }}<br>
+                            @endif
+                            @if($customer->postal_code && $customer->city)
+                                {{ $customer->postal_code }} {{ $customer->city }}
+                                @if($customer->country && $customer->country !== 'Deutschland')
+                                    <br>{{ $customer->country }}
+                                @endif
+                            @endif
+                            @if(isset($invoice->customer->vat_number) && $invoice->customer->vat_number)
+                                <br>USt-IdNr.: {{ $invoice->customer->vat_number }}
+                            @endif
+                        </div>
+                        {{-- Customer number --}}
+                        @if(($layoutSettings['content']['show_customer_number'] ?? true) && isset($invoice->customer->number) && $invoice->customer->number)
+                            <div style="margin-top: 2mm; font-size: {{ $bodyFontSize }}px;">
+                                <strong>Kundennr.:</strong> {{ $invoice->customer->number }}
+                            </div>
+                        @endif
+                    </div>
+                @endif
+            </td>
+            <td style="width: 50%; vertical-align: top;">
+                {{-- Invoice Details (German standard fields) --}}
+                <div style="text-align: right; font-size: {{ $bodyFontSize }}px;">
+                    <div style="margin-bottom: 2mm;"><strong>Rechnungsdatum:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
+                    
+                    @if(isset($invoice->service_date) && $invoice->service_date)
+                        <div style="margin-bottom: 2mm;"><strong>Leistungsdatum:</strong> {{ formatInvoiceDate($invoice->service_date, $dateFormat ?? 'd.m.Y') }}</div>
+                    @elseif(isset($invoice->service_period_start) && isset($invoice->service_period_end) && $invoice->service_period_start && $invoice->service_period_end)
+                        <div style="margin-bottom: 2mm;"><strong>Leistungszeitraum:</strong> {{ formatInvoiceDate($invoice->service_period_start, $dateFormat ?? 'd.m.Y') }} - {{ formatInvoiceDate($invoice->service_period_end, $dateFormat ?? 'd.m.Y') }}</div>
+                    @else
+                        <div style="margin-bottom: 2mm;"><strong>Leistungsdatum:</strong> entspricht Rechnungsdatum</div>
+                    @endif
+
+                    <div style="margin-bottom: 2mm;"><strong>Fälligkeitsdatum:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
+                </div>
+            </td>
+        </tr>
+    </table>
 
     {{-- Invoice Title --}}
-    <div style="margin-bottom: 15px;">
+    <div style="margin-bottom: 5mm;">
         @php
             $isCorrection = isset($invoice->is_correction) ? (bool)$invoice->is_correction : false;
         @endphp
@@ -72,31 +105,16 @@
             {{ $isCorrection ? 'STORNORECHNUNG' : 'Rechnung' }} {{ $invoice->number }}
         </div>
         @if($isCorrection && isset($invoice->correctsInvoice) && $invoice->correctsInvoice)
-            <div style="margin-top: 10px; padding: 10px; background-color: #fee2e2; border-left: 4px solid #dc2626; font-size: {{ $bodyFontSize }}px;">
-                <div style="font-weight: 600; color: #991b1b; margin-bottom: 4px;">Storniert Rechnung:</div>
+            <div style="margin-top: 3mm; padding: 3mm; background-color: #fee2e2; border-left: 4px solid #dc2626; font-size: {{ $bodyFontSize }}px;">
+                <div style="font-weight: 600; color: #991b1b; margin-bottom: 2mm;">Storniert Rechnung:</div>
                 <div style="color: #7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ formatInvoiceDate($invoice->correctsInvoice->issue_date, $dateFormat) }}</div>
                 @if(isset($invoice->correction_reason) && $invoice->correction_reason)
-                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #dc2626;">
+                    <div style="margin-top: 2mm; padding-top: 2mm; border-top: 1px solid #dc2626;">
                         <strong>Grund:</strong> {{ $invoice->correction_reason }}
                     </div>
                 @endif
             </div>
         @endif
-    </div>
-
-    {{-- Invoice Details (German standard fields) --}}
-    <div style="text-align: right; font-size: {{ $bodyFontSize }}px; margin-bottom: 12px;">
-        <div style="margin-bottom: 4px;"><strong>Rechnungsdatum:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
-        
-        @if(isset($invoice->service_date) && $invoice->service_date)
-            <div style="margin-bottom: 4px;"><strong>Leistungsdatum:</strong> {{ formatInvoiceDate($invoice->service_date, $dateFormat ?? 'd.m.Y') }}</div>
-        @elseif(isset($invoice->service_period_start) && isset($invoice->service_period_end) && $invoice->service_period_start && $invoice->service_period_end)
-            <div style="margin-bottom: 4px;"><strong>Leistungszeitraum:</strong> {{ formatInvoiceDate($invoice->service_period_start, $dateFormat ?? 'd.m.Y') }} - {{ formatInvoiceDate($invoice->service_period_end, $dateFormat ?? 'd.m.Y') }}</div>
-        @else
-            <div style="margin-bottom: 4px;"><strong>Leistungsdatum:</strong> entspricht Rechnungsdatum</div>
-        @endif
-
-        <div style="margin-bottom: 4px;"><strong>Fälligkeitsdatum:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
     </div>
 
     {{-- Salutation and Introduction --}}
