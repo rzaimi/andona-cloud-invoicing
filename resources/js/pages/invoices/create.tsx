@@ -24,11 +24,19 @@ interface InvoiceItem {
     quantity: number
     unit_price: number
     unit: string
+    tax_rate: number
     total: number
     discount_type?: "percentage" | "fixed" | null
     discount_value?: number | null
     discount_amount?: number
 }
+
+// German standard tax rates (Umsatzsteuer)
+const GERMAN_TAX_RATES = [
+    { value: 0.19, label: "19% (Regelsteuersatz)" },
+    { value: 0.07, label: "7% (Ermäßigter Satz)" },
+    { value: 0.00, label: "0% (Steuerfrei)" },
+] as const
 
 interface Product {
     id: string
@@ -84,6 +92,7 @@ export default function InvoicesCreate() {
                 quantity: 1,
                 unit_price: 0,
                 unit: "Stk.",
+                tax_rate: settings.tax_rate || 0.19,
                 total: 0,
                 discount_type: null,
                 discount_value: null,
@@ -126,10 +135,13 @@ export default function InvoicesCreate() {
         const subtotal = itemsWithTotals.reduce((sum: number, item: InvoiceItem) => sum + item.total, 0)
         const totalDiscount = itemsWithTotals.reduce((sum: number, item: InvoiceItem) => sum + (item.discount_amount || 0), 0)
         
-        // Calculate tax based on VAT regime
+        // Calculate tax based on VAT regime (item-level tax rates)
         let tax_amount = 0
         if (data.vat_regime === 'standard') {
-            tax_amount = subtotal * settings.tax_rate
+            tax_amount = itemsWithTotals.reduce((sum: number, item: InvoiceItem) => {
+                const taxRate = typeof item.tax_rate === 'number' ? item.tax_rate : 0
+                return sum + (item.total * taxRate)
+            }, 0)
         } else {
             // All other regimes (small_business, reverse_charge, intra_community, export) are tax-exempt or handled by buyer
             tax_amount = 0
@@ -143,7 +155,7 @@ export default function InvoicesCreate() {
             tax_amount, 
             total 
         })
-    }, [data.items, data.vat_regime, settings.tax_rate])
+    }, [data.items, data.vat_regime])
 
     const addItem = () => {
         const newItem: InvoiceItem = {
@@ -155,6 +167,7 @@ export default function InvoicesCreate() {
             quantity: 1,
             unit_price: 0,
             unit: "Stk.",
+            tax_rate: settings.tax_rate || 0.19,
             total: 0,
             discount_type: null,
             discount_value: null,
@@ -219,17 +232,35 @@ export default function InvoicesCreate() {
             <Head title="Neue Rechnung" />
 
             <div className="flex flex-1 flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <Link href="/invoices">
-                        <Button variant="outline" size="sm">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
+                {/* Header with Action Buttons */}
+                <div className="sticky top-0 z-10 bg-white border-b pb-4">
+                    <div className="flex items-center gap-4 mb-4">
+                        <Link href="/invoices">
+                            <Button variant="outline" size="sm">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Zurück
+                            </Button>
+                        </Link>
+                        <div className="flex-1">
+                            <h1 className="text-1xl font-bold text-gray-900">Neue Rechnung erstellen</h1>
+                            <p className="text-gray-600">Erstellen Sie eine neue Rechnung für Ihre Kunden</p>
+                        </div>
+                    </div>
+                    
+                    {/* Action Buttons - Top of Form */}
+                    <div className="flex justify-end gap-2">
+                        <Link href="/invoices">
+                            <Button type="button" variant="outline">
+                                Abbrechen
+                            </Button>
+                        </Link>
+                        <Button 
+                            type="submit" 
+                            disabled={processing}
+                            onClick={handleSubmit}
+                        >
+                            {processing ? "Wird erstellt..." : "Rechnung erstellen"}
                         </Button>
-                    </Link>
-                    <div>
-                        <h1 className="text-1xl font-bold text-gray-900">Neue Rechnung erstellen</h1>
-                        <p className="text-gray-600">Erstellen Sie eine neue Rechnung für Ihre Kunden</p>
                     </div>
                 </div>
 
@@ -470,10 +501,23 @@ export default function InvoicesCreate() {
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
-                                                <TableCell className="align-top">
-                                                    <div className="text-sm">
-                                                        {data.vat_regime === 'standard' ? `${(settings.tax_rate * 100).toFixed(0)}%` : '0%'}
-                                                    </div>
+                                                <TableCell>
+                                                    <Select 
+                                                        value={item.tax_rate.toString()} 
+                                                        onValueChange={(value) => updateItem(item.id, "tax_rate", Number.parseFloat(value))}
+                                                        disabled={data.vat_regime !== 'standard'}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {GERMAN_TAX_RATES.map((rate) => (
+                                                                <SelectItem key={rate.value} value={rate.value.toString()}>
+                                                                    {rate.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Input
@@ -598,17 +642,6 @@ export default function InvoicesCreate() {
                         </CardContent>
                     </Card>
 
-                    {/* Actions */}
-                    <div className="flex justify-end space-x-2">
-                        <Link href="/invoices">
-                            <Button type="button" variant="outline">
-                                Abbrechen
-                            </Button>
-                        </Link>
-                        <Button type="submit" disabled={processing}>
-                            {processing ? "Wird erstellt..." : "Rechnung erstellen"}
-                        </Button>
-                    </div>
                 </form>
             </div>
         </AppLayout>

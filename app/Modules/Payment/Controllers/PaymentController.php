@@ -4,6 +4,7 @@ namespace App\Modules\Payment\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Invoice\Models\Invoice;
+use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Modules\Payment\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -118,8 +119,19 @@ class PaymentController extends Controller
             // Update invoice status if fully paid
             $totalPaid = $invoice->payments()->where('status', 'completed')->sum('amount');
             if ($totalPaid >= $invoice->total && $invoice->status !== 'paid') {
+                $oldStatus = $invoice->status;
                 $invoice->status = 'paid';
                 $invoice->save();
+
+                // Audit Log: Invoice automatically marked as paid
+                InvoiceAuditLog::log(
+                    $invoice->id,
+                    'paid',
+                    $oldStatus,
+                    'paid',
+                    ['payment_id' => $payment->id, 'amount' => $payment->amount, 'total_paid' => $totalPaid],
+                    'Invoice automatically marked as paid after receiving payment of ' . number_format($payment->amount, 2) . ' EUR'
+                );
             }
         });
         

@@ -17,6 +17,13 @@ import type { BreadcrumbItem, Customer } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { route } from "ziggy-js"
 
+// German standard tax rates (Umsatzsteuer)
+const GERMAN_TAX_RATES = [
+    { value: 0.19, label: "19% (Regelsteuersatz)" },
+    { value: 0.07, label: "7% (Ermäßigter Satz)" },
+    { value: 0.00, label: "0% (Steuerfrei)" },
+] as const
+
 interface OfferItem {
     id: number | string
     product_id?: string
@@ -26,6 +33,7 @@ interface OfferItem {
     quantity: number
     unit_price: number
     unit: string
+    tax_rate: number
     total: number
     discount_type?: "percentage" | "fixed" | null
     discount_value?: number | null
@@ -95,6 +103,7 @@ export default function OffersEdit() {
             quantity: Number(item.quantity) || 0,
             unit_price: Number(item.unit_price) || 0,
             unit: item.unit || "Stk.",
+            tax_rate: Number((item as any).tax_rate) || settings.tax_rate || 0.19,
             total: Number(item.total) || 0,
             discount_type: item.discount_type || null,
             discount_value: item.discount_value ? Number(item.discount_value) : null,
@@ -133,7 +142,13 @@ export default function OffersEdit() {
         
         const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.total, 0)
         const totalDiscount = itemsWithTotals.reduce((sum, item) => sum + item.discount_amount, 0)
-        const tax_amount = subtotal * settings.tax_rate
+        
+        // Calculate tax amount per item (supports mixed tax rates)
+        const tax_amount = itemsWithTotals.reduce((sum, item) => {
+            const taxRate = typeof item.tax_rate === 'number' ? item.tax_rate : 0
+            return sum + (item.total * taxRate)
+        }, 0)
+        
         const total = subtotal + tax_amount
 
         setTotals({ 
@@ -142,7 +157,7 @@ export default function OffersEdit() {
             tax_amount, 
             total 
         })
-    }, [data.items, settings.tax_rate])
+    }, [data.items])
 
     const addItem = () => {
         const newItem: OfferItem = {
@@ -154,6 +169,7 @@ export default function OffersEdit() {
             quantity: 1,
             unit_price: 0,
             unit: "Stk.",
+            tax_rate: settings.tax_rate || 0.19,
             total: 0,
             discount_type: null,
             discount_value: null,
@@ -225,20 +241,38 @@ export default function OffersEdit() {
             <Head title={`Angebot bearbeiten - ${offer.number}`} />
 
             <div className="flex flex-1 flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <Link href="/offers">
-                        <Button variant="outline" size="sm">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
-                        </Button>
-                    </Link>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-1xl font-bold text-gray-900">Angebot bearbeiten</h1>
-                            {getStatusBadge(offer.status)}
+                {/* Header with Action Buttons */}
+                <div className="sticky top-0 z-10 bg-white border-b pb-4">
+                    <div className="flex items-center gap-4 mb-4">
+                        <Link href="/offers">
+                            <Button variant="outline" size="sm">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Zurück
+                            </Button>
+                        </Link>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-1xl font-bold text-gray-900">Angebot bearbeiten</h1>
+                                {getStatusBadge(offer.status)}
+                            </div>
+                            <p className="text-gray-600">{offer.number}</p>
                         </div>
-                        <p className="text-gray-600">{offer.number}</p>
+                    </div>
+                    
+                    {/* Action Buttons - Top of Form */}
+                    <div className="flex justify-end gap-2">
+                        <Link href="/offers">
+                            <Button type="button" variant="outline">
+                                Abbrechen
+                            </Button>
+                        </Link>
+                        <Button 
+                            type="submit" 
+                            disabled={processing}
+                            onClick={handleSubmit}
+                        >
+                            {processing ? "Wird gespeichert..." : "Änderungen speichern"}
+                        </Button>
                     </div>
                 </div>
 
@@ -422,8 +456,22 @@ export default function OffersEdit() {
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
-                                                <TableCell className="align-top">
-                                                    <div className="text-sm">{(settings.tax_rate * 100).toFixed(0)}%</div>
+                                                <TableCell>
+                                                    <Select 
+                                                        value={item.tax_rate.toString()} 
+                                                        onValueChange={(value) => updateItem(item.id, "tax_rate", Number.parseFloat(value))}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {GERMAN_TAX_RATES.map((rate) => (
+                                                                <SelectItem key={rate.value} value={rate.value.toString()}>
+                                                                    {rate.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Input
@@ -570,17 +618,6 @@ export default function OffersEdit() {
                         </Card>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex justify-end space-x-2">
-                        <Link href="/offers">
-                            <Button type="button" variant="outline">
-                                Abbrechen
-                            </Button>
-                        </Link>
-                        <Button type="submit" disabled={processing}>
-                            {processing ? "Wird gespeichert..." : "Änderungen speichern"}
-                        </Button>
-                    </div>
                 </form>
             </div>
         </AppLayout>

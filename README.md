@@ -325,6 +325,33 @@ This is proprietary software. All rights reserved.
 
 ---
 
+## 🆕 Recent Updates (February 2026)
+
+### GoBD Compliance & Invoice Editing Standards
+- **German Accounting Standards (GoBD)**: Implemented full compliance for invoice editing
+- **Status-Based Editing**: Only draft invoices can be edited; sent/paid invoices are locked
+- **Audit Logging**: Complete audit trail for all invoice state changes
+- **Stornorechnung Permission**: Role-based access control for invoice corrections
+- **Automatic Status Updates**: Invoices automatically transition from "sent" to "paid" when payment is recorded
+
+### Item-Level Tax Rates (USt.)
+- **Per-Item Tax Configuration**: Each invoice/offer item can have its own tax rate
+- **German Standard Rates**: Support for 19% (Regelsteuersatz), 7% (Ermäßigter Satz), 0% (Steuerfrei)
+- **Mixed Rate Calculations**: Correctly calculate totals with different tax rates per item
+- **Product Presets**: Products can have pre-configured tax rates
+- **PDF Templates Updated**: All 6 invoice templates display item-level tax rates
+
+### Database Enhancements
+- **Invoice Audit Logs**: New `invoice_audit_logs` table for compliance tracking
+- **Item Tax Rates**: Both `invoice_items` and `offer_items` support individual tax rates
+- **Enhanced Seeders**: Realistic test data with mixed tax rates and audit trails
+
+### Frontend Improvements
+- **Sticky Action Buttons**: Save/cancel buttons moved to top for better UX
+- **Edit Warnings**: Clear visual indicators when invoices cannot be edited
+- **Audit Log Viewer**: Dialog component to view complete invoice history
+- **USt. Dropdowns**: Interactive tax rate selection per line item
+
 **Version**: 1.0.0  
-**Last Updated**: November 2024
+**Last Updated**: February 2, 2026
 

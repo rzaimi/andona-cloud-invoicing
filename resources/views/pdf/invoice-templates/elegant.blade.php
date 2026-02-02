@@ -133,7 +133,7 @@
                             Std.
                         @endif
                     </td>
-                    <td style="padding: 8px 6px; text-align: right;">{{ number_format(($invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}%</td>
+                    <td style="padding: 8px 6px; text-align: right;">{{ number_format(($item->tax_rate ?? $invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}%</td>
                     <td style="padding: 8px 6px; text-align: right;">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
                     <td style="padding: 8px 6px; text-align: right;">
                         <div>{{ number_format($item->total, 2, ',', '.') }} €</div>

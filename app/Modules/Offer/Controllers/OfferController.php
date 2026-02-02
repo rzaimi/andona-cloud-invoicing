@@ -123,6 +123,7 @@ class OfferController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.unit' => 'nullable|string|max:10',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:1', // German tax rates: 0.00, 0.07, 0.19
             'items.*.discount_type' => 'nullable|in:percentage,fixed',
             'items.*.discount_value' => 'nullable|numeric|min:0',
         ]);
@@ -186,6 +187,7 @@ class OfferController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
+                    'tax_rate' => $itemData['tax_rate'] ?? $offer->tax_rate, // Use item tax rate or fallback to offer rate
                     'discount_type' => $discountType,
                     'discount_value' => $discountValue,
                     'sort_order' => $index,
@@ -264,6 +266,7 @@ class OfferController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.unit' => 'nullable|string|max:10',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:1', // German tax rates: 0.00, 0.07, 0.19
             'items.*.discount_type' => 'nullable|in:percentage,fixed',
             'items.*.discount_value' => 'nullable|numeric|min:0',
         ]);
@@ -311,6 +314,7 @@ class OfferController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
+                    'tax_rate' => $itemData['tax_rate'] ?? $offer->tax_rate, // Use item tax rate or fallback to offer rate
                     'discount_type' => $discountType,
                     'discount_value' => $discountValue,
                     'sort_order' => $index,

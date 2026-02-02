@@ -110,8 +110,17 @@ class Offer extends Model
         // Calculate subtotal (sum of all items - items already have discount applied)
         $this->subtotal = $this->items->sum('total');
         
-        // Calculate tax amount on subtotal (items already have discount applied)
-        $this->tax_amount = $this->subtotal * $this->tax_rate;
+        // Calculate tax amount per item (supports mixed tax rates)
+        // If items have individual tax_rate, calculate per item
+        // Otherwise, use offer-level tax_rate for all items
+        $taxAmount = 0;
+        foreach ($this->items as $item) {
+            $itemTaxRate = $item->tax_rate ?? $this->tax_rate;
+            // Tax is calculated on the item total (which already includes discount)
+            $taxAmount += $item->total * $itemTaxRate;
+        }
+        
+        $this->tax_amount = $taxAmount;
         $this->total = $this->subtotal + $this->tax_amount;
     }
 

@@ -20,6 +20,7 @@ class OfferItem extends Model
         'unit_price',
         'total',
         'unit',
+        'tax_rate',
         'discount_type',
         'discount_value',
         'discount_amount',
@@ -30,6 +31,7 @@ class OfferItem extends Model
         'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
         'total' => 'decimal:2',
+        'tax_rate' => 'decimal:4',
         'discount_value' => 'decimal:2',
         'discount_amount' => 'decimal:2',
     ];
@@ -70,6 +72,7 @@ class OfferItem extends Model
         $this->description = $product->name . ($product->description ? "\n" . $product->description : '');
         $this->unit_price = $product->price;
         $this->unit = $product->unit;
+        $this->tax_rate = $product->tax_rate ?? null; // Use product's tax rate if available
         $this->calculateTotal();
     }
 }

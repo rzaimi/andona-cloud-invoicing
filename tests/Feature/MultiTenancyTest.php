@@ -683,13 +683,17 @@ class MultiTenancyTest extends TestCase
     {
         $this->actingAs($this->user1);
 
+        // GoBD Compliance: Invoice must be in draft status to be edited
+        $this->invoice1->update(['status' => 'draft']);
+
         $response = $this->put("/invoices/{$this->invoice1->id}", [
             'notes' => 'Updated notes',
             'customer_id' => $this->customer1->id,
             'issue_date' => $this->invoice1->issue_date->format('Y-m-d'),
             'due_date' => $this->invoice1->due_date->format('Y-m-d'),
-            'status' => $this->invoice1->status,
+            'status' => 'draft',
             'layout_id' => null,
+            'vat_regime' => 'standard',
             'items' => [
                 [
                     'description' => 'Updated Item',
@@ -764,6 +768,7 @@ class MultiTenancyTest extends TestCase
             'due_date' => now()->addDays(14)->format('Y-m-d'),
             'notes' => null,
             'layout_id' => null,
+            'vat_regime' => 'standard',
             'items' => [
                 [
                     'description' => 'Test Item',
@@ -850,6 +855,7 @@ class MultiTenancyTest extends TestCase
             'due_date' => now()->addDays(14)->format('Y-m-d'),
             'notes' => null,
             'layout_id' => null,
+            'vat_regime' => 'standard',
             'items' => [
                 [
                     'description' => 'Test Item with 10% Discount',
@@ -912,6 +918,7 @@ class MultiTenancyTest extends TestCase
             'due_date' => now()->addDays(14)->format('Y-m-d'),
             'notes' => null,
             'layout_id' => null,
+            'vat_regime' => 'standard',
             'items' => [
                 [
                     'description' => 'Test Item with Fixed Discount',
@@ -985,6 +992,7 @@ class MultiTenancyTest extends TestCase
             'notes' => null,
             'layout_id' => null,
             'status' => 'draft',
+            'vat_regime' => 'standard',
             'items' => [
                 [
                     'description' => 'Updated Item with Discount',
@@ -1180,6 +1188,7 @@ class MultiTenancyTest extends TestCase
             'due_date' => now()->addDays(14)->format('Y-m-d'),
             'notes' => null,
             'layout_id' => null,
+            'vat_regime' => 'standard',
             'items' => [
                 [
                     'description' => 'Item 1 - No Discount',

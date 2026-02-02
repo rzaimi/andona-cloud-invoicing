@@ -7,6 +7,7 @@ use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Invoice\Models\InvoiceLayout;
+use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Traits\LogsEmails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -128,6 +129,7 @@ class InvoiceController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.unit' => 'nullable|string|max:10',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:1', // German tax rates: 0.00, 0.07, 0.19
             'items.*.discount_type' => 'nullable|in:percentage,fixed',
             'items.*.discount_value' => 'nullable|numeric|min:0',
         ]);
@@ -208,7 +210,7 @@ class InvoiceController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
-                    'tax_rate' => $invoice->tax_rate, // Use invoice tax rate by default
+                    'tax_rate' => $itemData['tax_rate'] ?? $invoice->tax_rate, // Use item tax rate or fallback to invoice rate
                     'discount_type' => $discountType,
                     'discount_value' => $discountValue,
                     'sort_order' => $index,
@@ -220,6 +222,16 @@ class InvoiceController extends Controller
             // Recalculate totals - calculateTotals() will load items if needed
             $invoice->calculateTotals();
             $invoice->save();
+
+            // Audit Log: Invoice created
+            InvoiceAuditLog::log(
+                $invoice->id,
+                'created',
+                null,
+                'draft',
+                null,
+                'Invoice created with ' . count($validated['items']) . ' items'
+            );
         });
 
         return redirect()->route('invoices.index')
@@ -277,6 +289,13 @@ class InvoiceController extends Controller
     {
         $this->authorize('update', $invoice);
 
+        // GoBD Compliance: Prevent editing non-draft invoices
+        if (!$invoice->canBeEdited()) {
+            return back()->withErrors([
+                'status' => 'Rechnung kann im Status "' . ucfirst($invoice->status) . '" nicht bearbeitet werden. Gemäß GoBD-Richtlinien können nur Entwurfsrechnungen bearbeitet werden. Bitte erstellen Sie eine Stornorechnung für Korrekturen.'
+            ])->withInput();
+        }
+
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'issue_date' => 'required|date',
@@ -294,12 +313,17 @@ class InvoiceController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.unit' => 'nullable|string|max:10',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:1', // German tax rates: 0.00, 0.07, 0.19
             'items.*.discount_type' => 'nullable|in:percentage,fixed',
             'items.*.discount_value' => 'nullable|numeric|min:0',
         ]);
 
         DB::transaction(function () use ($validated, $invoice, $request) {
             $effectiveCompanyId = $this->getEffectiveCompanyId();
+            
+            // Track changes for audit log
+            $oldStatus = $invoice->status;
+            $changes = [];
             
             // Security: Verify customer belongs to the same company
             $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
@@ -314,6 +338,18 @@ class InvoiceController extends Controller
                     abort(403, 'Layout does not belong to your company');
                 }
             }
+            
+            // Track key field changes
+            if ($invoice->customer_id != $validated['customer_id']) {
+                $changes['customer_id'] = ['old' => $invoice->customer_id, 'new' => $validated['customer_id']];
+            }
+            if ($invoice->status != $validated['status']) {
+                $changes['status'] = ['old' => $invoice->status, 'new' => $validated['status']];
+            }
+            if ($invoice->notes != $validated['notes']) {
+                $changes['notes'] = ['old' => $invoice->notes, 'new' => $validated['notes']];
+            }
+            
             // Update invoice
             $invoice->update([
                 'customer_id' => $validated['customer_id'],
@@ -358,7 +394,7 @@ class InvoiceController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $itemData['unit_price'],
                     'unit' => $itemData['unit'] ?? 'Stk.',
-                    'tax_rate' => $invoice->tax_rate, // Use invoice tax rate by default
+                    'tax_rate' => $itemData['tax_rate'] ?? $invoice->tax_rate, // Use item tax rate or fallback to invoice rate
                     'discount_type' => $discountType,
                     'discount_value' => $discountValue,
                     'sort_order' => $index,
@@ -375,6 +411,17 @@ class InvoiceController extends Controller
             // Recalculate totals
             $invoice->calculateTotals();
             $invoice->save();
+
+            // Audit Log: Invoice updated
+            $action = $oldStatus != $validated['status'] ? 'status_changed' : 'updated';
+            InvoiceAuditLog::log(
+                $invoice->id,
+                $action,
+                $oldStatus,
+                $validated['status'],
+                !empty($changes) ? $changes : null,
+                'Invoice updated with ' . count($validated['items']) . ' items'
+            );
         });
 
         return redirect()->route('invoices.index')
@@ -651,7 +698,18 @@ class InvoiceController extends Controller
 
             // Update invoice status to 'sent' if it's still 'draft'
             if ($invoice->status === 'draft') {
+                $oldStatus = $invoice->status;
                 $invoice->update(['status' => 'sent']);
+                
+                // Audit Log: Invoice sent
+                InvoiceAuditLog::log(
+                    $invoice->id,
+                    'sent',
+                    $oldStatus,
+                    'sent',
+                    ['email' => $validated['to']],
+                    'Invoice sent via email to ' . $validated['to']
+                );
             }
 
             return redirect()->back()->with('success', 'Rechnung wurde erfolgreich per E-Mail versendet.');
@@ -899,6 +957,38 @@ class InvoiceController extends Controller
     }
 
     /**
+     * View audit log for an invoice
+     */
+    public function auditLog(Invoice $invoice)
+    {
+        $this->authorize('view', $invoice);
+
+        $logs = $invoice->auditLogs()
+            ->with('user:id,name,email')
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'action' => $log->action,
+                    'old_status' => $log->old_status,
+                    'new_status' => $log->new_status,
+                    'changes' => $log->changes,
+                    'notes' => $log->notes,
+                    'user' => $log->user ? [
+                        'name' => $log->user->name,
+                        'email' => $log->user->email,
+                    ] : null,
+                    'ip_address' => $log->ip_address,
+                    'created_at' => $log->created_at->toISOString(),
+                ];
+            });
+
+        return response()->json([
+            'logs' => $logs,
+        ]);
+    }
+
+    /**
      * View reminder history for an invoice
      */
     public function reminderHistory(Invoice $invoice)
@@ -957,7 +1047,8 @@ class InvoiceController extends Controller
      */
     public function createCorrection(Request $request, Invoice $invoice)
     {
-        $this->authorize('update', $invoice);
+        // Requires special permission to create Stornorechnung
+        $this->authorize('createCorrection', $invoice);
 
         // Validate that invoice can be corrected
         if (!$invoice->canBeCorrect()) {
@@ -1026,10 +1117,32 @@ class InvoiceController extends Controller
             }
 
             // Mark original invoice as corrected
+            $oldInvoiceStatus = $invoice->status;
             $invoice->corrected_by_invoice_id = $correctionInvoice->id;
             $invoice->corrected_at = now();
             $invoice->status = 'cancelled';
             $invoice->save();
+
+            // Audit Logs
+            // Log original invoice correction
+            InvoiceAuditLog::log(
+                $invoice->id,
+                'corrected',
+                $oldInvoiceStatus,
+                'cancelled',
+                ['corrected_by' => $correctionInvoice->id],
+                'Invoice corrected via Stornorechnung. Reason: ' . $validated['correction_reason']
+            );
+
+            // Log new correction invoice creation
+            InvoiceAuditLog::log(
+                $correctionInvoice->id,
+                'created',
+                null,
+                'sent',
+                ['corrects' => $invoice->id, 'reason' => $validated['correction_reason']],
+                'Stornorechnung created for invoice ' . $invoice->number
+            );
 
             DB::commit();
 

@@ -132,6 +132,22 @@ class Invoice extends Model
     }
 
     /**
+     * Get all audit logs for this invoice
+     */
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(InvoiceAuditLog::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Check if invoice can be edited (GoBD compliance)
+     */
+    public function canBeEdited(): bool
+    {
+        return $this->status === 'draft';
+    }
+
+    /**
      * Create a snapshot of company information for this invoice
      */
     public function createCompanySnapshot(): array

@@ -20,6 +20,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_offers',
             'manage_products',
             'view_reports',
+            'create_stornorechnung', // Permission to create correction invoices (GoBD compliance)
         ];
 
         foreach ($permissions as $perm) {
@@ -39,6 +40,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_offers',
             'manage_products',
             'view_reports',
+            'create_stornorechnung', // Admins can create correction invoices
         ];
         $admin->syncPermissions(Permission::whereIn('name', $adminPermissions)->get());
 

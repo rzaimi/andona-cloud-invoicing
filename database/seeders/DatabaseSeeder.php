@@ -10,13 +10,14 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RolesAndPermissionsSeeder::class,
+            AddStornorechnungPermissionSeeder::class, // GoBD compliance permission
             CompanySeeder::class,
             CompanySettingsSeeder::class,
             UserSeeder::class,
             CustomerSeeder::class,
             CategorySeeder::class,
             ProductSeeder::class,
-            InvoiceSeeder::class,
+            InvoiceSeeder::class, // Now includes audit log entries
             OfferSeeder::class,
             ExpenseCategorySeeder::class,
             ExpenseSeeder::class,

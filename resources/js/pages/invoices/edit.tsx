@@ -16,7 +16,15 @@ import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer, Invoice, InvoiceItem } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { InvoiceCorrectionDialog } from "@/components/invoice-correction-dialog"
+import { InvoiceAuditLogDialog } from "@/components/invoice-audit-log-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+// German standard tax rates (Umsatzsteuer)
+const GERMAN_TAX_RATES = [
+    { value: 0.19, label: "19% (Regelsteuersatz)" },
+    { value: 0.07, label: "7% (Ermäßigter Satz)" },
+    { value: 0.00, label: "0% (Steuerfrei)" },
+] as const
 
 interface Product {
     id: string
@@ -85,6 +93,7 @@ export default function InvoicesEdit() {
             quantity: Number(item.quantity) || 0,
             unit_price: Number(item.unit_price) || 0,
             unit: item.unit || "Stk.",
+            tax_rate: Number(item.tax_rate) || settings.tax_rate || 0.19,
             total: Number(item.total) || 0,
             discount_type: item.discount_type || null,
             discount_value: item.discount_value ? Number(item.discount_value) : null,
@@ -127,10 +136,13 @@ export default function InvoicesEdit() {
         const subtotal = itemsWithTotals.reduce((sum: number, item: any) => sum + item.total, 0)
         const totalDiscount = itemsWithTotals.reduce((sum: number, item: any) => sum + (item.discount_amount || 0), 0)
         
-        // Calculate tax based on VAT regime
+        // Calculate tax based on VAT regime (item-level tax rates)
         let tax_amount = 0
         if (data.vat_regime === 'standard') {
-            tax_amount = subtotal * settings.tax_rate
+            tax_amount = itemsWithTotals.reduce((sum: number, item: any) => {
+                const taxRate = typeof item.tax_rate === 'number' ? item.tax_rate : 0
+                return sum + (item.total * taxRate)
+            }, 0)
         } else {
             // All other regimes are tax-exempt or handled by buyer
             tax_amount = 0
@@ -144,7 +156,7 @@ export default function InvoicesEdit() {
             tax_amount, 
             total 
         })
-    }, [data.items, data.vat_regime, settings.tax_rate])
+    }, [data.items, data.vat_regime])
 
     const addItem = () => {
         const newItem = {
@@ -156,6 +168,7 @@ export default function InvoicesEdit() {
             quantity: 1,
             unit_price: 0,
             unit: "Stk.",
+            tax_rate: settings.tax_rate || 0.19,
             total: 0,
             discount_type: null,
             discount_value: null,
@@ -223,95 +236,136 @@ export default function InvoicesEdit() {
         return <Badge variant={config.variant}>{config.label}</Badge>
     }
 
+    // Determine if invoice can be edited based on German accounting standards (GoBD)
+    const canEdit = invoice.status === 'draft'
+    const editWarning = !canEdit && invoice.status !== 'cancelled' 
+        ? "Gemäß GoBD-Richtlinien können versendete, bezahlte oder überfällige Rechnungen nicht mehr bearbeitet werden. Bitte erstellen Sie stattdessen eine Stornorechnung." 
+        : invoice.status === 'cancelled' 
+        ? "Stornierte Rechnungen können nicht bearbeitet werden." 
+        : null
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Rechnung bearbeiten - ${invoice.number}`} />
 
             <div className="flex flex-1 flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <Link href="/invoices">
-                        <Button variant="outline" size="sm">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
-                        </Button>
-                    </Link>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-1xl font-bold text-gray-900">
-                                {invoice.is_correction ? "Stornorechnung bearbeiten" : "Rechnung bearbeiten"}
-                            </h1>
-                            {getStatusBadge(invoice.status)}
-                            {invoice.is_correction && (
-                                <Badge variant="destructive">Stornorechnung</Badge>
-                            )}
+                {/* Header with Action Buttons */}
+                <div className="sticky top-0 z-10 bg-white border-b pb-4">
+                    <div className="flex items-center gap-4 mb-4">
+                        <Link href="/invoices">
+                            <Button variant="outline" size="sm">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Zurück
+                            </Button>
+                        </Link>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-1xl font-bold text-gray-900">
+                                    {invoice.is_correction ? "Stornorechnung bearbeiten" : "Rechnung bearbeiten"}
+                                </h1>
+                                {getStatusBadge(invoice.status)}
+                                {invoice.is_correction && (
+                                    <Badge variant="destructive">Stornorechnung</Badge>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <p className="text-gray-600">{invoice.number}</p>
+                                {invoice.is_correction && invoice.correctsInvoice && (
+                                    <>
+                                        <span className="text-gray-400">•</span>
+                                        <Link href={`/invoices/${invoice.correctsInvoice.id}/edit`} className="text-blue-600 hover:underline">
+                                            Original: {invoice.correctsInvoice.number}
+                                        </Link>
+                                    </>
+                                )}
+                                {invoice.correctedByInvoice && (
+                                    <>
+                                        <span className="text-gray-400">•</span>
+                                        <Link href={`/invoices/${invoice.correctedByInvoice.id}/edit`} className="text-red-600 hover:underline">
+                                            Storniert durch: {invoice.correctedByInvoice.number}
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <p className="text-gray-600">{invoice.number}</p>
-                            {invoice.is_correction && invoice.correctsInvoice && (
-                                <>
-                                    <span className="text-gray-400">•</span>
-                                    <Link href={`/invoices/${invoice.correctsInvoice.id}/edit`} className="text-blue-600 hover:underline">
-                                        Original: {invoice.correctsInvoice.number}
-                                    </Link>
-                                </>
-                            )}
-                            {invoice.correctedByInvoice && (
-                                <>
-                                    <span className="text-gray-400">•</span>
-                                    <Link href={`/invoices/${invoice.correctedByInvoice.id}/edit`} className="text-red-600 hover:underline">
-                                        Storniert durch: {invoice.correctedByInvoice.number}
-                                    </Link>
-                                </>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.open(`/invoices/${invoice.id}/pdf`, "_blank")}
+                            >
+                                <FileText className="mr-2 h-4 w-4" />
+                                PDF
+                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        <FileCheck className="mr-2 h-4 w-4" />
+                                        E-Rechnung
+                                        <ChevronDown className="ml-2 h-3 w-3" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                        onClick={() => window.open(`/invoices/${invoice.id}/xrechnung`, "_blank")}
+                                    >
+                                        <FileText className="mr-2 h-4 w-4" />
+                                        XRechnung (XML)
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => window.open(`/invoices/${invoice.id}/zugferd`, "_blank")}
+                                    >
+                                        <FileCheck className="mr-2 h-4 w-4" />
+                                        ZUGFeRD (PDF+XML)
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            {/* Audit Log Button - GoBD Compliance */}
+                            <InvoiceAuditLogDialog invoiceId={invoice.id} />
+                            
+                            {/* Correction Button - Only show for sent/paid invoices that haven't been corrected */}
+                            {(invoice.status === 'sent' || invoice.status === 'paid' || invoice.status === 'overdue') && 
+                             !invoice.corrected_by_invoice_id && 
+                             !invoice.is_correction && (
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => setCorrectionDialogOpen(true)}
+                                    type="button"
+                                >
+                                    <XCircle className="mr-2 h-4 w-4" />
+                                    Stornieren
+                                </Button>
                             )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(`/invoices/${invoice.id}/pdf`, "_blank")}
-                        >
-                            <FileText className="mr-2 h-4 w-4" />
-                            PDF
-                        </Button>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    <FileCheck className="mr-2 h-4 w-4" />
-                                    E-Rechnung
-                                    <ChevronDown className="ml-2 h-3 w-3" />
+                    
+                    {/* Action Buttons - Top of Form */}
+                    <div className="flex justify-between items-center">
+                        <div className="flex-1">
+                            {editWarning && (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <p className="text-sm text-yellow-800">
+                                        <strong>Hinweis:</strong> {editWarning}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                            <Link href="/invoices">
+                                <Button type="button" variant="outline">
+                                    Abbrechen
                                 </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                    onClick={() => window.open(`/invoices/${invoice.id}/xrechnung`, "_blank")}
-                                >
-                                    <FileText className="mr-2 h-4 w-4" />
-                                    XRechnung (XML)
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => window.open(`/invoices/${invoice.id}/zugferd`, "_blank")}
-                                >
-                                    <FileCheck className="mr-2 h-4 w-4" />
-                                    ZUGFeRD (PDF+XML)
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        {/* Correction Button - Only show for sent/paid invoices that haven't been corrected */}
-                        {(invoice.status === 'sent' || invoice.status === 'paid' || invoice.status === 'overdue') && 
-                         !invoice.corrected_by_invoice_id && 
-                         !invoice.is_correction && (
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => setCorrectionDialogOpen(true)}
-                                type="button"
+                            </Link>
+                            <Button 
+                                type="submit" 
+                                disabled={processing || !canEdit}
+                                onClick={handleSubmit}
+                                title={!canEdit ? "Rechnung kann im aktuellen Status nicht bearbeitet werden" : ""}
                             >
-                                <XCircle className="mr-2 h-4 w-4" />
-                                Stornieren
+                                {processing ? "Wird gespeichert..." : "Änderungen speichern"}
                             </Button>
-                        )}
+                        </div>
                     </div>
                 </div>
 
@@ -333,7 +387,7 @@ export default function InvoicesEdit() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="customer_id">Kunde *</Label>
-                                    <Select value={data.customer_id} onValueChange={(value) => setData("customer_id", value)}>
+                                    <Select value={data.customer_id} onValueChange={(value) => setData("customer_id", value)} disabled={!canEdit}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Kunde auswählen" />
                                         </SelectTrigger>
@@ -350,7 +404,7 @@ export default function InvoicesEdit() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="status">Status</Label>
-                                    <Select value={data.status} onValueChange={(value) => setData("status", value)}>
+                                    <Select value={data.status} onValueChange={(value) => setData("status", value)} disabled={!canEdit}>
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
@@ -367,7 +421,7 @@ export default function InvoicesEdit() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="layout_id">Layout</Label>
-                                    <Select value={data.layout_id} onValueChange={(value) => setData("layout_id", value)}>
+                                    <Select value={data.layout_id} onValueChange={(value) => setData("layout_id", value)} disabled={!canEdit}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Layout auswählen" />
                                         </SelectTrigger>
@@ -390,6 +444,7 @@ export default function InvoicesEdit() {
                                         value={data.issue_date}
                                         onChange={(e) => setData("issue_date", e.target.value)}
                                         required
+                                        disabled={!canEdit}
                                     />
                                     {formErrors.issue_date && <p className="text-red-600 text-sm">{formErrors.issue_date}</p>}
                                 </div>
@@ -402,13 +457,14 @@ export default function InvoicesEdit() {
                                         value={data.due_date}
                                         onChange={(e) => setData("due_date", e.target.value)}
                                         required
+                                        disabled={!canEdit}
                                     />
                                     {errors.due_date && <p className="text-red-600 text-sm">{errors.due_date}</p>}
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="vat_regime">Umsatzsteuer-Regelung *</Label>
-                                    <Select value={data.vat_regime} onValueChange={(value) => setData("vat_regime", value)}>
+                                    <Select value={data.vat_regime} onValueChange={(value) => setData("vat_regime", value)} disabled={!canEdit}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Regelung auswählen" />
                                         </SelectTrigger>
@@ -437,6 +493,7 @@ export default function InvoicesEdit() {
                                                 service_period_end: ""
                                             }))
                                         }}
+                                        disabled={!canEdit}
                                     />
                                     {errors.service_date && <p className="text-red-600 text-sm">{errors.service_date}</p>}
                                 </div>
@@ -455,6 +512,7 @@ export default function InvoicesEdit() {
                                                     service_date: ""
                                                 }))
                                             }}
+                                            disabled={!canEdit}
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -470,6 +528,7 @@ export default function InvoicesEdit() {
                                                     service_date: ""
                                                 }))
                                             }}
+                                            disabled={!canEdit}
                                         />
                                     </div>
                                     {(errors.service_period_start || errors.service_period_end) && (
@@ -489,26 +548,28 @@ export default function InvoicesEdit() {
                                 <CardTitle>Rechnungspositionen</CardTitle>
                                 <CardDescription>Bearbeiten Sie die Positionen Ihrer Rechnung</CardDescription>
                             </div>
-                            <ProductSelectorDialog 
-                                products={products || []} 
-                                onSelect={(item) => {
-                                    const newItem = {
-                                        id: Date.now(),
-                                        product_id: item.product_id,
-                                        product_sku: item.product_sku,
-                                        product_number: item.product_number,
-                                        description: item.description,
-                                        quantity: item.quantity,
-                                        unit_price: item.unit_price,
-                                        unit: item.unit,
-                                        total: item.quantity * item.unit_price,
-                                        discount_type: null,
-                                        discount_value: null,
-                                        discount_amount: 0,
-                                    }
-                                    setData("items", [...(data.items as any[]), newItem])
-                                }}
-                            />
+                            {canEdit && (
+                                <ProductSelectorDialog 
+                                    products={products || []} 
+                                    onSelect={(item) => {
+                                        const newItem = {
+                                            id: Date.now(),
+                                            product_id: item.product_id,
+                                            product_sku: item.product_sku,
+                                            product_number: item.product_number,
+                                            description: item.description,
+                                            quantity: item.quantity,
+                                            unit_price: item.unit_price,
+                                            unit: item.unit,
+                                            total: item.quantity * item.unit_price,
+                                            discount_type: null,
+                                            discount_value: null,
+                                            discount_amount: 0,
+                                        }
+                                        setData("items", [...(data.items as any[]), newItem])
+                                    }}
+                                />
+                            )}
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
@@ -544,6 +605,7 @@ export default function InvoicesEdit() {
                                                         placeholder="Beschreibung der Leistung..."
                                                         className="min-h-[60px]"
                                                         required
+                                                        disabled={!canEdit}
                                                     />
                                                     {formErrors[`items.${index}.description`] && (
                                                         <p className="text-red-600 text-sm mt-1">{formErrors[`items.${index}.description`]}</p>
@@ -557,13 +619,14 @@ export default function InvoicesEdit() {
                                                         value={item.quantity}
                                                         onChange={(e) => updateItem(item.id, "quantity", Number.parseFloat(e.target.value) || 0)}
                                                         required
+                                                        disabled={!canEdit}
                                                     />
                                                     {formErrors[`items.${index}.quantity`] && (
                                                         <p className="text-red-600 text-sm mt-1">{formErrors[`items.${index}.quantity`]}</p>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Select value={item.unit} onValueChange={(value) => updateItem(item.id, "unit", value)}>
+                                                    <Select value={item.unit} onValueChange={(value) => updateItem(item.id, "unit", value)} disabled={!canEdit}>
                                                         <SelectTrigger>
                                                             <SelectValue />
                                                         </SelectTrigger>
@@ -576,10 +639,23 @@ export default function InvoicesEdit() {
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
-                                                <TableCell className="align-top">
-                                                    <div className="text-sm">
-                                                        {data.vat_regime === 'standard' ? `${(settings.tax_rate * 100).toFixed(0)}%` : '0%'}
-                                                    </div>
+                                                <TableCell>
+                                                    <Select 
+                                                        value={item.tax_rate.toString()} 
+                                                        onValueChange={(value) => updateItem(item.id, "tax_rate", Number.parseFloat(value))}
+                                                        disabled={!canEdit || data.vat_regime !== 'standard'}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {GERMAN_TAX_RATES.map((rate) => (
+                                                                <SelectItem key={rate.value} value={rate.value.toString()}>
+                                                                    {rate.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Input
@@ -589,6 +665,7 @@ export default function InvoicesEdit() {
                                                         value={item.unit_price}
                                                         onChange={(e) => updateItem(item.id, "unit_price", Number.parseFloat(e.target.value) || 0)}
                                                         required
+                                                        disabled={!canEdit}
                                                     />
                                                     {formErrors[`items.${index}.unit_price`] && (
                                                         <p className="text-red-600 text-sm mt-1">{formErrors[`items.${index}.unit_price`]}</p>
@@ -605,6 +682,7 @@ export default function InvoicesEdit() {
                                                                 updateItem(item.id, "discount_type", value as "percentage" | "fixed")
                                                             }
                                                         }}
+                                                        disabled={!canEdit}
                                                     >
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Kein Rabatt" />
@@ -626,6 +704,7 @@ export default function InvoicesEdit() {
                                                             value={item.discount_value ?? ""}
                                                             onChange={(e) => updateItem(item.id, "discount_value", e.target.value ? Number.parseFloat(e.target.value) : null)}
                                                             placeholder={item.discount_type === 'percentage' ? "10" : "50.00"}
+                                                            disabled={!canEdit}
                                                         />
                                                     )}
                                                 </TableCell>
@@ -645,7 +724,7 @@ export default function InvoicesEdit() {
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => removeItem(item.id)}
-                                                        disabled={data.items.length === 1}
+                                                        disabled={!canEdit || data.items.length === 1}
                                                         className="text-red-600 hover:text-red-700"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -698,6 +777,7 @@ export default function InvoicesEdit() {
                                 onChange={(e) => setData("notes", e.target.value)}
                                     placeholder="Zusätzliche Informationen, Zahlungsbedingungen, etc..."
                                     rows={4}
+                                    disabled={!canEdit}
                                 />
                             {formErrors.notes && <p className="text-red-600 text-sm">{formErrors.notes}</p>}
                             </div>
@@ -756,17 +836,6 @@ export default function InvoicesEdit() {
                         </Card>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex justify-end space-x-2">
-                        <Link href="/invoices">
-                            <Button type="button" variant="outline">
-                                Abbrechen
-                            </Button>
-                        </Link>
-                        <Button type="submit" disabled={processing}>
-                            {processing ? "Wird gespeichert..." : "Änderungen speichern"}
-                        </Button>
-                    </div>
                 </form>
             </div>
         </AppLayout>

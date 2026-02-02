@@ -19,6 +19,9 @@ Route::post('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid
 Route::post('invoices/{invoice}/send-reminder', [InvoiceController::class, 'sendReminder'])->name('invoices.send-reminder');
 Route::get('invoices/{invoice}/reminder-history', [InvoiceController::class, 'reminderHistory'])->name('invoices.reminder-history');
 
+// Audit Log Route
+Route::get('invoices/{invoice}/audit-log', [InvoiceController::class, 'auditLog'])->name('invoices.audit-log');
+
 // E-Rechnung Routes
 Route::get('invoices/{invoice}/xrechnung', [InvoiceController::class, 'downloadXRechnung'])->name('invoices.xrechnung');
 Route::get('invoices/{invoice}/zugferd', [InvoiceController::class, 'downloadZugferd'])->name('invoices.zugferd');
