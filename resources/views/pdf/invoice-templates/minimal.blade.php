@@ -186,7 +186,10 @@
             foreach ($invoice->items as $it) {
                 $totalDiscount += (float)($it->discount_amount ?? 0);
             }
-            $vatBreakdown = $invoice->getVatBreakdown();
+            // Safely call getVatBreakdown() - check if method exists (model instance vs stdClass)
+            $vatBreakdown = (is_object($invoice) && method_exists($invoice, 'getVatBreakdown')) 
+                ? $invoice->getVatBreakdown() 
+                : [];
         @endphp
         <table style="width: 260px; margin-left: auto; border-collapse: collapse;">
             @if($totalDiscount > 0.0001)
