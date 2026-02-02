@@ -372,21 +372,40 @@ export default function OffersEdit() {
                             <ProductSelectorDialog 
                                 products={products || []} 
                                 onSelect={(item) => {
-                                    const newItem = {
-                                        id: Date.now(),
-                                        product_id: item.product_id,
-                                        product_sku: item.product_sku,
-                                        product_number: item.product_number,
-                                        description: item.description,
-                                        quantity: item.quantity,
-                                        unit_price: item.unit_price,
-                                        unit: item.unit,
-                                        total: item.quantity * item.unit_price,
-                                        discount_type: null,
-                                        discount_value: null,
-                                        discount_amount: 0,
+                                    // Check if product already exists in items
+                                    const existingItemIndex = data.items.findIndex(
+                                        (i) => i.product_id && i.product_id === item.product_id
+                                    )
+                                    
+                                    if (existingItemIndex !== -1) {
+                                        // Product exists, increase quantity
+                                        const updatedItems = [...data.items]
+                                        const existingItem = updatedItems[existingItemIndex]
+                                        updatedItems[existingItemIndex] = {
+                                            ...existingItem,
+                                            quantity: existingItem.quantity + item.quantity,
+                                            total: (existingItem.quantity + item.quantity) * existingItem.unit_price,
+                                        }
+                                        setData("items", updatedItems)
+                                    } else {
+                                        // New product, add to list
+                                        const newItem: OfferItem = {
+                                            id: Date.now(),
+                                            product_id: item.product_id,
+                                            product_sku: item.product_sku,
+                                            product_number: item.product_number,
+                                            description: item.description,
+                                            quantity: item.quantity,
+                                            unit_price: item.unit_price,
+                                            unit: item.unit,
+                                            tax_rate: item.tax_rate || settings.tax_rate || 0.19,
+                                            total: item.quantity * item.unit_price,
+                                            discount_type: null,
+                                            discount_value: null,
+                                            discount_amount: 0,
+                                        }
+                                        setData("items", [...data.items, newItem])
                                     }
-                                    setData("items", [...data.items, newItem])
                                 }}
                             />
                         </CardHeader>
@@ -458,7 +477,7 @@ export default function OffersEdit() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Select 
-                                                        value={item.tax_rate.toString()} 
+                                                        value={(item.tax_rate ?? settings.tax_rate ?? 0.19).toString()} 
                                                         onValueChange={(value) => updateItem(item.id, "tax_rate", Number.parseFloat(value))}
                                                     >
                                                         <SelectTrigger>
