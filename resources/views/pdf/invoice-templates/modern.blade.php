@@ -173,7 +173,7 @@
     </table>
 
     {{-- VAT Regime Note --}}
-    @php $vatNote = getVatRegimeNote($invoice->vat_regime); @endphp
+    @php $vatNote = getVatRegimeNote($invoice->vat_regime ?? 'standard'); @endphp
     @if($vatNote)
         <div style="margin-top: 10px; font-size: {{ $bodyFontSize }}px; font-style: italic;">
             {{ $vatNote }}
