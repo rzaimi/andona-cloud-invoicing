@@ -31,7 +31,9 @@ Route::middleware('can:manage_companies')->group(function () {
     Route::get('companies/create', [CompanyController::class, 'create'])->name('companies.create');
     
     // Wizard Routes (must be before resource routes to avoid conflicts)
+    Route::get('companies/wizard', [\App\Http\Controllers\CompanyWizardController::class, 'show'])->name('companies.wizard.show');
     Route::get('companies/wizard/start', [\App\Http\Controllers\CompanyWizardController::class, 'start'])->name('companies.wizard.start');
+    Route::get('companies/wizard/update', [\App\Http\Controllers\CompanyWizardController::class, 'show']);
     Route::post('companies/wizard/update', [\App\Http\Controllers\CompanyWizardController::class, 'updateStep'])->name('companies.wizard.update');
     Route::post('companies/wizard/complete', [\App\Http\Controllers\CompanyWizardController::class, 'complete'])->name('companies.wizard.complete');
     Route::post('companies/wizard/cancel', [\App\Http\Controllers\CompanyWizardController::class, 'cancel'])->name('companies.wizard.cancel');

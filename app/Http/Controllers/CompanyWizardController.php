@@ -25,11 +25,35 @@ class CompanyWizardController extends Controller
      */
     public function start()
     {
-        // Clear any existing wizard data
-        session()->forget('company_wizard');
+        // Reset wizard to defaults
+        $wizardData = $this->getDefaultWizardData();
+        session()->put('company_wizard', $wizardData);
 
-        // Initialize wizard with defaults
-        $wizardData = [
+        return Inertia::render('companies/wizard', [
+            'wizardData' => $wizardData,
+        ]);
+    }
+
+    /**
+     * Show current wizard state (GET-safe route for refresh/back)
+     */
+    public function show()
+    {
+        $wizardData = session('company_wizard');
+
+        if (empty($wizardData)) {
+            $wizardData = $this->getDefaultWizardData();
+            session()->put('company_wizard', $wizardData);
+        }
+
+        return Inertia::render('companies/wizard', [
+            'wizardData' => $wizardData,
+        ]);
+    }
+
+    protected function getDefaultWizardData(): array
+    {
+        return [
             'step' => 1,
             'company_info' => [
                 'name' => '',
@@ -91,12 +115,6 @@ class CompanyWizardController extends Controller
                 'send_welcome_email' => true,
             ],
         ];
-
-        session()->put('company_wizard', $wizardData);
-
-        return Inertia::render('companies/wizard', [
-            'wizardData' => $wizardData,
-        ]);
     }
 
     /**
@@ -125,12 +143,10 @@ class CompanyWizardController extends Controller
                 // On validation error, stay on current step
                 $wizardData['step'] = $currentStep;
                 session()->put('company_wizard', $wizardData);
-                
-                // Return Inertia response with errors
-                return Inertia::render('companies/wizard', [
-                    'wizardData' => $wizardData,
-                    'errors' => $validator->errors()->toArray(),
-                ]);
+
+                // Redirect to GET route so browser refresh never hits POST endpoint
+                return redirect()->route('companies.wizard.show')
+                    ->withErrors($validator);
             }
 
             // If validation passes, update wizard data
@@ -154,9 +170,8 @@ class CompanyWizardController extends Controller
 
         session()->put('company_wizard', $wizardData);
 
-        return Inertia::render('companies/wizard', [
-            'wizardData' => $wizardData,
-        ]);
+        // Redirect to GET route so browser refresh never hits POST endpoint
+        return redirect()->route('companies.wizard.show');
     }
 
     /**
