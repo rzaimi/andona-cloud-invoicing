@@ -26,6 +26,9 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                                 onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, invoice_prefix: e.target.value })}
                                 placeholder="RE-"
                             />
+                            {errors?.['invoice_settings.invoice_prefix'] && (
+                                <p className="text-sm text-red-500 mt-1">{errors['invoice_settings.invoice_prefix']}</p>
+                            )}
                         </div>
                         <div>
                             <Label htmlFor="offer_prefix">Angebotspräfix *</Label>
@@ -35,6 +38,9 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                                 onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, offer_prefix: e.target.value })}
                                 placeholder="AN-"
                             />
+                            {errors?.['invoice_settings.offer_prefix'] && (
+                                <p className="text-sm text-red-500 mt-1">{errors['invoice_settings.offer_prefix']}</p>
+                            )}
                         </div>
                         <div>
                             <Label htmlFor="customer_prefix">Kundenpräfix</Label>
@@ -67,6 +73,9 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                                     <SelectItem value="CHF">CHF</SelectItem>
                                 </SelectContent>
                             </Select>
+                            {errors?.['invoice_settings.currency'] && (
+                                <p className="text-sm text-red-500 mt-1">{errors['invoice_settings.currency']}</p>
+                            )}
                         </div>
                         <div>
                             <Label htmlFor="tax_rate">Steuersatz (19%) *</Label>
@@ -76,9 +85,12 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                                 step="0.01"
                                 min="0"
                                 max="1"
-                                value={data.invoice_settings?.tax_rate || 0.19}
-                                onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, tax_rate: parseFloat(e.target.value) })}
+                                value={data.invoice_settings?.tax_rate ?? 0.19}
+                                onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, tax_rate: parseFloat(e.target.value) || 0 })}
                             />
+                            {errors?.['invoice_settings.tax_rate'] && (
+                                <p className="text-sm text-red-500 mt-1">{errors['invoice_settings.tax_rate']}</p>
+                            )}
                         </div>
                         <div>
                             <Label htmlFor="reduced_tax_rate">Ermäßigter Steuersatz (7%)</Label>
@@ -88,9 +100,12 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                                 step="0.01"
                                 min="0"
                                 max="1"
-                                value={data.invoice_settings?.reduced_tax_rate || 0.07}
-                                onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, reduced_tax_rate: parseFloat(e.target.value) })}
+                                value={data.invoice_settings?.reduced_tax_rate ?? 0.07}
+                                onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, reduced_tax_rate: parseFloat(e.target.value) || 0 })}
                             />
+                            {errors?.['invoice_settings.reduced_tax_rate'] && (
+                                <p className="text-sm text-red-500 mt-1">{errors['invoice_settings.reduced_tax_rate']}</p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -104,9 +119,12 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                                 id="payment_terms"
                                 type="number"
                                 min="1"
-                                value={data.invoice_settings?.payment_terms || 14}
-                                onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, payment_terms: parseInt(e.target.value) })}
+                                value={data.invoice_settings?.payment_terms ?? 14}
+                                onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, payment_terms: parseInt(e.target.value) || 14 })}
                             />
+                            {errors?.['invoice_settings.payment_terms'] && (
+                                <p className="text-sm text-red-500 mt-1">{errors['invoice_settings.payment_terms']}</p>
+                            )}
                         </div>
                         <div>
                             <Label htmlFor="offer_validity_days">Angebotsgültigkeit (Tage) *</Label>
@@ -114,9 +132,12 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                                 id="offer_validity_days"
                                 type="number"
                                 min="1"
-                                value={data.invoice_settings?.offer_validity_days || 30}
-                                onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, offer_validity_days: parseInt(e.target.value) })}
+                                value={data.invoice_settings?.offer_validity_days ?? 30}
+                                onChange={(e) => setData('invoice_settings', { ...data.invoice_settings, offer_validity_days: parseInt(e.target.value) || 30 })}
                             />
+                            {errors?.['invoice_settings.offer_validity_days'] && (
+                                <p className="text-sm text-red-500 mt-1">{errors['invoice_settings.offer_validity_days']}</p>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -21,7 +21,12 @@ export default function Step6FirstUser({ data, setData, errors }: any) {
                 </div>
                 <Switch
                     checked={data.first_user?.create_user || false}
-                    onCheckedChange={(checked) => setData('first_user', { ...data.first_user, create_user: checked })}
+                    onCheckedChange={(checked) => setData('first_user', {
+                        ...data.first_user,
+                        create_user: checked,
+                        // Keep payload clean to avoid backend validation noise
+                        ...(checked ? {} : { name: '', email: '', password: '', send_welcome_email: true }),
+                    })}
                 />
             </div>
 

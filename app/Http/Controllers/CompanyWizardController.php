@@ -8,12 +8,14 @@ use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class CompanyWizardController extends Controller
 {
-    protected $settingsService;
+    protected SettingsService $settingsService;
 
     public function __construct(SettingsService $settingsService)
     {
@@ -21,401 +23,330 @@ class CompanyWizardController extends Controller
     }
 
     /**
-     * Start the wizard (Step 1)
+     * Redirect old "start" URL to the stable wizard URL.
+     * All wizard navigation happens at /companies/wizard; this avoids a URL
+     * change that would cause Inertia to re-initialize the React component.
      */
     public function start()
     {
-        // Reset wizard to defaults
-        $wizardData = $this->getDefaultWizardData();
-        session()->put('company_wizard', $wizardData);
-
-        return Inertia::render('companies/wizard', [
-            'wizardData' => $wizardData,
-        ]);
-    }
-
-    /**
-     * Show current wizard state (GET-safe route for refresh/back)
-     */
-    public function show()
-    {
-        $wizardData = session('company_wizard');
-
-        if (empty($wizardData)) {
-            $wizardData = $this->getDefaultWizardData();
-            session()->put('company_wizard', $wizardData);
-        }
-
-        return Inertia::render('companies/wizard', [
-            'wizardData' => $wizardData,
-        ]);
-    }
-
-    protected function getDefaultWizardData(): array
-    {
-        return [
-            'step' => 1,
-            'company_info' => [
-                'name' => '',
-                'email' => '',
-                'phone' => '',
-                'address' => '',
-                'postal_code' => '',
-                'city' => '',
-                'country' => 'Deutschland',
-                'tax_number' => '',
-                'vat_number' => '',
-                'website' => '',
-            ],
-            'email_settings' => [
-                'smtp_host' => '',
-                'smtp_port' => 587,
-                'smtp_username' => '',
-                'smtp_password' => '',
-                'smtp_encryption' => 'tls',
-                'smtp_from_address' => '',
-                'smtp_from_name' => '',
-            ],
-            'invoice_settings' => [
-                'invoice_prefix' => 'RE-',
-                'offer_prefix' => 'AN-',
-                'customer_prefix' => 'KD-',
-                'currency' => 'EUR',
-                'tax_rate' => 0.19,
-                'reduced_tax_rate' => 0.07,
-                'payment_terms' => 14,
-                'offer_validity_days' => 30,
-                'date_format' => 'd.m.Y',
-                'decimal_separator' => ',',
-                'thousands_separator' => '.',
-            ],
-            'mahnung_settings' => [
-                'reminder_friendly_days' => 7,
-                'reminder_mahnung1_days' => 14,
-                'reminder_mahnung2_days' => 21,
-                'reminder_mahnung3_days' => 30,
-                'reminder_inkasso_days' => 45,
-                'reminder_mahnung1_fee' => 5.00,
-                'reminder_mahnung2_fee' => 10.00,
-                'reminder_mahnung3_fee' => 15.00,
-                'reminder_interest_rate' => 9.00,
-                'reminder_auto_send' => true,
-            ],
-            'banking_info' => [
-                'bank_name' => '',
-                'iban' => '',
-                'bic' => '',
-                'account_holder' => '',
-            ],
-            'first_user' => [
-                'create_user' => false,
-                'name' => '',
-                'email' => '',
-                'password' => '',
-                'send_welcome_email' => true,
-            ],
-        ];
-    }
-
-    /**
-     * Update wizard data and navigate to next/previous step
-     */
-    public function updateStep(Request $request)
-    {
-        $wizardData = session('company_wizard', []);
-        $currentStep = $request->input('step', 1);
-        $action = $request->input('action', 'next'); // next, back, or save
-
-        // Update wizard data with current form data first
-        $stepKey = $this->getStepKey($currentStep);
-        if ($stepKey) {
-            $wizardData[$stepKey] = $request->input($stepKey, $wizardData[$stepKey] ?? []);
-        }
-
-        // Validate current step data (only if going forward)
-        if ($action === 'next') {
-            $validator = \Illuminate\Support\Facades\Validator::make(
-                $request->all(),
-                $this->getValidationRules($currentStep)
-            );
-
-            if ($validator->fails()) {
-                // On validation error, stay on current step
-                $wizardData['step'] = $currentStep;
-                session()->put('company_wizard', $wizardData);
-
-                // Redirect to GET route so browser refresh never hits POST endpoint
-                return redirect()->route('companies.wizard.show')
-                    ->withErrors($validator);
-            }
-
-            // If validation passes, update wizard data
-            $validated = $validator->validated();
-            if ($stepKey && isset($validated[$stepKey])) {
-                $wizardData[$stepKey] = array_merge(
-                    $wizardData[$stepKey] ?? [],
-                    $validated[$stepKey]
-                );
-            }
-        }
-
-        // Determine next step
-        if ($action === 'next' && $currentStep < 7) {
-            $wizardData['step'] = $currentStep + 1;
-        } elseif ($action === 'back' && $currentStep > 1) {
-            $wizardData['step'] = $currentStep - 1;
-        } else {
-            $wizardData['step'] = $currentStep;
-        }
-
-        session()->put('company_wizard', $wizardData);
-
-        // Redirect to GET route so browser refresh never hits POST endpoint
         return redirect()->route('companies.wizard.show');
     }
 
     /**
-     * Complete the wizard and create company
+     * Render the wizard page. All form state lives in React; the backend only
+     * provides the rendered shell plus any validation errors from a previous
+     * complete() attempt (stored in the session flash by Laravel).
+     */
+    public function show()
+    {
+        return Inertia::render('companies/wizard');
+    }
+
+    /**
+     * Validate and create the company from the full wizard payload.
+     *
+     * The wizard is purely client-side – every step uses React state. The only
+     * time the backend is called is here, on the final "Firma erstellen" click.
      */
     public function complete(Request $request)
     {
-        $wizardData = session('company_wizard', []);
+        $configureSmtp = filter_var(
+            $request->input('email_settings.configure_smtp', false),
+            FILTER_VALIDATE_BOOLEAN
+        );
+        $createUser = filter_var(
+            $request->input('first_user.create_user', false),
+            FILTER_VALIDATE_BOOLEAN
+        );
 
-        if (empty($wizardData)) {
-            return Inertia::location(route('companies.wizard.start'));
+        $smtpRule    = $configureSmtp ? 'required' : 'nullable';
+        $userRule    = $createUser    ? 'required' : 'nullable';
+
+        $validator = Validator::make($request->all(), [
+            // Company basics
+            'company_info.name'         => 'required|string|max:255',
+            'company_info.email'        => 'required|email|max:255|unique:companies,email',
+            'company_info.phone'        => 'nullable|string|max:50',
+            'company_info.address'      => 'nullable|string|max:255',
+            'company_info.postal_code'  => 'nullable|string|max:20',
+            'company_info.city'         => 'nullable|string|max:100',
+            'company_info.country'      => 'nullable|string|max:100',
+            'company_info.tax_number'   => 'nullable|string|max:100',
+            'company_info.vat_number'   => 'nullable|string|max:100',
+            'company_info.website'      => 'nullable|url|max:255',
+            'company_info.logo'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+
+            // Email / SMTP – all optional unless configure_smtp is on
+            'email_settings.configure_smtp'     => 'nullable|boolean',
+            'email_settings.smtp_host'          => $smtpRule . '|string|max:255',
+            'email_settings.smtp_port'          => $smtpRule . '|integer|min:1|max:65535',
+            'email_settings.smtp_username'      => $smtpRule . '|string|max:255',
+            'email_settings.smtp_password'      => $smtpRule . '|string|max:255',
+            'email_settings.smtp_encryption'    => $smtpRule . '|in:tls,ssl,none',
+            'email_settings.smtp_from_address'  => $smtpRule . '|email|max:255',
+            'email_settings.smtp_from_name'     => $smtpRule . '|string|max:255',
+
+            // Invoice settings
+            'invoice_settings.invoice_prefix'       => 'nullable|string|max:10',
+            'invoice_settings.offer_prefix'         => 'nullable|string|max:10',
+            'invoice_settings.customer_prefix'      => 'nullable|string|max:10',
+            'invoice_settings.currency'             => 'nullable|in:EUR,USD,GBP,CHF',
+            'invoice_settings.tax_rate'             => 'nullable|numeric|min:0|max:1',
+            'invoice_settings.reduced_tax_rate'     => 'nullable|numeric|min:0|max:1',
+            'invoice_settings.payment_terms'        => 'nullable|integer|min:1|max:365',
+            'invoice_settings.offer_validity_days'  => 'nullable|integer|min:1|max:365',
+            'invoice_settings.date_format'          => 'nullable|in:d.m.Y,Y-m-d,m/d/Y',
+            'invoice_settings.decimal_separator'    => 'nullable|string|max:1',
+            'invoice_settings.thousands_separator'  => 'nullable|string|max:1',
+
+            // Mahnung settings
+            'mahnung_settings.reminder_friendly_days'  => 'nullable|integer|min:1|max:90',
+            'mahnung_settings.reminder_mahnung1_days'  => 'nullable|integer|min:1|max:90',
+            'mahnung_settings.reminder_mahnung2_days'  => 'nullable|integer|min:1|max:90',
+            'mahnung_settings.reminder_mahnung3_days'  => 'nullable|integer|min:1|max:90',
+            'mahnung_settings.reminder_inkasso_days'   => 'nullable|integer|min:1|max:365',
+            'mahnung_settings.reminder_mahnung1_fee'   => 'nullable|numeric|min:0',
+            'mahnung_settings.reminder_mahnung2_fee'   => 'nullable|numeric|min:0',
+            'mahnung_settings.reminder_mahnung3_fee'   => 'nullable|numeric|min:0',
+            'mahnung_settings.reminder_interest_rate'  => 'nullable|numeric|min:0|max:30',
+            'mahnung_settings.reminder_auto_send'      => 'nullable|boolean',
+
+            // Banking – all optional
+            'banking_info.bank_name'       => 'nullable|string|max:255',
+            'banking_info.iban'            => 'nullable|string|max:34',
+            'banking_info.bic'             => 'nullable|string|max:11',
+            'banking_info.account_holder'  => 'nullable|string|max:255',
+
+            // First user – required only when create_user is on
+            'first_user.create_user'       => 'nullable|boolean',
+            'first_user.name'              => $userRule . '|string|max:255',
+            'first_user.email'             => $userRule . '|email|max:255|unique:users,email',
+            'first_user.password'          => $userRule . '|string|min:8',
+            'first_user.send_welcome_email' => 'nullable|boolean',
+        ], $this->validationMessages(), $this->validationAttributes());
+
+        if ($validator->fails()) {
+            return redirect()->route('companies.wizard.show')
+                ->withErrors($validator);
         }
 
         try {
             DB::beginTransaction();
 
-            // Create company
+            // ── Logo ──────────────────────────────────────────────────────────
+            $logoPath = null;
+            if ($request->hasFile('company_info.logo')) {
+                $logoPath = $request->file('company_info.logo')->store('company-logos', 'public');
+            }
+
+            // ── Company ──────────────────────────────────────────────────────
+            $ci = $request->input('company_info', []);
             $company = Company::create([
-                'id' => Str::uuid(),
-                'name' => $wizardData['company_info']['name'] ?? '',
-                'email' => $wizardData['company_info']['email'] ?? '',
-                'phone' => $wizardData['company_info']['phone'] ?? null,
-                'address' => $wizardData['company_info']['address'] ?? null,
-                'postal_code' => $wizardData['company_info']['postal_code'] ?? null,
-                'city' => $wizardData['company_info']['city'] ?? null,
-                'country' => $wizardData['company_info']['country'] ?? 'Deutschland',
-                'tax_number' => $wizardData['company_info']['tax_number'] ?? null,
-                'vat_number' => $wizardData['company_info']['vat_number'] ?? null,
-                'website' => $wizardData['company_info']['website'] ?? null,
+                'id'           => Str::uuid(),
+                'name'         => $ci['name'] ?? '',
+                'email'        => $ci['email'] ?? '',
+                'phone'        => $ci['phone'] ?? null,
+                'address'      => $ci['address'] ?? null,
+                'postal_code'  => $ci['postal_code'] ?? null,
+                'city'         => $ci['city'] ?? null,
+                'country'      => $ci['country'] ?? 'Deutschland',
+                'tax_number'   => $ci['tax_number'] ?? null,
+                'vat_number'   => $ci['vat_number'] ?? null,
+                'website'      => $ci['website'] ?? null,
+                'logo'         => $logoPath,
             ]);
 
-            // Set SMTP settings (normalized to company_settings)
-            if (!empty($wizardData['email_settings'])) {
+            // ── SMTP ─────────────────────────────────────────────────────────
+            if ($configureSmtp) {
+                $es = $request->input('email_settings', []);
                 $company->setSmtpSettings([
-                    'smtp_host' => $wizardData['email_settings']['smtp_host'] ?? null,
-                    'smtp_port' => $wizardData['email_settings']['smtp_port'] ?? 587,
-                    'smtp_username' => $wizardData['email_settings']['smtp_username'] ?? null,
-                    'smtp_password' => $wizardData['email_settings']['smtp_password'] ?? null,
-                    'smtp_encryption' => $wizardData['email_settings']['smtp_encryption'] ?? 'tls',
-                    'smtp_from_address' => $wizardData['email_settings']['smtp_from_address'] ?? null,
-                    'smtp_from_name' => $wizardData['email_settings']['smtp_from_name'] ?? null,
+                    'smtp_host'         => $es['smtp_host'] ?? null,
+                    'smtp_port'         => (int) ($es['smtp_port'] ?? 587),
+                    'smtp_username'     => $es['smtp_username'] ?? null,
+                    'smtp_password'     => $es['smtp_password'] ?? null,
+                    'smtp_encryption'   => $es['smtp_encryption'] ?? 'tls',
+                    'smtp_from_address' => $es['smtp_from_address'] ?? null,
+                    'smtp_from_name'    => $es['smtp_from_name'] ?? null,
                 ]);
             }
 
-            // Set bank settings (normalized to company_settings)
-            if (!empty($wizardData['banking_info'])) {
+            // ── Banking ──────────────────────────────────────────────────────
+            $bank = $request->input('banking_info', []);
+            if (!empty($bank['iban']) || !empty($bank['bic'])) {
                 $company->setBankSettings([
-                    'bank_name' => $wizardData['banking_info']['bank_name'] ?? null,
-                    'bank_iban' => $wizardData['banking_info']['iban'] ?? null,
-                    'bank_bic' => $wizardData['banking_info']['bic'] ?? null,
+                    'bank_name' => $bank['bank_name'] ?? null,
+                    'bank_iban' => $bank['iban'] ?? null,
+                    'bank_bic'  => $bank['bic'] ?? null,
                 ]);
             }
 
-            // Save invoice settings
-            if (isset($wizardData['invoice_settings']) && is_array($wizardData['invoice_settings'])) {
-                foreach ($wizardData['invoice_settings'] as $key => $value) {
-                    $type = $this->getSettingType($key, $value);
-                    $this->settingsService->setCompany($key, $value, $company->id, $type);
+            // ── Invoice settings ─────────────────────────────────────────────
+            $invoiceDefaults = [
+                'invoice_prefix'      => 'RE-',
+                'offer_prefix'        => 'AN-',
+                'customer_prefix'     => 'KD-',
+                'currency'            => 'EUR',
+                'tax_rate'            => 0.19,
+                'reduced_tax_rate'    => 0.07,
+                'payment_terms'       => 14,
+                'offer_validity_days' => 30,
+                'date_format'         => 'd.m.Y',
+                'decimal_separator'   => ',',
+                'thousands_separator' => '.',
+            ];
+            $invoiceSettings = array_merge($invoiceDefaults, $request->input('invoice_settings', []));
+            foreach ($invoiceSettings as $key => $value) {
+                if ($value !== null && $value !== '') {
+                    $this->settingsService->setCompany($key, $value, $company->id, $this->settingType($value));
                 }
             }
 
-            // Save Mahnung settings
-            if (isset($wizardData['mahnung_settings']) && is_array($wizardData['mahnung_settings'])) {
-                foreach ($wizardData['mahnung_settings'] as $key => $value) {
-                    $type = $this->getSettingType($key, $value);
-                    $this->settingsService->setCompany($key, $value, $company->id, $type);
-                }
+            // ── Mahnung settings ─────────────────────────────────────────────
+            $mahnungDefaults = [
+                'reminder_friendly_days'   => 7,
+                'reminder_mahnung1_days'   => 14,
+                'reminder_mahnung2_days'   => 21,
+                'reminder_mahnung3_days'   => 30,
+                'reminder_inkasso_days'    => 45,
+                'reminder_mahnung1_fee'    => 5.0,
+                'reminder_mahnung2_fee'    => 10.0,
+                'reminder_mahnung3_fee'    => 15.0,
+                'reminder_interest_rate'   => 9.0,
+                'reminder_auto_send'       => true,
+            ];
+            $mahnungRaw      = $request->input('mahnung_settings', []);
+            $mahnungSettings = array_merge($mahnungDefaults, $mahnungRaw);
+            // Cast booleans and numbers received as strings via FormData
+            $mahnungSettings['reminder_auto_send'] = filter_var(
+                $mahnungSettings['reminder_auto_send'], FILTER_VALIDATE_BOOLEAN
+            );
+            foreach ($mahnungSettings as $key => $value) {
+                $this->settingsService->setCompany($key, $value, $company->id, $this->settingType($value));
             }
 
-            // Create first user if requested
-            if (isset($wizardData['first_user']['create_user']) && 
-                $wizardData['first_user']['create_user'] && 
-                !empty($wizardData['first_user']['email'])) {
+            // ── First user ───────────────────────────────────────────────────
+            if ($createUser && !empty($request->input('first_user.email'))) {
+                $fu   = $request->input('first_user', []);
                 $user = User::create([
-                    'id' => Str::uuid(),
-                    'name' => $wizardData['first_user']['name'],
-                    'email' => $wizardData['first_user']['email'],
-                    'password' => Hash::make($wizardData['first_user']['password']),
-                    'company_id' => $company->id,
-                    'role' => 'admin',
-                    'status' => 'active',
+                    'id'                => Str::uuid(),
+                    'name'              => $fu['name'],
+                    'email'             => $fu['email'],
+                    'password'          => Hash::make($fu['password']),
+                    'company_id'        => $company->id,
+                    'role'              => 'admin',
+                    'status'            => 'active',
                     'email_verified_at' => now(),
                 ]);
-
-                // Assign admin role (Spatie)
                 $user->assignRole('admin');
-
-                // TODO: Send welcome email if requested
             }
 
             DB::commit();
-
-            // Clear wizard data
-            session()->forget('company_wizard');
 
             return Inertia::location(route('companies.index'));
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Company wizard failed: ' . $e->getMessage());
-            
-            // Return to wizard with error
-            $wizardData['step'] = 7;
-            session()->put('company_wizard', $wizardData);
-            
-            return Inertia::render('companies/wizard', [
-                'wizardData' => $wizardData,
-                'errors' => ['general' => $e->getMessage()],
-            ]);
+            \Log::error('Company wizard failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+
+            return redirect()->route('companies.wizard.show')
+                ->withErrors(['general' => 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
         }
     }
 
     /**
-     * Cancel wizard and clear session
+     * Cancel wizard – just redirect back to the company list.
      */
     public function cancel()
     {
-        session()->forget('company_wizard');
-        return redirect()->route('companies.index')
-            ->with('info', 'Wizard abgebrochen.');
+        return redirect()->route('companies.index');
     }
 
-    /**
-     * Get validation rules for a specific step
-     */
-    protected function getValidationRules(int $step)
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    protected function settingType(mixed $value): string
     {
-        $rules = [];
-
-        switch ($step) {
-            case 1: // Company Info
-                $rules = [
-                    'company_info.name' => 'required|string|max:255',
-                    'company_info.email' => 'required|email|max:255|unique:companies,email',
-                    'company_info.phone' => 'nullable|string|max:50',
-                    'company_info.address' => 'nullable|string|max:255',
-                    'company_info.postal_code' => 'nullable|string|max:20',
-                    'company_info.city' => 'nullable|string|max:100',
-                    'company_info.country' => 'nullable|string|max:100',
-                    'company_info.tax_number' => 'nullable|string|max:100',
-                    'company_info.vat_number' => 'nullable|string|max:100',
-                    'company_info.website' => 'nullable|url|max:255',
-                ];
-                break;
-
-            case 2: // Email Settings
-                $rules = [
-                    'email_settings.smtp_host' => 'required|string|max:255',
-                    'email_settings.smtp_port' => 'required|integer|min:1|max:65535',
-                    'email_settings.smtp_username' => 'required|string|max:255',
-                    'email_settings.smtp_password' => 'required|string|max:255',
-                    'email_settings.smtp_encryption' => 'required|in:tls,ssl,none',
-                    'email_settings.smtp_from_address' => 'required|email|max:255',
-                    'email_settings.smtp_from_name' => 'required|string|max:255',
-                ];
-                break;
-
-            case 3: // Invoice Settings
-                $rules = [
-                    'invoice_settings.invoice_prefix' => 'required|string|max:10',
-                    'invoice_settings.offer_prefix' => 'required|string|max:10',
-                    'invoice_settings.customer_prefix' => 'nullable|string|max:10',
-                    'invoice_settings.currency' => 'required|in:EUR,USD,GBP,CHF',
-                    'invoice_settings.tax_rate' => 'required|numeric|min:0|max:1',
-                    'invoice_settings.reduced_tax_rate' => 'nullable|numeric|min:0|max:1',
-                    'invoice_settings.payment_terms' => 'required|integer|min:1|max:365',
-                    'invoice_settings.offer_validity_days' => 'required|integer|min:1|max:365',
-                    'invoice_settings.date_format' => 'required|in:d.m.Y,Y-m-d,m/d/Y',
-                    'invoice_settings.decimal_separator' => 'required|string|max:1',
-                    'invoice_settings.thousands_separator' => 'required|string|max:1',
-                ];
-                break;
-
-            case 4: // Mahnung Settings
-                $rules = [
-                    'mahnung_settings.reminder_friendly_days' => 'required|integer|min:1|max:90',
-                    'mahnung_settings.reminder_mahnung1_days' => 'required|integer|min:1|max:90',
-                    'mahnung_settings.reminder_mahnung2_days' => 'required|integer|min:1|max:90',
-                    'mahnung_settings.reminder_mahnung3_days' => 'required|integer|min:1|max:90',
-                    'mahnung_settings.reminder_inkasso_days' => 'required|integer|min:1|max:365',
-                    'mahnung_settings.reminder_mahnung1_fee' => 'required|numeric|min:0|max:100',
-                    'mahnung_settings.reminder_mahnung2_fee' => 'required|numeric|min:0|max:100',
-                    'mahnung_settings.reminder_mahnung3_fee' => 'required|numeric|min:0|max:100',
-                    'mahnung_settings.reminder_interest_rate' => 'required|numeric|min:0|max:20',
-                    'mahnung_settings.reminder_auto_send' => 'required|boolean',
-                ];
-                break;
-
-            case 5: // Banking Info
-                $rules = [
-                    'banking_info.bank_name' => 'nullable|string|max:255',
-                    'banking_info.iban' => 'required|string|max:34',
-                    'banking_info.bic' => 'required|string|max:11',
-                    'banking_info.account_holder' => 'nullable|string|max:255',
-                ];
-                break;
-
-            case 6: // First User
-                $rules = [
-                    'first_user.create_user' => 'required|boolean',
-                    'first_user.name' => 'required_if:first_user.create_user,true|string|max:255',
-                    'first_user.email' => 'required_if:first_user.create_user,true|email|max:255|unique:users,email',
-                    'first_user.password' => 'required_if:first_user.create_user,true|string|min:8',
-                    'first_user.send_welcome_email' => 'nullable|boolean',
-                ];
-                break;
-        }
-
-        return $rules;
-    }
-
-    /**
-     * Get step key for wizard data
-     */
-    protected function getStepKey(int $step): ?string
-    {
-        return match($step) {
-            1 => 'company_info',
-            2 => 'email_settings',
-            3 => 'invoice_settings',
-            4 => 'mahnung_settings',
-            5 => 'banking_info',
-            6 => 'first_user',
-            default => null,
-        };
-    }
-
-    /**
-     * Determine setting type
-     */
-    protected function getSettingType(string $key, $value): string
-    {
-        if (is_bool($value)) {
-            return 'boolean';
-        }
-        if (is_int($value)) {
-            return 'integer';
-        }
-        if (is_float($value)) {
-            return 'decimal';
-        }
-        if (is_array($value)) {
-            return 'json';
-        }
+        if (is_bool($value))  return 'boolean';
+        if (is_int($value))   return 'integer';
+        if (is_float($value)) return 'decimal';
+        if (is_array($value)) return 'json';
         return 'string';
+    }
+
+    protected function validationMessages(): array
+    {
+        return [
+            'required'  => 'Das Feld :attribute ist erforderlich.',
+            'email'     => 'Bitte geben Sie eine gültige E-Mail-Adresse für :attribute ein.',
+            'url'       => 'Bitte geben Sie eine gültige URL für :attribute ein (z. B. https://example.de).',
+            'max'       => 'Das Feld :attribute darf höchstens :max Zeichen enthalten.',
+            'min'       => 'Das Feld :attribute muss mindestens :min sein.',
+            'integer'   => 'Das Feld :attribute muss eine ganze Zahl sein.',
+            'numeric'   => 'Das Feld :attribute muss eine Zahl sein.',
+            'string'    => 'Das Feld :attribute muss ein Text sein.',
+            'in'        => 'Der ausgewählte Wert für :attribute ist ungültig.',
+            'unique'    => 'Der Wert für :attribute ist bereits vergeben.',
+            'boolean'   => 'Das Feld :attribute muss wahr oder falsch sein.',
+            'company_info.email.unique'  => 'Die Firmen-E-Mail ist bereits vergeben.',
+            'first_user.email.unique'    => 'Die E-Mail des Benutzers ist bereits vergeben.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'company_info.name'         => 'Firmenname',
+            'company_info.email'        => 'E-Mail',
+            'company_info.phone'        => 'Telefon',
+            'company_info.address'      => 'Adresse',
+            'company_info.postal_code'  => 'Postleitzahl',
+            'company_info.city'         => 'Stadt',
+            'company_info.country'      => 'Land',
+            'company_info.tax_number'   => 'Steuernummer',
+            'company_info.vat_number'   => 'USt-IdNr.',
+            'company_info.website'      => 'Webseite',
+            'company_info.logo'         => 'Firmenlogo',
+
+            'email_settings.smtp_host'         => 'SMTP Host',
+            'email_settings.smtp_port'         => 'SMTP Port',
+            'email_settings.smtp_username'     => 'SMTP Benutzername',
+            'email_settings.smtp_password'     => 'SMTP Passwort',
+            'email_settings.smtp_encryption'   => 'SMTP Verschlüsselung',
+            'email_settings.smtp_from_address' => 'Absender E-Mail',
+            'email_settings.smtp_from_name'    => 'Absendername',
+
+            'invoice_settings.invoice_prefix'      => 'Rechnungspräfix',
+            'invoice_settings.offer_prefix'        => 'Angebotspräfix',
+            'invoice_settings.customer_prefix'     => 'Kundenpräfix',
+            'invoice_settings.currency'            => 'Währung',
+            'invoice_settings.tax_rate'            => 'Steuersatz',
+            'invoice_settings.reduced_tax_rate'    => 'Ermäßigter Steuersatz',
+            'invoice_settings.payment_terms'       => 'Zahlungsziel',
+            'invoice_settings.offer_validity_days' => 'Angebotsgültigkeit',
+            'invoice_settings.date_format'         => 'Datumsformat',
+            'invoice_settings.decimal_separator'   => 'Dezimaltrennzeichen',
+            'invoice_settings.thousands_separator' => 'Tausendertrennzeichen',
+
+            'mahnung_settings.reminder_friendly_days'  => 'Tage bis freundliche Erinnerung',
+            'mahnung_settings.reminder_mahnung1_days'  => 'Tage bis 1. Mahnung',
+            'mahnung_settings.reminder_mahnung2_days'  => 'Tage bis 2. Mahnung',
+            'mahnung_settings.reminder_mahnung3_days'  => 'Tage bis 3. Mahnung',
+            'mahnung_settings.reminder_inkasso_days'   => 'Tage bis Inkasso',
+            'mahnung_settings.reminder_mahnung1_fee'   => 'Gebühr 1. Mahnung',
+            'mahnung_settings.reminder_mahnung2_fee'   => 'Gebühr 2. Mahnung',
+            'mahnung_settings.reminder_mahnung3_fee'   => 'Gebühr 3. Mahnung',
+            'mahnung_settings.reminder_interest_rate'  => 'Verzugszinssatz',
+            'mahnung_settings.reminder_auto_send'      => 'Automatischer Versand',
+
+            'banking_info.bank_name'      => 'Bankname',
+            'banking_info.iban'           => 'IBAN',
+            'banking_info.bic'            => 'BIC',
+            'banking_info.account_holder' => 'Kontoinhaber',
+
+            'first_user.create_user'        => 'Benutzer erstellen',
+            'first_user.name'               => 'Name des ersten Benutzers',
+            'first_user.email'              => 'E-Mail des ersten Benutzers',
+            'first_user.password'           => 'Passwort des ersten Benutzers',
+            'first_user.send_welcome_email' => 'Willkommens-E-Mail senden',
+        ];
     }
 }

@@ -2,7 +2,33 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, Building2, Mail, FileText, Bell, Landmark, User } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function Step7Review({ data }: any) {
+function fmt(value: any, decimals = 2): string {
+    const n = parseFloat(value)
+    return isNaN(n) ? "-" : n.toFixed(decimals)
+}
+
+function fmtInt(value: any): string {
+    const n = parseInt(value)
+    return isNaN(n) ? "-" : String(n)
+}
+
+export default function Step7Review({ data, logoPreview }: any) {
+    const ci = data.company_info ?? {}
+    const es = data.email_settings ?? {}
+    const inv = data.invoice_settings ?? {}
+    const mah = data.mahnung_settings ?? {}
+    const bank = data.banking_info ?? {}
+    const fu = data.first_user ?? {}
+
+    // Use the passed local preview (blob URL) or fall back to a stored path in ci.logo
+    const storedLogoPath = ci.logo && typeof ci.logo === "string" ? ci.logo : null
+    const storedLogoUrl = storedLogoPath
+        ? (storedLogoPath.startsWith("http") ? storedLogoPath : `/storage/${storedLogoPath}`)
+        : null
+    const logoUrl = logoPreview || storedLogoUrl
+
+    const configureSmtp = es.configure_smtp === true || es.configure_smtp === "true"
+
     return (
         <div className="space-y-6">
             <Alert>
@@ -20,38 +46,52 @@ export default function Step7Review({ data }: any) {
                         Firmeninformationen
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                        <span className="font-medium">Name:</span>
-                        <p>{data.company_info?.name || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">E-Mail:</span>
-                        <p>{data.company_info?.email || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Telefon:</span>
-                        <p>{data.company_info?.phone || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Website:</span>
-                        <p>{data.company_info?.website || '-'}</p>
-                    </div>
-                    <div className="col-span-2">
-                        <span className="font-medium">Adresse:</span>
-                        <p>
-                            {[data.company_info?.address, data.company_info?.postal_code, data.company_info?.city, data.company_info?.country]
-                                .filter(Boolean)
-                                .join(', ') || '-'}
-                        </p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Steuernummer:</span>
-                        <p>{data.company_info?.tax_number || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">USt-IdNr.:</span>
-                        <p>{data.company_info?.vat_number || '-'}</p>
+                <CardContent className="space-y-4">
+                    {logoUrl && (
+                        <div>
+                            <span className="text-sm font-medium">Logo:</span>
+                            <div className="mt-2">
+                                <img
+                                    src={logoUrl}
+                                    alt="Firmenlogo"
+                                    className="h-16 w-auto object-contain rounded border bg-white"
+                                />
+                            </div>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <span className="font-medium">Name:</span>
+                            <p>{ci.name || "-"}</p>
+                        </div>
+                        <div>
+                            <span className="font-medium">E-Mail:</span>
+                            <p>{ci.email || "-"}</p>
+                        </div>
+                        <div>
+                            <span className="font-medium">Telefon:</span>
+                            <p>{ci.phone || "-"}</p>
+                        </div>
+                        <div>
+                            <span className="font-medium">Website:</span>
+                            <p>{ci.website || "-"}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <span className="font-medium">Adresse:</span>
+                            <p>
+                                {[ci.address, ci.postal_code, ci.city, ci.country]
+                                    .filter(Boolean)
+                                    .join(", ") || "-"}
+                            </p>
+                        </div>
+                        <div>
+                            <span className="font-medium">Steuernummer:</span>
+                            <p>{ci.tax_number || "-"}</p>
+                        </div>
+                        <div>
+                            <span className="font-medium">USt-IdNr.:</span>
+                            <p>{ci.vat_number || "-"}</p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -65,30 +105,38 @@ export default function Step7Review({ data }: any) {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                        <span className="font-medium">SMTP Host:</span>
-                        <p>{data.email_settings?.smtp_host || '-'}</p>
+                    <div className="col-span-2">
+                        <span className="font-medium">Status:</span>
+                        <p>{configureSmtp ? "Aktiviert" : "Nicht konfiguriert"}</p>
                     </div>
-                    <div>
-                        <span className="font-medium">Port:</span>
-                        <p>{data.email_settings?.smtp_port || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Benutzername:</span>
-                        <p>{data.email_settings?.smtp_username || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Verschlüsselung:</span>
-                        <p className="uppercase">{data.email_settings?.smtp_encryption || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Absender E-Mail:</span>
-                        <p>{data.email_settings?.smtp_from_address || '-'}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Absender Name:</span>
-                        <p>{data.email_settings?.smtp_from_name || '-'}</p>
-                    </div>
+                    {configureSmtp && (
+                        <>
+                            <div>
+                                <span className="font-medium">SMTP Host:</span>
+                                <p>{es.smtp_host || "-"}</p>
+                            </div>
+                            <div>
+                                <span className="font-medium">Port:</span>
+                                <p>{es.smtp_port || "-"}</p>
+                            </div>
+                            <div>
+                                <span className="font-medium">Benutzername:</span>
+                                <p>{es.smtp_username || "-"}</p>
+                            </div>
+                            <div>
+                                <span className="font-medium">Verschlüsselung:</span>
+                                <p className="uppercase">{es.smtp_encryption || "-"}</p>
+                            </div>
+                            <div>
+                                <span className="font-medium">Absender E-Mail:</span>
+                                <p>{es.smtp_from_address || "-"}</p>
+                            </div>
+                            <div>
+                                <span className="font-medium">Absender Name:</span>
+                                <p>{es.smtp_from_name || "-"}</p>
+                            </div>
+                        </>
+                    )}
                 </CardContent>
             </Card>
 
@@ -103,27 +151,27 @@ export default function Step7Review({ data }: any) {
                 <CardContent className="grid grid-cols-3 gap-3 text-sm">
                     <div>
                         <span className="font-medium">Rechnungspräfix:</span>
-                        <p>{data.invoice_settings?.invoice_prefix || '-'}</p>
+                        <p>{inv.invoice_prefix || "-"}</p>
                     </div>
                     <div>
                         <span className="font-medium">Angebotspräfix:</span>
-                        <p>{data.invoice_settings?.offer_prefix || '-'}</p>
+                        <p>{inv.offer_prefix || "-"}</p>
                     </div>
                     <div>
                         <span className="font-medium">Währung:</span>
-                        <p>{data.invoice_settings?.currency || '-'}</p>
+                        <p>{inv.currency || "-"}</p>
                     </div>
                     <div>
                         <span className="font-medium">Steuersatz:</span>
-                        <p>{((data.invoice_settings?.tax_rate || 0) * 100).toFixed(0)}%</p>
+                        <p>{inv.tax_rate != null ? `${(parseFloat(inv.tax_rate) * 100).toFixed(0)} %` : "-"}</p>
                     </div>
                     <div>
                         <span className="font-medium">Zahlungsziel:</span>
-                        <p>{data.invoice_settings?.payment_terms || '-'} Tage</p>
+                        <p>{fmtInt(inv.payment_terms)} Tage</p>
                     </div>
                     <div>
                         <span className="font-medium">Angebotsgültigkeit:</span>
-                        <p>{data.invoice_settings?.offer_validity_days || '-'} Tage</p>
+                        <p>{fmtInt(inv.offer_validity_days)} Tage</p>
                     </div>
                 </CardContent>
             </Card>
@@ -140,32 +188,36 @@ export default function Step7Review({ data }: any) {
                     <div className="grid grid-cols-3 gap-3">
                         <div>
                             <span className="font-medium">Freundlich:</span>
-                            <p>{data.mahnung_settings?.reminder_friendly_days || '-'} Tage</p>
+                            <p>{fmtInt(mah.reminder_friendly_days)} Tage</p>
                         </div>
                         <div>
                             <span className="font-medium">1. Mahnung:</span>
-                            <p>{data.mahnung_settings?.reminder_mahnung1_days || '-'} Tage (€{data.mahnung_settings?.reminder_mahnung1_fee?.toFixed(2) || '-'})</p>
+                            <p>{fmtInt(mah.reminder_mahnung1_days)} Tage (€ {fmt(mah.reminder_mahnung1_fee)})</p>
                         </div>
                         <div>
                             <span className="font-medium">2. Mahnung:</span>
-                            <p>{data.mahnung_settings?.reminder_mahnung2_days || '-'} Tage (€{data.mahnung_settings?.reminder_mahnung2_fee?.toFixed(2) || '-'})</p>
+                            <p>{fmtInt(mah.reminder_mahnung2_days)} Tage (€ {fmt(mah.reminder_mahnung2_fee)})</p>
                         </div>
                         <div>
                             <span className="font-medium">3. Mahnung:</span>
-                            <p>{data.mahnung_settings?.reminder_mahnung3_days || '-'} Tage (€{data.mahnung_settings?.reminder_mahnung3_fee?.toFixed(2) || '-'})</p>
+                            <p>{fmtInt(mah.reminder_mahnung3_days)} Tage (€ {fmt(mah.reminder_mahnung3_fee)})</p>
                         </div>
                         <div>
                             <span className="font-medium">Inkasso:</span>
-                            <p>{data.mahnung_settings?.reminder_inkasso_days || '-'} Tage</p>
+                            <p>{fmtInt(mah.reminder_inkasso_days)} Tage</p>
                         </div>
                         <div>
                             <span className="font-medium">Verzugszins:</span>
-                            <p>{data.mahnung_settings?.reminder_interest_rate?.toFixed(2) || '-'}% p.a.</p>
+                            <p>{fmt(mah.reminder_interest_rate)} % p.a.</p>
                         </div>
                     </div>
                     <div>
                         <span className="font-medium">Automatischer Versand:</span>
-                        <p>{data.mahnung_settings?.reminder_auto_send ? 'Ja' : 'Nein'}</p>
+                        <p>
+                            {mah.reminder_auto_send === false || mah.reminder_auto_send === "false" || mah.reminder_auto_send === "0"
+                                ? "Nein"
+                                : "Ja"}
+                        </p>
                     </div>
                 </CardContent>
             </Card>
@@ -181,25 +233,25 @@ export default function Step7Review({ data }: any) {
                 <CardContent className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                         <span className="font-medium">Bank:</span>
-                        <p>{data.banking_info?.bank_name || '-'}</p>
+                        <p>{bank.bank_name || "-"}</p>
                     </div>
                     <div>
                         <span className="font-medium">Kontoinhaber:</span>
-                        <p>{data.banking_info?.account_holder || '-'}</p>
+                        <p>{bank.account_holder || "-"}</p>
                     </div>
                     <div>
                         <span className="font-medium">IBAN:</span>
-                        <p className="font-mono">{data.banking_info?.iban || '-'}</p>
+                        <p className="font-mono">{bank.iban || "-"}</p>
                     </div>
                     <div>
                         <span className="font-medium">BIC:</span>
-                        <p className="font-mono">{data.banking_info?.bic || '-'}</p>
+                        <p className="font-mono">{bank.bic || "-"}</p>
                     </div>
                 </CardContent>
             </Card>
 
             {/* First User */}
-            {data.first_user?.create_user && (
+            {fu.create_user && fu.create_user !== "false" && fu.create_user !== "0" && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
@@ -210,15 +262,15 @@ export default function Step7Review({ data }: any) {
                     <CardContent className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                             <span className="font-medium">Name:</span>
-                            <p>{data.first_user?.name || '-'}</p>
+                            <p>{fu.name || "-"}</p>
                         </div>
                         <div>
                             <span className="font-medium">E-Mail:</span>
-                            <p>{data.first_user?.email || '-'}</p>
+                            <p>{fu.email || "-"}</p>
                         </div>
                         <div className="col-span-2">
                             <span className="font-medium">Willkommens-E-Mail:</span>
-                            <p>{data.first_user?.send_welcome_email ? 'Ja' : 'Nein'}</p>
+                            <p>{fu.send_welcome_email && fu.send_welcome_email !== "false" ? "Ja" : "Nein"}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -226,5 +278,3 @@ export default function Step7Review({ data }: any) {
         </div>
     )
 }
-
-

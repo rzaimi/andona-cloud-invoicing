@@ -22,6 +22,9 @@ export default function Step5BankingInfo({ data, setData, errors }: any) {
                         onChange={(e) => setData('banking_info', { ...data.banking_info, bank_name: e.target.value })}
                         placeholder="z.B. Sparkasse Berlin"
                     />
+                    {errors?.['banking_info.bank_name'] && (
+                        <p className="text-sm text-red-500 mt-1">{errors['banking_info.bank_name']}</p>
+                    )}
                 </div>
 
                 <div>
@@ -60,6 +63,9 @@ export default function Step5BankingInfo({ data, setData, errors }: any) {
                         onChange={(e) => setData('banking_info', { ...data.banking_info, account_holder: e.target.value })}
                         placeholder="Musterfirma GmbH"
                     />
+                    {errors?.['banking_info.account_holder'] && (
+                        <p className="text-sm text-red-500 mt-1">{errors['banking_info.account_holder']}</p>
+                    )}
                 </div>
             </div>
 
