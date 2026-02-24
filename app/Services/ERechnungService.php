@@ -239,11 +239,12 @@ class ERechnungService
         } else {
             // Special regimes (tax exempt or reverse charge)
             $category = match($invoice->vat_regime) {
-                'reverse_charge' => ZugferdDutyTaxFeeCategories::REVERSE_CHARGE,
-                'intra_community' => ZugferdDutyTaxFeeCategories::INTRA_COMMUNITY_SUPPLY,
-                'export' => ZugferdDutyTaxFeeCategories::EXPORT_OUTSIDE_EU,
-                'small_business' => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_GERMAN_USTG_19,
-                default => ZugferdDutyTaxFeeCategories::VAT_EXEMPT,
+                'reverse_charge'          => ZugferdDutyTaxFeeCategories::REVERSE_CHARGE,
+                'reverse_charge_domestic' => ZugferdDutyTaxFeeCategories::REVERSE_CHARGE,
+                'intra_community'         => ZugferdDutyTaxFeeCategories::INTRA_COMMUNITY_SUPPLY,
+                'export'                  => ZugferdDutyTaxFeeCategories::EXPORT_OUTSIDE_EU,
+                'small_business'          => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_GERMAN_USTG_19,
+                default                   => ZugferdDutyTaxFeeCategories::VAT_EXEMPT,
             };
             
             $document->addDocumentTax(

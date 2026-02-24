@@ -123,7 +123,7 @@ class InvoiceController extends Controller
             'due_date'             => 'required|date|after_or_equal:issue_date',
             'notes'                => 'nullable|string',
             'layout_id'            => 'nullable|exists:invoice_layouts,id',
-            'vat_regime'           => 'required|in:standard,small_business,reverse_charge,intra_community,export',
+            'vat_regime'           => 'required|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
             // Rechnungstyp
             'invoice_type'     => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
             'sequence_number'  => 'nullable|integer|between:1,20',
@@ -326,7 +326,7 @@ class InvoiceController extends Controller
             'notes'                => 'nullable|string',
             'layout_id'            => 'nullable|exists:invoice_layouts,id',
             'status'               => 'required|in:draft,sent,paid,overdue,cancelled',
-            'vat_regime'           => 'required|in:standard,small_business,reverse_charge,intra_community,export',
+            'vat_regime'           => 'required|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
             // Rechnungstyp
             'invoice_type'    => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
             'sequence_number' => 'nullable|integer|between:1,20',

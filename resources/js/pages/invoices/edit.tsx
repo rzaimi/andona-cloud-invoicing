@@ -487,7 +487,8 @@ export default function InvoicesEdit() {
                                         <SelectContent>
                                             <SelectItem value="standard">Regelbesteuerung (19% / 7%)</SelectItem>
                                             <SelectItem value="small_business">Kleinunternehmerregelung (§ 19 UStG)</SelectItem>
-                                            <SelectItem value="reverse_charge">Reverse Charge (§ 13b UStG)</SelectItem>
+                                            <SelectItem value="reverse_charge">Reverse Charge – Ausland (§ 13b UStG)</SelectItem>
+                                            <SelectItem value="reverse_charge_domestic">§ 13b UStG – Inland (Steuerschuldnerschaft des Leistungsempfängers)</SelectItem>
                                             <SelectItem value="intra_community">Innergemeinschaftliche Lieferung (§ 4 Nr. 1b UStG)</SelectItem>
                                             <SelectItem value="export">Ausfuhrlieferung (§ 4 Nr. 1a UStG)</SelectItem>
                                         </SelectContent>

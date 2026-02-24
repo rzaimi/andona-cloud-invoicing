@@ -434,6 +434,8 @@
                     return 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.';
                 case 'reverse_charge':
                     return 'Steuerschuldnerschaft des Leistungsempfängers (Reverse Charge).';
+                case 'reverse_charge_domestic':
+                    return 'Die Umsatzsteuer für diese umsatzsteuerpflichtige Leistung schuldet der Auftraggeber gemäß §13b UStG.';
                 case 'intra_community':
                     return 'Innergemeinschaftliche Lieferung. Steuerfrei gem. § 4 Nr. 1b UStG.';
                 case 'export':
@@ -451,6 +453,7 @@
                 return match($regime) {
                     'small_business' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
                     'reverse_charge' => 'Steuerschuldnerschaft des Leistungsempfängers (Reverse Charge) gemäß § 13b UStG.',
+                    'reverse_charge_domestic' => 'Die Umsatzsteuer für diese umsatzsteuerpflichtige Leistung schuldet der Auftraggeber gemäß §13b UStG.',
                     'intra_community' => 'Steuerfreie innergemeinschaftliche Lieferung gemäß § 4 Nr. 1b UStG.',
                     'export' => 'Steuerfreie Ausfuhrlieferung gemäß § 4 Nr. 1a UStG.',
                     default => null,
