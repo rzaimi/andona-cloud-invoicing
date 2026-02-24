@@ -62,7 +62,7 @@ class PaymentController extends Controller
         $companyId = $this->getEffectiveCompanyId();
         
         $invoices = Invoice::forCompany($companyId)
-            ->whereIn('status', ['sent', 'overdue', 'paid'])
+            ->whereNotIn('status', ['cancelled'])
             ->with(['customer:id,name', 'payments' => function($query) {
                 $query->where('status', 'completed');
             }])
@@ -70,12 +70,19 @@ class PaymentController extends Controller
             ->orderBy('number', 'desc')
             ->get();
         
-        // If invoice_id is provided, pre-select that invoice
+        // If invoice_id is provided, pre-select that invoice.
+        // Also ensure it is included in the dropdown list even if somehow excluded above.
         $selectedInvoice = null;
         if ($request->invoice_id) {
             $selectedInvoice = Invoice::forCompany($companyId)
                 ->with(['customer:id,name', 'payments'])
                 ->find($request->invoice_id);
+            
+            if ($selectedInvoice && !$invoices->contains('id', $selectedInvoice->id)) {
+                $invoices->prepend($selectedInvoice->load(['customer:id,name', 'payments' => function($q) {
+                    $q->where('status', 'completed');
+                }]));
+            }
         }
         
         return Inertia::render('payments/create', [
@@ -157,7 +164,7 @@ class PaymentController extends Controller
         $companyId = $this->getEffectiveCompanyId();
         
         $invoices = Invoice::forCompany($companyId)
-            ->whereIn('status', ['sent', 'overdue', 'paid'])
+            ->whereNotIn('status', ['cancelled'])
             ->with(['customer:id,name', 'payments' => function($query) {
                 $query->where('status', 'completed');
             }])
@@ -166,6 +173,11 @@ class PaymentController extends Controller
             ->get();
         
         $payment->load(['invoice']);
+        
+        // Always include the payment's own invoice in the list
+        if ($payment->invoice && !$invoices->contains('id', $payment->invoice_id)) {
+            $invoices->prepend($payment->invoice);
+        }
         
         return Inertia::render('payments/edit', [
             'payment' => $payment,
