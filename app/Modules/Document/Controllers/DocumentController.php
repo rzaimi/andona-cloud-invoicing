@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class DocumentController extends Controller
@@ -121,16 +122,16 @@ class DocumentController extends Controller
 
         DB::beginTransaction();
         try {
-            // Organize files by company_id/year/month/
+            // Path: {companyId}/documents/{year}/{month}/{uuid}.{ext}
             $year = now()->year;
             $month = now()->format('m');
-            $storagePath = "{$companyId}/{$year}/{$month}";
+            $storagePath = "{$companyId}/documents/{$year}/{$month}";
             
             foreach ($files as $file) {
                 try {
-                    // Store file in private documents storage with organized structure
-                    // Structure: company_id/year/month/filename
-                    $filePath = $file->store($storagePath, 'documents');
+                    $ext      = $file->getClientOriginalExtension();
+                    $filename = Str::uuid() . ($ext ? ".{$ext}" : '');
+                    $filePath = $file->storeAs($storagePath, $filename, 'private');
                     
                     // Use filename without extension as name, or generate from original filename
                     $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -186,13 +187,15 @@ class DocumentController extends Controller
             abort(403);
         }
 
-        // Use documents disk (private, not publicly accessible)
-        if (!Storage::disk('documents')->exists($document->file_path)) {
+        $disk = Storage::disk('private')->exists($document->file_path)
+            ? 'private'
+            : 'documents'; // legacy fallback
+
+        if (!Storage::disk($disk)->exists($document->file_path)) {
             abort(404, 'Datei nicht gefunden.');
         }
 
-        // Stream the file through Laravel (ensures authentication check)
-        return Storage::disk('documents')->download($document->file_path, $document->original_filename);
+        return Storage::disk($disk)->download($document->file_path, $document->original_filename);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Modules\Expense\Models\ExpenseCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class ExpenseController extends Controller
@@ -140,15 +141,15 @@ class ExpenseController extends Controller
             }
             
             // Handle receipt upload
-            $receiptPath = null;
+            $receiptPath             = null;
+            $receiptOriginalFilename = null;
             if ($request->hasFile('receipt')) {
-                $file = $request->file('receipt');
-                $year = now()->year;
-                $month = now()->format('m');
-                $directory = "{$companyId}/{$year}/{$month}";
-                
-                Storage::disk('expenses')->makeDirectory($directory);
-                $receiptPath = $file->storeAs($directory, $file->getClientOriginalName(), 'expenses');
+                $file      = $request->file('receipt');
+                $ext       = $file->getClientOriginalExtension();
+                $filename  = Str::uuid() . ($ext ? ".{$ext}" : '');
+                $directory = "{$companyId}/expenses/" . now()->year . '/' . now()->format('m');
+                $receiptPath             = $file->storeAs($directory, $filename, 'private');
+                $receiptOriginalFilename = $file->getClientOriginalName();
             }
             
             // Calculate VAT and net amount
@@ -172,6 +173,7 @@ class ExpenseController extends Controller
                 'payment_method' => $validated['payment_method'] ?? null,
                 'reference' => $validated['reference'] ?? null,
                 'receipt_path' => $receiptPath,
+                'receipt_original_filename' => $receiptOriginalFilename,
             ]);
             
             return redirect()->route('expenses.index')
@@ -236,18 +238,22 @@ class ExpenseController extends Controller
             
             // Handle receipt upload
             if ($request->hasFile('receipt')) {
-                // Delete old receipt if exists
-                if ($expense->receipt_path && Storage::disk('expenses')->exists($expense->receipt_path)) {
-                    Storage::disk('expenses')->delete($expense->receipt_path);
+                // Delete old receipt (check both disks for backward compat)
+                if ($expense->receipt_path) {
+                    if (Storage::disk('private')->exists($expense->receipt_path)) {
+                        Storage::disk('private')->delete($expense->receipt_path);
+                    } elseif (Storage::disk('expenses')->exists($expense->receipt_path)) {
+                        Storage::disk('expenses')->delete($expense->receipt_path);
+                    }
                 }
-                
-                $file = $request->file('receipt');
-                $year = now()->year;
-                $month = now()->format('m');
-                $directory = "{$companyId}/{$year}/{$month}";
-                
-                Storage::disk('expenses')->makeDirectory($directory);
-                $validated['receipt_path'] = $file->storeAs($directory, $file->getClientOriginalName(), 'expenses');
+
+                $file      = $request->file('receipt');
+                $ext       = $file->getClientOriginalExtension();
+                $filename  = Str::uuid() . ($ext ? ".{$ext}" : '');
+                $directory = "{$companyId}/expenses/" . now()->year . '/' . now()->format('m');
+
+                $validated['receipt_path']             = $file->storeAs($directory, $filename, 'private');
+                $validated['receipt_original_filename'] = $file->getClientOriginalName();
             }
             
             // Calculate VAT and net amount
@@ -281,11 +287,13 @@ class ExpenseController extends Controller
         $this->authorize('delete', $expense);
         
         DB::transaction(function () use ($expense) {
-            // Delete receipt if exists
-            if ($expense->receipt_path && Storage::disk('expenses')->exists($expense->receipt_path)) {
-                Storage::disk('expenses')->delete($expense->receipt_path);
+            if ($expense->receipt_path) {
+                if (Storage::disk('private')->exists($expense->receipt_path)) {
+                    Storage::disk('private')->delete($expense->receipt_path);
+                } elseif (Storage::disk('expenses')->exists($expense->receipt_path)) {
+                    Storage::disk('expenses')->delete($expense->receipt_path);
+                }
             }
-            
             $expense->delete();
         });
         
@@ -297,13 +305,22 @@ class ExpenseController extends Controller
     {
         $this->authorize('view', $expense);
         
-        if (!$expense->receipt_path || !Storage::disk('expenses')->exists($expense->receipt_path)) {
+        if (!$expense->receipt_path) {
             abort(404, 'Beleg nicht gefunden.');
         }
-        
-        $filePath = Storage::disk('expenses')->path($expense->receipt_path);
-        
-        return response()->download($filePath, basename($expense->receipt_path));
+
+        $disk = Storage::disk('private')->exists($expense->receipt_path)
+            ? 'private'
+            : 'expenses'; // legacy fallback
+
+        if (!Storage::disk($disk)->exists($expense->receipt_path)) {
+            abort(404, 'Beleg nicht gefunden.');
+        }
+
+        $downloadName = $expense->receipt_original_filename
+            ?? basename($expense->receipt_path);
+
+        return Storage::disk($disk)->download($expense->receipt_path, $downloadName);
     }
 }
 

@@ -133,12 +133,6 @@ class CompanyWizardController extends Controller
         try {
             DB::beginTransaction();
 
-            // ── Logo ──────────────────────────────────────────────────────────
-            $logoPath = null;
-            if ($request->hasFile('company_info.logo')) {
-                $logoPath = $request->file('company_info.logo')->store('company-logos', 'public');
-            }
-
             // ── Company ──────────────────────────────────────────────────────
             $ci = $request->input('company_info', []);
             $company = Company::create([
@@ -153,8 +147,14 @@ class CompanyWizardController extends Controller
                 'tax_number'   => $ci['tax_number'] ?? null,
                 'vat_number'   => $ci['vat_number'] ?? null,
                 'website'      => $ci['website'] ?? null,
-                'logo'         => $logoPath,
             ]);
+
+            // ── Logo (needs company ID for tenant path) ───────────────────────
+            if ($request->hasFile('company_info.logo')) {
+                $logoPath = $request->file('company_info.logo')
+                    ->store("tenants/{$company->id}/logo", 'public');
+                $company->update(['logo' => $logoPath]);
+            }
 
             // ── SMTP ─────────────────────────────────────────────────────────
             if ($configureSmtp) {

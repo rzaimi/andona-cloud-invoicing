@@ -272,13 +272,15 @@ class CompanyController extends Controller
         ];
         unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic']);
 
-        if ($request->hasFile('logo')) {
-            $validated['logo'] = $request->file('logo')->store('company-logos', 'public');
-        }
-
         $validated['status'] = 'active';
 
         $company = Company::create($validated);
+
+        if ($request->hasFile('logo')) {
+            $validated['logo'] = $request->file('logo')
+                ->store("tenants/{$company->id}/logo", 'public');
+            $company->update(['logo' => $validated['logo']]);
+        }
         
         // Set bank settings after creation
         $company->setBankSettings($bankSettings);
@@ -371,11 +373,11 @@ class CompanyController extends Controller
         unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic']);
 
         if ($request->hasFile('logo')) {
-            // Delete old logo if exists
             if ($company->logo) {
                 Storage::disk('public')->delete($company->logo);
             }
-            $validated['logo'] = $request->file('logo')->store('company-logos', 'public');
+            $validated['logo'] = $request->file('logo')
+                ->store("tenants/{$company->id}/logo", 'public');
         }
 
         $company->update($validated);

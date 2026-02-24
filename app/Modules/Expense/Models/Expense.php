@@ -28,6 +28,7 @@ class Expense extends Model
         'payment_method',
         'reference',
         'receipt_path',
+        'receipt_original_filename',
     ];
 
     protected $casts = [

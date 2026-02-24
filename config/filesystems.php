@@ -38,10 +38,27 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Unified private disk for all tenant files.
+         * Structure: tenants/{company_uuid}/{type}/{year}/{month}/{uuid}.{ext}
+         * Types: documents, expenses, exports
+         */
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/tenants'),
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
+        /*
+         * Legacy aliases kept for the migration command.
+         * Remove after running php artisan storage:migrate-to-tenant-structure
+         */
         'documents' => [
             'driver' => 'local',
             'root' => storage_path('app/documents'),
-            'serve' => false, // Not publicly accessible
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
@@ -49,7 +66,7 @@ return [
         'expenses' => [
             'driver' => 'local',
             'root' => storage_path('app/expenses'),
-            'serve' => false, // Not publicly accessible
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

@@ -122,8 +122,10 @@ class Document extends Model
         parent::boot();
 
         static::deleting(function ($document) {
-            // Delete from documents (private) storage
-            if (Storage::disk('documents')->exists($document->file_path)) {
+            if (Storage::disk('private')->exists($document->file_path)) {
+                Storage::disk('private')->delete($document->file_path);
+            } elseif (Storage::disk('documents')->exists($document->file_path)) {
+                // Legacy: file stored on old documents disk
                 Storage::disk('documents')->delete($document->file_path);
             }
         });

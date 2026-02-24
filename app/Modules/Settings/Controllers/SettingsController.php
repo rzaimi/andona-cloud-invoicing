@@ -710,11 +710,11 @@ class SettingsController extends Controller
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
-            // Delete old logo if exists
             if ($company->logo && \Storage::disk('public')->exists($company->logo)) {
                 \Storage::disk('public')->delete($company->logo);
             }
-            $validated['logo'] = $request->file('logo')->store('company-logos', 'public');
+            $validated['logo'] = $request->file('logo')
+                ->store("tenants/{$company->id}/logo", 'public');
         }
 
         // Update company
