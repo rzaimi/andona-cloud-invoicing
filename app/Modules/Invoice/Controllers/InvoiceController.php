@@ -8,6 +8,7 @@ use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Invoice\Models\InvoiceLayout;
 use App\Modules\Invoice\Models\InvoiceAuditLog;
+use App\Services\NumberFormatService;
 use App\Traits\LogsEmails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -114,25 +115,39 @@ class InvoiceController extends Controller
         $this->authorize('create', Invoice::class);
         
         $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'issue_date' => 'required|date',
-            'service_date' => 'nullable|date',
+            'customer_id'          => 'required|exists:customers,id',
+            'issue_date'           => 'required|date',
+            'service_date'         => 'nullable|date',
             'service_period_start' => 'nullable|date',
-            'service_period_end' => 'nullable|date|after_or_equal:service_period_start',
-            'due_date' => 'required|date|after_or_equal:issue_date',
-            'notes' => 'nullable|string',
-            'layout_id' => 'nullable|exists:invoice_layouts,id',
-            'vat_regime' => 'required|in:standard,small_business,reverse_charge,intra_community,export',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'nullable|uuid|exists:products,id',
-            'items.*.description' => 'required|string',
-            'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.unit' => 'nullable|string|max:10',
-            'items.*.tax_rate' => 'nullable|numeric|min:0|max:1', // German tax rates: 0.00, 0.07, 0.19
-            'items.*.discount_type' => 'nullable|in:percentage,fixed',
-            'items.*.discount_value' => 'nullable|numeric|min:0',
+            'service_period_end'   => 'nullable|date|after_or_equal:service_period_start',
+            'due_date'             => 'required|date|after_or_equal:issue_date',
+            'notes'                => 'nullable|string',
+            'layout_id'            => 'nullable|exists:invoice_layouts,id',
+            'vat_regime'           => 'required|in:standard,small_business,reverse_charge,intra_community,export',
+            // Rechnungstyp
+            'invoice_type'     => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
+            'sequence_number'  => 'nullable|integer|between:1,20',
+            // Skonto
+            'skonto_percent'   => 'nullable|numeric|in:2,3,4,5',
+            'skonto_days'      => 'nullable|integer|in:7,10,14',
+            // Items
+            'items'                    => 'required|array|min:1',
+            'items.*.product_id'       => 'nullable|uuid|exists:products,id',
+            'items.*.description'      => 'required|string',
+            'items.*.quantity'         => 'required|numeric|min:0.01',
+            'items.*.unit_price'       => 'required|numeric|min:0',
+            'items.*.unit'             => 'nullable|string|max:10',
+            'items.*.tax_rate'         => 'nullable|numeric|min:0|max:1',
+            'items.*.discount_type'    => 'nullable|in:percentage,fixed',
+            'items.*.discount_value'   => 'nullable|numeric|min:0',
         ]);
+
+        // Business rule: Abschlagsrechnung requires sequence_number; others must not have one
+        if (($validated['invoice_type'] ?? 'standard') === 'abschlagsrechnung') {
+            $request->validate(['sequence_number' => 'required|integer|between:1,20']);
+        } else {
+            $validated['sequence_number'] = null;
+        }
 
         DB::transaction(function () use ($validated, $request) {
             $user = $request->user();
@@ -153,29 +168,33 @@ class InvoiceController extends Controller
                 }
             }
 
-            // Generate invoice number before creating
-            $prefix = $company->getSetting('invoice_prefix', 'RE-');
-            $year = now()->year;
-            $lastNumber = Invoice::where('company_id', $effectiveCompanyId)
-                    ->whereYear('created_at', $year)
-                    ->count() + 1;
-            $invoiceNumber = $prefix . $year . '-' . str_pad($lastNumber, 4, '0', STR_PAD_LEFT);
+            // Generate invoice number using dynamic format setting
+            $svc    = new NumberFormatService();
+            $format = $svc->normaliseToFormat(
+                $company->getSetting('invoice_number_format')
+                    ?? $company->getSetting('invoice_prefix', 'RE-')
+            );
+            $invoiceNumber = $svc->next($format, Invoice::where('company_id', $effectiveCompanyId)->pluck('number'));
 
             // Create invoice
             $invoice = Invoice::create([
-                'number' => $invoiceNumber,
-                'company_id' => $effectiveCompanyId,
-                'customer_id' => $validated['customer_id'],
-                'user_id' => $user->id,
-                'issue_date' => $validated['issue_date'],
-                'service_date' => $validated['service_date'] ?? null,
+                'number'               => $invoiceNumber,
+                'company_id'           => $effectiveCompanyId,
+                'customer_id'          => $validated['customer_id'],
+                'user_id'              => $user->id,
+                'issue_date'           => $validated['issue_date'],
+                'service_date'         => $validated['service_date'] ?? null,
                 'service_period_start' => $validated['service_period_start'] ?? null,
-                'service_period_end' => $validated['service_period_end'] ?? null,
-                'due_date' => $validated['due_date'],
-                'notes' => $validated['notes'],
-                'layout_id' => $validated['layout_id'],
-                'vat_regime' => $validated['vat_regime'] ?? 'standard',
-                'tax_rate' => ($validated['vat_regime'] ?? 'standard') === 'standard' ? $company->getSetting('tax_rate', 0.19) : 0,
+                'service_period_end'   => $validated['service_period_end'] ?? null,
+                'due_date'             => $validated['due_date'],
+                'notes'                => $validated['notes'],
+                'layout_id'            => $validated['layout_id'],
+                'vat_regime'           => $validated['vat_regime'] ?? 'standard',
+                'tax_rate'             => ($validated['vat_regime'] ?? 'standard') === 'standard' ? $company->getSetting('tax_rate', 0.19) : 0,
+                'invoice_type'         => $validated['invoice_type'] ?? 'standard',
+                'sequence_number'      => $validated['sequence_number'] ?? null,
+                'skonto_percent'       => isset($validated['skonto_percent']) ? (float) $validated['skonto_percent'] : null,
+                'skonto_days'          => isset($validated['skonto_days']) ? (int) $validated['skonto_days'] : null,
             ]);
 
             // Save company snapshot
@@ -219,8 +238,9 @@ class InvoiceController extends Controller
                 $item->save();
             }
 
-            // Recalculate totals - calculateTotals() will load items if needed
+            // Recalculate totals, then skonto (skonto depends on the final total)
             $invoice->calculateTotals();
+            $invoice->calculateSkonto();
             $invoice->save();
 
             // Audit Log: Invoice created
@@ -297,26 +317,39 @@ class InvoiceController extends Controller
         }
 
         $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'issue_date' => 'required|date',
-            'service_date' => 'nullable|date',
+            'customer_id'          => 'required|exists:customers,id',
+            'issue_date'           => 'required|date',
+            'service_date'         => 'nullable|date',
             'service_period_start' => 'nullable|date',
-            'service_period_end' => 'nullable|date|after_or_equal:service_period_start',
-            'due_date' => 'required|date|after_or_equal:issue_date',
-            'notes' => 'nullable|string',
-            'layout_id' => 'nullable|exists:invoice_layouts,id',
-            'status' => 'required|in:draft,sent,paid,overdue,cancelled',
-            'vat_regime' => 'required|in:standard,small_business,reverse_charge,intra_community,export',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'nullable|uuid|exists:products,id',
-            'items.*.description' => 'required|string',
-            'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.unit' => 'nullable|string|max:10',
-            'items.*.tax_rate' => 'nullable|numeric|min:0|max:1', // German tax rates: 0.00, 0.07, 0.19
-            'items.*.discount_type' => 'nullable|in:percentage,fixed',
+            'service_period_end'   => 'nullable|date|after_or_equal:service_period_start',
+            'due_date'             => 'required|date|after_or_equal:issue_date',
+            'notes'                => 'nullable|string',
+            'layout_id'            => 'nullable|exists:invoice_layouts,id',
+            'status'               => 'required|in:draft,sent,paid,overdue,cancelled',
+            'vat_regime'           => 'required|in:standard,small_business,reverse_charge,intra_community,export',
+            // Rechnungstyp
+            'invoice_type'    => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
+            'sequence_number' => 'nullable|integer|between:1,20',
+            // Skonto
+            'skonto_percent'  => 'nullable|numeric|in:2,3,4,5',
+            'skonto_days'     => 'nullable|integer|in:7,10,14',
+            // Items
+            'items'                  => 'required|array|min:1',
+            'items.*.product_id'     => 'nullable|uuid|exists:products,id',
+            'items.*.description'    => 'required|string',
+            'items.*.quantity'       => 'required|numeric|min:0.01',
+            'items.*.unit_price'     => 'required|numeric|min:0',
+            'items.*.unit'           => 'nullable|string|max:10',
+            'items.*.tax_rate'       => 'nullable|numeric|min:0|max:1',
+            'items.*.discount_type'  => 'nullable|in:percentage,fixed',
             'items.*.discount_value' => 'nullable|numeric|min:0',
         ]);
+
+        if (($validated['invoice_type'] ?? 'standard') === 'abschlagsrechnung') {
+            $request->validate(['sequence_number' => 'required|integer|between:1,20']);
+        } else {
+            $validated['sequence_number'] = null;
+        }
 
         DB::transaction(function () use ($validated, $invoice, $request) {
             $effectiveCompanyId = $this->getEffectiveCompanyId();
@@ -352,17 +385,21 @@ class InvoiceController extends Controller
             
             // Update invoice
             $invoice->update([
-                'customer_id' => $validated['customer_id'],
-                'issue_date' => $validated['issue_date'],
-                'service_date' => $validated['service_date'] ?? null,
+                'customer_id'          => $validated['customer_id'],
+                'issue_date'           => $validated['issue_date'],
+                'service_date'         => $validated['service_date'] ?? null,
                 'service_period_start' => $validated['service_period_start'] ?? null,
-                'service_period_end' => $validated['service_period_end'] ?? null,
-                'due_date' => $validated['due_date'],
-                'notes' => $validated['notes'],
-                'layout_id' => $validated['layout_id'],
-                'status' => $validated['status'],
-                'vat_regime' => $validated['vat_regime'] ?? 'standard',
-                'tax_rate' => ($validated['vat_regime'] ?? 'standard') === 'standard' ? $invoice->company->getSetting('tax_rate', 0.19) : 0,
+                'service_period_end'   => $validated['service_period_end'] ?? null,
+                'due_date'             => $validated['due_date'],
+                'notes'                => $validated['notes'],
+                'layout_id'            => $validated['layout_id'],
+                'status'               => $validated['status'],
+                'vat_regime'           => $validated['vat_regime'] ?? 'standard',
+                'tax_rate'             => ($validated['vat_regime'] ?? 'standard') === 'standard' ? $invoice->company->getSetting('tax_rate', 0.19) : 0,
+                'invoice_type'         => $validated['invoice_type'] ?? 'standard',
+                'sequence_number'      => $validated['sequence_number'] ?? null,
+                'skonto_percent'       => isset($validated['skonto_percent']) ? (float) $validated['skonto_percent'] : null,
+                'skonto_days'          => isset($validated['skonto_days']) ? (int) $validated['skonto_days'] : null,
             ]);
 
             // Delete existing items and create new ones
@@ -408,8 +445,9 @@ class InvoiceController extends Controller
                 $invoice->company_snapshot = $invoice->createCompanySnapshot();
             }
 
-            // Recalculate totals
+            // Recalculate totals, then skonto
             $invoice->calculateTotals();
+            $invoice->calculateSkonto();
             $invoice->save();
 
             // Audit Log: Invoice updated
@@ -1091,12 +1129,16 @@ class InvoiceController extends Controller
             $correctionInvoice->tax_amount = -$invoice->tax_amount;
             $correctionInvoice->total = -$invoice->total;
             
-            // IMPORTANT: Generate number BEFORE saving (number field is NOT NULL)
-            // Temporarily save with a placeholder to get the ID for number generation
-            $company = $invoice->company;
-            $prefix = $company->getSetting('invoice_prefix', 'RE-');
+            // Generate correction (STORNO) number derived from the original invoice number
+            $company        = $invoice->company;
+            $svc            = new NumberFormatService();
+            $format         = $svc->normaliseToFormat(
+                $company->getSetting('invoice_number_format')
+                    ?? $company->getSetting('invoice_prefix', 'RE-')
+            );
+            $scopePrefix    = $svc->scopePrefix($format);
             $originalNumber = $invoice->number;
-            $correctionInvoice->number = str_replace($prefix, $prefix . 'STORNO-', $originalNumber);
+            $correctionInvoice->number = str_replace($scopePrefix, $scopePrefix . 'STORNO-', $originalNumber);
             
             // Now save with the number
             $correctionInvoice->save();

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Search, Plus, Package } from "lucide-react"
+import { Search, Plus, Package, Check } from "lucide-react"
 
 interface Product {
     id: string
@@ -36,6 +36,9 @@ interface ProductSelectorDialogProps {
 export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSelectorDialogProps) {
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
+    const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
+    const [addedCount, setAddedCount] = useState(0)
+    const [customAdded, setCustomAdded] = useState(false)
     const [customItem, setCustomItem] = useState({
         description: "",
         quantity: 1,
@@ -60,28 +63,43 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
             product_sku: product.sku,
             product_number: product.number,
         })
-        setOpen(false)
-        setSearchTerm("")
+
+        // Show per-row feedback and update count — dialog stays open
+        setAddedIds((prev) => new Set(prev).add(product.id))
+        setAddedCount((c) => c + 1)
+
+        // Remove the checkmark after 2 s so it can be re-added
+        setTimeout(() => {
+            setAddedIds((prev) => {
+                const next = new Set(prev)
+                next.delete(product.id)
+                return next
+            })
+        }, 2000)
     }
 
     const handleCustomItemAdd = () => {
-        if (!customItem.description) {
-            return
-        }
+        if (!customItem.description) return
         onSelect(customItem)
+        setAddedCount((c) => c + 1)
+        setCustomAdded(true)
+        // Reset form but keep dialog open
+        setCustomItem({ description: "", quantity: 1, unit_price: 0, unit: "Stk." })
+        setTimeout(() => setCustomAdded(false), 2000)
+    }
+
+    const handleClose = () => {
         setOpen(false)
-        setCustomItem({
-            description: "",
-            quantity: 1,
-            unit_price: 0,
-            unit: "Stk.",
-        })
+        setSearchTerm("")
+        setAddedIds(new Set())
+        setAddedCount(0)
+        setCustomAdded(false)
     }
 
     const germanUnits = ["Stk.", "Std.", "Tag", "Monat", "Jahr", "m", "m²", "m³", "kg", "l", "Paket"]
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else setOpen(true) }}>
             <DialogTrigger asChild>
                 {trigger || (
                     <Button type="button" variant="outline" size="sm">
@@ -92,10 +110,20 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Position hinzufügen</DialogTitle>
-                    <DialogDescription>
-                        Wählen Sie ein Produkt aus oder fügen Sie eine benutzerdefinierte Position hinzu.
-                    </DialogDescription>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <DialogTitle>Position hinzufügen</DialogTitle>
+                            <DialogDescription>
+                                Wählen Sie ein Produkt aus oder fügen Sie eine benutzerdefinierte Position hinzu.
+                            </DialogDescription>
+                        </div>
+                        {addedCount > 0 && (
+                            <Badge variant="secondary" className="text-sm px-3 py-1">
+                                <Check className="mr-1 h-3 w-3 text-green-600" />
+                                {addedCount} {addedCount === 1 ? "Position" : "Positionen"} hinzugefügt
+                            </Badge>
+                        )}
+                    </div>
                 </DialogHeader>
 
                 <Tabs defaultValue="products" className="w-full">
@@ -141,44 +169,59 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredProducts.map((product) => (
-                                            <TableRow key={product.id} className="cursor-pointer hover:bg-muted/50">
-                                                <TableCell>
-                                                    <div>
-                                                        <div className="font-medium">{product.name}</div>
-                                                        {product.description && (
-                                                            <div className="text-sm text-muted-foreground line-clamp-1">
-                                                                {product.description}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="text-sm">
-                                                        {product.sku && <Badge variant="outline">{product.sku}</Badge>}
-                                                        {product.number && (
-                                                            <Badge variant="outline" className="ml-1">{product.number}</Badge>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {Number(product.price).toFixed(2)} €
-                                                </TableCell>
-                                                <TableCell>{product.unit}</TableCell>
-                                                <TableCell>
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        onClick={() => handleProductSelect(product)}
-                                                    >
-                                                        <Plus className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
+                                        filteredProducts.map((product) => {
+                                            const wasAdded = addedIds.has(product.id)
+                                            return (
+                                                <TableRow key={product.id} className="cursor-pointer hover:bg-muted/50">
+                                                    <TableCell>
+                                                        <div>
+                                                            <div className="font-medium">{product.name}</div>
+                                                            {product.description && (
+                                                                <div className="text-sm text-muted-foreground line-clamp-1">
+                                                                    {product.description}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="text-sm">
+                                                            {product.sku && <Badge variant="outline">{product.sku}</Badge>}
+                                                            {product.number && (
+                                                                <Badge variant="outline" className="ml-1">{product.number}</Badge>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {Number(product.price).toFixed(2)} €
+                                                    </TableCell>
+                                                    <TableCell>{product.unit}</TableCell>
+                                                    <TableCell>
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant={wasAdded ? "secondary" : "default"}
+                                                            onClick={() => handleProductSelect(product)}
+                                                            className={wasAdded ? "text-green-600" : ""}
+                                                        >
+                                                            {wasAdded ? (
+                                                                <Check className="h-4 w-4" />
+                                                            ) : (
+                                                                <Plus className="h-4 w-4" />
+                                                            )}
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })
                                     )}
                                 </TableBody>
                             </Table>
+                        </div>
+
+                        <div className="flex justify-end">
+                            <Button type="button" onClick={handleClose}>
+                                Fertig
+                            </Button>
                         </div>
                     </TabsContent>
 
@@ -236,17 +279,28 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
                                 </div>
                             </div>
 
-                            <div className="flex justify-end space-x-2">
-                                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                                    Abbrechen
-                                </Button>
-                                <Button
-                                    type="button"
-                                    onClick={handleCustomItemAdd}
-                                    disabled={!customItem.description}
-                                >
-                                    Position hinzufügen
-                                </Button>
+                            <div className="flex items-center justify-between">
+                                {customAdded ? (
+                                    <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
+                                        <Check className="h-4 w-4" />
+                                        Position hinzugefügt
+                                    </span>
+                                ) : (
+                                    <span />
+                                )}
+                                <div className="flex gap-2">
+                                    <Button type="button" variant="outline" onClick={handleClose}>
+                                        Fertig
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={handleCustomItemAdd}
+                                        disabled={!customItem.description}
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Position hinzufügen
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </TabsContent>
@@ -255,4 +309,3 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
         </Dialog>
     )
 }
-

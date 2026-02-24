@@ -61,18 +61,7 @@
                 @endif
             </td>
             <td style="width: 50%; vertical-align: top;">
-                {{-- Invoice details --}}
-                <div style="text-align: right; font-size: {{ $bodyFontSize }}px;">
-                    <div style="margin-bottom: 2mm;"><strong>Rechnungsdatum:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
-                    <div style="margin-bottom: 2mm;"><strong>Leistungsdatum:</strong> entspricht Rechnungsdatum</div>
-                    <div style="margin-bottom: 2mm;"><strong>Fälligkeitsdatum:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
-                    @if(isset($invoice->customer->number) && $invoice->customer->number)
-                        <div style="margin-bottom: 2mm;"><strong>Kundennummer:</strong> {{ $invoice->customer->number }}</div>
-                    @endif
-                    @if(isset($invoice->customer->contact_person) && $invoice->customer->contact_person)
-                        <div><strong>Ansprechpartner:</strong> {{ $invoice->customer->contact_person }}</div>
-                    @endif
-                </div>
+                @include('pdf.invoice-partials.details')
             </td>
         </tr>
     </table>
@@ -81,9 +70,12 @@
     <div style="text-align: center; margin-bottom: 10px;">
         @php
             $isCorrection = isset($invoice->is_correction) ? (bool)$invoice->is_correction : false;
+            $invoiceTypeLabel = $isCorrection
+                ? 'STORNORECHNUNG'
+                : strtoupper(getReadableInvoiceType($invoice->invoice_type ?? 'standard', $invoice->sequence_number ?? null));
         @endphp
         <div style="font-size: {{ $headingFontSize + 6 }}px; font-weight: 700; color: {{ $isCorrection ? '#dc2626' : ($layoutSettings['colors']['text'] ?? '#1f2937') }}; text-transform: uppercase; letter-spacing: 1px;">
-            {{ $isCorrection ? 'STORNORECHNUNG' : 'RECHNUNG' }}
+            {{ $invoiceTypeLabel }}
         </div>
         <div style="font-size: {{ $bodyFontSize + 1 }}px; color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }}; margin-top: 4px;">
             Nr. {{ $invoice->number }}
@@ -108,105 +100,97 @@
     </div>
 
     {{-- Items Table - Classic bordered style --}}
-    <table style="width: 100%; border-collapse: collapse; margin: 10px 0; border: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">
-        <thead>
-            <tr style="background-color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }}; color: white;">
-                <th style="padding: 8px 6px; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; border-right: 1px solid white; width: 5%;">Nr.</th>
-                @if($layoutSettings['content']['show_item_codes'] ?? false)
-                    <th style="padding: 8px 6px; text-align: left; font-weight: 600; border-right: 1px solid white; width: 12%;">Produkt-Nr.</th>
-                @endif
-                <th style="padding: 8px 6px; text-align: left; font-weight: 600; border-right: 1px solid white; width: {{ ($layoutSettings['content']['show_item_codes'] ?? false) ? '46%' : '58%' }};">Leistung</th>
-                <th style="padding: 8px 6px; text-align: center; font-weight: 600; border-right: 1px solid white; width: 9%;">Menge</th>
-                <th style="padding: 8px 6px; text-align: right; font-weight: 600; border-right: 1px solid white; width: 6%;">USt.</th>
-                <th style="padding: 8px 6px; text-align: right; font-weight: 600; border-right: 1px solid white; width: 10%;">Preis</th>
-                <th style="padding: 8px 6px; text-align: right; font-weight: 600; width: 12%;">Gesamt</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($invoice->items as $index => $item)
-                @php
-                    $discountAmount = (float)($item->discount_amount ?? 0);
-                    $hasDiscount = $discountAmount > 0.0001;
-                    $baseTotal = (float)($item->quantity ?? 0) * (float)($item->unit_price ?? 0);
-                    $discountType = $item->discount_type ?? null;
-                    $discountValue = $item->discount_value ?? null;
-                    $productCode = data_get($item, 'product.number')
-                        ?? data_get($item, 'product.sku')
-                        ?? data_get($item, 'product_number')
-                        ?? data_get($item, 'product_sku');
-                @endphp
-                <tr style="border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">
-                    <td style="padding: 8px 6px; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ $index + 1 }}</td>
-                    @if($layoutSettings['content']['show_item_codes'] ?? false)
-                        <td style="padding: 8px 6px; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ $productCode ?: '-' }}</td>
-                    @endif
-                    <td style="padding: 8px 6px; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ $item->description }}</td>
-                    <td style="padding: 8px 6px; text-align: center; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">
-                        {{ number_format($item->quantity, 2, ',', '.') }}
-                        @if($layoutSettings['content']['show_unit_column'] ?? true && isset($item->unit) && $item->unit)
-                            {{ $item->unit }}
-                        @else
-                            Std.
-                        @endif
-                    </td>
-                    <td style="padding: 8px 6px; text-align: right; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format(($item->tax_rate ?? $invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}%</td>
-                    <td style="padding: 8px 6px; text-align: right; border-right: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
-                    <td style="padding: 8px 6px; text-align: right; font-weight: 600;">
-                        <div>{{ number_format($item->total, 2, ',', '.') }} €</div>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+    @php
+        $tableHeaderBg    = $layoutSettings['colors']['text'] ?? '#1f2937';
+        $tableOuterBorder = '1px solid ' . ($layoutSettings['colors']['text'] ?? '#1f2937');
+        $showRowNumber    = true;
+    @endphp
+    @include('pdf.invoice-partials.items-table')
 
-    {{-- Totals - Classic boxed style --}}
-    <div style="text-align: right; margin-top: 10px;">
+    {{-- Totals - Classic boxed style with VAT breakdown and skonto --}}
+    <div style="margin-top: 10px;">
         @php
             $totalDiscount = 0;
             foreach ($invoice->items as $it) {
                 $totalDiscount += (float)($it->discount_amount ?? 0);
             }
+            $classicBorder  = $layoutSettings['colors']['text'] ?? '#1f2937';
+            $isStandardVat  = ($invoice->vat_regime ?? 'standard') === 'standard';
+            $vatBreakdownCl = [];
+            if ($isStandardVat) {
+                foreach ($invoice->items as $item) {
+                    $rate = round((float)($item->tax_rate ?? $invoice->tax_rate ?? 0), 4);
+                    $k    = (string)$rate;
+                    if (!isset($vatBreakdownCl[$k])) $vatBreakdownCl[$k] = ['rate' => $rate, 'net' => 0.0, 'tax' => 0.0];
+                    $vatBreakdownCl[$k]['net'] += (float)($item->total ?? 0);
+                    $vatBreakdownCl[$k]['tax'] += (float)($item->total ?? 0) * $rate;
+                }
+                uasort($vatBreakdownCl, fn($a, $b) => $b['rate'] <=> $a['rate']);
+            }
+            $multipleRatesCl = count($vatBreakdownCl) > 1;
+            $skontoAmountCl  = (float)($invoice->skonto_amount ?? 0);
+            $hasSkontoC      = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmountCl > 0;
         @endphp
-        <table style="width: 300px; margin-left: auto; border-collapse: collapse; border: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">
+        <table style="width: 300px; margin-left: auto; border-collapse: collapse; border: 1px solid {{ $classicBorder }}; font-size: {{ $bodyFontSize }}px;">
             @if($totalDiscount > 0.0001)
                 <tr>
-                    <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">Zwischensumme (vor Rabatt)</td>
-                    <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($invoice->subtotal + $totalDiscount, 2, ',', '.') }} €</td>
+                    <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $classicBorder }};">Bruttobetrag (vor Rabatt)</td>
+                    <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $classicBorder }}; white-space: nowrap;">{{ number_format($invoice->subtotal + $totalDiscount, 2, ',', '.') }} €</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">Gesamtrabatt</td>
-                    <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }}; color: #dc2626;">-{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
+                    <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $classicBorder }}; color: #dc2626;">Rabatt</td>
+                    <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $classicBorder }}; color: #dc2626; white-space: nowrap;">−{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
                 </tr>
             @endif
             <tr>
-                <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">Gesamtbetrag (netto)</td>
-                <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($invoice->subtotal, 2, ',', '.') }} €</td>
+                <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $classicBorder }};">Nettobetrag</td>
+                <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $classicBorder }}; white-space: nowrap;">{{ number_format($invoice->subtotal, 2, ',', '.') }} €</td>
             </tr>
-            <tr>
-                <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($invoice->tax_rate * 100, 0) }}% Umsatzsteuer</td>
-                <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};">{{ number_format($invoice->tax_amount, 2, ',', '.') }} €</td>
-            </tr>
+            @if($isStandardVat)
+                @if($multipleRatesCl)
+                    @foreach($vatBreakdownCl as $vat)
+                        @if($vat['rate'] > 0.0001)
+                            <tr>
+                                <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $classicBorder }};">{{ number_format($vat['rate'] * 100, 0) }}% USt. auf {{ number_format($vat['net'], 2, ',', '.') }} €</td>
+                                <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $classicBorder }}; white-space: nowrap;">{{ number_format($vat['tax'], 2, ',', '.') }} €</td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $classicBorder }}; color: #6b7280;">0% USt. (steuerfrei)</td>
+                                <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $classicBorder }}; white-space: nowrap;">0,00 €</td>
+                            </tr>
+                        @endif
+                    @endforeach
+                @else
+                    <tr>
+                        <td style="padding: 6px 10px; text-align: left; border-bottom: 1px solid {{ $classicBorder }};">{{ number_format($invoice->tax_rate * 100, 0) }}% Umsatzsteuer</td>
+                        <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid {{ $classicBorder }}; white-space: nowrap;">{{ number_format($invoice->tax_amount, 2, ',', '.') }} €</td>
+                    </tr>
+                @endif
+            @endif
             <tr style="background-color: {{ $layoutSettings['colors']['primary'] ?? '#1f2937' }}; color: white;">
-                <td style="padding: 8px 10px; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">Rechnungsbetrag</td>
-                <td style="padding: 8px 10px; text-align: right; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">{{ number_format($invoice->total, 2, ',', '.') }} €</td>
+                <td style="padding: 8px 10px; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">Gesamtbetrag (brutto)</td>
+                <td style="padding: 8px 10px; text-align: right; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px; white-space: nowrap;">{{ number_format($invoice->total, 2, ',', '.') }} €</td>
             </tr>
+            @if($hasSkontoC)
+                <tr style="color: #16a34a;">
+                    <td style="padding: 6px 10px; text-align: left; font-style: italic; border-top: 2px solid #dcfce7;">
+                        Skonto {{ number_format($invoice->skonto_percent, 0) }}% bis {{ formatInvoiceDate($invoice->skonto_due_date, $dateFormat ?? 'd.m.Y') }}
+                    </td>
+                    <td style="padding: 6px 10px; text-align: right; font-style: italic; border-top: 2px solid #dcfce7; white-space: nowrap;">
+                        −{{ number_format($skontoAmountCl, 2, ',', '.') }} €
+                    </td>
+                </tr>
+                <tr style="color: #16a34a; font-weight: 700;">
+                    <td style="padding: 6px 10px; border-bottom: 2px solid #16a34a;">Bei Skonto zahlen Sie</td>
+                    <td style="padding: 6px 10px; text-align: right; border-bottom: 2px solid #16a34a; white-space: nowrap;">{{ number_format($invoice->total - $skontoAmountCl, 2, ',', '.') }} €</td>
+                </tr>
+            @endif
         </table>
     </div>
 
-    {{-- Payment Instructions --}}
-    @php
-        $taxNote = $settings['invoice_tax_note'] ?? null;
-    @endphp
-    @if($taxNote)
-        <div style="margin-top: 12px; font-size: {{ $bodyFontSize ?? 11 }}px; line-height: 1.5;">
-            {{ $taxNote }}
-        </div>
-    @endif
-    @if($layoutSettings['content']['show_payment_terms'] ?? true)
-        <div style="margin-top: 12px; padding: 8px; background-color: {{ $layoutSettings['colors']['accent'] ?? '#f9fafb' }}; border-left: 4px solid {{ $layoutSettings['colors']['primary'] ?? '#1f2937' }}; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
-            <strong>Zahlungsbedingungen:</strong> Der Rechnungsbetrag ist innerhalb von {{ \Carbon\Carbon::parse($invoice->due_date)->diffInDays(\Carbon\Carbon::parse($invoice->issue_date)) }} Tagen nach Rechnungseingang fällig und ohne Abzug auf das unten angegebene Konto zu überweisen.
-        </div>
-    @endif
+    {{-- Payment instructions --}}
+    @include('pdf.invoice-partials.payment-terms')
 
     {{-- Closing --}}
     <div style="margin-top: 12px; font-size: {{ $bodyFontSize }}px;">

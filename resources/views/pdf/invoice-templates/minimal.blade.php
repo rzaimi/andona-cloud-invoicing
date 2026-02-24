@@ -74,23 +74,7 @@
                 @endif
             </td>
             <td style="width: 50%; vertical-align: top;">
-                {{-- Invoice Details (German standard fields) --}}
-                <div style="text-align: right; font-size: {{ $bodyFontSize }}px;">
-                    @if(($layoutSettings['content']['show_customer_number'] ?? true) && isset($invoice->customer->number) && $invoice->customer->number)
-                        <div style="margin-bottom: 2mm;"><strong>Kundennummer:</strong> {{ $invoice->customer->number }}</div>
-                    @endif
-                    <div style="margin-bottom: 2mm;"><strong>Rechnungsdatum:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
-                    
-                    @if(isset($invoice->service_date) && $invoice->service_date)
-                        <div style="margin-bottom: 2mm;"><strong>Leistungsdatum:</strong> {{ formatInvoiceDate($invoice->service_date, $dateFormat ?? 'd.m.Y') }}</div>
-                    @elseif(isset($invoice->service_period_start) && isset($invoice->service_period_end) && $invoice->service_period_start && $invoice->service_period_end)
-                        <div style="margin-bottom: 2mm;"><strong>Leistungszeitraum:</strong> {{ formatInvoiceDate($invoice->service_period_start, $dateFormat ?? 'd.m.Y') }} - {{ formatInvoiceDate($invoice->service_period_end, $dateFormat ?? 'd.m.Y') }}</div>
-                    @else
-                        <div style="margin-bottom: 2mm;"><strong>Leistungsdatum:</strong> entspricht Rechnungsdatum</div>
-                    @endif
-
-                    <div style="margin-bottom: 2mm;"><strong>Fälligkeitsdatum:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</div>
-                </div>
+                @include('pdf.invoice-partials.details')
             </td>
         </tr>
     </table>
@@ -99,8 +83,13 @@
         @php
             $isCorrection = isset($invoice->is_correction) ? (bool)$invoice->is_correction : false;
         @endphp
-        <div style="font-size: {{ $headingFontSize + 2 }}px; font-weight: 600; color: {{ $isCorrection ? '#dc2626' : ($layoutSettings['colors']['text'] ?? '#1f2937') }};">
-            {{ $isCorrection ? 'STORNORECHNUNG' : 'Rechnung' }} {{ $invoice->number }}
+        @php
+            $invoiceTypeLabel = $isCorrection
+                ? 'STORNORECHNUNG'
+                : strtoupper(getReadableInvoiceType($invoice->invoice_type ?? 'standard', $invoice->sequence_number ?? null));
+        @endphp
+        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 700; color: {{ $isCorrection ? '#dc2626' : ($layoutSettings['colors']['primary'] ?? '#1f2937') }};">
+            {{ $invoiceTypeLabel }} {{ $invoice->number }}
         </div>
         @if($isCorrection && isset($invoice->correctsInvoice) && $invoice->correctsInvoice)
             <div style="margin-top: 8px; padding: 8px; background-color: #fee2e2; border-left: 3px solid #dc2626; font-size: {{ $bodyFontSize }}px;">
@@ -122,54 +111,8 @@
     </div>
 
     {{-- Items Table - Minimal borders - DISTINCTIVE: Very thin borders --}}
-    <table style="width: 100%; border-collapse: collapse; margin: 2px 0;">
-        <thead>
-            <tr style="border-bottom: 0.5px solid #d1d5db;">
-                @if($layoutSettings['content']['show_item_codes'] ?? false)
-                    <th style="padding: 6px 4px; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; width: 12%;">Produkt-Nr.</th>
-                @endif
-                <th style="padding: 6px 4px; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; width: {{ ($layoutSettings['content']['show_item_codes'] ?? false) ? '45%' : '55%' }};">Leistung</th>
-                <th style="padding: 6px 4px; text-align: left; font-weight: 600; width: 9%;">Menge</th>
-                <th style="padding: 6px 4px; text-align: right; font-weight: 600; width: 6%;">USt.</th>
-                <th style="padding: 6px 4px; text-align: right; font-weight: 600; width: 10%;">Preis</th>
-                <th style="padding: 6px 4px; text-align: right; font-weight: 600; width: 12%;">Gesamt</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($invoice->items as $index => $item)
-                @php
-                    $discountAmount = (float)($item->discount_amount ?? 0);
-                    $hasDiscount = $discountAmount > 0.0001;
-                    $baseTotal = (float)($item->quantity ?? 0) * (float)($item->unit_price ?? 0);
-                    $discountType = $item->discount_type ?? null;
-                    $discountValue = $item->discount_value ?? null;
-                    $productCode = data_get($item, 'product.number')
-                        ?? data_get($item, 'product.sku')
-                        ?? data_get($item, 'product_number')
-                        ?? data_get($item, 'product_sku');
-                @endphp
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                    @if($layoutSettings['content']['show_item_codes'] ?? false)
-                        <td style="padding: 6px 4px;">{{ $productCode ?: '-' }}</td>
-                    @endif
-                    <td style="padding: 6px 4px;">{{ $item->description }}</td>
-                    <td style="padding: 6px 4px;">
-                        {{ number_format($item->quantity, 2, ',', '.') }}
-                        @if($layoutSettings['content']['show_unit_column'] ?? true && isset($item->unit) && $item->unit)
-                            {{ $item->unit }}
-                        @else
-                            Std.
-                        @endif
-                    </td>
-                    <td style="padding: 6px 4px; text-align: right;">{{ number_format(($item->tax_rate ?? $invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}%</td>
-                    <td style="padding: 6px 4px; text-align: right;">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
-                    <td style="padding: 6px 4px; text-align: right; font-weight: 600;">
-                        <div>{{ number_format($item->total, 2, ',', '.') }} €</div>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+    @php $cellPadding = '6px 4px'; @endphp
+    @include('pdf.invoice-partials.items-table')
 
     {{-- VAT Regime Note --}}
     @php $vatNote = getVatRegimeNote($invoice->vat_regime ?? 'standard'); @endphp
@@ -179,67 +122,14 @@
         </div>
     @endif
 
-    {{-- Totals - Minimal styling --}}
-    <div style="text-align: right; margin-top: 8px;">
-        @php
-            $totalDiscount = 0;
-            foreach ($invoice->items as $it) {
-                $totalDiscount += (float)($it->discount_amount ?? 0);
-            }
-            // Safely call getVatBreakdown() - check if method exists (model instance vs stdClass)
-            $vatBreakdown = (is_object($invoice) && method_exists($invoice, 'getVatBreakdown')) 
-                ? $invoice->getVatBreakdown() 
-                : [];
-        @endphp
-        <table style="width: 260px; margin-left: auto; border-collapse: collapse;">
-            @if($totalDiscount > 0.0001)
-                <tr>
-                    <td style="padding: 4px 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Zwischensumme (vor Rabatt)</td>
-                    <td style="padding: 4px 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ number_format($invoice->subtotal + $totalDiscount, 2, ',', '.') }} €</td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Gesamtrabatt</td>
-                    <td style="padding: 4px 8px; text-align: right; border-bottom: 1px solid #e5e7eb; color: #dc2626;">-{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
-                </tr>
-            @endif
-            <tr>
-                <td style="padding: 4px 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Gesamtbetrag (netto)</td>
-                <td style="padding: 4px 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ number_format($invoice->subtotal, 2, ',', '.') }} €</td>
-            </tr>
-            @if(count($vatBreakdown) > 0)
-                @foreach($vatBreakdown as $rateKey => $data)
-                    <tr>
-                        <td style="padding: 4px 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">{{ number_format($data['rate'] * 100, 0, ',', '.') }}% Umsatzsteuer</td>
-                        <td style="padding: 4px 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ number_format($data['tax_amount'], 2, ',', '.') }} €</td>
-                    </tr>
-                @endforeach
-            @elseif(($invoice->vat_regime ?? 'standard') === 'standard')
-                <tr>
-                    <td style="padding: 4px 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">{{ number_format(($invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}% Umsatzsteuer</td>
-                    <td style="padding: 4px 8px; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ number_format($invoice->tax_amount, 2, ',', '.') }} €</td>
-                </tr>
-            @endif
-            <tr>
-                <td style="padding: 6px 8px; text-align: left; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">Gesamtbetrag (brutto)</td>
-                <td style="padding: 6px 8px; text-align: right; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">{{ number_format($invoice->total, 2, ',', '.') }} €</td>
-            </tr>
-        </table>
+    {{-- Totals --}}
+    <div style="margin-top: 8px;">
+        @php $tableWidth = '260px'; @endphp
+        @include('pdf.invoice-partials.totals')
     </div>
 
-    {{-- Payment Instructions - Minimal --}}
-    @php
-        $taxNote = $settings['invoice_tax_note'] ?? null;
-    @endphp
-    @if($taxNote)
-        <div style="margin-top: 12px; font-size: {{ $bodyFontSize ?? 11 }}px; line-height: 1.5;">
-            {{ $taxNote }}
-        </div>
-    @endif
-    @if($layoutSettings['content']['show_payment_terms'] ?? true)
-        <div style="margin-top: 10px; font-size: {{ $bodyFontSize }}px; line-height: 1.4;">
-            Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten angegebene Konto. Der Rechnungsbetrag ist sofort fällig.
-        </div>
-    @endif
+    {{-- Payment instructions --}}
+    @include('pdf.invoice-partials.payment-terms')
 
     {{-- Closing - Minimal --}}
     <div style="margin-top: 10px; font-size: {{ $bodyFontSize }}px;">

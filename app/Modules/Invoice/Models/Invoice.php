@@ -6,6 +6,8 @@ use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\User\Models\User;
 use App\Modules\Invoice\Models\InvoiceItem;
+use App\Services\NumberFormatService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +26,13 @@ class Invoice extends Model
     const REMINDER_MAHNUNG_3 = 4;
     const REMINDER_INKASSO = 5;
 
+    // Valid invoice types
+    const TYPE_STANDARD          = 'standard';
+    const TYPE_ABSCHLAGSRECHNUNG = 'abschlagsrechnung';
+    const TYPE_SCHLUSSRECHNUNG   = 'schlussrechnung';
+    const TYPE_NACHTRAGSRECHNUNG = 'nachtragsrechnung';
+    const TYPE_KORREKTURRECHNUNG = 'korrekturrechnung';
+
     protected $fillable = [
         'number',
         'company_id',
@@ -35,10 +44,18 @@ class Invoice extends Model
         'service_period_start',
         'service_period_end',
         'due_date',
+        // Skonto
+        'skonto_percent',
+        'skonto_days',
+        'skonto_amount',
+        'skonto_due_date',
         'subtotal',
         'tax_rate',
         'tax_amount',
         'vat_regime',
+        // Rechnungstyp
+        'invoice_type',
+        'sequence_number',
         'total',
         'notes',
         'payment_method',
@@ -57,21 +74,24 @@ class Invoice extends Model
     ];
 
     protected $casts = [
-        'issue_date' => 'date',
-        'service_date' => 'date',
+        'issue_date'           => 'date',
+        'service_date'         => 'date',
         'service_period_start' => 'date',
-        'service_period_end' => 'date',
-        'due_date' => 'date',
-        'subtotal' => 'decimal:2',
-        'tax_rate' => 'decimal:4',
-        'tax_amount' => 'decimal:2',
-        'total' => 'decimal:2',
-        'reminder_fee' => 'decimal:2',
+        'service_period_end'   => 'date',
+        'due_date'             => 'date',
+        'skonto_due_date'      => 'date',
+        'skonto_percent'       => 'decimal:2',
+        'skonto_amount'        => 'decimal:2',
+        'subtotal'             => 'decimal:2',
+        'tax_rate'             => 'decimal:4',
+        'tax_amount'           => 'decimal:2',
+        'total'                => 'decimal:2',
+        'reminder_fee'         => 'decimal:2',
         'last_reminder_sent_at' => 'datetime',
-        'reminder_history' => 'array',
-        'company_snapshot' => 'array',
-        'is_correction' => 'boolean',
-        'corrected_at' => 'datetime',
+        'reminder_history'     => 'array',
+        'company_snapshot'     => 'array',
+        'is_correction'        => 'boolean',
+        'corrected_at'         => 'datetime',
     ];
 
     public function company(): BelongsTo
@@ -218,6 +238,37 @@ class Invoice extends Model
         return $invoice;
     }
 
+    /**
+     * Human-readable invoice type label (e.g. "Abschlagsrechnung 3")
+     */
+    public function getReadableTypeAttribute(): string
+    {
+        return match ($this->invoice_type ?? self::TYPE_STANDARD) {
+            self::TYPE_ABSCHLAGSRECHNUNG => 'Abschlagsrechnung ' . ($this->sequence_number ?? ''),
+            self::TYPE_SCHLUSSRECHNUNG   => 'Schlussrechnung',
+            self::TYPE_NACHTRAGSRECHNUNG => 'Nachtragsrechnung',
+            self::TYPE_KORREKTURRECHNUNG => 'Korrekturrechnung',
+            default                      => 'Rechnung',
+        };
+    }
+
+    /**
+     * Calculate skonto amount and due date based on total and configuration.
+     * Must be called AFTER calculateTotals() so $this->total is accurate.
+     */
+    public function calculateSkonto(): void
+    {
+        if ($this->skonto_percent === null || $this->skonto_days === null) {
+            $this->skonto_amount   = null;
+            $this->skonto_due_date = null;
+            return;
+        }
+
+        $this->skonto_amount   = round((float) $this->total * ((float) $this->skonto_percent / 100), 2);
+        $baseDate              = $this->issue_date ?? now()->toDateObject();
+        $this->skonto_due_date = \Carbon\Carbon::instance($baseDate)->addDays((int) $this->skonto_days);
+    }
+
     public function calculateTotals(): void
     {
         // Load items if not already loaded
@@ -290,17 +341,15 @@ class Invoice extends Model
     public function generateNumber(): string
     {
         $company = $this->company;
-        $prefix = $company->getSetting('invoice_prefix', 'RE-');
+        $svc     = new NumberFormatService();
+        $format  = $svc->normaliseToFormat(
+            $company->getSetting('invoice_number_format')
+                ?? $company->getSetting('invoice_prefix', 'RE-')
+        );
 
-        $year = now()->year;
-        $lastInvoice = static::where('company_id', $this->company_id)
-            ->whereYear('created_at', $year)
-            ->orderBy('created_at', 'desc')
-            ->first();
+        $numbers = static::where('company_id', $this->company_id)->pluck('number');
 
-        $lastNumber = $lastInvoice ? (int) substr($lastInvoice->number, -4) : 0;
-
-        return $prefix . $year . '-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        return $svc->next($format, $numbers);
     }
 
     /**
@@ -477,24 +526,25 @@ class Invoice extends Model
     public function generateCorrectionNumber(): string
     {
         $company = $this->company;
-        $prefix = $company->getSetting('invoice_prefix', 'RE-');
-        
-        // Extract the number from the original invoice
+        $svc     = new NumberFormatService();
+        $format  = $svc->normaliseToFormat(
+            $company->getSetting('invoice_number_format')
+                ?? $company->getSetting('invoice_prefix', 'RE-')
+        );
+
+        // Build a "STORNO" variant of the format by inserting STORNO- before the counter token
+        $stornoFormat = preg_replace('/\{(#+)\}/', 'STORNO-{$1}', $format);
+
+        // If the original invoice exists, derive its number directly
         if ($this->corrects_invoice_id && $this->correctsInvoice) {
             $originalNumber = $this->correctsInvoice->number;
-            return str_replace($prefix, $prefix . 'STORNO-', $originalNumber);
+            $scopePrefix    = $svc->scopePrefix($format);
+            return str_replace($scopePrefix, $scopePrefix . 'STORNO-', $originalNumber);
         }
-        
-        // Fallback to regular numbering with STORNO prefix
-        $year = now()->year;
-        $lastInvoice = static::where('company_id', $this->company_id)
-            ->whereYear('created_at', $year)
-            ->orderBy('created_at', 'desc')
-            ->first();
 
-        $lastNumber = $lastInvoice ? (int) substr($lastInvoice->number, -4) : 0;
+        $numbers = static::where('company_id', $this->company_id)->pluck('number');
 
-        return $prefix . 'STORNO-' . $year . '-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        return $svc->next($stornoFormat, $numbers);
     }
 
     /**

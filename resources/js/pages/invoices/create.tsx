@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, PackagePlus } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
@@ -82,23 +82,11 @@ export default function InvoicesCreate() {
         notes: "",
         layout_id: layouts.find((l) => l.is_default)?.id || "",
         vat_regime: "standard",
-        items: [
-            {
-                id: 1,
-                product_id: undefined,
-                product_sku: undefined,
-                product_number: undefined,
-                description: "",
-                quantity: 1,
-                unit_price: 0,
-                unit: "Stk.",
-                tax_rate: settings.tax_rate || 0.19,
-                total: 0,
-                discount_type: null,
-                discount_value: null,
-                discount_amount: 0,
-            },
-        ] as InvoiceItem[],
+        invoice_type: "standard",
+        sequence_number: "",
+        skonto_percent: "",
+        skonto_days: "",
+        items: [] as InvoiceItem[],
     })
 
     const [totals, setTotals] = useState({
@@ -107,6 +95,18 @@ export default function InvoicesCreate() {
         tax_amount: 0,
         total: 0,
     })
+
+    // Skonto live preview (client-side calculation — backend is source of truth on save)
+    const skontoAmount = data.skonto_percent && totals.total
+        ? Math.round(totals.total * (Number(data.skonto_percent) / 100) * 100) / 100
+        : null
+    const skontoDate = data.skonto_days && data.issue_date
+        ? (() => {
+            const d = new Date(data.issue_date)
+            d.setDate(d.getDate() + Number(data.skonto_days))
+            return d.toLocaleDateString("de-DE")
+          })()
+        : null
 
     const germanUnits = ["Stk.", "Std.", "Tag", "Monat", "Jahr", "m", "m²", "m³", "kg", "l", "Paket"]
     const formErrors = errors as Record<string, string>
@@ -177,12 +177,10 @@ export default function InvoicesCreate() {
     }
 
     const removeItem = (id: number) => {
-        if ((data.items as InvoiceItem[]).length > 1) {
-            setData(
-                "items",
-                (data.items as InvoiceItem[]).filter((item: InvoiceItem) => item.id !== id),
-            )
-        }
+        setData(
+            "items",
+            (data.items as InvoiceItem[]).filter((item: InvoiceItem) => item.id !== id),
+        )
     }
 
     const updateItem = (id: number, field: keyof InvoiceItem, value: string | number | null) => {
@@ -407,6 +405,131 @@ export default function InvoicesCreate() {
                         </CardContent>
                     </Card>
 
+                    {/* Rechnungstyp & Skonto */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Rechnungstyp &amp; Zahlungsbedingungen</CardTitle>
+                            <CardDescription>Typ, Skonto und erweiterte Zahlungsoptionen</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Rechnungstyp */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="invoice_type">Rechnungstyp</Label>
+                                    <Select
+                                        value={data.invoice_type || "standard"}
+                                        onValueChange={(v) => {
+                                            setData((prev: any) => ({
+                                                ...prev,
+                                                invoice_type: v,
+                                                sequence_number: v !== "abschlagsrechnung" ? "" : prev.sequence_number,
+                                            }))
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="standard">Rechnung</SelectItem>
+                                            <SelectItem value="abschlagsrechnung">Abschlagsrechnung</SelectItem>
+                                            <SelectItem value="schlussrechnung">Schlussrechnung</SelectItem>
+                                            <SelectItem value="nachtragsrechnung">Nachtragsrechnung</SelectItem>
+                                            <SelectItem value="korrekturrechnung">Korrekturrechnung</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.invoice_type && <p className="text-red-600 text-sm">{errors.invoice_type}</p>}
+                                </div>
+
+                                {/* Sequence Number – only for Abschlagsrechnung */}
+                                {data.invoice_type === "abschlagsrechnung" && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sequence_number">Abschlagsnummer (1–20) *</Label>
+                                        <Select
+                                            value={data.sequence_number?.toString() || ""}
+                                            onValueChange={(v) => setData("sequence_number", v)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Abschlag wählen" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
+                                                    <SelectItem key={n} value={n.toString()}>
+                                                        Abschlag {n}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.sequence_number && <p className="text-red-600 text-sm">{errors.sequence_number}</p>}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Skonto */}
+                            <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                                <div>
+                                    <p className="font-medium text-sm">Skonto (Zahlungsrabatt)</p>
+                                    <p className="text-xs text-muted-foreground">Optionaler Rabatt bei frühzeitiger Zahlung</p>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="skonto_percent">Skonto-Prozentsatz</Label>
+                                        <Select
+                                            value={data.skonto_percent?.toString() || "none"}
+                                            onValueChange={(v) => setData("skonto_percent", v === "none" ? "" : v)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Kein Skonto" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">Kein Skonto</SelectItem>
+                                                <SelectItem value="2">2 %</SelectItem>
+                                                <SelectItem value="3">3 %</SelectItem>
+                                                <SelectItem value="4">4 %</SelectItem>
+                                                <SelectItem value="5">5 %</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.skonto_percent && <p className="text-red-600 text-sm">{errors.skonto_percent}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="skonto_days">Skonto-Frist (Tage)</Label>
+                                        <Select
+                                            value={data.skonto_days?.toString() || "none"}
+                                            onValueChange={(v) => setData("skonto_days", v === "none" ? "" : v)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Frist wählen" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">Keine Frist</SelectItem>
+                                                <SelectItem value="7">7 Tage</SelectItem>
+                                                <SelectItem value="10">10 Tage</SelectItem>
+                                                <SelectItem value="14">14 Tage</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.skonto_days && <p className="text-red-600 text-sm">{errors.skonto_days}</p>}
+                                    </div>
+                                </div>
+                                {/* Live preview */}
+                                {skontoAmount !== null && skontoDate && (
+                                    <div className="rounded bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-800 flex gap-6">
+                                        <span>
+                                            <span className="font-medium">Skonto-Betrag: </span>
+                                            {formatCurrency(skontoAmount)}
+                                        </span>
+                                        <span>
+                                            <span className="font-medium">Skonto bis: </span>
+                                            {skontoDate}
+                                        </span>
+                                        <span>
+                                            <span className="font-medium">Bei Skonto zahlen: </span>
+                                            {formatCurrency(totals.total - skontoAmount)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Invoice Items */}
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
@@ -472,7 +595,17 @@ export default function InvoicesCreate() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {(data.items as InvoiceItem[]).map((item: InvoiceItem, index: number) => (
+                                        {(data.items as InvoiceItem[]).length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={10} className="py-12 text-center">
+                                                    <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                                                        <PackagePlus className="h-10 w-10 opacity-30" />
+                                                        <p className="text-sm font-medium">Noch keine Positionen vorhanden</p>
+                                                        <p className="text-xs">Klicken Sie auf „Position hinzufügen", um zu beginnen.</p>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (data.items as InvoiceItem[]).map((item: InvoiceItem, index: number) => (
                                             <TableRow key={item.id}>
                                                 <TableCell className="align-top">
                                                     <div className="text-sm">
@@ -602,7 +735,6 @@ export default function InvoicesCreate() {
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => removeItem(item.id)}
-                                                        disabled={data.items.length === 1}
                                                         className="text-red-600 hover:text-red-700"
                                                     >
                                                         <Trash2 className="h-4 w-4" />

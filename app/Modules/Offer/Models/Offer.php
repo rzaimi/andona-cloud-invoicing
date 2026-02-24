@@ -6,6 +6,7 @@ use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\User\Models\User;
+use App\Services\NumberFormatService;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -127,17 +128,15 @@ class Offer extends Model
     public function generateNumber(): string
     {
         $company = $this->company;
-        $prefix = $company->getSetting('offer_prefix', 'AN-');
+        $svc     = new NumberFormatService();
+        $format  = $svc->normaliseToFormat(
+            $company->getSetting('offer_number_format')
+                ?? $company->getSetting('offer_prefix', 'AN-')
+        );
 
-        $year = now()->year;
-        $lastOffer = static::where('company_id', $this->company_id)
-            ->whereYear('created_at', $year)
-            ->orderBy('created_at', 'desc')
-            ->first();
+        $numbers = static::where('company_id', $this->company_id)->pluck('number');
 
-        $lastNumber = $lastOffer ? (int) substr($lastOffer->number, -4) : 0;
-
-        return $prefix . $year . '-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        return $svc->next($format, $numbers);
     }
 
     public function isExpired(): bool

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, PackagePlus } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
@@ -79,23 +79,7 @@ export default function OffersCreate() {
         notes: "",
         terms_conditions: "",
         layout_id: layouts.find((l) => l.is_default)?.id || "",
-        items: [
-            {
-                id: 1,
-                product_id: undefined,
-                product_sku: undefined,
-                product_number: undefined,
-                description: "",
-                quantity: 1,
-                unit_price: 0,
-                unit: "Stk.",
-                tax_rate: settings.tax_rate || 0.19,
-                total: 0,
-                discount_type: null,
-                discount_value: null,
-                discount_amount: 0,
-            },
-        ] as OfferItem[],
+        items: [] as OfferItem[],
     })
 
     const [totals, setTotals] = useState({
@@ -166,12 +150,10 @@ export default function OffersCreate() {
     }
 
     const removeItem = (id: number) => {
-        if (data.items.length > 1) {
-            setData(
-                "items",
-                data.items.filter((item) => item.id !== id),
-            )
-        }
+        setData(
+            "items",
+            data.items.filter((item) => item.id !== id),
+        )
     }
 
     const updateItem = (id: number, field: keyof OfferItem, value: string | number | null) => {
@@ -383,7 +365,17 @@ export default function OffersCreate() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {data.items.map((item, index) => (
+                                        {data.items.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={10} className="py-12 text-center">
+                                                    <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                                                        <PackagePlus className="h-10 w-10 opacity-30" />
+                                                        <p className="text-sm font-medium">Noch keine Positionen vorhanden</p>
+                                                        <p className="text-xs">Klicken Sie auf „Position hinzufügen", um zu beginnen.</p>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : data.items.map((item, index) => (
                                             <TableRow key={item.id}>
                                                 <TableCell className="align-top">
                                                     <div className="text-sm">
@@ -512,7 +504,6 @@ export default function OffersCreate() {
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => removeItem(item.id)}
-                                                        disabled={data.items.length === 1}
                                                         className="text-red-600 hover:text-red-700"
                                                     >
                                                         <Trash2 className="h-4 w-4" />

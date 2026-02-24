@@ -8,6 +8,7 @@ use App\Modules\Invoice\Models\InvoiceLayout;
 use App\Modules\Company\Models\CompanySetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -208,15 +209,16 @@ class SettingsController extends Controller
             'currency' => 'required|string|in:USD,EUR,GBP,JPY,CHF',
             'tax_rate' => 'required|numeric|min:0|max:1',
             'reduced_tax_rate' => 'nullable|numeric|min:0|max:1',
-            'invoice_prefix' => 'required|string|max:10',
-            'offer_prefix' => 'required|string|max:10',
-            'customer_prefix' => 'nullable|string|max:10',
+            // Dynamic number format strings (new) – validated to contain the {#} counter token
+            'invoice_number_format' => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'offer_number_format'   => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'customer_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
             'date_format' => 'required|string|in:Y-m-d,d.m.Y,d/m/Y,m/d/Y',
             'payment_terms' => 'required|integer|min:1|max:365',
             'language' => 'nullable|string|in:de,en,fr,it,es',
             'timezone' => 'nullable|string',
-            'decimal_separator' => 'required|string|in:.,,',
-            'thousands_separator' => 'required|string|in:.,,',
+            'decimal_separator'   => ['required', 'string', Rule::in(['.', ','])],
+            'thousands_separator' => ['required', 'string', Rule::in(['.', ',', ' ', ''])],
             'invoice_footer' => 'nullable|string|max:500',
             'invoice_tax_note' => 'nullable|string|max:500',
             'offer_footer' => 'nullable|string|max:500',

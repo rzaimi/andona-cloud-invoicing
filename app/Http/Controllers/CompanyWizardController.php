@@ -87,9 +87,9 @@ class CompanyWizardController extends Controller
             'email_settings.smtp_from_name'     => $smtpRule . '|string|max:255',
 
             // Invoice settings
-            'invoice_settings.invoice_prefix'       => 'nullable|string|max:10',
-            'invoice_settings.offer_prefix'         => 'nullable|string|max:10',
-            'invoice_settings.customer_prefix'      => 'nullable|string|max:10',
+            'invoice_settings.invoice_number_format'  => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'invoice_settings.offer_number_format'    => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'invoice_settings.customer_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
             'invoice_settings.currency'             => 'nullable|in:EUR,USD,GBP,CHF',
             'invoice_settings.tax_rate'             => 'nullable|numeric|min:0|max:1',
             'invoice_settings.reduced_tax_rate'     => 'nullable|numeric|min:0|max:1',
@@ -182,9 +182,12 @@ class CompanyWizardController extends Controller
 
             // ── Invoice settings ─────────────────────────────────────────────
             $invoiceDefaults = [
-                'invoice_prefix'      => 'RE-',
-                'offer_prefix'        => 'AN-',
-                'customer_prefix'     => 'KD-',
+                'invoice_number_format'  => 'RE-{YYYY}-{####}',
+                'offer_number_format'    => 'AN-{YYYY}-{####}',
+                'customer_number_format' => 'KU-{YYYY}-{####}',
+                'invoice_prefix'         => 'RE-',
+                'offer_prefix'           => 'AN-',
+                'customer_prefix'        => 'KU-',
                 'currency'            => 'EUR',
                 'tax_rate'            => 0.19,
                 'reduced_tax_rate'    => 0.07,
@@ -314,9 +317,9 @@ class CompanyWizardController extends Controller
             'email_settings.smtp_from_address' => 'Absender E-Mail',
             'email_settings.smtp_from_name'    => 'Absendername',
 
-            'invoice_settings.invoice_prefix'      => 'Rechnungspräfix',
-            'invoice_settings.offer_prefix'        => 'Angebotspräfix',
-            'invoice_settings.customer_prefix'     => 'Kundenpräfix',
+            'invoice_settings.invoice_number_format'  => 'Rechnungsnummernformat',
+            'invoice_settings.offer_number_format'    => 'Angebotsnummernformat',
+            'invoice_settings.customer_number_format' => 'Kundennummernformat',
             'invoice_settings.currency'            => 'Währung',
             'invoice_settings.tax_rate'            => 'Steuersatz',
             'invoice_settings.reduced_tax_rate'    => 'Ermäßigter Steuersatz',

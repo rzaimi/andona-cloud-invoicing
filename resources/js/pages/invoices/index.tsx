@@ -174,6 +174,25 @@ export default function InvoicesIndex() {
         )
     }
 
+    const getTypeBadge = (invoice: any) => {
+        const type = invoice.invoice_type || "standard"
+        const seq  = invoice.sequence_number
+        const labels: Record<string, string> = {
+            standard:          "",
+            abschlagsrechnung: `Abschlag ${seq ?? ""}`,
+            schlussrechnung:   "Schlussrechnung",
+            nachtragsrechnung: "Nachtrag",
+            korrekturrechnung: "Korrektur",
+        }
+        const label = labels[type]
+        if (!label) return null
+        return (
+            <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+                {label}
+            </Badge>
+        )
+    }
+
     const getStatusBadge = (status: string) => {
         const statusConfig = {
             draft: { label: "Entwurf", variant: "outline" as const },
@@ -425,8 +444,9 @@ export default function InvoicesIndex() {
                                 {invoices.data.map((invoice) => (
                                     <TableRow key={invoice.id} className="group">
                                         <TableCell className="font-medium">
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
                                                 {invoice.number}
+                                                {getTypeBadge(invoice)}
                                                 {invoice.is_correction && (
                                                     <Badge variant="destructive" className="text-xs">
                                                         Storno

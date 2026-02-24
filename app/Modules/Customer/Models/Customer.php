@@ -5,6 +5,7 @@ namespace App\Modules\Customer\Models;
 use App\Modules\Company\Models\Company;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Offer\Models\Offer;
+use App\Services\NumberFormatService;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -89,22 +90,15 @@ class Customer extends Model
     public function generateCustomerNumber(): string
     {
         $company = $this->company ?? Company::find($this->company_id);
-        $prefix = $company->getSetting('customer_prefix', 'KU');
-        $year = date('Y');
+        $svc     = new NumberFormatService();
+        $format  = $svc->normaliseToFormat(
+            $company->getSetting('customer_number_format')
+                ?? $company->getSetting('customer_prefix', 'KU-')
+        );
 
-        $lastCustomer = static::where('company_id', $this->company_id)
-            ->where('number', 'like', "{$prefix}-{$year}-%")
-            ->orderBy('number', 'desc')
-            ->first();
+        $numbers = static::where('company_id', $this->company_id)->pluck('number');
 
-        if ($lastCustomer) {
-            $lastNumber = (int) substr($lastCustomer->number, -4);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
-        }
-
-        return sprintf('%s-%s-%04d', $prefix, $year, $nextNumber);
+        return $svc->next($format, $numbers);
     }
 
     public function getFullAddressAttribute(): string

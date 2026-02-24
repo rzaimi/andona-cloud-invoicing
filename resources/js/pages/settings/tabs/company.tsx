@@ -8,8 +8,31 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { Save } from "lucide-react"
 import { route } from "ziggy-js"
+
+/** Resolve a number-format string to a preview using today's date and a sample counter. */
+function previewNumberFormat(format: string, sample = 1): string {
+    if (!format) return ""
+    const now = new Date()
+    const yyyy = String(now.getFullYear())
+    const yy   = yyyy.slice(-2)
+    const mm   = String(now.getMonth() + 1).padStart(2, "0")
+    const dd   = String(now.getDate()).padStart(2, "0")
+
+    let result = format
+        .replace(/\{YYYY\}/g, yyyy)
+        .replace(/\{YY\}/g, yy)
+        .replace(/\{MM\}/g, mm)
+        .replace(/\{DD\}/g, dd)
+
+    // Replace {####} with padded counter
+    result = result.replace(/\{(#+)\}/g, (_: string, hashes: string) =>
+        String(sample).padStart(hashes.length, "0")
+    )
+    return result
+}
 
 interface CompanySettingsTabProps {
     company: any
@@ -21,9 +44,9 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
         currency: settings?.currency || "EUR",
         tax_rate: settings?.tax_rate || 0.19,
         reduced_tax_rate: settings?.reduced_tax_rate || 0.07,
-        invoice_prefix: settings?.invoice_prefix || "RE-",
-        offer_prefix: settings?.offer_prefix || "AN-",
-        customer_prefix: settings?.customer_prefix || "KU-",
+        invoice_number_format:  settings?.invoice_number_format  || "RE-{YYYY}-{####}",
+        offer_number_format:    settings?.offer_number_format    || "AN-{YYYY}-{####}",
+        customer_number_format: settings?.customer_number_format || "KU-{YYYY}-{####}",
         date_format: settings?.date_format || "d.m.Y",
         payment_terms: settings?.payment_terms || 14,
         language: settings?.language || "de",
@@ -169,43 +192,76 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Nummern-Präfixe</CardTitle>
-                    <CardDescription>Präfixe für automatisch generierte Nummern</CardDescription>
+                    <CardTitle>Nummernformat</CardTitle>
+                    <CardDescription>
+                        Dynamisches Format für automatisch generierte Nummern. Verfügbare Tokens:
+                    </CardDescription>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                        {[
+                            ["{YYYY}", "4-stelliges Jahr (2025)"],
+                            ["{YY}",   "2-stelliges Jahr (25)"],
+                            ["{MM}",   "Monat (01–12)"],
+                            ["{DD}",   "Tag (01–31)"],
+                            ["{####}", "Laufende Nr. (Anzahl # = Stellenanzahl)"],
+                        ].map(([token, desc]) => (
+                            <span key={token} title={desc} className="cursor-help">
+                                <Badge variant="outline" className="font-mono text-xs">{token}</Badge>
+                            </span>
+                        ))}
+                    </div>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-3">
                     <div className="space-y-2">
-                        <Label htmlFor="invoice_prefix">Rechnungs-Präfix *</Label>
+                        <Label htmlFor="invoice_number_format">Rechnungsformat *</Label>
                         <Input
-                            id="invoice_prefix"
-                            value={data.invoice_prefix}
-                            onChange={(e) => setData("invoice_prefix", e.target.value)}
-                            maxLength={10}
+                            id="invoice_number_format"
+                            value={data.invoice_number_format}
+                            onChange={(e) => setData("invoice_number_format", e.target.value)}
+                            maxLength={60}
+                            placeholder="RE-{YYYY}-{####}"
                             required
                         />
-                        {errors.invoice_prefix && <p className="text-red-600 text-sm">{errors.invoice_prefix}</p>}
+                        {data.invoice_number_format && (
+                            <p className="text-xs text-muted-foreground">
+                                Vorschau: <span className="font-mono font-medium">{previewNumberFormat(data.invoice_number_format)}</span>
+                            </p>
+                        )}
+                        {errors.invoice_number_format && <p className="text-red-600 text-sm">{errors.invoice_number_format}</p>}
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="offer_prefix">Angebots-Präfix *</Label>
+                        <Label htmlFor="offer_number_format">Angebotsformat *</Label>
                         <Input
-                            id="offer_prefix"
-                            value={data.offer_prefix}
-                            onChange={(e) => setData("offer_prefix", e.target.value)}
-                            maxLength={10}
+                            id="offer_number_format"
+                            value={data.offer_number_format}
+                            onChange={(e) => setData("offer_number_format", e.target.value)}
+                            maxLength={60}
+                            placeholder="AN-{YYYY}-{####}"
                             required
                         />
-                        {errors.offer_prefix && <p className="text-red-600 text-sm">{errors.offer_prefix}</p>}
+                        {data.offer_number_format && (
+                            <p className="text-xs text-muted-foreground">
+                                Vorschau: <span className="font-mono font-medium">{previewNumberFormat(data.offer_number_format)}</span>
+                            </p>
+                        )}
+                        {errors.offer_number_format && <p className="text-red-600 text-sm">{errors.offer_number_format}</p>}
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="customer_prefix">Kunden-Präfix</Label>
+                        <Label htmlFor="customer_number_format">Kundenformat</Label>
                         <Input
-                            id="customer_prefix"
-                            value={data.customer_prefix}
-                            onChange={(e) => setData("customer_prefix", e.target.value)}
-                            maxLength={10}
+                            id="customer_number_format"
+                            value={data.customer_number_format}
+                            onChange={(e) => setData("customer_number_format", e.target.value)}
+                            maxLength={60}
+                            placeholder="KU-{YYYY}-{####}"
                         />
-                        {errors.customer_prefix && <p className="text-red-600 text-sm">{errors.customer_prefix}</p>}
+                        {data.customer_number_format && (
+                            <p className="text-xs text-muted-foreground">
+                                Vorschau: <span className="font-mono font-medium">{previewNumberFormat(data.customer_number_format)}</span>
+                            </p>
+                        )}
+                        {errors.customer_number_format && <p className="text-red-600 text-sm">{errors.customer_number_format}</p>}
                     </div>
                 </CardContent>
             </Card>

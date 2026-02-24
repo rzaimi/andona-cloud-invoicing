@@ -413,6 +413,19 @@
         }
     }
 
+    // Readable invoice type label
+    if (!function_exists('getReadableInvoiceType')) {
+        function getReadableInvoiceType($type, $sequenceNumber = null) {
+            switch ($type) {
+                case 'abschlagsrechnung': return 'Abschlagsrechnung ' . ($sequenceNumber ?? '');
+                case 'schlussrechnung':   return 'Schlussrechnung';
+                case 'nachtragsrechnung': return 'Nachtragsrechnung';
+                case 'korrekturrechnung': return 'Korrekturrechnung';
+                default:                  return 'Rechnung';
+            }
+        }
+    }
+
     // Helper function for VAT regime legal text
     if (!function_exists('getVatRegimeNote')) {
         function getVatRegimeNote($regime) {

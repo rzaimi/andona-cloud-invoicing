@@ -9,6 +9,7 @@ use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Offer\Models\Offer;
 use App\Modules\Offer\Models\OfferItem;
 use App\Modules\Offer\Models\OfferLayout;
+use App\Services\NumberFormatService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -133,13 +134,13 @@ class OfferController extends Controller
             $effectiveCompanyId = $this->getEffectiveCompanyId();
             $company = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
 
-            // Generate offer number
-            $prefix = $company->getSetting('offer_prefix', 'AN-');
-            $year = now()->year;
-            $lastNumber = Offer::where('company_id', $effectiveCompanyId)
-                    ->whereYear('created_at', $year)
-                    ->count() + 1;
-            $offerNumber = $prefix . $year . '-' . str_pad($lastNumber, 4, '0', STR_PAD_LEFT);
+            // Generate offer number using dynamic format setting
+            $svc    = new NumberFormatService();
+            $format = $svc->normaliseToFormat(
+                $company->getSetting('offer_number_format')
+                    ?? $company->getSetting('offer_prefix', 'AN-')
+            );
+            $offerNumber = $svc->next($format, Offer::where('company_id', $effectiveCompanyId)->pluck('number'));
 
             // Create offer
             $offer = Offer::create([
@@ -359,13 +360,13 @@ class OfferController extends Controller
         DB::transaction(function () use ($offer) {
             $company = $offer->company;
 
-            // Generate invoice number
-            $prefix = $company->getSetting('invoice_prefix', 'RE-');
-            $year = now()->year;
-            $lastNumber = Invoice::where('company_id', $offer->company_id)
-                    ->whereYear('created_at', $year)
-                    ->count() + 1;
-            $invoiceNumber = $prefix . $year . '-' . str_pad($lastNumber, 4, '0', STR_PAD_LEFT);
+            // Generate invoice number using dynamic format setting
+            $svc    = new NumberFormatService();
+            $format = $svc->normaliseToFormat(
+                $company->getSetting('invoice_number_format')
+                    ?? $company->getSetting('invoice_prefix', 'RE-')
+            );
+            $invoiceNumber = $svc->next($format, Invoice::where('company_id', $offer->company_id)->pluck('number'));
 
             // Create invoice from offer
             $invoice = Invoice::create([

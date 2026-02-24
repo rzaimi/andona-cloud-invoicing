@@ -5,6 +5,7 @@ namespace App\Modules\Customer\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Customer\Models\Customer;
 use App\Services\ContextService;
+use App\Services\NumberFormatService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -101,25 +102,15 @@ class CustomerController extends Controller
             $validated['status'] = 'active';
         }
 
-        // Generate customer number
+        // Generate customer number using dynamic format setting
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::find($companyId);
-        $prefix = $company->getSetting('customer_prefix', 'KU');
-        $year = date('Y');
-
-        $lastCustomer = Customer::where('company_id', $companyId)
-            ->where('number', 'like', "{$prefix}-{$year}-%")
-            ->orderBy('number', 'desc')
-            ->first();
-
-        if ($lastCustomer) {
-            $lastNumber = (int) substr($lastCustomer->number, -4);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-
-        $validated['number'] = sprintf('%s-%s-%04d', $prefix, $year, $newNumber);
+        $company   = \App\Modules\Company\Models\Company::find($companyId);
+        $svc       = new NumberFormatService();
+        $format    = $svc->normaliseToFormat(
+            $company->getSetting('customer_number_format')
+                ?? $company->getSetting('customer_prefix', 'KU-')
+        );
+        $validated['number'] = $svc->next($format, Customer::where('company_id', $companyId)->pluck('number'));
         $validated['company_id'] = $companyId;
         $validated['user_id'] = $user->id;
 

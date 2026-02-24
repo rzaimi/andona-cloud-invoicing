@@ -141,8 +141,12 @@ class HandleInertiaRequests extends Middleware
                         $essentialSettings = [
                             'currency' => $allSettings['currency'] ?? 'EUR',
                             'tax_rate' => $allSettings['tax_rate'] ?? 0.19,
+                            'invoice_number_format'  => $allSettings['invoice_number_format']  ?? 'RE-{YYYY}-{####}',
+                            'offer_number_format'    => $allSettings['offer_number_format']    ?? 'AN-{YYYY}-{####}',
+                            'customer_number_format' => $allSettings['customer_number_format'] ?? 'KU-{YYYY}-{####}',
+                            // Legacy prefix keys kept for backward compat
                             'invoice_prefix' => $allSettings['invoice_prefix'] ?? 'RE-',
-                            'offer_prefix' => $allSettings['offer_prefix'] ?? 'AN-',
+                            'offer_prefix'   => $allSettings['offer_prefix']   ?? 'AN-',
                             'date_format' => $allSettings['date_format'] ?? 'd.m.Y',
                             'language' => $allSettings['language'] ?? 'de',
                         ];
