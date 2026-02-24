@@ -17,12 +17,18 @@ import type { BreadcrumbItem, Customer } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { route } from "ziggy-js"
 
-// German standard tax rates (Umsatzsteuer)
-const GERMAN_TAX_RATES = [
-    { value: 0.19, label: "19% (Regelsteuersatz)" },
-    { value: 0.07, label: "7% (Ermäßigter Satz)" },
-    { value: 0.00, label: "0% (Steuerfrei)" },
-] as const
+function buildTaxRates(taxRate: number, reducedTaxRate?: number) {
+    const standard = Math.round(taxRate * 100)
+    const reduced  = Math.round((reducedTaxRate ?? 0.07) * 100)
+    const rates: { value: number; label: string }[] = [
+        { value: taxRate, label: `${standard}% (Regelsteuersatz)` },
+    ]
+    if (reduced !== standard) {
+        rates.push({ value: reducedTaxRate ?? 0.07, label: `${reduced}% (Ermäßigter Satz)` })
+    }
+    rates.push({ value: 0.00, label: "0% (Steuerfrei)" })
+    return rates
+}
 
 interface OfferItem {
     id: number | string
@@ -72,6 +78,7 @@ interface OffersEditProps {
     settings: {
         currency: string
         tax_rate: number
+        reduced_tax_rate?: number
         decimal_separator: string
         thousands_separator: string
     }
@@ -79,6 +86,7 @@ interface OffersEditProps {
 
 export default function OffersEdit() {
     const { offer, customers, layouts, products, settings } = usePage<OffersEditProps>().props
+    const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate)
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -484,7 +492,7 @@ export default function OffersEdit() {
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {GERMAN_TAX_RATES.map((rate) => (
+                                                            {germanTaxRates.map((rate) => (
                                                                 <SelectItem key={rate.value} value={rate.value.toString()}>
                                                                     {rate.label}
                                                                 </SelectItem>

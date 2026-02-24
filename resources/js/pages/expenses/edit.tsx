@@ -36,6 +36,8 @@ interface ExpensesEditProps {
 export default function ExpensesEdit() {
     // @ts-ignore
     const { expense, categories } = usePage<ExpensesEditProps>().props
+    // @ts-ignore
+    const settingsPaymentMethods: string[] = (usePage().props.auth as any)?.user?.company?.settings?.payment_methods ?? []
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -55,7 +57,7 @@ export default function ExpensesEdit() {
         receipt: null as File | null,
     })
 
-    const paymentMethods = [
+    const paymentMethods = settingsPaymentMethods.length > 0 ? settingsPaymentMethods : [
         "Überweisung",
         "SEPA-Lastschrift",
         "Bar",

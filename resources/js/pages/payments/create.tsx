@@ -33,6 +33,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function PaymentsCreate() {
     const { invoices, selectedInvoice } = usePage<PaymentCreateProps>().props
+    // @ts-ignore
+    const settingsPaymentMethods: string[] = (usePage().props.auth as any)?.user?.company?.settings?.payment_methods ?? []
 
     const toNumber = (v: any) => {
         const n = typeof v === "number" ? v : parseFloat(String(v ?? "0"))
@@ -54,7 +56,7 @@ export default function PaymentsCreate() {
 
     const selectedInvoiceData = invoices.find((inv) => inv.id === data.invoice_id)
 
-    const paymentMethods = [
+    const paymentMethods = settingsPaymentMethods.length > 0 ? settingsPaymentMethods : [
         "Überweisung",
         "SEPA-Lastschrift",
         "Bar",

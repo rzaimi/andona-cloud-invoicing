@@ -49,8 +49,6 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
         customer_number_format: settings?.customer_number_format || "KU-{YYYY}-{####}",
         date_format: settings?.date_format || "d.m.Y",
         payment_terms: settings?.payment_terms || 14,
-        language: settings?.language || "de",
-        timezone: settings?.timezone || "Europe/Berlin",
         decimal_separator: settings?.decimal_separator || ",",
         thousands_separator: settings?.thousands_separator || ".",
         invoice_footer: settings?.invoice_footer || "",
@@ -70,13 +68,6 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
         { value: "Y-m-d", label: "YYYY-MM-DD" },
         { value: "d/m/Y", label: "DD/MM/YYYY" },
         { value: "m/d/Y", label: "MM/DD/YYYY" },
-    ]
-    const languages = [
-        { value: "de", label: "Deutsch" },
-        { value: "en", label: "English" },
-        { value: "fr", label: "Français" },
-        { value: "it", label: "Italiano" },
-        { value: "es", label: "Español" },
     ]
 
     return (
@@ -102,34 +93,6 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                             </SelectContent>
                         </Select>
                         {errors.currency && <p className="text-red-600 text-sm">{errors.currency}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="language">Sprache</Label>
-                        <Select value={data.language} onValueChange={(value) => setData("language", value)}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {languages.map((lang) => (
-                                    <SelectItem key={lang.value} value={lang.value}>
-                                        {lang.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {errors.language && <p className="text-red-600 text-sm">{errors.language}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="timezone">Zeitzone</Label>
-                        <Input
-                            id="timezone"
-                            value={data.timezone}
-                            onChange={(e) => setData("timezone", e.target.value)}
-                            placeholder="Europe/Berlin"
-                        />
-                        {errors.timezone && <p className="text-red-600 text-sm">{errors.timezone}</p>}
                     </div>
 
                     <div className="space-y-2">

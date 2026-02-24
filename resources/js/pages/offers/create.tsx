@@ -31,12 +31,18 @@ interface OfferItem {
     discount_amount?: number
 }
 
-// German standard tax rates (Umsatzsteuer)
-const GERMAN_TAX_RATES = [
-    { value: 0.19, label: "19% (Regelsteuersatz)" },
-    { value: 0.07, label: "7% (Ermäßigter Satz)" },
-    { value: 0.00, label: "0% (Steuerfrei)" },
-] as const
+function buildTaxRates(taxRate: number, reducedTaxRate?: number) {
+    const standard = Math.round(taxRate * 100)
+    const reduced  = Math.round((reducedTaxRate ?? 0.07) * 100)
+    const rates: { value: number; label: string }[] = [
+        { value: taxRate, label: `${standard}% (Regelsteuersatz)` },
+    ]
+    if (reduced !== standard) {
+        rates.push({ value: reducedTaxRate ?? 0.07, label: `${reduced}% (Ermäßigter Satz)` })
+    }
+    rates.push({ value: 0.00, label: "0% (Steuerfrei)" })
+    return rates
+}
 
 interface Product {
     id: string
@@ -56,6 +62,7 @@ interface OffersCreateProps {
     settings: {
         currency: string
         tax_rate: number
+        reduced_tax_rate?: number
         offer_prefix: string
         offer_validity_days: number
         decimal_separator: string
@@ -71,6 +78,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function OffersCreate() {
     const { customers, layouts, products, settings } = usePage<OffersCreateProps>().props
+    const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate)
 
     const { data, setData, post, processing, errors } = useForm({
         customer_id: "",
@@ -432,7 +440,7 @@ export default function OffersCreate() {
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {GERMAN_TAX_RATES.map((rate) => (
+                                                            {germanTaxRates.map((rate) => (
                                                                 <SelectItem key={rate.value} value={rate.value.toString()}>
                                                                     {rate.label}
                                                                 </SelectItem>

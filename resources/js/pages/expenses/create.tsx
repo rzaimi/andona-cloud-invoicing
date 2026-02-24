@@ -28,6 +28,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function ExpensesCreate() {
     const { categories } = usePage<ExpenseCreateProps>().props
+    // @ts-ignore
+    const settingsPaymentMethods: string[] = (usePage().props.auth as any)?.user?.company?.settings?.payment_methods ?? []
 
     const { data, setData, post, processing, errors } = useForm({
         category_id: "none",
@@ -41,7 +43,7 @@ export default function ExpensesCreate() {
         receipt: null as File | null,
     })
 
-    const paymentMethods = [
+    const paymentMethods = settingsPaymentMethods.length > 0 ? settingsPaymentMethods : [
         "Überweisung",
         "SEPA-Lastschrift",
         "Bar",

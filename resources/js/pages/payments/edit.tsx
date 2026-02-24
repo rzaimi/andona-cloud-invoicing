@@ -32,6 +32,8 @@ interface PaymentsEditProps {
 export default function PaymentsEdit() {
     // @ts-ignore
     const { payment, invoices } = usePage<PaymentsEditProps>().props
+    // @ts-ignore
+    const settingsPaymentMethods: string[] = (usePage().props.auth as any)?.user?.company?.settings?.payment_methods ?? []
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -49,7 +51,7 @@ export default function PaymentsEdit() {
         status: payment.status,
     })
 
-    const paymentMethods = [
+    const paymentMethods = settingsPaymentMethods.length > 0 ? settingsPaymentMethods : [
         "Überweisung",
         "SEPA-Lastschrift",
         "Bar",

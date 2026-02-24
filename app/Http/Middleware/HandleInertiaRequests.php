@@ -138,17 +138,21 @@ class HandleInertiaRequests extends Middleware
                         $allSettings = $settingsService->getAll($company->id);
                         
                         // Only include frequently used settings to reduce payload
+                        $rawPaymentMethods = $allSettings['payment_methods'] ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'];
                         $essentialSettings = [
-                            'currency' => $allSettings['currency'] ?? 'EUR',
-                            'tax_rate' => $allSettings['tax_rate'] ?? 0.19,
+                            'currency'               => $allSettings['currency'] ?? 'EUR',
+                            'tax_rate'               => $allSettings['tax_rate'] ?? 0.19,
+                            'reduced_tax_rate'       => $allSettings['reduced_tax_rate'] ?? 0.07,
                             'invoice_number_format'  => $allSettings['invoice_number_format']  ?? 'RE-{YYYY}-{####}',
                             'offer_number_format'    => $allSettings['offer_number_format']    ?? 'AN-{YYYY}-{####}',
                             'customer_number_format' => $allSettings['customer_number_format'] ?? 'KU-{YYYY}-{####}',
                             // Legacy prefix keys kept for backward compat
-                            'invoice_prefix' => $allSettings['invoice_prefix'] ?? 'RE-',
-                            'offer_prefix'   => $allSettings['offer_prefix']   ?? 'AN-',
-                            'date_format' => $allSettings['date_format'] ?? 'd.m.Y',
-                            'language' => $allSettings['language'] ?? 'de',
+                            'invoice_prefix'         => $allSettings['invoice_prefix'] ?? 'RE-',
+                            'offer_prefix'           => $allSettings['offer_prefix']   ?? 'AN-',
+                            'date_format'            => $allSettings['date_format'] ?? 'd.m.Y',
+                            'payment_terms'          => $allSettings['payment_terms'] ?? 14,
+                            'payment_methods'        => is_array($rawPaymentMethods) ? $rawPaymentMethods : json_decode($rawPaymentMethods, true) ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
+                            'default_payment_method' => $allSettings['default_payment_method'] ?? 'Überweisung',
                         ];
                         
                         $userData['company'] = [

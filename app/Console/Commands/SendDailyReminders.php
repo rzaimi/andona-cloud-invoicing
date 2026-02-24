@@ -95,6 +95,12 @@ class SendDailyReminders extends Command
     {
         $today = Carbon::today();
 
+        // Respect the per-company auto-send toggle
+        if (!(bool) $company->getSetting('reminder_auto_send', true)) {
+            $this->line("  ⏭  Auto-send disabled for {$company->name}, skipping.");
+            return;
+        }
+
         // Get company reminder settings
         $friendlyReminderDays = (int) $company->getSetting('reminder_friendly_days', 7); // 7 days after due
         $mahnung1Days = (int) $company->getSetting('reminder_mahnung1_days', 14); // 14 days after due

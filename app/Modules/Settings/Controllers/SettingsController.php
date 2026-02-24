@@ -109,16 +109,6 @@ class SettingsController extends Controller
             'electronic_address' => $this->settingsService->get('electronic_address', $companyId, null),
         ];
 
-        $notificationSettings = [
-            'notify_on_invoice_created' => $settings['notify_on_invoice_created'] ?? false,
-            'notify_on_invoice_sent' => $settings['notify_on_invoice_sent'] ?? true,
-            'notify_on_payment_received' => $settings['notify_on_payment_received'] ?? true,
-            'notify_on_offer_created' => $settings['notify_on_offer_created'] ?? false,
-            'notify_on_offer_accepted' => $settings['notify_on_offer_accepted'] ?? true,
-            'notify_on_offer_rejected' => $settings['notify_on_offer_rejected'] ?? false,
-            'email_notifications_enabled' => $settings['email_notifications_enabled'] ?? true,
-        ];
-
         $paymentMethodSettings = [
             'payment_methods' => $settings['payment_methods'] ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
             'default_payment_method' => $settings['default_payment_method'] ?? 'Überweisung',
@@ -190,7 +180,6 @@ class SettingsController extends Controller
             'emailSettings' => $emailSettings,
             'reminderSettings' => $reminderSettings,
             'erechnungSettings' => $erechnungSettings,
-            'notificationSettings' => $notificationSettings,
             'paymentMethodSettings' => $paymentMethodSettings,
             'datevSettings' => $datevSettings,
             'emailLogs' => $emailLogs,
@@ -215,8 +204,6 @@ class SettingsController extends Controller
             'customer_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
             'date_format' => 'required|string|in:Y-m-d,d.m.Y,d/m/Y,m/d/Y',
             'payment_terms' => 'required|integer|min:1|max:365',
-            'language' => 'nullable|string|in:de,en,fr,it,es',
-            'timezone' => 'nullable|string',
             'decimal_separator'   => ['required', 'string', Rule::in(['.', ','])],
             'thousands_separator' => ['required', 'string', Rule::in(['.', ',', ' ', ''])],
             'invoice_footer' => 'nullable|string|max:500',

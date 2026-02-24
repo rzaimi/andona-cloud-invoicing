@@ -14,7 +14,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { 
     Settings, 
     Mail, 
-    Bell, 
+    Bell,
+    AlarmClock,
     FileCheck, 
     CreditCard, 
     LayoutTemplate, 
@@ -41,7 +42,6 @@ import CompanyInfoTab from "./tabs/company-info"
 import EmailSettingsTab from "./tabs/email"
 import RemindersSettingsTab from "./tabs/reminders"
 import ERechnungSettingsTab from "./tabs/erechnung"
-import NotificationsSettingsTab from "./tabs/notifications"
 import PaymentMethodsSettingsTab from "./tabs/payment-methods"
 import EmailLogsTab from "./tabs/email-logs"
 import ProfileSettingsTab from "./tabs/profile"
@@ -57,7 +57,6 @@ interface SettingsPageProps {
     emailSettings: any
     reminderSettings: any
     erechnungSettings: any
-    notificationSettings: any
     paymentMethodSettings: any
     datevSettings: any
     emailLogs?: any
@@ -81,7 +80,6 @@ export default function SettingsIndex() {
         emailSettings, 
         reminderSettings, 
         erechnungSettings,
-        notificationSettings,
         paymentMethodSettings,
         datevSettings,
         emailLogs,
@@ -92,12 +90,16 @@ export default function SettingsIndex() {
         flash
     } = page.props
 
+    const isSuperAdmin = Array.isArray(user?.roles)
+        ? user.roles.some((r: any) => (typeof r === 'string' ? r : r?.name) === 'super_admin')
+        : false
+
     // Valid tab values
     const validTabs = [
         'company', 'company-info', 'email', 'reminders', 'erechnung', 
-        'notifications', 'payment-methods', 'email-logs', 
+        'payment-methods', 'email-logs', 
         'datev', 'profile', 'password', 'appearance',
-        'company-settings'
+        ...(isSuperAdmin ? ['company-settings'] : []),
     ]
 
     // Get tab from URL - prioritize URL over prop
@@ -189,7 +191,7 @@ export default function SettingsIndex() {
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <Settings className="h-4 w-4" />
-                                <span>Firmeneinstellungen</span>
+                                <span>Dokumenteneinstellungen</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="email" 
@@ -202,7 +204,7 @@ export default function SettingsIndex() {
                                 value="reminders" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
-                                <Bell className="h-4 w-4" />
+                                <AlarmClock className="h-4 w-4" />
                                 <span>Mahnungen</span>
                             </TabsTrigger>
                             <TabsTrigger 
@@ -211,13 +213,6 @@ export default function SettingsIndex() {
                             >
                                 <FileCheck className="h-4 w-4" />
                                 <span>E-Rechnung</span>
-                            </TabsTrigger>
-                            <TabsTrigger 
-                                value="notifications" 
-                                className="w-full justify-start gap-2 data-[state=active]:bg-background"
-                            >
-                                <Bell className="h-4 w-4" />
-                                <span>Benachrichtigungen</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="payment-methods" 
@@ -240,13 +235,15 @@ export default function SettingsIndex() {
                                 <Database className="h-4 w-4" />
                                 <span>DATEV</span>
                             </TabsTrigger>
-                            <TabsTrigger 
-                                value="company-settings" 
-                                className="w-full justify-start gap-2 data-[state=active]:bg-background"
-                            >
-                                <Settings className="h-4 w-4" />
-                                <span>Erweiterte Einstellungen</span>
-                            </TabsTrigger>
+                            {isSuperAdmin && (
+                                <TabsTrigger 
+                                    value="company-settings" 
+                                    className="w-full justify-start gap-2 data-[state=active]:bg-background"
+                                >
+                                    <Settings className="h-4 w-4" />
+                                    <span>Erweiterte Einstellungen</span>
+                                </TabsTrigger>
+                            )}
                             <TabsTrigger 
                                 value="profile" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
@@ -291,10 +288,6 @@ export default function SettingsIndex() {
 
                         <TabsContent value="erechnung" className="space-y-6 mt-0">
                             <ERechnungSettingsTab erechnungSettings={erechnungSettings} />
-                        </TabsContent>
-
-                        <TabsContent value="notifications" className="space-y-6 mt-0">
-                            <NotificationsSettingsTab notificationSettings={notificationSettings} />
                         </TabsContent>
 
                         <TabsContent value="payment-methods" className="space-y-6 mt-0">

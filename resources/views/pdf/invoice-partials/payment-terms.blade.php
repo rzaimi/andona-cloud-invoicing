@@ -3,10 +3,11 @@
     Required scope: $invoice, $dateFormat, $bodyFontSize, $layoutSettings
 --}}
 @php
-    $skontoAmount = (float)($invoice->skonto_amount ?? 0);
-    $hasSkonto    = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
-    $dueDateFmt   = $invoice->due_date ? formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') : null;
-    $taxNote      = $settings['invoice_tax_note'] ?? null;
+    $skontoAmount  = (float)($invoice->skonto_amount ?? 0);
+    $hasSkonto     = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
+    $dueDateFmt    = $invoice->due_date ? formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') : null;
+    $taxNote       = $settings['invoice_tax_note'] ?? null;
+    $invoiceFooter = trim($settings['invoice_footer'] ?? '');
 @endphp
 
 @if($taxNote)
@@ -31,5 +32,11 @@
             bis spätestens{{ $dueDateFmt ? ' ' . $dueDateFmt : '' }}
             unter Angabe der Rechnungsnummer <strong>{{ $invoice->number }}</strong> auf das unten genannte Konto.
         @endif
+    </div>
+@endif
+
+@if($invoiceFooter)
+    <div style="margin-top: 14px; font-size: {{ $bodyFontSize }}px; line-height: 1.6; color: #555;">
+        {!! nl2br(e($invoiceFooter)) !!}
     </div>
 @endif
