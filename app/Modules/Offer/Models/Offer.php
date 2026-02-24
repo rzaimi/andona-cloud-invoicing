@@ -127,16 +127,16 @@ class Offer extends Model
 
     public function generateNumber(): string
     {
-        $company = $this->company;
-        $svc     = new NumberFormatService();
-        $format  = $svc->normaliseToFormat(
+        $company    = $this->company;
+        $svc        = new NumberFormatService();
+        $format     = $svc->normaliseToFormat(
             $company->getSetting('offer_number_format')
                 ?? $company->getSetting('offer_prefix', 'AN-')
         );
+        $minCounter = (int) ($company->getSetting('offer_next_counter') ?? 1);
+        $numbers    = static::where('company_id', $this->company_id)->pluck('number');
 
-        $numbers = static::where('company_id', $this->company_id)->pluck('number');
-
-        return $svc->next($format, $numbers);
+        return $svc->next($format, $numbers, null, $minCounter);
     }
 
     public function isExpired(): bool

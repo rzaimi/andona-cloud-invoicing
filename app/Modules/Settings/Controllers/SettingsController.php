@@ -73,7 +73,7 @@ class SettingsController extends Controller
             });
         
         // Get active tab from request
-        $activeTab = $request->get('tab', 'company');
+        $activeTab = $request->get('tab', 'company-info');
 
         // Load all settings data for unified page
         $emailSettings = [
@@ -198,10 +198,15 @@ class SettingsController extends Controller
             'currency' => 'required|string|in:USD,EUR,GBP,JPY,CHF',
             'tax_rate' => 'required|numeric|min:0|max:1',
             'reduced_tax_rate' => 'nullable|numeric|min:0|max:1',
-            // Dynamic number format strings (new) – validated to contain the {#} counter token
-            'invoice_number_format' => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
-            'offer_number_format'   => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
+            // Dynamic number format strings – validated to contain the {#} counter token
+            'invoice_number_format'  => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'invoice_next_counter'   => 'required|integer|min:1|max:999999',
+            'storno_number_format'   => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'storno_next_counter'    => 'required|integer|min:1|max:999999',
+            'offer_number_format'    => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'offer_next_counter'     => 'required|integer|min:1|max:999999',
             'customer_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'customer_next_counter'  => 'nullable|integer|min:1|max:999999',
             'date_format' => 'required|string|in:Y-m-d,d.m.Y,d/m/Y,m/d/Y',
             'payment_terms' => 'required|integer|min:1|max:365',
             'decimal_separator'   => ['required', 'string', Rule::in(['.', ','])],

@@ -134,8 +134,13 @@ class Company extends Model
             'tax_rate' => 0.19,
             'reduced_tax_rate' => 0.07,
             'invoice_number_format'  => 'RE-{YYYY}-{####}',
+            'invoice_next_counter'   => 1,
+            'storno_number_format'   => 'STORNO-{YYYY}-{####}',
+            'storno_next_counter'    => 1,
             'offer_number_format'    => 'AN-{YYYY}-{####}',
+            'offer_next_counter'     => 1,
             'customer_number_format' => 'KU-{YYYY}-{####}',
+            'customer_next_counter'  => 1,
             // Legacy prefix keys kept for backward-compatibility read fallback
             'invoice_prefix'  => 'RE-',
             'offer_prefix'    => 'AN-',

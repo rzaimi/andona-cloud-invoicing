@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Plus, Trash2, PackagePlus } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, PackagePlus, Hash } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
@@ -48,6 +48,7 @@ interface InvoicesCreateProps {
     customers: Customer[]
     layouts: any[]
     products: Product[]
+    nextNumber: string
     settings: {
         currency: string
         tax_rate: number
@@ -79,7 +80,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function InvoicesCreate() {
-    const { customers, layouts, products, settings } = usePage().props as unknown as InvoicesCreateProps
+    const { customers, layouts, products, settings, nextNumber } = usePage().props as unknown as InvoicesCreateProps
     const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate)
 
     const { data, setData, post, processing, errors } = useForm<Record<string, any>>({
@@ -250,7 +251,15 @@ export default function InvoicesCreate() {
                             </Button>
                         </Link>
                         <div className="flex-1">
-                            <h1 className="text-1xl font-bold text-gray-900">Neue Rechnung erstellen</h1>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-1xl font-bold text-gray-900">Neue Rechnung erstellen</h1>
+                                {nextNumber && (
+                                    <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-blue-300 bg-blue-50 px-2.5 py-0.5 text-xs font-mono font-medium text-blue-700" title="Voraussichtliche Rechnungsnummer">
+                                        <Hash className="h-3 w-3" />
+                                        {nextNumber}
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-gray-600">Erstellen Sie eine neue Rechnung für Ihre Kunden</p>
                         </div>
                     </div>

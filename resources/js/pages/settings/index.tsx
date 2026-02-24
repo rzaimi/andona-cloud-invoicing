@@ -86,7 +86,7 @@ export default function SettingsIndex() {
         emailLogsStats,
         emailLogsFilters,
         user,
-        activeTab = "company",
+        activeTab = "company-info",
         flash
     } = page.props
 
@@ -118,9 +118,9 @@ export default function SettingsIndex() {
     // Initialize with URL tab if available, otherwise use prop
     const [currentTab, setCurrentTab] = useState(() => {
         const urlTab = getTabFromUrl()
-        const tab = urlTab || activeTab || 'company'
+        const tab = urlTab || activeTab || 'company-info'
         // Ensure tab is valid
-        return validTabs.includes(tab) ? tab : 'company'
+        return validTabs.includes(tab) ? tab : 'company-info'
     })
 
     // Update tab when URL changes (on mount and when activeTab prop changes)

@@ -119,14 +119,17 @@ class NumberFormatService
     /**
      * Generate the next number for a given set of existing numbers.
      *
-     * @param  string      $format   Format string
-     * @param  Collection  $numbers  All existing document numbers for this company
-     * @param  Carbon|null $date     Date context (defaults to now())
+     * @param  string      $format      Format string
+     * @param  Collection  $numbers     All existing document numbers for this company
+     * @param  Carbon|null $date        Date context (defaults to now())
+     * @param  int         $minCounter  Minimum counter value (from settings override).
+     *                                  The actual counter is max(DB-derived, $minCounter - 1) + 1,
+     *                                  so the counter can only move forward, never create duplicates.
      */
-    public function next(string $format, Collection $numbers, ?Carbon $date = null): string
+    public function next(string $format, Collection $numbers, ?Carbon $date = null, int $minCounter = 1): string
     {
         $date ??= now();
-        $last = $this->lastSequential($format, $numbers, $date);
+        $last = max($this->lastSequential($format, $numbers, $date), $minCounter - 1);
 
         return $this->resolve($format, $last + 1, $date);
     }

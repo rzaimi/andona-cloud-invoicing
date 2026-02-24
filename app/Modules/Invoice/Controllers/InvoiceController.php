@@ -88,6 +88,8 @@ class InvoiceController extends Controller
     public function create()
     {
         $companyId = $this->getEffectiveCompanyId();
+        $company   = \App\Modules\Company\Models\Company::find($companyId);
+
         $customers = Customer::forCompany($companyId)
             ->active()
             ->select('id', 'name', 'email')
@@ -102,11 +104,20 @@ class InvoiceController extends Controller
             ->orderBy('name')
             ->get();
 
+        $svc        = new NumberFormatService();
+        $format     = $svc->normaliseToFormat(
+            $company->getSetting('invoice_number_format')
+                ?? $company->getSetting('invoice_prefix', 'RE-')
+        );
+        $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
+        $nextNumber = $svc->next($format, Invoice::where('company_id', $companyId)->pluck('number'), null, $minCounter);
+
         return Inertia::render('invoices/create', [
-            'customers' => $customers,
-            'layouts' => $layouts,
-            'products' => $products,
-            'settings' => \App\Modules\Company\Models\Company::find($this->getEffectiveCompanyId())->getDefaultSettings(),
+            'customers'  => $customers,
+            'layouts'    => $layouts,
+            'products'   => $products,
+            'nextNumber' => $nextNumber,
+            'settings'   => $company->getDefaultSettings(),
         ]);
     }
 
@@ -1129,16 +1140,8 @@ class InvoiceController extends Controller
             $correctionInvoice->tax_amount = -$invoice->tax_amount;
             $correctionInvoice->total = -$invoice->total;
             
-            // Generate correction (STORNO) number derived from the original invoice number
-            $company        = $invoice->company;
-            $svc            = new NumberFormatService();
-            $format         = $svc->normaliseToFormat(
-                $company->getSetting('invoice_number_format')
-                    ?? $company->getSetting('invoice_prefix', 'RE-')
-            );
-            $scopePrefix    = $svc->scopePrefix($format);
-            $originalNumber = $invoice->number;
-            $correctionInvoice->number = str_replace($scopePrefix, $scopePrefix . 'STORNO-', $originalNumber);
+            // Generate correction (STORNO) number using the company's storno_number_format setting
+            $correctionInvoice->number = $correctionInvoice->generateCorrectionNumber();
             
             // Now save with the number
             $correctionInvoice->save();

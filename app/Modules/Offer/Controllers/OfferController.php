@@ -87,6 +87,8 @@ class OfferController extends Controller
     public function create()
     {
         $companyId = $this->getEffectiveCompanyId();
+        $company   = \App\Modules\Company\Models\Company::find($companyId);
+
         $customers = Customer::forCompany($companyId)
             ->active()
             ->select('id', 'name', 'email')
@@ -101,11 +103,20 @@ class OfferController extends Controller
             ->orderBy('name')
             ->get();
 
+        $svc        = new NumberFormatService();
+        $format     = $svc->normaliseToFormat(
+            $company->getSetting('offer_number_format')
+                ?? $company->getSetting('offer_prefix', 'AN-')
+        );
+        $minCounter = (int) ($company->getSetting('offer_next_counter') ?? 1);
+        $nextNumber = $svc->next($format, \App\Modules\Offer\Models\Offer::where('company_id', $companyId)->pluck('number'), null, $minCounter);
+
         return Inertia::render('offers/create', [
-            'customers' => $customers,
-            'layouts' => $layouts,
-            'products' => $products,
-            'settings' => \App\Modules\Company\Models\Company::find($companyId)->getDefaultSettings(),
+            'customers'  => $customers,
+            'layouts'    => $layouts,
+            'products'   => $products,
+            'nextNumber' => $nextNumber,
+            'settings'   => $company->getDefaultSettings(),
         ]);
     }
 

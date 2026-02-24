@@ -340,16 +340,16 @@ class Invoice extends Model
 
     public function generateNumber(): string
     {
-        $company = $this->company;
-        $svc     = new NumberFormatService();
-        $format  = $svc->normaliseToFormat(
+        $company    = $this->company;
+        $svc        = new NumberFormatService();
+        $format     = $svc->normaliseToFormat(
             $company->getSetting('invoice_number_format')
                 ?? $company->getSetting('invoice_prefix', 'RE-')
         );
+        $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
+        $numbers    = static::where('company_id', $this->company_id)->pluck('number');
 
-        $numbers = static::where('company_id', $this->company_id)->pluck('number');
-
-        return $svc->next($format, $numbers);
+        return $svc->next($format, $numbers, null, $minCounter);
     }
 
     /**
@@ -521,30 +521,20 @@ class Invoice extends Model
     }
 
     /**
-     * Generate correction number based on original invoice
+     * Generate correction number based on the company's storno_number_format setting.
      */
     public function generateCorrectionNumber(): string
     {
-        $company = $this->company;
-        $svc     = new NumberFormatService();
-        $format  = $svc->normaliseToFormat(
-            $company->getSetting('invoice_number_format')
-                ?? $company->getSetting('invoice_prefix', 'RE-')
+        $company      = $this->company;
+        $svc          = new NumberFormatService();
+        $stornoFormat = $svc->normaliseToFormat(
+            $company->getSetting('storno_number_format')
+                ?? 'STORNO-{YYYY}-{####}'
         );
+        $minCounter = (int) ($company->getSetting('storno_next_counter') ?? 1);
+        $numbers    = static::where('company_id', $this->company_id)->pluck('number');
 
-        // Build a "STORNO" variant of the format by inserting STORNO- before the counter token
-        $stornoFormat = preg_replace('/\{(#+)\}/', 'STORNO-{$1}', $format);
-
-        // If the original invoice exists, derive its number directly
-        if ($this->corrects_invoice_id && $this->correctsInvoice) {
-            $originalNumber = $this->correctsInvoice->number;
-            $scopePrefix    = $svc->scopePrefix($format);
-            return str_replace($scopePrefix, $scopePrefix . 'STORNO-', $originalNumber);
-        }
-
-        $numbers = static::where('company_id', $this->company_id)->pluck('number');
-
-        return $svc->next($stornoFormat, $numbers);
+        return $svc->next($stornoFormat, $numbers, null, $minCounter);
     }
 
     /**

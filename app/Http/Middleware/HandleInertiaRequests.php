@@ -144,6 +144,7 @@ class HandleInertiaRequests extends Middleware
                             'tax_rate'               => $allSettings['tax_rate'] ?? 0.19,
                             'reduced_tax_rate'       => $allSettings['reduced_tax_rate'] ?? 0.07,
                             'invoice_number_format'  => $allSettings['invoice_number_format']  ?? 'RE-{YYYY}-{####}',
+                            'storno_number_format'   => $allSettings['storno_number_format']   ?? 'STORNO-{YYYY}-{####}',
                             'offer_number_format'    => $allSettings['offer_number_format']    ?? 'AN-{YYYY}-{####}',
                             'customer_number_format' => $allSettings['customer_number_format'] ?? 'KU-{YYYY}-{####}',
                             // Legacy prefix keys kept for backward compat

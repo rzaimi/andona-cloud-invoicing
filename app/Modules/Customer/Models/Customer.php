@@ -89,16 +89,16 @@ class Customer extends Model
 
     public function generateCustomerNumber(): string
     {
-        $company = $this->company ?? Company::find($this->company_id);
-        $svc     = new NumberFormatService();
-        $format  = $svc->normaliseToFormat(
+        $company    = $this->company ?? Company::find($this->company_id);
+        $svc        = new NumberFormatService();
+        $format     = $svc->normaliseToFormat(
             $company->getSetting('customer_number_format')
                 ?? $company->getSetting('customer_prefix', 'KU-')
         );
+        $minCounter = (int) ($company->getSetting('customer_next_counter') ?? 1);
+        $numbers    = static::where('company_id', $this->company_id)->pluck('number');
 
-        $numbers = static::where('company_id', $this->company_id)->pluck('number');
-
-        return $svc->next($format, $numbers);
+        return $svc->next($format, $numbers, null, $minCounter);
     }
 
     public function getFullAddressAttribute(): string
