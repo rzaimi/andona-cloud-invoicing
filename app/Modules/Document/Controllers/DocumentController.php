@@ -180,12 +180,8 @@ class DocumentController extends Controller
      */
     public function download(Document $document)
     {
+        $this->authorize('view', $document);
         $companyId = $this->getEffectiveCompanyId();
-        
-        // Verify document belongs to company
-        if ($document->company_id !== $companyId) {
-            abort(403);
-        }
 
         $disk = Storage::disk('private')->exists($document->file_path)
             ? 'private'
@@ -203,12 +199,8 @@ class DocumentController extends Controller
      */
     public function update(Request $request, Document $document)
     {
+        $this->authorize('update', $document);
         $companyId = $this->getEffectiveCompanyId();
-        
-        // Verify document belongs to company
-        if ($document->company_id !== $companyId) {
-            abort(403);
-        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -255,12 +247,7 @@ class DocumentController extends Controller
      */
     public function destroy(Document $document)
     {
-        $companyId = $this->getEffectiveCompanyId();
-        
-        // Verify document belongs to company
-        if ($document->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('delete', $document);
 
         // File will be deleted automatically via model boot method
         $document->delete();

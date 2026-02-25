@@ -14,46 +14,46 @@ class ExpensePolicy
 
     public function view(User $user, Expense $expense): bool
     {
-        // Admin and super admin have full access
-        if ($user->hasPermissionTo('manage_companies') || $user->hasRole('admin')) {
+        // Super admin can view expenses across all companies
+        if ($user->hasPermissionTo('manage_companies')) {
             return true;
         }
 
-        // Users can only view expenses from their company
+        // Admin and user can only view expenses from their own company
         return $user->company_id === $expense->company_id;
     }
 
     public function create(User $user): bool
     {
-        // Admin and super admin can create
-        if ($user->hasPermissionTo('manage_companies') || $user->hasRole('admin')) {
+        // Super admin can always create; admin/user need a company
+        if ($user->hasPermissionTo('manage_companies')) {
             return true;
         }
 
-        // Regular users are read-only
-        return false;
+        // Only admins (with manage_settings) can create expenses; regular users are read-only
+        return $user->company_id !== null && $user->hasRole('admin');
     }
 
     public function update(User $user, Expense $expense): bool
     {
-        // Admin and super admin have full access
-        if ($user->hasPermissionTo('manage_companies') || $user->hasRole('admin')) {
+        // Super admin can update any expense
+        if ($user->hasPermissionTo('manage_companies')) {
             return true;
         }
 
-        // Regular users are read-only
-        return false;
+        // Admin can update only their own company's expenses
+        return $user->company_id === $expense->company_id && $user->hasRole('admin');
     }
 
     public function delete(User $user, Expense $expense): bool
     {
-        // Admin and super admin have full access
-        if ($user->hasPermissionTo('manage_companies') || $user->hasRole('admin')) {
+        // Super admin can delete any expense
+        if ($user->hasPermissionTo('manage_companies')) {
             return true;
         }
 
-        // Regular users are read-only
-        return false;
+        // Admin can delete only their own company's expenses
+        return $user->company_id === $expense->company_id && $user->hasRole('admin');
     }
 }
 

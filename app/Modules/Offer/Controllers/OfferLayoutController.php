@@ -141,11 +141,7 @@ class OfferLayoutController extends Controller
 
     public function update(Request $request, OfferLayout $offerLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($offerLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('update', $offerLayout);
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -193,11 +189,7 @@ class OfferLayoutController extends Controller
 
     public function destroy(OfferLayout $offerLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($offerLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('delete', $offerLayout);
 
         // Prevent deletion of default layout
         if ($offerLayout->is_default) {
@@ -220,14 +212,10 @@ class OfferLayoutController extends Controller
 
     public function setDefault(OfferLayout $offerLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($offerLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('update', $offerLayout);
 
         // Remove default from all layouts of this company
-        OfferLayout::where('company_id', $companyId)
+        OfferLayout::where('company_id', $offerLayout->company_id)
             ->update(['is_default' => false]);
 
         // Set this layout as default
@@ -239,11 +227,7 @@ class OfferLayoutController extends Controller
 
     public function duplicate(OfferLayout $offerLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($offerLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('update', $offerLayout);
 
         $duplicatedLayout = $offerLayout->replicate();
         $duplicatedLayout->name = $offerLayout->name . ' (Kopie)';
@@ -256,11 +240,7 @@ class OfferLayoutController extends Controller
 
     public function preview(OfferLayout $offerLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($offerLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('view', $offerLayout);
 
         // Create sample data objects that match Offer, Customer, and Company models
         $sampleOffer = (object) [

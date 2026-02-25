@@ -15,20 +15,32 @@ use Spatie\Permission\Models\Permission;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $search = $request->input('search', '');
 
-        // Super admin with manage_companies permission can see all, others only their company
-        $query = User::with('company');
-        if (!$user->hasPermissionTo('manage_companies')) {
-            $query->where('company_id', $user->company_id);
-        }
+        $query = User::with('company')
+            ->when(!$user->hasPermissionTo('manage_companies'), fn($q) => $q->where('company_id', $user->company_id))
+            ->when($search, fn($q) => $q->where(function ($inner) use ($search) {
+                $inner->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+            }))
+            ->orderBy('name');
 
-        $users = $query->paginate(15);
+        $paginated = $query->paginate(15)->withQueryString();
+
+        // Attach per-row permission flags so the frontend can show/hide actions correctly
+        $paginated->getCollection()->transform(function ($u) use ($user) {
+            $canEdit = $this->canEditUser($user, $u);
+            $u->can_edit   = $canEdit;
+            $u->can_delete = $canEdit && $u->id !== $user->id;
+            return $u;
+        });
 
         return Inertia::render('users/index', [
-            'users' => $users,
+            'users' => $paginated,
+            'search' => $search,
             'can_create' => $user->hasPermissionTo('manage_users'),
             'can_manage_companies' => $user->hasPermissionTo('manage_companies'),
         ]);
@@ -36,11 +48,8 @@ class UserController extends Controller
 
     public function create()
     {
+        $this->authorize('create', User::class);
         $user = Auth::user();
-
-        if (!$user->hasPermissionTo('manage_users')) {
-            abort(403);
-        }
 
         $companies = [];
         if ($user->hasPermissionTo('manage_companies')) {
@@ -56,11 +65,8 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', User::class);
         $user = Auth::user();
-
-        if (!$user->hasPermissionTo('manage_users')) {
-            abort(403);
-        }
 
         $rules = [
             'name' => 'required|string|max:255',
@@ -98,28 +104,23 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        $this->authorize('view', $user);
         $currentUser = Auth::user();
-
-        // Check if user can view this user
-        if (!$currentUser->hasPermissionTo('manage_companies') && $user->company_id !== $currentUser->company_id) {
-            abort(403);
-        }
 
         $user->load('company');
 
         return Inertia::render('users/show', [
             'user' => $user,
             'can_edit' => $this->canEditUser($currentUser, $user),
+            'roles' => $user->getRoleNames(),
+            'permissions' => $user->getAllPermissions()->pluck('name'),
         ]);
     }
 
     public function edit(User $user)
     {
+        $this->authorize('update', $user);
         $currentUser = Auth::user();
-
-        if (!$this->canEditUser($currentUser, $user)) {
-            abort(403);
-        }
 
         $companies = [];
         if ($currentUser->hasPermissionTo('manage_companies')) {
@@ -139,11 +140,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $this->authorize('update', $user);
         $currentUser = Auth::user();
-
-        if (!$this->canEditUser($currentUser, $user)) {
-            abort(403);
-        }
 
         $rules = [
             'name' => 'required|string|max:255',
@@ -193,11 +191,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        $this->authorize('delete', $user);
         $currentUser = Auth::user();
-
-        if (!$this->canEditUser($currentUser, $user)) {
-            abort(403);
-        }
 
         // Prevent self-deletion
         if ($user->id === $currentUser->id) {

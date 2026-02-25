@@ -10,7 +10,6 @@ use App\Modules\Product\Models\Warehouse;
 use App\Modules\Product\Models\WarehouseStock;
 use App\Services\ContextService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -27,7 +26,6 @@ class WarehouseController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
 
         if (!$companyId) {
@@ -94,7 +92,6 @@ class WarehouseController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
 
         if (!$companyId) {
@@ -118,8 +115,12 @@ class WarehouseController extends Controller
         ]);
 
         $validated['company_id'] = $companyId;
-        $validated['country'] = $validated['country'] ?? 'DE';
-        $validated['is_active'] = $validated['is_active'] ?? true;
+        $validated['country']    = $validated['country'] ?? 'DE';
+        $validated['is_active']  = $validated['is_active'] ?? true;
+
+        // Auto-generate a unique warehouse code (e.g. WH-001, WH-002, …)
+        $count = Warehouse::where('company_id', $companyId)->withTrashed()->count();
+        $validated['code'] = 'WH-' . str_pad($count + 1, 3, '0', STR_PAD_LEFT);
 
         // If this is set as default, unset other defaults
         if ($validated['is_default'] ?? false) {
@@ -136,12 +137,7 @@ class WarehouseController extends Controller
      */
     public function show(Warehouse $warehouse)
     {
-        $user = Auth::user();
-
-        $companyId = $this->getEffectiveCompanyId();
-        if ($warehouse->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('view', $warehouse);
 
         $warehouse->load(['warehouseStocks.product', 'stockMovements.product', 'stockMovements.user']);
 
@@ -187,12 +183,7 @@ class WarehouseController extends Controller
      */
     public function edit(Warehouse $warehouse)
     {
-        $user = Auth::user();
-
-        $companyId = $this->getEffectiveCompanyId();
-        if ($warehouse->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('update', $warehouse);
 
         return Inertia::render('warehouse/edit', [
             'warehouse' => $warehouse,
@@ -204,30 +195,27 @@ class WarehouseController extends Controller
      */
     public function update(Request $request, Warehouse $warehouse)
     {
-        $user = Auth::user();
-
+        $this->authorize('update', $warehouse);
         $companyId = $this->getEffectiveCompanyId();
-        if ($warehouse->company_id !== $companyId) {
-            abort(403);
-        }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'address' => 'nullable|string|max:255',
-            'postal_code' => 'nullable|string|max:10',
-            'city' => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100',
+            'name'           => 'required|string|max:255',
+            'description'    => 'nullable|string|max:1000',
+            'street'         => 'nullable|string|max:255',
+            'street_number'  => 'nullable|string|max:10',
+            'postal_code'    => 'nullable|string|max:10',
+            'city'           => 'nullable|string|max:100',
+            'state'          => 'nullable|string|max:100',
+            'country'        => 'nullable|string|max:2',
             'contact_person' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
-            'is_default' => 'boolean',
-            'is_active' => 'boolean',
+            'phone'          => 'nullable|string|max:50',
+            'email'          => 'nullable|email|max:255',
+            'is_default'     => 'boolean',
+            'is_active'      => 'boolean',
         ]);
 
         // If this is set as default, unset other defaults
         if ($validated['is_default'] ?? false) {
-            $companyId = $this->getEffectiveCompanyId();
             Warehouse::where('company_id', $companyId)
                 ->where('id', '!=', $warehouse->id)
                 ->update(['is_default' => false]);
@@ -243,12 +231,7 @@ class WarehouseController extends Controller
      */
     public function destroy(Warehouse $warehouse)
     {
-        $user = Auth::user();
-
-        $companyId = $this->getEffectiveCompanyId();
-        if ($warehouse->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('delete', $warehouse);
 
         // Check if warehouse has stock
         if ($warehouse->warehouseStocks()->where('quantity', '>', 0)->exists()) {
@@ -265,7 +248,6 @@ class WarehouseController extends Controller
      */
     public function adjustments(Request $request)
     {
-        $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
 
         if (!$companyId) {
@@ -296,7 +278,6 @@ class WarehouseController extends Controller
      */
     public function processAdjustment(Request $request)
     {
-        $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
 
         if (!$companyId) {
@@ -356,16 +337,18 @@ class WarehouseController extends Controller
 
             // Create stock movement record
             StockMovement::create([
-                'company_id' => $companyId,
-                'warehouse_id' => $warehouse->id,
-                'product_id' => $product->id,
-                'user_id' => $user->id,
-                'type' => StockMovement::TYPE_ADJUSTMENT,
-                'quantity' => $quantityChange,
-                'unit_cost' => $product->cost_price ?? 0,
-                'total_cost' => $quantityChange * ($product->cost_price ?? 0),
-                'reason' => $validated['reason'],
-                'notes' => $validated['notes'],
+                'company_id'      => $companyId,
+                'warehouse_id'    => $warehouse->id,
+                'product_id'      => $product->id,
+                'created_by'      => $user->id,
+                'type'            => StockMovement::TYPE_ADJUSTMENT,
+                'quantity_before' => $oldQuantity,
+                'quantity_change' => $quantityChange,
+                'quantity_after'  => $newQuantity,
+                'unit_cost'       => $product->cost_price ?? 0,
+                'total_cost'      => abs($quantityChange) * ($product->cost_price ?? 0),
+                'reason'          => $validated['reason'],
+                'notes'           => $validated['notes'],
             ]);
         });
 

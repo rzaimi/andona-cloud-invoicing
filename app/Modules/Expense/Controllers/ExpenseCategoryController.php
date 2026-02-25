@@ -12,7 +12,7 @@ class ExpenseCategoryController extends Controller
 {
     public function index()
     {
-        $this->authorize('viewAny', \App\Modules\Expense\Models\Expense::class);
+        $this->authorize('viewAny', ExpenseCategory::class);
         
         $companyId = $this->getEffectiveCompanyId();
         
@@ -28,7 +28,7 @@ class ExpenseCategoryController extends Controller
     
     public function store(Request $request)
     {
-        $this->authorize('create', \App\Modules\Expense\Models\Expense::class);
+        $this->authorize('create', ExpenseCategory::class);
         
         $companyId = $this->getEffectiveCompanyId();
         
@@ -57,19 +57,9 @@ class ExpenseCategoryController extends Controller
     
     public function update(Request $request, ExpenseCategory $category)
     {
+        $this->authorize('update', $category);
         $companyId = $this->getEffectiveCompanyId();
-        
-        // Verify category belongs to company
-        if ($category->company_id !== $companyId) {
-            abort(403);
-        }
-        
-        // Check authorization (admin/super_admin can update)
-        $user = auth()->user();
-        if (!$user->hasPermissionTo('manage_companies') && !$user->hasRole('admin')) {
-            abort(403);
-        }
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -95,19 +85,8 @@ class ExpenseCategoryController extends Controller
     
     public function destroy(ExpenseCategory $category)
     {
-        $companyId = $this->getEffectiveCompanyId();
-        
-        // Verify category belongs to company
-        if ($category->company_id !== $companyId) {
-            abort(403);
-        }
-        
-        // Check authorization (admin/super_admin can delete)
-        $user = auth()->user();
-        if (!$user->hasPermissionTo('manage_companies') && !$user->hasRole('admin')) {
-            abort(403);
-        }
-        
+        $this->authorize('delete', $category);
+
         // Check if category has expenses
         if ($category->expenses()->count() > 0) {
             return redirect()->back()

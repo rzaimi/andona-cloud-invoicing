@@ -7,11 +7,31 @@ import { Head, Link, useForm } from "@inertiajs/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Save, User as UserIcon } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { ArrowLeft, Save, User as UserIcon, Shield, Key } from "lucide-react"
 import type { Company, User } from "@/types"
+
+const PERMISSION_LABELS: Record<string, string> = {
+    manage_users: "Benutzer verwalten",
+    manage_companies: "Firmen verwalten",
+    manage_settings: "Einstellungen verwalten",
+    manage_invoices: "Rechnungen verwalten",
+    manage_offers: "Angebote verwalten",
+    manage_products: "Produkte verwalten",
+    view_reports: "Berichte anzeigen",
+    create_stornorechnung: "Stornorechnungen erstellen",
+}
+
+const ROLE_LABELS: Record<string, string> = {
+    super_admin: "Super Admin",
+    admin: "Administrator",
+    user: "Benutzer",
+}
 
 interface Props {
     user: User & { company?: Company }
@@ -61,8 +81,8 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900">Benutzer bearbeiten</h1>
-                        <p className="text-gray-600">Aktualisieren Sie die Benutzerinformationen</p>
+                        <h1 className="text-2xl font-bold text-foreground">Benutzer bearbeiten</h1>
+                        <p className="text-muted-foreground">Aktualisieren Sie die Benutzerinformationen</p>
                     </div>
                 </div>
 
@@ -223,46 +243,60 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                             </div>
 
                             {/* Roles */}
-                            <div className="space-y-2 md:col-span-2">
-                                <Label>Rollen</Label>
-                                <div className="grid gap-2 md:grid-cols-3">
+                            <div className="col-span-2 space-y-3">
+                                <Separator />
+                                <div className="flex items-center gap-2">
+                                    <Shield className="h-4 w-4 text-muted-foreground" />
+                                    <Label className="text-base font-semibold">Spatie-Rollen</Label>
+                                    <span className="text-xs text-muted-foreground">(bestimmt die Basis-Berechtigungen)</span>
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-3">
                                     {available_roles.map((r) => {
                                         const checked = data.roles.includes(r)
                                         return (
-                                            <label key={r} className="flex items-center gap-2 text-sm">
-                                                <input
-                                                    type="checkbox"
+                                            <div key={r} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={`role-${r}`}
                                                     checked={checked}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) setData("roles", [...data.roles, r])
+                                                    onCheckedChange={(val) => {
+                                                        if (val) setData("roles", [...data.roles, r])
                                                         else setData("roles", data.roles.filter((x: string) => x !== r))
                                                     }}
                                                 />
-                                                <span>{r}</span>
-                                            </label>
+                                                <label htmlFor={`role-${r}`} className="text-sm font-medium cursor-pointer">
+                                                    {ROLE_LABELS[r] ?? r}
+                                                </label>
+                                            </div>
                                         )
                                     })}
                                 </div>
                             </div>
 
                             {/* Permissions */}
-                            <div className="space-y-2 md:col-span-2">
-                                <Label>Berechtigungen</Label>
-                                <div className="grid gap-2 md:grid-cols-3">
+                            <div className="col-span-2 space-y-3">
+                                <Separator />
+                                <div className="flex items-center gap-2">
+                                    <Key className="h-4 w-4 text-muted-foreground" />
+                                    <Label className="text-base font-semibold">Zusätzliche Berechtigungen</Label>
+                                    <span className="text-xs text-muted-foreground">(überschreibt Rollen-Berechtigungen)</span>
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-2">
                                     {available_permissions.map((p) => {
                                         const checked = data.permissions.includes(p)
                                         return (
-                                            <label key={p} className="flex items-center gap-2 text-sm">
-                                                <input
-                                                    type="checkbox"
+                                            <div key={p} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={`perm-${p}`}
                                                     checked={checked}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) setData("permissions", [...data.permissions, p])
+                                                    onCheckedChange={(val) => {
+                                                        if (val) setData("permissions", [...data.permissions, p])
                                                         else setData("permissions", data.permissions.filter((x: string) => x !== p))
                                                     }}
                                                 />
-                                                <span>{p}</span>
-                                            </label>
+                                                <label htmlFor={`perm-${p}`} className="text-sm cursor-pointer">
+                                                    {PERMISSION_LABELS[p] ?? p}
+                                                </label>
+                                            </div>
                                         )
                                     })}
                                 </div>

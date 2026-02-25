@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Modules\Product\Models\Category;
 use App\Services\ContextService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CategoryController extends Controller
@@ -22,7 +21,6 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
 
         if (!$companyId) {
@@ -58,12 +56,16 @@ class CategoryController extends Controller
 
         $categories = $query->orderBy('sort_order')->orderBy('name')->paginate(20);
 
-        // Get statistics
+        // Get statistics in a single query pass
+        $allCategoryStats = Category::where('company_id', $companyId)
+            ->withCount('products')
+            ->get(['id', 'is_active', 'parent_id']);
+
         $stats = [
-            'total_categories' => Category::where('company_id', $companyId)->count(),
-            'active_categories' => Category::where('company_id', $companyId)->where('is_active', true)->count(),
-            'root_categories' => Category::where('company_id', $companyId)->whereNull('parent_id')->count(),
-            'categories_with_products' => Category::where('company_id', $companyId)->has('products')->count(),
+            'total_categories'        => $allCategoryStats->count(),
+            'active_categories'       => $allCategoryStats->where('is_active', true)->count(),
+            'root_categories'         => $allCategoryStats->whereNull('parent_id')->count(),
+            'categories_with_products'=> $allCategoryStats->where('products_count', '>', 0)->count(),
         ];
 
         // Get parent categories for filter
@@ -85,7 +87,6 @@ class CategoryController extends Controller
      */
     public function create()
     {
-        $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
 
         if (!$companyId) {
@@ -108,7 +109,6 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
 
         if (!$companyId) {
@@ -147,12 +147,7 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
-        $user = Auth::user();
-
-        $companyId = $this->getEffectiveCompanyId();
-        if ($category->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('view', $category);
 
         $category->load(['parent', 'children.products', 'products' => function ($query) {
             $query->with(['category'])->orderBy('name');
@@ -180,12 +175,8 @@ class CategoryController extends Controller
      */
     public function edit(Category $category)
     {
-        $user = Auth::user();
-
+        $this->authorize('update', $category);
         $companyId = $this->getEffectiveCompanyId();
-        if ($category->company_id !== $companyId) {
-            abort(403);
-        }
 
         // Get parent categories (excluding self and children to prevent circular references)
         $parentCategories = Category::where('company_id', $companyId)
@@ -205,12 +196,8 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        $user = Auth::user();
-
+        $this->authorize('update', $category);
         $companyId = $this->getEffectiveCompanyId();
-        if ($category->company_id !== $companyId) {
-            abort(403);
-        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -249,12 +236,7 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        $user = Auth::user();
-
-        $companyId = $this->getEffectiveCompanyId();
-        if ($category->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('delete', $category);
 
         // Check if category has products
         if ($category->products()->count() > 0) {

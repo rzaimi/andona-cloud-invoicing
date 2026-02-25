@@ -32,12 +32,7 @@ class CompanyController extends Controller
 
     public function create()
     {
-        $user = Auth::user();
-
-        // Permission check is handled by route middleware, but double-check here
-        if (!$user->hasPermissionTo('manage_companies')) {
-            abort(403);
-        }
+        $this->authorize('create', Company::class);
 
         // Redirect to wizard
         return redirect()->route('companies.wizard');
@@ -45,11 +40,7 @@ class CompanyController extends Controller
 
     public function createWizard(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user->hasPermissionTo('manage_companies')) {
-            abort(403);
-        }
+        $this->authorize('create', Company::class);
 
         // Get wizard data from session if exists
         $wizardData = $request->session()->get('company_wizard', [
@@ -93,11 +84,7 @@ class CompanyController extends Controller
 
     public function storeWizardStep(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user->hasPermissionTo('manage_companies')) {
-            abort(403);
-        }
+        $this->authorize('create', Company::class);
 
         $step = $request->input('step');
         $data = $request->input('data');
@@ -123,11 +110,7 @@ class CompanyController extends Controller
 
     public function completeWizard(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user->hasPermissionTo('manage_companies')) {
-            abort(403);
-        }
+        $this->authorize('create', Company::class);
 
         // Get wizard data from session
         $wizardData = $request->session()->get('company_wizard');
@@ -237,12 +220,7 @@ class CompanyController extends Controller
 
     public function store(Request $request)
     {
-        $user = Auth::user();
-
-        // Permission check is handled by route middleware, but double-check here
-        if (!$user->hasPermissionTo('manage_companies')) {
-            abort(403);
-        }
+        $this->authorize('create', Company::class);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -291,12 +269,7 @@ class CompanyController extends Controller
 
     public function show(Company $company)
     {
-        $user = Auth::user();
-
-        // Permission check is handled by route middleware, but double-check here
-        if (!$user->hasPermissionTo('manage_companies')) {
-            abort(403);
-        }
+        $this->authorize('view', $company);
 
         $company->load([
             'users' => function ($query) {
@@ -322,12 +295,7 @@ class CompanyController extends Controller
 
     public function edit(Company $company)
     {
-        $user = Auth::user();
-
-        // Permission check is handled by route middleware, but double-check here
-        if (!$user->hasPermissionTo('manage_companies')) {
-            abort(403);
-        }
+        $this->authorize('update', $company);
 
         return Inertia::render('companies/edit', [
             'company' => $company,
@@ -336,12 +304,7 @@ class CompanyController extends Controller
 
     public function update(Request $request, Company $company)
     {
-        $user = Auth::user();
-
-        // Permission check is handled by route middleware, but double-check here
-        if (!$user->hasPermissionTo('manage_companies')) {
-            abort(403);
-        }
+        $this->authorize('update', $company);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -391,12 +354,7 @@ class CompanyController extends Controller
 
     public function destroy(Company $company)
     {
-        $user = Auth::user();
-
-        // Permission check is handled by route middleware, but double-check here
-        if (!$user->hasPermissionTo('manage_companies')) {
-            abort(403);
-        }
+        $this->authorize('delete', $company);
 
         // Check if company has associated data
         $hasUsers = $company->users()->exists();

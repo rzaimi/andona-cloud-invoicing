@@ -23,7 +23,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Edit, Trash2, Eye, Copy, Layout, Star, Download, Palette, Type, Settings, FileText, AlertCircle } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, Copy, Layout, Star, Download, Palette, FileText, Settings, Type, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import AppLayout from "@/layouts/app-layout"
 import { route } from "ziggy-js"
@@ -179,6 +179,7 @@ const mergeWithDefaults = (settings: Partial<OfferLayoutSettings> | null): Offer
 
 export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPageProps) {
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [isLayoutDialogOpen, setIsLayoutDialogOpen] = useState(false)
     const [editingLayout, setEditingLayout] = useState<OfferLayout | null>(null)
     const [previewLayout, setPreviewLayout] = useState<OfferLayout | null>(null)
@@ -254,85 +255,44 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
             settings: layoutFormData.settings,
         }
 
-        // Submit directly using router with the correct data
+        setIsSubmitting(true)
+
+        const onSuccess = () => {
+            setIsSubmitting(false)
+            handleCloseDialog()
+        }
+        const onError = (errors: Record<string, string>) => {
+            setIsSubmitting(false)
+            if (errors) {
+                Object.keys(errors).forEach((key) => {
+                    const errorMessage = Array.isArray(errors[key]) ? errors[key][0] : errors[key]
+                    form.setError(key as any, errorMessage)
+                })
+            }
+        }
+
         if (editingLayout) {
-            router.put(route("offer-layouts.update", editingLayout.id), submitData, {
-                onSuccess: () => {
-                    handleCloseDialog()
-                },
-                onError: (errors) => {
-                    // Handle validation errors - set them in the form object for display
-                    if (errors) {
-                        Object.keys(errors).forEach((key) => {
-                            const errorMessage = Array.isArray(errors[key]) ? errors[key][0] : errors[key]
-                            form.setError(key as any, errorMessage)
-                        })
-                    }
-                },
-            })
+            router.put(route("offer-layouts.update", editingLayout.id), submitData, { onSuccess, onError })
         } else {
-            router.post(route("offer-layouts.store"), submitData, {
-                onSuccess: () => {
-                    handleCloseDialog()
-                },
-                onError: (errors) => {
-                    // Handle validation errors - set them in the form object for display
-                    if (errors) {
-                        Object.keys(errors).forEach((key) => {
-                            const errorMessage = Array.isArray(errors[key]) ? errors[key][0] : errors[key]
-                            form.setError(key as any, errorMessage)
-                        })
-                    }
-                },
-            })
+            router.post(route("offer-layouts.store"), submitData, { onSuccess, onError })
         }
     }
 
     const handleDeleteLayout = (id: string) => {
         if (confirm("Sind Sie sicher, dass Sie dieses Angebotslayout löschen möchten?")) {
-            router.delete(route("offer-layouts.destroy", id), {
-                onSuccess: () => {
-                    console.log("Layout deleted successfully")
-                },
-                onError: (error) => {
-                    console.error("Error deleting layout:", error)
-                },
-            })
+            router.delete(route("offer-layouts.destroy", id))
         }
     }
 
     const handleSetDefaultLayout = (id: string) => {
-        router.post(
-            route("offer-layouts.set-default", id),
-            {},
-            {
-                onSuccess: () => {
-                    console.log("Default layout set successfully")
-                },
-                onError: (error) => {
-                    console.error("Error setting default layout:", error)
-                },
-            },
-        )
+        router.post(route("offer-layouts.set-default", id))
     }
 
     const handleDuplicateLayout = (layout: OfferLayout) => {
-        router.post(
-            route("offer-layouts.duplicate", layout.id),
-            {},
-            {
-                onSuccess: () => {
-                    console.log("Layout duplicated successfully")
-                },
-                onError: (error) => {
-                    console.error("Error duplicating layout:", error)
-                },
-            },
-        )
+        router.post(route("offer-layouts.duplicate", layout.id))
     }
 
     const handlePreviewLayout = (layout: OfferLayout) => {
-        console.log("Opening preview for layout:", layout.name)
         const layoutWithDefaults = {
             ...layout,
             settings: mergeWithDefaults(layout.settings),
@@ -344,12 +304,6 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
     const handleClosePreview = () => {
         setIsPreviewOpen(false)
         setPreviewLayout(null)
-    }
-
-    const handleDownloadPDF = () => {
-        if (previewLayout) {
-            console.log("Downloading PDF for layout:", previewLayout.id)
-        }
     }
 
     // Update functions for form data
@@ -477,8 +431,8 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
 
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900">Angebotslayouts</h1>
-                        <p className="text-gray-600">Verwalten Sie Ihre Angebotslayouts und Templates</p>
+                        <h1 className="text-2xl font-bold text-foreground">Angebotslayouts</h1>
+                        <p className="text-muted-foreground">Verwalten Sie Ihre Angebotslayouts und Templates</p>
                     </div>
 
                     <Dialog open={isLayoutDialogOpen} onOpenChange={setIsLayoutDialogOpen}>
@@ -567,7 +521,7 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                                                                 <h3 className="font-semibold">{template.name}</h3>
                                                                 {layoutFormData.template === template.id && <Badge variant="default">Ausgewählt</Badge>}
                                                             </div>
-                                                            <p className="text-sm text-gray-600 mb-3">{template.description}</p>
+                                                            <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
                                                             <div className="flex flex-wrap gap-1 mb-3">
                                                                 {template.features.map((feature) => (
                                                                     <Badge key={feature} variant="outline" className="text-xs">
@@ -833,7 +787,7 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Logo anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Firmenlogo im Angebot anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Firmenlogo im Angebot anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.branding.show_logo}
@@ -889,7 +843,7 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Artikelbilder anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Produktbilder in der Artikeltabelle anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Produktbilder in der Artikeltabelle anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_item_images}
@@ -900,7 +854,7 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Artikelnummern anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Produktnummern in der Artikeltabelle anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Produktnummern in der Artikeltabelle anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_item_codes}
@@ -911,7 +865,7 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Steueraufschlüsselung anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Detaillierte Steuerberechnung anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Detaillierte Steuerberechnung anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_tax_breakdown}
@@ -922,7 +876,7 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Zahlungsbedingungen anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Zahlungsbedingungen im Angebot anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Zahlungsbedingungen im Angebot anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_payment_terms}
@@ -933,7 +887,7 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Gültigkeitsdauer anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Gültigkeitsdauer des Angebots hervorheben</p>
+                                                            <p className="text-sm text-muted-foreground">Gültigkeitsdauer des Angebots hervorheben</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_validity_period}
@@ -959,11 +913,11 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                                 </Tabs>
 
                                 <DialogFooter className="mt-6">
-                                    <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={form.processing}>
+                                    <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isSubmitting}>
                                         Abbrechen
                                     </Button>
-                                    <Button type="submit" disabled={form.processing}>
-                                        {form.processing ? "Speichert..." : editingLayout ? "Layout aktualisieren" : "Layout erstellen"}
+                                    <Button type="submit" disabled={isSubmitting}>
+                                        {isSubmitting ? "Speichert..." : editingLayout ? "Layout aktualisieren" : "Layout erstellen"}
                                     </Button>
                                 </DialogFooter>
                             </form>
@@ -975,8 +929,8 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                     <Card>
                         <CardContent className="flex flex-col items-center justify-center py-12">
                             <Layout className="h-12 w-12 text-gray-400 mb-4" />
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Keine Angebotslayouts vorhanden</h3>
-                            <p className="text-gray-600 text-center mb-4">
+                            <h3 className="text-lg font-semibold text-foreground mb-2">Keine Angebotslayouts vorhanden</h3>
+                            <p className="text-muted-foreground text-center mb-4">
                                 Erstellen Sie Ihr erstes Angebotslayout, um professionelle Angebote zu generieren.
                             </p>
                             <Button onClick={handleCreateLayout}>
@@ -1132,12 +1086,12 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                                         </div>
                                         <div className="text-right">
                                             <div className="mb-4">
-                                                <p className="text-gray-600">Angebotsdatum:</p>
+                                                <p className="text-muted-foreground">Angebotsdatum:</p>
                                                 <p className="font-semibold">01.12.2024</p>
                                             </div>
                                             {previewLayout.settings?.content?.show_validity_period && (
                                                 <div className="mb-4">
-                                                    <p className="text-gray-600">Gültig bis:</p>
+                                                    <p className="text-muted-foreground">Gültig bis:</p>
                                                     <p className="font-semibold text-red-600">31.12.2024</p>
                                                 </div>
                                             )}
@@ -1241,10 +1195,12 @@ export default function OfferLayoutsPage({ layouts, templates }: OfferLayoutsPag
                             <Button variant="outline" onClick={handleClosePreview}>
                                 Schließen
                             </Button>
-                            <Button onClick={handleDownloadPDF}>
-                                <Download className="mr-2 h-4 w-4" />
-                                PDF herunterladen
-                            </Button>
+                            {previewLayout && (
+                                <Button onClick={() => window.open(route("offer-layouts.preview", previewLayout.id), "_blank")}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    In neuem Tab öffnen
+                                </Button>
+                            )}
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

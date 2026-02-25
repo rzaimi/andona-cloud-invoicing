@@ -15,13 +15,14 @@ import { Plus, Search, Edit, Trash2, Eye, Users, Building2 } from "lucide-react"
 import type { User, Company, PaginatedResponse } from "@/types"
 
 interface Props {
-    users: PaginatedResponse<User & { company: Company }>
+    users: PaginatedResponse<User & { company: Company; can_edit: boolean; can_delete: boolean }>
+    search: string
     can_create: boolean
     can_manage_companies: boolean
 }
 
-export default function UsersIndex({ users, can_create, can_manage_companies }: Props) {
-    const [search, setSearch] = useState("")
+export default function UsersIndex({ users, search: initialSearch, can_create, can_manage_companies }: Props) {
+    const [search, setSearch] = useState(initialSearch ?? "")
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
@@ -64,8 +65,8 @@ export default function UsersIndex({ users, can_create, can_manage_companies }: 
                 {/* Header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Benutzerverwaltung</h1>
-                        <p className="text-gray-600">Verwalten Sie Benutzer in Ihrem System</p>
+                        <h1 className="text-2xl font-bold text-foreground">Benutzerverwaltung</h1>
+                        <p className="text-muted-foreground">Verwalten Sie Benutzer in Ihrem System</p>
                     </div>
 
                     <div className="flex gap-2">
@@ -97,7 +98,7 @@ export default function UsersIndex({ users, can_create, can_manage_companies }: 
                     <CardContent>
                         <form onSubmit={handleSearch} className="flex gap-2">
                             <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     placeholder="Name oder E-Mail eingeben..."
                                     value={search}
@@ -135,7 +136,7 @@ export default function UsersIndex({ users, can_create, can_manage_companies }: 
                                 <TableBody>
                                     {users.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                                 Keine Benutzer gefunden
                                             </TableCell>
                                         </TableRow>
@@ -155,7 +156,7 @@ export default function UsersIndex({ users, can_create, can_manage_companies }: 
                                                         </Avatar>
                                                         <div>
                                                             <div className="font-medium">{user.name}</div>
-                                                            <div className="text-sm text-gray-500">{user.email}</div>
+                                                            <div className="text-sm text-muted-foreground">{user.email}</div>
                                                         </div>
                                                     </div>
                                                 </TableCell>
@@ -170,29 +171,34 @@ export default function UsersIndex({ users, can_create, can_manage_companies }: 
                                                         {user.status === "active" ? "Aktiv" : "Inaktiv"}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell className="text-sm text-gray-500">
+                                                <TableCell className="text-sm text-muted-foreground">
                                                     {new Date(user.created_at).toLocaleDateString("de-DE")}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
-                                                        <Button variant="ghost" size="sm" asChild>
+                                                        <Button variant="ghost" size="sm" asChild title="Ansehen">
                                                             <Link href={route("users.show", user.id)}>
                                                                 <Eye className="h-4 w-4" />
                                                             </Link>
                                                         </Button>
-                                                        <Button variant="ghost" size="sm" asChild>
-                                                            <Link href={route("users.edit", user.id)}>
-                                                                <Edit className="h-4 w-4" />
-                                                            </Link>
-                                                        </Button>
-                                                        <Button 
-                                                            variant="ghost" 
-                                                            size="sm" 
-                                                            onClick={() => handleDelete(user)}
-                                                            className="text-red-600 hover:text-red-700"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        {user.can_edit && (
+                                                            <Button variant="ghost" size="sm" asChild title="Bearbeiten">
+                                                                <Link href={route("users.edit", user.id)}>
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Link>
+                                                            </Button>
+                                                        )}
+                                                        {user.can_delete && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleDelete(user)}
+                                                                className="text-red-600 hover:text-red-700"
+                                                                title="Löschen"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -205,7 +211,7 @@ export default function UsersIndex({ users, can_create, can_manage_companies }: 
                         {/* Pagination */}
                         {users.last_page > 1 && (
                             <div className="flex items-center justify-between px-2 py-4">
-                                <div className="text-sm text-gray-500">
+                                <div className="text-sm text-muted-foreground">
                                     Zeige {users.from} bis {users.to} von {users.total} Einträgen
                                 </div>
                                 <div className="flex gap-2">

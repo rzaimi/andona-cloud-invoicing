@@ -156,11 +156,7 @@ class InvoiceLayoutController extends Controller
 
     public function update(Request $request, InvoiceLayout $invoiceLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($invoiceLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('update', $invoiceLayout);
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -215,11 +211,7 @@ class InvoiceLayoutController extends Controller
 
     public function destroy(InvoiceLayout $invoiceLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($invoiceLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('delete', $invoiceLayout);
 
         // Prevent deletion of default layout
         if ($invoiceLayout->is_default) {
@@ -242,14 +234,10 @@ class InvoiceLayoutController extends Controller
 
     public function setDefault(InvoiceLayout $invoiceLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($invoiceLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('update', $invoiceLayout);
 
         // Remove default from all layouts of this company
-        InvoiceLayout::where('company_id', $companyId)
+        InvoiceLayout::where('company_id', $invoiceLayout->company_id)
             ->update(['is_default' => false]);
 
         // Set this layout as default
@@ -261,11 +249,7 @@ class InvoiceLayoutController extends Controller
 
     public function duplicate(InvoiceLayout $invoiceLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($invoiceLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('update', $invoiceLayout);
 
         $duplicatedLayout = $invoiceLayout->replicate();
         $duplicatedLayout->name = $invoiceLayout->name . ' (Kopie)';
@@ -278,11 +262,7 @@ class InvoiceLayoutController extends Controller
 
     public function preview(InvoiceLayout $invoiceLayout)
     {
-        // Check if user can access this layout
-        $companyId = $this->getEffectiveCompanyId();
-        if ($invoiceLayout->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('view', $invoiceLayout);
 
         // Create sample data objects that match Invoice, Customer, and Company models
         $sampleInvoice = (object) [

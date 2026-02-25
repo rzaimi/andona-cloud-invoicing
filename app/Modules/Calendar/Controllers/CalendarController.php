@@ -21,101 +21,98 @@ class CalendarController extends Controller
 
     public function index(Request $request)
     {
-        $user = auth()->user();
         $companyId = $this->getEffectiveCompanyId();
 
-        // Get calendar events
-        $events = $this->getCalendarEvents($companyId);
-
         return Inertia::render('calendar/index', [
-            'user' => $this->contextService->getUserContext(),
-            'stats' => $this->contextService->getDashboardStats(),
-            'events' => $events,
+            'events' => $this->getCalendarEvents($companyId),
         ]);
     }
 
     private function getCalendarEvents($companyId)
     {
-        $events = collect();
+        $events     = collect();
+        $rangeStart = now()->subDays(30)->startOfDay();
+        $rangeEnd   = now()->addDays(90)->endOfDay();
 
-        // Custom calendar events from database
+        // Custom calendar events — load 4-month window around today
         $customEvents = CalendarEvent::forCompany($companyId)
+            ->whereBetween('date', [$rangeStart->toDateString(), $rangeEnd->toDateString()])
             ->with('user:id,name')
             ->get();
 
         foreach ($customEvents as $event) {
             $events->push([
-                'id' => $event->id,
-                'title' => $event->title,
-                'type' => $event->type,
-                'date' => $event->date->format('Y-m-d'),
-                'time' => $event->time,
-                'description' => $event->description,
-                'location' => $event->location,
-                'user' => $event->user->name ?? null,
-                'is_custom' => true,
+                'id'                => $event->id,
+                'title'             => $event->title,
+                'type'              => $event->type,
+                'date'              => $event->date->format('Y-m-d'),
+                'time'              => $event->time,
+                'description'       => $event->description,
+                'location'          => $event->location,
+                'user'              => $event->user->name ?? null,
+                'is_custom'         => true,
                 'calendar_event_id' => $event->id,
             ]);
         }
 
-        // Invoice due dates (include overdue and upcoming)
+        // Invoice due dates — only sent/overdue invoices, within date range
         $invoices = Invoice::where('company_id', $companyId)
-            ->where('status', '!=', 'paid')
-            ->with('customer')
+            ->whereIn('status', ['sent', 'overdue'])
+            ->whereNotNull('due_date')
+            ->whereBetween('due_date', [$rangeStart->toDateString(), $rangeEnd->toDateString()])
+            ->with('customer:id,name')
+            ->select('id', 'number', 'due_date', 'total', 'status', 'customer_id')
             ->get();
 
         foreach ($invoices as $invoice) {
-            // Only add if due_date is set
-            if ($invoice->due_date) {
-                $events->push([
-                    'id' => 'invoice_' . $invoice->id,
-                    'title' => "Rechnung {$invoice->number} fällig",
-                    'type' => 'invoice_due',
-                    'date' => $invoice->due_date->format('Y-m-d'),
-                    'time' => '09:00',
-                    'customer' => $invoice->customer->name ?? 'Unbekannt',
-                    'amount' => $invoice->total ?? 0,
-                    'status' => $invoice->due_date->isPast() ? 'overdue' : 'pending',
-                    'description' => 'Zahlungserinnerung senden',
-                    'invoice_id' => $invoice->id,
-                ]);
-            }
+            $events->push([
+                'id'          => 'invoice_' . $invoice->id,
+                'title'       => "Rechnung {$invoice->number} fällig",
+                'type'        => 'invoice_due',
+                'date'        => $invoice->due_date->format('Y-m-d'),
+                'time'        => '09:00',
+                'customer'    => $invoice->customer->name ?? 'Unbekannt',
+                'amount'      => (float) ($invoice->total ?? 0),
+                'status'      => $invoice->due_date->isPast() ? 'overdue' : 'pending',
+                'description' => 'Zahlungserinnerung senden',
+                'invoice_id'  => $invoice->id,
+            ]);
         }
 
-        // Offer expiry dates (include expired and upcoming)
+        // Offer expiry dates — only sent offers, within date range
         $offers = Offer::where('company_id', $companyId)
             ->where('status', 'sent')
-            ->with('customer')
+            ->whereNotNull('valid_until')
+            ->whereBetween('valid_until', [$rangeStart->toDateString(), $rangeEnd->toDateString()])
+            ->with('customer:id,name')
+            ->select('id', 'number', 'valid_until', 'total', 'status', 'customer_id')
             ->get();
 
         foreach ($offers as $offer) {
-            // Only add if valid_until is set
-            if ($offer->valid_until) {
-                $daysUntilExpiry = now()->diffInDays($offer->valid_until, false);
-                $events->push([
-                    'id' => 'offer_' . $offer->id,
-                    'title' => "Angebot {$offer->number} läuft ab",
-                    'type' => 'offer_expiry',
-                    'date' => $offer->valid_until->format('Y-m-d'),
-                    'time' => '23:59',
-                    'customer' => $offer->customer->name ?? 'Unbekannt',
-                    'amount' => $offer->total ?? 0,
-                    'status' => $daysUntilExpiry <= 3 && $daysUntilExpiry >= 0 ? 'expiring' : ($daysUntilExpiry < 0 ? 'expired' : 'active'),
-                    'description' => 'Angebot verlängern oder nachfassen',
-                    'offer_id' => $offer->id,
-                ]);
-            }
+            $daysUntilExpiry = now()->diffInDays($offer->valid_until, false);
+            $events->push([
+                'id'          => 'offer_' . $offer->id,
+                'title'       => "Angebot {$offer->number} läuft ab",
+                'type'        => 'offer_expiry',
+                'date'        => $offer->valid_until->format('Y-m-d'),
+                'time'        => '23:59',
+                'customer'    => $offer->customer->name ?? 'Unbekannt',
+                'amount'      => (float) ($offer->total ?? 0),
+                'status'      => $daysUntilExpiry < 0 ? 'expired' : ($daysUntilExpiry <= 3 ? 'expiring' : 'active'),
+                'description' => 'Angebot verlängern oder nachfassen',
+                'offer_id'    => $offer->id,
+            ]);
         }
 
-        // Add recurring events (monthly reports, etc.)
+        // Recurring: end-of-month report reminder
         $events->push([
-            'id' => 'monthly_report_' . now()->format('Y_m'),
-            'title' => 'Monatsbericht erstellen',
-            'type' => 'report',
-            'date' => now()->endOfMonth()->format('Y-m-d'),
-            'time' => '16:00',
-            'description' => 'Umsatz- und Kundenbericht für ' . now()->format('F Y'),
-            'recurring' => 'monthly',
+            'id'          => 'monthly_report_' . now()->format('Y_m'),
+            'title'       => 'Monatsbericht erstellen',
+            'type'        => 'report',
+            'date'        => now()->endOfMonth()->format('Y-m-d'),
+            'time'        => '16:00',
+            'description' => 'Umsatz- und Kundenbericht für ' . now()->translatedFormat('F Y'),
+            'recurring'   => 'monthly',
         ]);
 
         return $events->sortBy('date')->values();
@@ -151,12 +148,7 @@ class CalendarController extends Controller
 
     public function update(Request $request, CalendarEvent $event)
     {
-        $companyId = $this->getEffectiveCompanyId();
-        
-        // Verify event belongs to company
-        if ($event->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('update', $event);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -181,12 +173,7 @@ class CalendarController extends Controller
 
     public function destroy(CalendarEvent $event)
     {
-        $companyId = $this->getEffectiveCompanyId();
-        
-        // Verify event belongs to company
-        if ($event->company_id !== $companyId) {
-            abort(403);
-        }
+        $this->authorize('delete', $event);
 
         $event->delete();
 

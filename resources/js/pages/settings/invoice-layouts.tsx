@@ -23,7 +23,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
-import { Plus, Edit, Trash2, Eye, Copy, Layout, Star, Download, Palette, Type, Settings, FileText, AlertCircle } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, Copy, Layout, Star, Download, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import AppLayout from "@/layouts/app-layout"
 import { route } from "ziggy-js"
@@ -452,6 +452,8 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
         settings: getDefaultSettings(),
     })
 
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
     const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
     const logoForm = useForm({
         _method: "put",
@@ -528,37 +530,26 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
             save_and_preview: saveAndPreview,
         }
 
-        // Submit directly using router with the correct data
+        setIsSubmitting(true)
+
+        const onSuccess = () => {
+            setIsSubmitting(false)
+            handleCloseDialog()
+        }
+        const onError = (errors: Record<string, string>) => {
+            setIsSubmitting(false)
+            if (errors) {
+                Object.keys(errors).forEach((key) => {
+                    const errorMessage = Array.isArray(errors[key]) ? errors[key][0] : errors[key]
+                    form.setError(key as any, errorMessage)
+                })
+            }
+        }
+
         if (editingLayout) {
-            router.put(route("invoice-layouts.update", editingLayout.id), submitData, {
-                onSuccess: () => {
-                    handleCloseDialog()
-                },
-                onError: (errors) => {
-                    // Handle validation errors - set them in the form object for display
-                    if (errors) {
-                        Object.keys(errors).forEach((key) => {
-                            const errorMessage = Array.isArray(errors[key]) ? errors[key][0] : errors[key]
-                            form.setError(key as any, errorMessage)
-                        })
-                    }
-                },
-            })
+            router.put(route("invoice-layouts.update", editingLayout.id), submitData, { onSuccess, onError })
         } else {
-            router.post(route("invoice-layouts.store"), submitData, {
-                onSuccess: () => {
-                    handleCloseDialog()
-                },
-                onError: (errors) => {
-                    // Handle validation errors - set them in the form object for display
-                    if (errors) {
-                        Object.keys(errors).forEach((key) => {
-                            const errorMessage = Array.isArray(errors[key]) ? errors[key][0] : errors[key]
-                            form.setError(key as any, errorMessage)
-                        })
-                    }
-                },
-            })
+            router.post(route("invoice-layouts.store"), submitData, { onSuccess, onError })
         }
     }
 
@@ -660,50 +651,19 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
     const handleDeleteLayout = (id: string) => {
         if (confirm("Sind Sie sicher, dass Sie dieses Layout löschen möchten?")) {
-            router.delete(route("invoice-layouts.destroy", id), {
-                onSuccess: () => {
-                    console.log("Layout deleted successfully")
-                },
-                onError: (error) => {
-                    console.error("Error deleting layout:", error)
-                },
-            })
+            router.delete(route("invoice-layouts.destroy", id))
         }
     }
 
     const handleSetDefaultLayout = (id: string) => {
-        router.post(
-            route("invoice-layouts.set-default", id),
-            {},
-            {
-                onSuccess: () => {
-                    console.log("Default layout set successfully")
-                },
-                onError: (error) => {
-                    console.error("Error setting default layout:", error)
-                },
-            },
-        )
+        router.post(route("invoice-layouts.set-default", id))
     }
 
     const handleDuplicateLayout = (layout: InvoiceLayout) => {
-        router.post(
-            route("invoice-layouts.duplicate", layout.id),
-            {},
-            {
-                onSuccess: () => {
-                    console.log("Layout duplicated successfully")
-                },
-                onError: (error) => {
-                    console.error("Error duplicating layout:", error)
-                },
-            },
-        )
+        router.post(route("invoice-layouts.duplicate", layout.id))
     }
 
     const handlePreviewLayout = (layout: InvoiceLayout) => {
-        console.log("Opening preview for layout:", layout.name)
-        // Ensure the layout has complete settings before previewing
         const layoutWithDefaults = {
             ...layout,
             settings: mergeWithDefaults(layout.settings),
@@ -715,14 +675,6 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
     const handleClosePreview = () => {
         setIsPreviewOpen(false)
         setPreviewLayout(null)
-    }
-
-    const handleDownloadPDF = () => {
-        if (previewLayout) {
-            // This would trigger PDF download
-            console.log("Downloading PDF for layout:", previewLayout.id)
-            // router.get(`/settings/invoice-layouts/${previewLayout.id}/pdf`)
-        }
     }
 
     const getTypeLabel = (type: string) => {
@@ -875,8 +827,8 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900">Rechnungslayouts</h1>
-                        <p className="text-gray-600">Verwalten Sie Ihre Rechnungs- und Angebotslayouts</p>
+                        <h1 className="text-2xl font-bold text-foreground">Rechnungslayouts</h1>
+                        <p className="text-muted-foreground">Verwalten Sie Ihre Rechnungs- und Angebotslayouts</p>
                     </div>
 
                     <Dialog open={isLayoutDialogOpen} onOpenChange={setIsLayoutDialogOpen}>
@@ -920,25 +872,25 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                             <div className="text-sm font-medium mb-2">Konfigurator</div>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("basic")}>
-                                                    1. Choose Layout
+                                                    1. Layout wählen
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("design", "step-colors")}>
-                                                    2. Colors
+                                                    2. Farben
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("design", "step-fonts")}>
-                                                    3. Fonts
+                                                    3. Schriften
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-logo")}>
-                                                    4. Logo
+                                                    4. Logo & Branding
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-header-footer")}>
-                                                    5. Header/Footer
+                                                    5. Kopf-/Fußzeile
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-margins")}>
-                                                    6. Margins & Padding
+                                                    6. Seitenränder
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start sm:col-span-2" onClick={() => goToStep("content", "step-additional")}>
-                                                    7. Additional Options
+                                                    7. Weitere Optionen
                                                 </Button>
                                             </div>
                                         </div>
@@ -995,7 +947,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                                 <h3 className="font-semibold">{template.name}</h3>
                                                                 {layoutFormData.template === template.id && <Badge variant="default">Ausgewählt</Badge>}
                                                             </div>
-                                                            <p className="text-sm text-gray-600 mb-3">{template.description}</p>
+                                                            <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
                                                             <div className="flex flex-wrap gap-1 mb-3">
                                                                 {template.features.map((feature) => (
                                                                     <Badge key={feature} variant="outline" className="text-xs">
@@ -1286,8 +1238,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                                 if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl)
                                                                 const url = URL.createObjectURL(file)
                                                                 setLogoPreviewUrl(url)
-                                                                // @ts-ignore
-                                                                logoForm.setData("logo", file)
+                                                logoForm.setData("logo" as any, file)
                                                             }}
                                                         />
                                                         <Button
@@ -1314,7 +1265,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Logo anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Firmenlogo im Dokument anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Firmenlogo im Dokument anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.branding.show_logo}
@@ -1361,7 +1312,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Kopfzeilen-Linie anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Linie unter dem Header anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Linie unter dem Header anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.branding.show_header_line}
@@ -1372,7 +1323,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Fußzeile anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Fußzeile mit Firmeninformationen anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Fußzeile mit Firmeninformationen anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.branding.show_footer}
@@ -1383,7 +1334,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Fußzeilen-Linie anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Linie über der Fußzeile anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Linie über der Fußzeile anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.branding.show_footer_line}
@@ -1403,7 +1354,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Firmenadresse anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Adresse der Firma im Header anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Adresse der Firma im Header anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_company_address}
@@ -1414,7 +1365,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Firmenkontakt anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Telefon, E-Mail und Website anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Telefon, E-Mail und Website anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_company_contact}
@@ -1430,7 +1381,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Kundennummer anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Kundennummer im Dokument anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Kundennummer im Dokument anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_customer_number}
@@ -1441,7 +1392,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Steuernummer anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Steuernummer im Dokument anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Steuernummer im Dokument anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_tax_number}
@@ -1452,7 +1403,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Einheitsspalte anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Einheit (Stk., kg, etc.) in Artikeltabelle anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Einheit (Stk., kg, etc.) in Artikeltabelle anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_unit_column}
@@ -1463,7 +1414,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Notizen anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Notizenfeld im Dokument anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Notizenfeld im Dokument anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_notes}
@@ -1479,7 +1430,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Bankverbindung anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">IBAN, BIC und Bankname anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">IBAN, BIC und Bankname anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_bank_details}
@@ -1490,7 +1441,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Handelsregister anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Handelsregister und Steuernummer anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Handelsregister und Steuernummer anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_company_registration}
@@ -1501,7 +1452,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Zahlungsbedingungen anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Zahlungsbedingungen im Dokument anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Zahlungsbedingungen im Dokument anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_payment_terms}
@@ -1517,7 +1468,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Artikelbilder anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Produktbilder in der Artikeltabelle anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Produktbilder in der Artikeltabelle anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_item_images}
@@ -1528,7 +1479,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Artikelnummern anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Produktnummern in der Artikeltabelle anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Produktnummern in der Artikeltabelle anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_item_codes}
@@ -1539,7 +1490,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Steueraufschlüsselung anzeigen</Label>
-                                                            <p className="text-sm text-gray-600">Detaillierte Steuerberechnung anzeigen</p>
+                                                            <p className="text-sm text-muted-foreground">Detaillierte Steuerberechnung anzeigen</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_tax_breakdown}
@@ -1566,15 +1517,15 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                         </div>
 
                                         <div className="mt-4 flex items-center justify-between border-t pt-4">
-                                            <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={form.processing}>
+                                            <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isSubmitting}>
                                                 Abbrechen
                                             </Button>
                                             <Button
                                                 type="submit"
-                                                disabled={form.processing}
+                                                disabled={isSubmitting}
                                                 onClick={() => setSaveAndPreview(true)}
                                             >
-                                                {form.processing ? "Speichert..." : "Save & Preview"}
+                                                {isSubmitting ? "Speichert..." : "Speichern & Vorschau"}
                                             </Button>
                                         </div>
                                     </div>
@@ -1610,8 +1561,8 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                     <Card>
                         <CardContent className="flex flex-col items-center justify-center py-12">
                             <Layout className="h-12 w-12 text-gray-400 mb-4" />
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Keine Layouts vorhanden</h3>
-                            <p className="text-gray-600 text-center mb-4">
+                            <h3 className="text-lg font-semibold text-foreground mb-2">Keine Layouts vorhanden</h3>
+                            <p className="text-muted-foreground text-center mb-4">
                                 Erstellen Sie Ihr erstes Rechnungslayout, um professionelle Dokumente zu generieren.
                             </p>
                             <Button onClick={handleCreateLayout}>
