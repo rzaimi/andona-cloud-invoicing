@@ -91,6 +91,7 @@ export default function InvoicesCreate() {
         service_period_end: "",
         due_date: new Date(Date.now() + settings.payment_terms * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         notes: "",
+        bauvorhaben: "",
         layout_id: layouts.find((l) => l.is_default)?.id || "",
         vat_regime: "standard",
         invoice_type: "standard",
@@ -346,6 +347,18 @@ export default function InvoicesCreate() {
                                         required
                                     />
                                     {errors.due_date && <p className="text-red-600 text-sm">{errors.due_date}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="bauvorhaben">BV (Bauvorhaben)</Label>
+                                    <Input
+                                        id="bauvorhaben"
+                                        type="text"
+                                        value={data.bauvorhaben}
+                                        onChange={(e) => setData("bauvorhaben", e.target.value)}
+                                        placeholder="z.B. Neubau Musterstraße 12, Berlin"
+                                    />
+                                    {errors.bauvorhaben && <p className="text-red-600 text-sm">{errors.bauvorhaben}</p>}
                                 </div>
 
                                 <div className="space-y-2">

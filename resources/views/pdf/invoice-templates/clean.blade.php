@@ -130,41 +130,7 @@
         <div style="font-weight: 600;">{{ $snapshot['name'] ?? '' }}</div>
     </div>
 
-    {{-- Footer Style A: Multi-line right-aligned blocks (German Example 1) --}}
-    @if($layoutSettings['branding']['show_footer'] ?? true)
-    <div class="pdf-footer" style="margin-top: 15mm; border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; padding-top: 3mm;">
-        <table style="width: 100%; font-size: 7pt; line-height: 1.5; color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }}; border-collapse: collapse;">
-            <tr>
-                {{-- Column 1: Address (22%) --}}
-                <td style="width: 22%; vertical-align: top; padding-right: 5px;">
-                    @if($snapshot['name'] ?? null)<div style="font-weight: 600; margin-bottom: 2px;">{{ $snapshot['name'] }}</div>@endif
-                    @if($snapshot['address'] ?? null)<div>{{ $snapshot['address'] }}</div>@endif
-                    @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null))
-                        <div>{{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}</div>
-                    @endif
-                </td>
-                {{-- Column 2: Contact (24%) --}}
-                <td style="width: 24%; vertical-align: top; padding-right: 5px;">
-                    @if($snapshot['phone'] ?? null)<div><strong>FON</strong> {{ $snapshot['phone'] }}</div>@endif
-                    @if($snapshot['email'] ?? null)<div><strong>MAIL</strong> {{ $snapshot['email'] }}</div>@endif
-                    @if($snapshot['website'] ?? null)<div><strong>WEB</strong> {{ $snapshot['website'] }}</div>@endif
-                </td>
-                {{-- Column 3: Tax Info (18%) --}}
-                <td style="width: 18%; vertical-align: top; padding-right: 5px;">
-                    @if($snapshot['tax_number'] ?? null)<div><strong>Steuernr.</strong> {{ $snapshot['tax_number'] }}</div>@endif
-                    @if($snapshot['vat_number'] ?? null)<div><strong>UST-ID</strong> {{ $snapshot['vat_number'] }}</div>@endif
-                </td>
-                {{-- Column 4: Banking (36%) --}}
-                @if($layoutSettings['content']['show_bank_details'] ?? true)
-                <td style="width: 36%; vertical-align: top;">
-                    @if($snapshot['bank_name'] ?? null)<div><strong>BANK</strong> {{ $snapshot['bank_name'] }}</div>@endif
-                    @if($snapshot['bank_iban'] ?? null)<div><strong>IBAN</strong> {{ $snapshot['bank_iban'] }}</div>@endif
-                    @if($snapshot['bank_bic'] ?? null)<div><strong>BIC</strong> {{ $snapshot['bank_bic'] }}</div>@endif
-                </td>
-                @endif
-            </tr>
-        </table>
-    </div>
+        @if($layoutSettings['branding']['show_footer'] ?? true)
+    @include('pdf.invoice-partials.footer')
     @endif
-
 </div>

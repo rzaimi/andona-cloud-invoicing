@@ -3,8 +3,10 @@
 namespace App\Modules\Offer\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Company\Models\Company;
 use App\Modules\Offer\Models\OfferLayout;
 use App\Services\ContextService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -81,47 +83,72 @@ class OfferLayoutController extends Controller
             ]
         ];
 
+        $company = Company::find($companyId);
+
         return Inertia::render('settings/offer-layouts', [
-            'layouts' => $layouts,
-            'templates' => $templates
+            'layouts'   => $layouts,
+            'templates' => $templates,
+            'company'   => $company ? [
+                'id'   => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo,
+            ] : null,
         ]);
+    }
+
+    private function layoutValidationRules(): array
+    {
+        return [
+            'name'                                        => 'required|string|max:255',
+            'template'                                    => 'required|string',
+            'settings'                                    => 'required|array',
+            'settings.colors'                             => 'required|array',
+            'settings.colors.primary'                     => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.secondary'                   => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.accent'                      => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.text'                        => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.fonts'                              => 'required|array',
+            'settings.fonts.heading'                      => 'required|string|max:50',
+            'settings.fonts.body'                         => 'required|string|max:50',
+            'settings.fonts.size'                         => 'required|in:small,medium,large',
+            'settings.layout'                             => 'required|array',
+            'settings.layout.header_height'               => 'required|integer|min:50|max:300',
+            'settings.layout.footer_height'               => 'required|integer|min:30|max:200',
+            'settings.layout.margin_top'                  => 'required|integer|min:0|max:100',
+            'settings.layout.margin_bottom'               => 'required|integer|min:0|max:100',
+            'settings.layout.margin_left'                 => 'required|integer|min:0|max:100',
+            'settings.layout.margin_right'                => 'required|integer|min:0|max:100',
+            'settings.branding'                           => 'required|array',
+            'settings.branding.show_logo'                 => 'required|boolean',
+            'settings.branding.logo_position'             => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.branding.company_info_position'     => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.branding.show_header_line'          => 'sometimes|boolean',
+            'settings.branding.show_footer_line'          => 'sometimes|boolean',
+            'settings.branding.show_footer'               => 'sometimes|boolean',
+            'settings.content'                            => 'required|array',
+            'settings.content.show_company_address'       => 'sometimes|boolean',
+            'settings.content.show_company_contact'       => 'sometimes|boolean',
+            'settings.content.show_customer_number'       => 'sometimes|boolean',
+            'settings.content.show_tax_number'            => 'sometimes|boolean',
+            'settings.content.show_unit_column'           => 'sometimes|boolean',
+            'settings.content.show_notes'                 => 'sometimes|boolean',
+            'settings.content.show_bank_details'          => 'sometimes|boolean',
+            'settings.content.show_company_registration'  => 'sometimes|boolean',
+            'settings.content.show_payment_terms'         => 'required|boolean',
+            'settings.content.show_validity_period'       => 'required|boolean',
+            'settings.content.show_item_images'           => 'required|boolean',
+            'settings.content.show_item_codes'            => 'required|boolean',
+            'settings.content.show_row_number'            => 'required|boolean',
+            'settings.content.show_bauvorhaben'           => 'required|boolean',
+            'settings.content.show_tax_breakdown'         => 'required|boolean',
+            'settings.content.custom_footer_text'         => 'nullable|string|max:2000',
+            'settings.template_specific'                  => 'sometimes|array',
+        ];
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'template' => 'required|string',
-            'settings' => 'required|array',
-            'settings.colors' => 'required|array',
-            'settings.colors.primary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.secondary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.accent' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.text' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.fonts' => 'required|array',
-            'settings.fonts.heading' => 'required|string|max:50',
-            'settings.fonts.body' => 'required|string|max:50',
-            'settings.fonts.size' => 'required|in:small,medium,large',
-            'settings.layout' => 'required|array',
-            'settings.layout.header_height' => 'required|integer|min:50|max:300',
-            'settings.layout.footer_height' => 'required|integer|min:30|max:200',
-            'settings.layout.margin_top' => 'required|integer|min:0|max:100',
-            'settings.layout.margin_bottom' => 'required|integer|min:0|max:100',
-            'settings.layout.margin_left' => 'required|integer|min:0|max:100',
-            'settings.layout.margin_right' => 'required|integer|min:0|max:100',
-            'settings.branding' => 'required|array',
-            'settings.branding.show_logo' => 'required|boolean',
-            'settings.branding.logo_position' => 'required|in:top-left,top-center,top-right',
-            'settings.branding.company_info_position' => 'required|in:top-left,top-center,top-right',
-            'settings.content' => 'required|array',
-            'settings.content.show_item_images' => 'required|boolean',
-            'settings.content.show_item_codes' => 'required|boolean',
-            'settings.content.show_tax_breakdown' => 'required|boolean',
-            'settings.content.show_payment_terms' => 'required|boolean',
-            'settings.content.show_validity_period' => 'required|boolean',
-            'settings.content.custom_footer_text' => 'nullable|string|max:2000',
-            'settings.template_specific' => 'sometimes|array',
-        ]);
+        $request->validate($this->layoutValidationRules());
 
         // Check if this is the first layout for the company
         $companyId = $this->getEffectiveCompanyId();
@@ -143,39 +170,7 @@ class OfferLayoutController extends Controller
     {
         $this->authorize('update', $offerLayout);
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'template' => 'required|string',
-            'settings' => 'required|array',
-            'settings.colors' => 'required|array',
-            'settings.colors.primary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.secondary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.accent' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.text' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.fonts' => 'required|array',
-            'settings.fonts.heading' => 'required|string|max:50',
-            'settings.fonts.body' => 'required|string|max:50',
-            'settings.fonts.size' => 'required|in:small,medium,large',
-            'settings.layout' => 'required|array',
-            'settings.layout.header_height' => 'required|integer|min:50|max:300',
-            'settings.layout.footer_height' => 'required|integer|min:30|max:200',
-            'settings.layout.margin_top' => 'required|integer|min:0|max:100',
-            'settings.layout.margin_bottom' => 'required|integer|min:0|max:100',
-            'settings.layout.margin_left' => 'required|integer|min:0|max:100',
-            'settings.layout.margin_right' => 'required|integer|min:0|max:100',
-            'settings.branding' => 'required|array',
-            'settings.branding.show_logo' => 'required|boolean',
-            'settings.branding.logo_position' => 'required|in:top-left,top-center,top-right',
-            'settings.branding.company_info_position' => 'required|in:top-left,top-center,top-right',
-            'settings.content' => 'required|array',
-            'settings.content.show_item_images' => 'required|boolean',
-            'settings.content.show_item_codes' => 'required|boolean',
-            'settings.content.show_tax_breakdown' => 'required|boolean',
-            'settings.content.show_payment_terms' => 'required|boolean',
-            'settings.content.show_validity_period' => 'required|boolean',
-            'settings.content.custom_footer_text' => 'nullable|string|max:2000',
-            'settings.template_specific' => 'sometimes|array',
-        ]);
+        $request->validate($this->layoutValidationRules());
 
         $offerLayout->update([
             'name' => $request->name,
@@ -242,104 +237,127 @@ class OfferLayoutController extends Controller
     {
         $this->authorize('view', $offerLayout);
 
-        // Create sample data objects that match Offer, Customer, and Company models
-        $sampleOffer = (object) [
-            'id' => 'sample-offer-001',
-            'number' => 'AN-2024-0001',
-            'status' => 'sent',
-            'issue_date' => now(),
-            'valid_until' => now()->addDays(30),
-            'subtotal' => 125.00,
-            'tax_rate' => 0.19,
-            'tax_amount' => 23.75,
-            'total' => 148.75,
-            'notes' => null,
-            'terms' => null,
-            'items' => collect([
-                (object) [
-                    'id' => 'item-001',
-                    'description' => 'Beispielprodukt',
-                    'quantity' => 2,
-                    'unit' => 'Stk.',
-                    'unit_price' => 50.00,
-                    'total' => 100.00,
-                ],
-                (object) [
-                    'id' => 'item-002',
-                    'description' => 'Weiteres Produkt',
-                    'quantity' => 1,
-                    'unit' => 'Stk.',
-                    'unit_price' => 25.00,
-                    'total' => 25.00,
-                ],
-            ]),
-        ];
+        [$sampleOffer, $sampleCustomer] = $this->buildSampleOffer();
+        $company = Company::find($offerLayout->company_id);
 
-        $sampleCustomer = (object) [
-            'id' => 'customer-001',
-            'name' => 'Musterkunde GmbH',
-            'contact_person' => 'Herr Mustermann',
-            'address' => 'Kundenstraße 456',
-            'postal_code' => '54321',
-            'city' => 'Kundenstadt',
-            'country' => 'Deutschland',
-            'number' => 'KU-2024-0001',
-        ];
-
-        // Attach customer to offer (as the view expects $offer->customer)
-        $sampleOffer->customer = $sampleCustomer;
-
-        $sampleCompany = \App\Modules\Company\Models\Company::find($companyId);
-        
-        // Use the same PDF view for preview
         return view('pdf.offer', [
-            'layout' => $offerLayout,
-            'offer' => $sampleOffer,
-            'company' => $sampleCompany,
+            'layout'   => $offerLayout,
+            'offer'    => $sampleOffer,
+            'company'  => $company,
             'customer' => $sampleCustomer,
-            'preview' => true,
+            'settings' => [],
+            'preview'  => true,
         ]);
     }
 
-    private function getSampleData()
+    public function previewLivePdf(Request $request)
     {
-        return [
-            'offer_number' => 'AN-2024-0001',
-            'offer_date' => now()->format('d.m.Y'),
-            'valid_until' => now()->addDays(30)->format('d.m.Y'),
-            'company' => [
-                'name' => 'Ihre Firma GmbH',
-                'address' => 'Musterstraße 123',
-                'postal_code' => '12345',
-                'city' => 'Musterstadt',
-                'phone' => '+49 123 456789',
-                'email' => 'info@ihrefirma.de',
-            ],
-            'customer' => [
-                'name' => 'Musterkunde GmbH',
-                'address' => 'Kundenstraße 456',
-                'postal_code' => '54321',
-                'city' => 'Kundenstadt',
-            ],
-            'items' => [
-                [
-                    'code' => 'ART-001',
-                    'description' => 'Beispielprodukt',
-                    'quantity' => 2,
-                    'unit_price' => 50.00,
-                    'total' => 100.00,
-                ],
-                [
-                    'code' => 'ART-002',
-                    'description' => 'Weiteres Produkt',
-                    'quantity' => 1,
-                    'unit_price' => 25.00,
-                    'total' => 25.00,
-                ]
-            ],
-            'subtotal' => 125.00,
-            'tax_amount' => 23.75,
-            'total' => 148.75,
-        ];
+        $companyId = $this->getEffectiveCompanyId();
+
+        $request->validate([
+            'template'                                    => 'required|string',
+            'settings'                                    => 'required|array',
+            'settings.colors'                             => 'required|array',
+            'settings.colors.primary'                     => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.secondary'                   => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.accent'                      => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.text'                        => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.fonts'                              => 'required|array',
+            'settings.fonts.heading'                      => 'required|string|max:50',
+            'settings.fonts.body'                         => 'required|string|max:50',
+            'settings.fonts.size'                         => 'required|in:small,medium,large',
+            'settings.layout'                             => 'required|array',
+            'settings.layout.header_height'               => 'required|integer|min:50|max:300',
+            'settings.layout.footer_height'               => 'required|integer|min:30|max:200',
+            'settings.layout.margin_top'                  => 'required|integer|min:0|max:100',
+            'settings.layout.margin_bottom'               => 'required|integer|min:0|max:100',
+            'settings.layout.margin_left'                 => 'required|integer|min:0|max:100',
+            'settings.layout.margin_right'                => 'required|integer|min:0|max:100',
+            'settings.branding'                           => 'required|array',
+            'settings.branding.show_logo'                 => 'required|boolean',
+            'settings.branding.logo_position'             => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.branding.company_info_position'     => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.content'                            => 'required|array',
+            'settings.content.show_item_images'           => 'required|boolean',
+            'settings.content.show_item_codes'            => 'required|boolean',
+            'settings.content.show_row_number'            => 'required|boolean',
+            'settings.content.show_bauvorhaben'           => 'required|boolean',
+            'settings.content.show_tax_breakdown'         => 'required|boolean',
+            'settings.content.show_payment_terms'         => 'required|boolean',
+            'settings.content.show_validity_period'       => 'required|boolean',
+            'settings.content.custom_footer_text'         => 'nullable|string|max:2000',
+            'settings.template_specific'                  => 'sometimes|array',
+        ]);
+
+        $layout             = new OfferLayout();
+        $layout->company_id = $companyId;
+        $layout->name       = 'Live Preview';
+        $layout->template   = $request->template;
+        $layout->settings   = $request->input('settings');
+
+        [$sampleOffer, $sampleCustomer] = $this->buildSampleOffer();
+        $company = Company::find($companyId);
+
+        $html = view('pdf.offer', [
+            'layout'   => $layout,
+            'offer'    => $sampleOffer,
+            'company'  => $company,
+            'customer' => $sampleCustomer,
+            'settings' => [],
+            'preview'  => true,
+        ])->render();
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('a4')
+            ->setOptions([
+                'defaultFont'         => 'DejaVu Sans',
+                'isRemoteEnabled'     => true,
+                'isHtml5ParserEnabled' => true,
+                'isPhpEnabled'        => true,
+            ]);
+
+        return response($pdf->output(), 200, [
+            'Content-Type'  => 'application/pdf',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
     }
+
+    private function buildSampleOffer(): array
+    {
+        $sampleCustomer = (object) [
+            'id'             => 'customer-001',
+            'name'           => 'Schmidt Consulting AG',
+            'contact_person' => 'Frau Schmidt',
+            'address'        => 'Maximilianstraße 35',
+            'postal_code'    => '80539',
+            'city'           => 'München',
+            'country'        => 'Deutschland',
+            'number'         => 'KU-2026-0002',
+        ];
+
+        $sampleOffer = (object) [
+            'id'              => 'sample-offer-001',
+            'number'          => 'AN-2026-0007',
+            'status'          => 'sent',
+            'issue_date'      => now(),
+            'valid_until'     => now()->addDays(30),
+            'subtotal'        => 16029.00,
+            'tax_rate'        => 0.19,
+            'tax_amount'      => 3045.51,
+            'total'           => 19074.51,
+            'notes'           => null,
+            'terms_conditions' => null,
+            'customer'        => $sampleCustomer,
+            'items'           => collect([
+                (object) ['id' => 'item-001', 'description' => 'SEO-Optimierung und Beratung',    'quantity' => 19, 'unit' => 'Std.', 'unit_price' => 102.00, 'total' => 1938.00, 'tax_rate' => 0.19, 'discount_amount' => 0, 'discount_type' => null, 'discount_value' => null],
+                (object) ['id' => 'item-002', 'description' => 'E-Commerce Shop Entwicklung',     'quantity' => 1,  'unit' => 'Stk.', 'unit_price' => 7598.00, 'total' => 7598.00, 'tax_rate' => 0.19, 'discount_amount' => 0, 'discount_type' => null, 'discount_value' => null],
+                (object) ['id' => 'item-003', 'description' => 'Datenbank-Design und -Optimierung', 'quantity' => 13, 'unit' => 'Std.', 'unit_price' => 105.00, 'total' => 1365.00, 'tax_rate' => 0.19, 'discount_amount' => 0, 'discount_type' => null, 'discount_value' => null],
+                (object) ['id' => 'item-004', 'description' => 'Mobile App Entwicklung',         'quantity' => 1,  'unit' => 'Stk.', 'unit_price' => 5128.00, 'total' => 5128.00, 'tax_rate' => 0.19, 'discount_amount' => 0, 'discount_type' => null, 'discount_value' => null],
+            ]),
+        ];
+
+        return [$sampleOffer, $sampleCustomer];
+    }
+
 }
+

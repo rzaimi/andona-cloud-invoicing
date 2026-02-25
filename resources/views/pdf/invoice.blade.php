@@ -374,22 +374,24 @@
     } elseif (isset($company)) {
         // Fallback: create snapshot from current company
         $snapshot = [
-            'name' => $company->name ?? '',
-            'email' => $company->email ?? '',
-            'phone' => $company->phone ?? '',
-            'address' => $company->address ?? '',
-            'postal_code' => $company->postal_code ?? '',
-            'city' => $company->city ?? '',
-            'country' => $company->country ?? 'Deutschland',
-            'tax_number' => $company->tax_number ?? '',
-            'vat_number' => $company->vat_number ?? '',
+            'name'                => $company->name ?? '',
+            'email'               => $company->email ?? '',
+            'phone'               => $company->phone ?? '',
+            'fax'                 => $company->fax ?? '',
+            'address'             => $company->address ?? '',
+            'postal_code'         => $company->postal_code ?? '',
+            'city'                => $company->city ?? '',
+            'country'             => $company->country ?? 'Deutschland',
+            'tax_number'          => $company->tax_number ?? '',
+            'tax_office'          => $company->tax_office ?? '',
+            'vat_number'          => $company->vat_number ?? '',
             'commercial_register' => $company->commercial_register ?? '',
-            'managing_director' => $company->managing_director ?? '',
-            'website' => $company->website ?? '',
-            'logo' => $company->logo ?? '',
-            'bank_name' => $company->bank_name ?? '',
-            'bank_iban' => $company->bank_iban ?? '',
-            'bank_bic' => $company->bank_bic ?? '',
+            'managing_director'   => $company->managing_director ?? '',
+            'website'             => $company->website ?? '',
+            'logo'                => $company->logo ?? '',
+            'bank_name'           => $company->bank_name ?? '',
+            'bank_iban'           => $company->bank_iban ?? '',
+            'bank_bic'            => $company->bank_bic ?? '',
         ];
     } else {
         $snapshot = [];
@@ -463,23 +465,6 @@
     @endphp
 
     {{-- Footer moved to individual templates for variety --}}
-
-    {{-- Page number (bottom-right inside footer area) --}}
-    <script type="text/php">
-    if (isset($pdf)) {
-        $pdf->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
-            $font = $fontMetrics->get_font("DejaVu Sans", "normal");
-            $size = 7;
-            $text = "Seite {$pageNumber} / {$pageCount}";
-            $w = $fontMetrics->get_text_width($text, $font, $size);
-            // simple: bottom-right, aligned to the right edge, slightly above the page bottom
-            $x = $canvas->get_width() - $w - 6;
-            $y = $canvas->get_height() - 14;
-            $canvas->text($x, $y, $text, $font, $size, [0, 0, 0]);
-        });
-    }
-    </script>
-
 
 @php
     // Ensure settings are accessible (keep behavior, but do not recompute $template here)

@@ -50,8 +50,14 @@
     @endif
 
     @if(!empty($invoice->customer->number))
-        <div>
+        <div style="margin-bottom: 1mm;">
             <strong>Kundennr.:</strong> {{ $invoice->customer->number }}
+        </div>
+    @endif
+
+    @if(!empty($invoice->bauvorhaben) && ($layoutSettings['content']['show_bauvorhaben'] ?? true))
+        <div style="margin-bottom: 1mm; font-weight: 600; color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};">
+            <strong>BV:</strong> {{ $invoice->bauvorhaben }}
         </div>
     @endif
 </div>

@@ -126,6 +126,8 @@ class InvoiceLayoutController extends Controller
             'settings.content' => 'required|array',
             'settings.content.show_item_images' => 'required|boolean',
             'settings.content.show_item_codes' => 'required|boolean',
+            'settings.content.show_row_number' => 'required|boolean',
+            'settings.content.show_bauvorhaben' => 'required|boolean',
             'settings.content.show_tax_breakdown' => 'required|boolean',
             'settings.content.show_payment_terms' => 'required|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
@@ -187,6 +189,8 @@ class InvoiceLayoutController extends Controller
             'settings.content' => 'required|array',
             'settings.content.show_item_images' => 'required|boolean',
             'settings.content.show_item_codes' => 'required|boolean',
+            'settings.content.show_row_number' => 'required|boolean',
+            'settings.content.show_bauvorhaben' => 'required|boolean',
             'settings.content.show_tax_breakdown' => 'required|boolean',
             'settings.content.show_payment_terms' => 'required|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
@@ -263,6 +267,8 @@ class InvoiceLayoutController extends Controller
     public function preview(InvoiceLayout $invoiceLayout)
     {
         $this->authorize('view', $invoiceLayout);
+
+        $companyId = $invoiceLayout->company_id;
 
         // Create sample data objects that match Invoice, Customer, and Company models
         $sampleInvoice = (object) [
@@ -356,6 +362,8 @@ class InvoiceLayoutController extends Controller
             'settings.content' => 'required|array',
             'settings.content.show_item_images' => 'required|boolean',
             'settings.content.show_item_codes' => 'required|boolean',
+            'settings.content.show_row_number' => 'required|boolean',
+            'settings.content.show_bauvorhaben' => 'required|boolean',
             'settings.content.show_tax_breakdown' => 'required|boolean',
             'settings.content.show_payment_terms' => 'required|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
@@ -462,6 +470,8 @@ class InvoiceLayoutController extends Controller
             'settings.content' => 'required|array',
             'settings.content.show_item_images' => 'required|boolean',
             'settings.content.show_item_codes' => 'required|boolean',
+            'settings.content.show_row_number' => 'required|boolean',
+            'settings.content.show_bauvorhaben' => 'required|boolean',
             'settings.content.show_tax_breakdown' => 'required|boolean',
             'settings.content.show_payment_terms' => 'required|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',

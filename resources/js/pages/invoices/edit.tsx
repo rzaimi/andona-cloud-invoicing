@@ -89,6 +89,7 @@ export default function InvoicesEdit() {
         service_period_end: invoice.service_period_end?.split('T')[0] || invoice.service_period_end || "",
         due_date: invoice.due_date?.split('T')[0] || invoice.due_date,
         notes: invoice.notes || "",
+        bauvorhaben: (invoice as any).bauvorhaben || "",
         layout_id: invoice.layout_id?.toString() || "",
         status: invoice.status,
         vat_regime: invoice.vat_regime || "standard",
@@ -484,6 +485,19 @@ export default function InvoicesEdit() {
                                         disabled={!canEdit}
                                     />
                                     {errors.due_date && <p className="text-red-600 text-sm">{errors.due_date}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="bauvorhaben">BV (Bauvorhaben)</Label>
+                                    <Input
+                                        id="bauvorhaben"
+                                        type="text"
+                                        value={data.bauvorhaben}
+                                        onChange={(e) => setData("bauvorhaben", e.target.value)}
+                                        placeholder="z.B. Neubau Musterstraße 12, Berlin"
+                                        disabled={!canEdit}
+                                    />
+                                    {errors.bauvorhaben && <p className="text-red-600 text-sm">{errors.bauvorhaben}</p>}
                                 </div>
 
                                 <div className="space-y-2">

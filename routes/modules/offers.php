@@ -24,6 +24,7 @@ Route::post('offers/{offer}/reject', [OfferController::class, 'reject'])->name('
 Route::prefix('offer-layouts')->name('offer-layouts.')->group(function () {
     Route::get('/', [OfferLayoutController::class, 'index'])->name('index');
     Route::post('/', [OfferLayoutController::class, 'store'])->name('store');
+    Route::post('/preview-live-pdf', [OfferLayoutController::class, 'previewLivePdf'])->name('preview-live-pdf');
     Route::get('/{offerLayout}/preview', [OfferLayoutController::class, 'preview'])->name('preview');
     Route::put('/{offerLayout}', [OfferLayoutController::class, 'update'])->name('update');
     Route::delete('/{offerLayout}', [OfferLayoutController::class, 'destroy'])->name('destroy');

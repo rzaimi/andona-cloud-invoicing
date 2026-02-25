@@ -21,11 +21,13 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
         name: company?.name || '',
         email: company?.email || '',
         phone: company?.phone || '',
+        fax: company?.fax || '',
         address: company?.address || '',
         postal_code: company?.postal_code || '',
         city: company?.city || '',
         country: company?.country || 'Deutschland',
         tax_number: company?.tax_number || '',
+        tax_office: company?.tax_office || '',
         vat_number: company?.vat_number || '',
         is_small_business: company?.is_small_business || false,
         commercial_register: company?.commercial_register || '',
@@ -157,6 +159,16 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
                     </div>
 
                     <div className="space-y-2">
+                        <Label htmlFor="fax">Fax</Label>
+                        <Input
+                            id="fax"
+                            value={data.fax}
+                            onChange={(e) => setData("fax", e.target.value)}
+                        />
+                        {errors.fax && <p className="text-red-600 text-sm">{errors.fax}</p>}
+                    </div>
+
+                    <div className="space-y-2">
                         <Label htmlFor="website">Webseite</Label>
                         <Input
                             id="website"
@@ -242,13 +254,24 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
-                        <Label htmlFor="tax_number">Steuernummer</Label>
+                        <Label htmlFor="tax_number">Steuernummer (St.Nr.)</Label>
                         <Input
                             id="tax_number"
                             value={data.tax_number}
                             onChange={(e) => setData("tax_number", e.target.value)}
                         />
                         {errors.tax_number && <p className="text-red-600 text-sm">{errors.tax_number}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="tax_office">Finanzamt</Label>
+                        <Input
+                            id="tax_office"
+                            value={data.tax_office}
+                            onChange={(e) => setData("tax_office", e.target.value)}
+                            placeholder="z.B. Finanzamt Gießen"
+                        />
+                        {errors.tax_office && <p className="text-red-600 text-sm">{errors.tax_office}</p>}
                     </div>
 
                     <div className="space-y-2">

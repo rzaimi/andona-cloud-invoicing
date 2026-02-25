@@ -68,6 +68,8 @@ interface InvoiceLayoutSettings {
         show_payment_terms: boolean
         show_item_images: boolean
         show_item_codes: boolean
+        show_row_number: boolean
+        show_bauvorhaben: boolean
         show_tax_breakdown: boolean
         custom_footer_text: string
     }
@@ -142,6 +144,8 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         show_payment_terms: true,
         show_item_images: false,
         show_item_codes: true,
+        show_row_number: false,
+        show_bauvorhaben: true,
         show_tax_breakdown: true,
         custom_footer_text: "",
     },
@@ -199,6 +203,8 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: true,
+                show_row_number: false,
+                show_bauvorhaben: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -222,6 +228,8 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             defaults.content = {
                 show_item_images: false,
                 show_item_codes: true,
+                show_row_number: true,
+                show_bauvorhaben: true,
                 show_tax_breakdown: true,
                 show_payment_terms: true,
                 custom_footer_text: "",
@@ -258,6 +266,8 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: false,
+                show_row_number: false,
+                show_bauvorhaben: true,
                 show_tax_breakdown: false,
                 custom_footer_text: "",
             }
@@ -293,6 +303,8 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: true,
+                show_row_number: false,
+                show_bauvorhaben: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -328,6 +340,8 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: true,
+                show_row_number: false,
+                show_bauvorhaben: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -363,6 +377,8 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_payment_terms: true,
                 show_item_images: false,
                 show_item_codes: true,
+                show_row_number: false,
+                show_bauvorhaben: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -417,6 +433,8 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
             show_payment_terms: settings.content?.show_payment_terms ?? defaults.content.show_payment_terms,
             show_item_images: settings.content?.show_item_images ?? defaults.content.show_item_images,
             show_item_codes: settings.content?.show_item_codes ?? defaults.content.show_item_codes,
+            show_row_number: settings.content?.show_row_number ?? defaults.content.show_row_number,
+            show_bauvorhaben: settings.content?.show_bauvorhaben ?? defaults.content.show_bauvorhaben,
             show_tax_breakdown: settings.content?.show_tax_breakdown ?? defaults.content.show_tax_breakdown,
             custom_footer_text: settings.content?.custom_footer_text ?? defaults.content.custom_footer_text,
         },
@@ -1402,6 +1420,17 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
+                                                            <Label>BV (Bauvorhaben) anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Bauvorhaben-Referenz im Dokumentkopf anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_bauvorhaben}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_bauvorhaben", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
                                                             <Label>Einheitsspalte anzeigen</Label>
                                                             <p className="text-sm text-muted-foreground">Einheit (Stk., kg, etc.) in Artikeltabelle anzeigen</p>
                                                         </div>
@@ -1484,6 +1513,17 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_item_codes}
                                                             onCheckedChange={(checked) => updateContentSetting("show_item_codes", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Positionsnummern anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Fortlaufende Nr.-Spalte (Pos.) in der Artikeltabelle anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_row_number}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_row_number", checked)}
                                                         />
                                                     </div>
 

@@ -53,6 +53,7 @@ interface Offer {
     issue_date: string
     valid_until: string
     notes: string | null
+    bauvorhaben: string | null
     terms_conditions: string | null
     layout_id: string | null
     status: string
@@ -99,6 +100,7 @@ export default function OffersEdit() {
         issue_date: offer.issue_date?.split('T')[0] || offer.issue_date,
         valid_until: offer.valid_until?.split('T')[0] || offer.valid_until,
         notes: offer.notes || "",
+        bauvorhaben: offer.bauvorhaben || "",
         terms: offer.terms_conditions || "",
         layout_id: offer.layout_id?.toString() || "",
         status: offer.status,
@@ -365,6 +367,18 @@ export default function OffersEdit() {
                                         required
                                     />
                                     {errors.valid_until && <p className="text-red-600 text-sm">{errors.valid_until}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="bauvorhaben">BV (Bauvorhaben)</Label>
+                                    <Input
+                                        id="bauvorhaben"
+                                        type="text"
+                                        value={data.bauvorhaben}
+                                        onChange={(e) => setData("bauvorhaben", e.target.value)}
+                                        placeholder="z.B. Neubau Musterstraße 12, Berlin"
+                                    />
+                                    {errors.bauvorhaben && <p className="text-red-600 text-sm">{errors.bauvorhaben}</p>}
                                 </div>
                             </div>
                         </CardContent>

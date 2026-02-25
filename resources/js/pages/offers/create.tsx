@@ -86,6 +86,7 @@ export default function OffersCreate() {
         issue_date: new Date().toISOString().split("T")[0],
         valid_until: new Date(Date.now() + settings.offer_validity_days * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         notes: "",
+        bauvorhaben: "",
         terms_conditions: "",
         layout_id: layouts.find((l) => l.is_default)?.id || "",
         items: [] as OfferItem[],
@@ -312,6 +313,18 @@ export default function OffersCreate() {
                                         required
                                     />
                                     {errors.valid_until && <p className="text-red-600 text-sm">{errors.valid_until}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="bauvorhaben">BV (Bauvorhaben)</Label>
+                                    <Input
+                                        id="bauvorhaben"
+                                        type="text"
+                                        value={data.bauvorhaben}
+                                        onChange={(e) => setData("bauvorhaben", e.target.value)}
+                                        placeholder="z.B. Neubau Musterstraße 12, Berlin"
+                                    />
+                                    {errors.bauvorhaben && <p className="text-red-600 text-sm">{errors.bauvorhaben}</p>}
                                 </div>
                             </div>
                         </CardContent>

@@ -134,18 +134,8 @@
         <div style="font-weight: 600;">{{ $snapshot['name'] ?? '' }}</div>
     </div>
 
-    {{-- Footer Style B: Compact single-line (German Example 2 & 4) --}}
     @if($layoutSettings['branding']['show_footer'] ?? true)
-    <div class="pdf-footer" style="margin-top: 15mm; border-top: 1px solid {{ $layoutSettings['colors']['accent'] ?? '#e5e7eb' }}; padding-top: 3mm;">
-        <div style="font-size: 7pt; line-height: 1.5; color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }}; text-align: left;">
-            {{ $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }} 
-            FON {{ $snapshot['phone'] ?? '' }} MAIL {{ $snapshot['email'] ?? '' }} @if($snapshot['website'] ?? null)WEB {{ $snapshot['website'] }}@endif
-            @if($layoutSettings['content']['show_bank_details'] ?? true)
-                BANK {{ $snapshot['bank_name'] ?? '' }} 
-            @endif
-            IBAN {{ $snapshot['bank_iban'] ?? '' }} @if($snapshot['bank_bic'] ?? null)BIC {{ $snapshot['bank_bic'] }}@endif @if($snapshot['tax_number'] ?? null)STEUERNUMMER {{ $snapshot['tax_number'] }}@endif @if($snapshot['vat_number'] ?? null)UST-ID {{ $snapshot['vat_number'] }}@endif
-        </div>
-    </div>
+    @include('pdf.invoice-partials.footer')
     @endif
 
 </div>

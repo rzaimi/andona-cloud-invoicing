@@ -16,7 +16,7 @@
     $tableOuterBorder     = $tableOuterBorder      ?? 'none';
     $altRowBg             = $altRowBg             ?? null;
     $cellPadding          = $cellPadding           ?? '8px 6px';
-    $showRowNumber        = $showRowNumber         ?? false;
+    $showRowNumber        = $layoutSettings['content']['show_row_number'] ?? ($showRowNumber ?? false);
     $showItemCodes        = $layoutSettings['content']['show_item_codes'] ?? false;
     $showBorderColor      = $layoutSettings['colors']['text'] ?? '#1f2937';
 
