@@ -1,6 +1,6 @@
 "use client"
 
-import { Head, Link, router } from "@inertiajs/react"
+import { Head, Link, router, usePage } from "@inertiajs/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,10 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Edit, Trash2, Folder, FolderOpen, Package, TrendingUp, Eye, Plus } from 'lucide-react'
 import AppLayout from "@/layouts/app-layout"
-import type { User, Category, Product } from "@/types"
+import type { Category, Product, BreadcrumbItem } from "@/types"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface CategoryShowProps {
-    user: User
     category: Category & {
         parent?: Category
         children?: Category[]
@@ -25,7 +25,16 @@ interface CategoryShowProps {
     }
 }
 
-export default function CategoryShow({ user, category, stats }: CategoryShowProps) {
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Kategorien", href: "/categories" },
+    { title: "Kategoriedetails" },
+]
+
+export default function CategoryShow({ category, stats }: CategoryShowProps) {
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
+
     const deleteCategory = () => {
         if (
             confirm(
@@ -36,12 +45,7 @@ export default function CategoryShow({ user, category, stats }: CategoryShowProp
         }
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("de-DE", {
@@ -68,7 +72,7 @@ export default function CategoryShow({ user, category, stats }: CategoryShowProp
     }
 
     return (
-        <AppLayout user={user}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={category.name} />
 
             <div className="space-y-6">
