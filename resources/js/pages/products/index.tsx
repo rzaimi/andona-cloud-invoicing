@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Package, Plus, Search, Filter, Edit, Eye, Trash2, AlertTriangle, TrendingUp, TrendingDown, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { Product, Category, PaginatedResponse, User } from "@/types"
+import type { Product, Category, PaginatedResponse, BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface ProductsIndexProps {
     user: User
@@ -32,9 +33,14 @@ interface ProductsIndexProps {
     }
 }
 
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Produkte" },
+]
+
 export default function ProductsIndex({ products, categories, stats, filters }: Omit<ProductsIndexProps, 'user'>) {
-    const { props } = usePage()
-    const user = (props as any).auth?.user || (props as any).user
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
     const [search, setSearch] = useState(filters.search || "")
     const [selectedCategory, setSelectedCategory] = useState(filters.category || "all")
     const [selectedStatus, setSelectedStatus] = useState(filters.status || "all")
@@ -99,15 +105,10 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
         return <Badge variant={variants[status as keyof typeof variants]}>{labels[status as keyof typeof labels]}</Badge>
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     return (
-        <AppLayout user={user}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Produktverwaltung" />
 
             <div className="space-y-6">
@@ -306,7 +307,7 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
                                             </TableCell>
                                             <TableCell>
                                                 {product.category ? (
-                                                    <Badge variant="outline">{product.category}</Badge>
+                                                    <Badge variant="outline">{product.category.name}</Badge>
                                                 ) : (
                                                     <span className="text-muted-foreground">-</span>
                                                 )}

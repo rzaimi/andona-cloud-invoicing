@@ -48,19 +48,34 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Calculate growth percentages
+        // Calculate growth percentages — compare current period to previous period
+        $invoicesThisMonth = Invoice::where('company_id', $companyId)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+        $invoicesLastMonth = Invoice::where('company_id', $companyId)
+            ->whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->count();
+
+        $customersLastMonth = Customer::where('company_id', $companyId)
+            ->whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->count();
+
         $growthData = [
             'revenue_growth' => $this->calculateGrowthPercentage(
                 $stats['revenue']['this_month'],
                 $stats['revenue']['last_month']
             ),
             'invoice_growth' => $this->calculateGrowthPercentage(
-                $stats['invoices']['total'],
-                $stats['invoices']['total'] // This would need historical data
+                $invoicesThisMonth,
+                $invoicesLastMonth
             ),
             'customer_growth' => $this->calculateGrowthPercentage(
                 $stats['customers']['new_this_month'],
-                $stats['customers']['new_this_month'] // This would need historical data
+                $customersLastMonth
             ),
         ];
 

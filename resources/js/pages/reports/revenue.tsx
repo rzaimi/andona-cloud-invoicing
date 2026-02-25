@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Head, Link, router } from "@inertiajs/react"
+import { Head, Link, router, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -10,6 +10,7 @@ import { Euro, ArrowLeft, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts"
 
 interface RevenueData {
@@ -30,6 +31,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function RevenueReports({ period, revenueData }: RevenueReportsProps) {
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
+
     const [selectedPeriod, setSelectedPeriod] = useState(period)
 
     const handlePeriodChange = (newPeriod: string) => {
@@ -37,21 +41,17 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
         router.get(route("reports.revenue"), { period: newPeriod })
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0)
     const totalInvoices = revenueData.reduce((sum, item) => sum + item.invoices, 0)
     const avgRevenue = revenueData.length > 0 ? totalRevenue / revenueData.length : 0
 
     // Calculate growth percentage
-    const growth = revenueData.length >= 2 
-        ? ((revenueData[revenueData.length - 1].revenue - revenueData[revenueData.length - 2].revenue) / revenueData[revenueData.length - 2].revenue) * 100
-        : 0
+    const prevRevenue = revenueData.length >= 2 ? revenueData[revenueData.length - 2].revenue : 0
+    const growth = prevRevenue !== 0
+        ? ((revenueData[revenueData.length - 1].revenue - prevRevenue) / prevRevenue) * 100
+        : revenueData.length >= 1 && revenueData[revenueData.length - 1].revenue > 0 ? 100 : 0
 
     const handleExport = () => {
         // Simple CSV export
@@ -146,7 +146,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                         <CardContent>
                             <div className="text-2xl font-bold">{totalInvoices}</div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {formatCurrency(totalRevenue / totalInvoices)} Durchschnitt
+                                {formatCurrency(totalInvoices > 0 ? totalRevenue / totalInvoices : 0)} Durchschnitt
                             </p>
                         </CardContent>
                     </Card>

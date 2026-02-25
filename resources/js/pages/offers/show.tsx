@@ -10,6 +10,7 @@ import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CheckCircle, XCircle
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface OfferItem {
     id: number | string
@@ -61,8 +62,8 @@ interface OffersShowProps {
 }
 
 export default function OffersShow() {
-    // @ts-ignore
-    const { offer, settings } = usePage<OffersShowProps>().props
+    const { offer } = usePage<OffersShowProps>().props
+    const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -89,12 +90,9 @@ export default function OffersShow() {
     }
 
     const formatCurrency = (amount: number | string | null | undefined) => {
-        const numAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0)
+        const numAmount = typeof amount === "string" ? parseFloat(amount) : (amount ?? 0)
         if (isNaN(numAmount)) return "0,00 €"
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(numAmount)
+        return formatCurrencyUtil(numAmount, settings)
     }
 
     const formatDate = (date: string) => {
@@ -147,15 +145,12 @@ export default function OffersShow() {
                         </Link>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h1 className="text-1xl font-bold text-gray-900">
+                                <h1 className="text-2xl font-bold text-foreground">
                                     Angebot {offer.number}
                                 </h1>
                                 {getStatusBadge(offer.status)}
-                                {isExpired && (
-                                    <Badge variant="destructive">Abgelaufen</Badge>
-                                )}
                             </div>
-                            <p className="text-gray-600 mt-1">
+                            <p className="text-muted-foreground mt-1">
                                 {offer.customer?.name} • {formatDate(offer.issue_date)}
                             </p>
                         </div>
@@ -225,31 +220,31 @@ export default function OffersShow() {
                             <CardContent>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <div className="text-sm text-gray-600">Angebotsnummer</div>
+                                        <div className="text-sm text-muted-foreground">Angebotsnummer</div>
                                         <div className="font-medium">{offer.number}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Status</div>
+                                        <div className="text-sm text-muted-foreground">Status</div>
                                         <div className="mt-1">{getStatusBadge(offer.status)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Angebotsdatum</div>
+                                        <div className="text-sm text-muted-foreground">Angebotsdatum</div>
                                         <div className="font-medium">{formatDate(offer.issue_date)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Gültig bis</div>
-                                        <div className={`font-medium ${isExpired ? 'text-red-600' : ''}`}>
+                                        <div className="text-sm text-muted-foreground">Gültig bis</div>
+                                        <div className={`font-medium ${isExpired ? "text-red-600" : ""}`}>
                                             {formatDate(offer.valid_until)}
                                             {isExpired && " (abgelaufen)"}
                                         </div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Kunde</div>
+                                        <div className="text-sm text-muted-foreground">Kunde</div>
                                         <div className="font-medium">{offer.customer?.name}</div>
                                     </div>
                                     {offer.customer?.email && (
                                         <div>
-                                            <div className="text-sm text-gray-600">E-Mail</div>
+                                            <div className="text-sm text-muted-foreground">E-Mail</div>
                                             <div className="font-medium">{offer.customer.email}</div>
                                         </div>
                                     )}
@@ -353,11 +348,11 @@ export default function OffersShow() {
                                             )
                                         })()}
                                         <div className="flex justify-between">
-                                            <span className="text-gray-600">Zwischensumme (netto)</span>
+                                            <span className="text-muted-foreground">Zwischensumme (netto)</span>
                                             <span className="font-medium">{formatCurrency(offer.subtotal)}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-gray-600">
+                                            <span className="text-muted-foreground">
                                                 {Number(offer.tax_rate || 0) * 100}% Umsatzsteuer
                                             </span>
                                             <span className="font-medium">{formatCurrency(offer.tax_amount)}</span>
@@ -403,11 +398,11 @@ export default function OffersShow() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <div className="text-sm text-gray-600">Gesamtbetrag</div>
+                                    <div className="text-sm text-muted-foreground">Gesamtbetrag</div>
                                     <div className="text-2xl font-bold">{formatCurrency(offer.total)}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-gray-600">Status</div>
+                                    <div className="text-sm text-muted-foreground">Status</div>
                                     <div className="mt-1">{getStatusBadge(offer.status)}</div>
                                 </div>
                                 {isExpired && (
@@ -494,14 +489,14 @@ export default function OffersShow() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <div className="text-sm text-gray-600">Erstellt am</div>
+                                    <div className="text-sm text-muted-foreground">Erstellt am</div>
                                     <div className="font-medium">
                                         {new Date(offer.created_at).toLocaleDateString("de-DE")}
                                     </div>
                                 </div>
                                 {offer.user && (
                                     <div>
-                                        <div className="text-sm text-gray-600">Erstellt von</div>
+                                        <div className="text-sm text-muted-foreground">Erstellt von</div>
                                         <div className="font-medium">{offer.user.name}</div>
                                     </div>
                                 )}

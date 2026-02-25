@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Edit, Trash2, Search, EuroIcon, Download, Eye, Receipt } from "lucide-react"
+import { Plus, Edit, Trash2, Search, EuroIcon, Download, Eye } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { Pagination } from "@/components/pagination"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface Expense {
     id: string
@@ -68,6 +69,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" 
 export default function ExpensesIndex() {
     // @ts-ignore
     const { expenses, categories, filters, totals } = usePage<ExpensesIndexProps>().props
+    const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
     const [search, setSearch] = useState(filters.search || "")
     const [startDate, setStartDate] = useState(filters.start_date || "")
     const [endDate, setEndDate] = useState(filters.end_date || "")
@@ -89,19 +91,8 @@ export default function ExpensesIndex() {
         }
     }
 
-    const formatCurrency = (amount: number | null | undefined) => {
-        const numAmount = Number(amount) || 0
-        if (isNaN(numAmount)) {
-            return new Intl.NumberFormat("de-DE", {
-                style: "currency",
-                currency: "EUR",
-            }).format(0)
-        }
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(numAmount)
-    }
+    const formatCurrency = (amount: number | null | undefined) =>
+        formatCurrencyUtil(Number(amount) || 0, settings)
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString("de-DE")

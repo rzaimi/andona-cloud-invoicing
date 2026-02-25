@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowLeft, Edit, Package, TrendingUp, AlertTriangle, CheckCircle, XCircle, Warehouse as WarehouseIcon } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
+import type { BreadcrumbItem } from "@/types"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface Warehouse {
     id: string
@@ -79,17 +81,18 @@ interface WarehouseShowProps {
     }>
 }
 
-export default function WarehouseShow() {
-    const { props } = usePage<WarehouseShowProps>()
-    const { warehouse, stats, recentMovements = [], lowStockItems = [] } = props
-    const user = (props as any).auth?.user || (props as any).user
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Lagerverwaltung", href: "/warehouses" },
+    { title: "Lagerdetails" },
+]
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+export default function WarehouseShow() {
+    const pageProps = usePage<WarehouseShowProps & { auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const { warehouse, stats, recentMovements = [], lowStockItems = [] } = pageProps
+    const settings = pageProps.auth?.user?.company?.settings
+
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("de-DE", {
@@ -128,7 +131,7 @@ export default function WarehouseShow() {
     }
 
     return (
-        <AppLayout user={user}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Lager: ${warehouse.name}`} />
 
             <div className="space-y-6">

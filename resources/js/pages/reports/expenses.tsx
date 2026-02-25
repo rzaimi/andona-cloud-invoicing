@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Head, Link, router } from "@inertiajs/react"
+import { Head, Link, router, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,7 @@ import { ArrowLeft, Download, EuroIcon, Receipt } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
 interface ExpenseData {
@@ -40,6 +41,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function ExpensesReports({ expenses, totals, filters }: ExpensesReportsProps) {
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
+
     const [startDate, setStartDate] = useState(filters.start_date)
     const [endDate, setEndDate] = useState(filters.end_date)
 
@@ -47,12 +51,7 @@ export default function ExpensesReports({ expenses, totals, filters }: ExpensesR
         router.get(route("reports.expenses"), { start_date: startDate, end_date: endDate })
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const chartData = expenses.map((exp) => ({
         name: exp.category_name,

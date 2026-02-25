@@ -19,11 +19,14 @@ class ProductController extends Controller
     {
         $companyId = $this->getEffectiveCompanyId();
         $products = Product::forCompany($companyId)
+            ->with('category:id,name')
             ->when($request->search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
                       ->orWhere('number', 'like', "%{$search}%")
                       ->orWhere('description', 'like', "%{$search}%")
                       ->orWhere('sku', 'like', "%{$search}%");
+                });
             })
             ->when($request->category, function ($query, $category) {
                 $query->byCategory($category);
@@ -38,40 +41,53 @@ class ProductController extends Controller
                     $query->products();
                 }
             })
-            ->when($request->low_stock, function ($query) {
-                $query->lowStock();
+            ->when($request->stock_status, function ($query, $stockStatus) {
+                if ($stockStatus === 'low_stock') {
+                    $query->lowStock();
+                } elseif ($stockStatus === 'out_of_stock') {
+                    $query->where('track_stock', true)->where('stock_quantity', '<=', 0);
+                } elseif ($stockStatus === 'in_stock') {
+                    $query->where(function ($q) {
+                        $q->where('track_stock', false)
+                          ->orWhere('stock_quantity', '>', 0);
+                    });
+                }
             })
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
-        $categories = Product::forCompany($companyId)
-            ->whereNotNull('category_id')
-            ->distinct()
-            ->pluck('category_id');
+        // Load actual category objects (id + name) for the filter dropdown
+        $categories = Category::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // Aggregate stats in a single pass using DB to avoid loading all products into memory
+        $statsRaw = DB::table('products')
+            ->where('company_id', $companyId)
+            ->selectRaw("
+                COUNT(*) as total_products,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_products,
+                SUM(CASE WHEN track_stock = 1 AND stock_quantity > 0 AND stock_quantity <= min_stock_level THEN 1 ELSE 0 END) as low_stock_products,
+                SUM(CASE WHEN track_stock = 1 AND stock_quantity <= 0 THEN 1 ELSE 0 END) as out_of_stock_products,
+                COALESCE(SUM(CASE WHEN track_stock = 1 AND cost_price IS NOT NULL THEN cost_price * stock_quantity ELSE 0 END), 0) as total_value
+            ")
+            ->first();
 
         $stats = [
-            'total_products' => Product::forCompany($companyId)->count(),
-            'active_products' => Product::forCompany($companyId)->active()->count(),
-            'low_stock_products' => Product::forCompany($companyId)->lowStock()->count(),
-            'out_of_stock_products' => Product::forCompany($companyId)
-                ->where('track_stock', true)
-                ->where('stock_quantity', '<=', 0)
-                ->count(),
-            'total_value' => Product::forCompany($companyId)
-                ->whereNotNull('cost_price')
-                ->where('track_stock', true)
-                ->get()
-                ->sum(function ($product) {
-                    return ($product->cost_price ?? 0) * ($product->stock_quantity ?? 0);
-                }),
+            'total_products'       => (int) ($statsRaw->total_products ?? 0),
+            'active_products'      => (int) ($statsRaw->active_products ?? 0),
+            'low_stock_products'   => (int) ($statsRaw->low_stock_products ?? 0),
+            'out_of_stock_products'=> (int) ($statsRaw->out_of_stock_products ?? 0),
+            'total_value'          => (float) ($statsRaw->total_value ?? 0),
         ];
 
         return Inertia::render('products/index', [
             'products' => $products,
             'categories' => $categories,
             'stats' => $stats,
-            'filters' => $request->only(['search', 'category', 'status', 'type', 'low_stock']),
+            'filters' => $request->only(['search', 'category', 'status', 'type', 'stock_status']),
         ]);
     }
 
@@ -148,7 +164,9 @@ class ProductController extends Controller
                 return [
                     'id' => $movement->id,
                     'type' => $typeMap[$movement->type] ?? 'adjustment',
-                    'quantity' => (float) $movement->quantity,
+                    'quantity' => (float) $movement->quantity_change,
+                    'quantity_before' => (float) $movement->quantity_before,
+                    'quantity_after' => (float) $movement->quantity_after,
                     'reason' => $movement->reason,
                     'notes' => $movement->notes,
                     'created_at' => $movement->created_at->toISOString(),
@@ -305,16 +323,18 @@ class ProductController extends Controller
 
             // Create stock movement record
             StockMovement::create([
-                'company_id' => $companyId,
-                'warehouse_id' => $warehouse->id,
-                'product_id' => $product->id,
-                'created_by' => $user->id,
-                'type' => StockMovement::TYPE_ADJUSTMENT,
-                'quantity' => $quantityChange,
-                'unit_cost' => $product->cost_price ?? 0,
-                'total_cost' => abs($quantityChange) * ($product->cost_price ?? 0),
-                'reason' => $validated['reason'],
-                'notes' => $validated['notes'],
+                'company_id'      => $companyId,
+                'warehouse_id'    => $warehouse->id,
+                'product_id'      => $product->id,
+                'created_by'      => $user->id,
+                'type'            => StockMovement::TYPE_ADJUSTMENT,
+                'quantity_before' => $oldQuantity,
+                'quantity_change' => $quantityChange,
+                'quantity_after'  => $newQuantity,
+                'unit_cost'       => $product->cost_price ?? 0,
+                'total_cost'      => abs($quantityChange) * ($product->cost_price ?? 0),
+                'reason'          => $validated['reason'],
+                'notes'           => $validated['notes'],
             ]);
         });
 

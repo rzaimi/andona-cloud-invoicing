@@ -1,10 +1,11 @@
 "use client"
 
-import { Head } from "@inertiajs/react"
+import { Head, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, Euro, Users, EuroIcon, TrendingUp } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface ReportsStats {
     invoices: {
@@ -34,12 +35,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function ReportsIndex({ stats }: ReportsIndexProps) {
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
+
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { Head, Link, useForm, usePage } from "@inertiajs/react"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,24 +34,39 @@ interface ExpensesEditProps {
     }>
 }
 
+const VAT_OPTIONS = [
+    { value: "0.19", label: "19% (Regelsteuersatz)" },
+    { value: "0.07", label: "7% (ermäßigter Steuersatz)" },
+    { value: "0",    label: "0% (steuerfrei)" },
+]
+
 export default function ExpensesEdit() {
     // @ts-ignore
     const { expense, categories } = usePage<ExpensesEditProps>().props
-    // @ts-ignore
-    const settingsPaymentMethods: string[] = (usePage().props.auth as any)?.user?.company?.settings?.payment_methods ?? []
+    const pageProps = usePage().props as any
+    const settings = pageProps.auth?.user?.company?.settings ?? {}
+    const settingsPaymentMethods: string[] = settings.payment_methods ?? []
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
         { title: "Ausgaben", href: "/expenses" },
-        { title: `Ausgabe bearbeiten` },
+        { title: "Ausgabe bearbeiten" },
     ]
+
+    // Normalize stored vat_rate to a string matching one of the VAT_OPTIONS values
+    const normalizeVatRate = (rate: number): string => {
+        const rounded = Math.round(rate * 100) / 100
+        if (rounded === 0.19) return "0.19"
+        if (rounded === 0.07) return "0.07"
+        return "0"
+    }
 
     const { data, setData, post, processing, errors, transform } = useForm({
         category_id: expense.category_id || "none",
         title: expense.title,
         description: expense.description || "",
         amount: expense.amount,
-        vat_rate: expense.vat_rate,
+        vat_rate: normalizeVatRate(expense.vat_rate),
         expense_date: expense.expense_date.split("T")[0],
         payment_method: expense.payment_method || "",
         reference: expense.reference || "",
@@ -67,12 +83,7 @@ export default function ExpensesEdit() {
         "Andere",
     ]
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -91,9 +102,10 @@ export default function ExpensesEdit() {
         })
     }
 
-    // amount is the total (including VAT)
-    const vatAmount = data.amount * data.vat_rate
-    const netAmount = data.amount - vatAmount
+    // amount is the gross total (including VAT)
+    const vatRate = parseFloat(data.vat_rate) || 0
+    const vatAmount = Math.round(data.amount * vatRate * 100) / 100
+    const netAmount = Math.round((data.amount - vatAmount) * 100) / 100
     const totalAmount = data.amount
 
     return (
@@ -173,7 +185,7 @@ export default function ExpensesEdit() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="amount">Betrag (€) *</Label>
+                                            <Label htmlFor="amount">Bruttobetrag (inkl. MwSt.) *</Label>
                                             <Input
                                                 id="amount"
                                                 type="number"
@@ -190,29 +202,41 @@ export default function ExpensesEdit() {
 
                                         <div className="space-y-2">
                                             <Label htmlFor="vat_rate">MwSt.-Satz *</Label>
-                                            <Input
-                                                id="vat_rate"
-                                                type="number"
-                                                step="0.0001"
-                                                min="0"
-                                                max="1"
+                                            <Select
                                                 value={data.vat_rate}
-                                                onChange={(e) => setData("vat_rate", parseFloat(e.target.value) || 0)}
-                                                required
-                                            />
+                                                onValueChange={(value) => setData("vat_rate", value)}
+                                            >
+                                                <SelectTrigger id="vat_rate">
+                                                    <SelectValue placeholder="MwSt.-Satz wählen" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {VAT_OPTIONS.map((opt) => (
+                                                        <SelectItem key={opt.value} value={opt.value}>
+                                                            {opt.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                             {errors.vat_rate && (
                                                 <p className="text-sm text-red-600">{errors.vat_rate}</p>
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-gray-50 rounded-lg">
-                                        <div className="text-sm font-medium text-gray-900 mb-2">Berechnung</div>
-                                        <div className="text-sm text-gray-700 space-y-1">
-                                            <div>Netto-Betrag: {formatCurrency(netAmount)}</div>
-                                            <div>MwSt. ({Math.round(data.vat_rate * 100)}%): {formatCurrency(vatAmount)}</div>
-                                            <div className="font-semibold pt-2 border-t">
-                                                Gesamtbetrag: {formatCurrency(totalAmount)}
+                                    <div className="p-4 bg-muted/40 rounded-lg">
+                                        <div className="text-sm font-medium mb-2">Berechnung</div>
+                                        <div className="text-sm space-y-1">
+                                            <div className="flex justify-between">
+                                                <span>Netto-Betrag:</span>
+                                                <span>{formatCurrency(netAmount)}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>MwSt. ({Math.round(vatRate * 100)}%):</span>
+                                                <span>{formatCurrency(vatAmount)}</span>
+                                            </div>
+                                            <div className="flex justify-between font-semibold pt-2 border-t">
+                                                <span>Bruttobetrag:</span>
+                                                <span>{formatCurrency(totalAmount)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -310,7 +334,7 @@ export default function ExpensesEdit() {
                                         <div className="font-medium">{formatCurrency(vatAmount)}</div>
                                     </div>
                                     <div className="pt-2 border-t">
-                                        <div className="text-sm text-gray-600">Gesamtbetrag</div>
+                                        <div className="text-sm text-gray-600">Bruttobetrag</div>
                                         <div className="text-xl font-bold">{formatCurrency(totalAmount)}</div>
                                     </div>
                                     <div className="pt-4 border-t">

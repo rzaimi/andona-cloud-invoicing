@@ -58,8 +58,8 @@ export default function CustomersIndex() {
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Kundenverwaltung</h1>
-                        <p className="text-gray-600">Verwalten Sie Ihre Kunden und deren Informationen</p>
+                        <h1 className="text-2xl font-bold text-foreground">Kundenverwaltung</h1>
+                        <p className="text-muted-foreground">Verwalten Sie Ihre Kunden und deren Informationen</p>
                     </div>
 
                     <div className="flex gap-2">
@@ -120,7 +120,7 @@ export default function CustomersIndex() {
                 {/* Customers Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Kunden ()</CardTitle>
+                        <CardTitle>Kunden ({customers.meta?.total ?? customers.data.length})</CardTitle>
                         <CardDescription>Alle registrierten Kunden in Ihrem System</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -184,7 +184,7 @@ export default function CustomersIndex() {
                                                 {customer.status === "active" ? "Aktiv" : "Inaktiv"}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>{new Date(customer.created_at).toLocaleDateString("de-DE")}</TableCell>
+                                                                        <TableCell>{customer.created_at ? new Date(customer.created_at).toLocaleDateString("de-DE") : "—"}</TableCell>
                                         <TableCell>
                                             <div className="flex space-x-2">
                                                 <Button variant="ghost" size="sm" asChild>

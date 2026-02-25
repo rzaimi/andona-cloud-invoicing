@@ -31,6 +31,7 @@ import { route } from "ziggy-js"
 import AppLayout from "@/layouts/app-layout"
 import { SendEmailDialog } from "@/components/send-email-dialog"
 import type { BreadcrumbItem, Offer, PaginatedData } from "@/types"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface OffersIndexProps {
     offers: PaginatedData<Offer>
@@ -54,6 +55,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" 
 
 export default function OffersIndex() {
     const { offers, filters, stats } = usePage<OffersIndexProps>().props
+    const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
     const [search, setSearch] = useState(filters.search || "")
     const [status, setStatus] = useState(filters.status || "all")
     const sort = filters.sort || "issue_date"
@@ -128,12 +130,7 @@ export default function OffersIndex() {
         return <Badge variant={config.variant}>{config.label}</Badge>
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString("de-DE")
@@ -155,8 +152,8 @@ export default function OffersIndex() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Angebote</h1>
-                        <p className="text-gray-600">Verwalten Sie Ihre Kundenangebote</p>
+                        <h1 className="text-2xl font-bold text-foreground">Angebote</h1>
+                        <p className="text-muted-foreground">Verwalten Sie Ihre Kundenangebote</p>
                     </div>
                     <div className="flex gap-2">
                         <Button
@@ -259,7 +256,7 @@ export default function OffersIndex() {
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         className="pl-10"
-                                        onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                                     />
                                 </div>
                             </div>

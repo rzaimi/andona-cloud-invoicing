@@ -152,7 +152,7 @@ export interface Product {
     unit: string
     price: number
     cost_price?: number
-    category?: string
+    category?: Category | null
     category_id?: string
     sku?: string
     barcode?: string

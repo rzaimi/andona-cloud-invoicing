@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Head, Link, router } from "@inertiajs/react"
+import { Head, Link, router, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -10,6 +10,7 @@ import { EuroIcon, ArrowLeft, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 
 interface TaxData {
@@ -33,6 +34,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 const COLORS = ['oklch(0.646 0.222 41.116)', 'oklch(0.6 0.118 184.704)', 'oklch(0.398 0.07 227.392)']
 
 export default function TaxReports({ period, taxData }: TaxReportsProps) {
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
+
     const [selectedPeriod, setSelectedPeriod] = useState(period)
 
     const handlePeriodChange = (newPeriod: string) => {
@@ -40,12 +44,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
         router.get(route("reports.tax"), { period: newPeriod })
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const totalSubtotal = taxData.reduce((sum, item) => sum + item.subtotal, 0)
     const totalTax = taxData.reduce((sum, item) => sum + item.tax, 0)

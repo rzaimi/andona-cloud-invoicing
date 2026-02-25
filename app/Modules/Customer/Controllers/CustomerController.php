@@ -8,6 +8,7 @@ use App\Services\ContextService;
 use App\Services\NumberFormatService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
@@ -25,43 +26,55 @@ class CustomerController extends Controller
     {
         $companyId = $this->getEffectiveCompanyId();
 
-        $query = Customer::forCompany($companyId)->with(['invoices', 'offers']);
+        $allowedSortColumns = ['name', 'email', 'created_at', 'status', 'number'];
+        $sortBy    = in_array($request->get('sort_by'), $allowedSortColumns, true) ? $request->get('sort_by') : 'created_at';
+        $sortOrder = $request->get('sort_order') === 'asc' ? 'asc' : 'desc';
 
-        // Search functionality
+        $query = Customer::forCompany($companyId);
+
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('number', 'like', "%{$search}%")
-                  ->orWhere('company_name', 'like', "%{$search}%");
+                  ->orWhere('number', 'like', "%{$search}%");
             });
         }
 
-        // Status filter
         if ($request->filled('status')) {
             $query->where('status', $request->get('status'));
         }
 
-        // Sort functionality
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
-        $query->orderBy($sortBy, $sortOrder);
+        $customers = $query->orderBy($sortBy, $sortOrder)
+            ->paginate(15)
+            ->withQueryString();
 
-        $customers = $query->paginate(15)->withQueryString();
+        // Aggregate invoice stats per customer in a single query (avoids N+1)
+        $customerIds = $customers->pluck('id');
+        $invoiceStats = DB::table('invoices')
+            ->whereIn('customer_id', $customerIds)
+            ->where('company_id', $companyId)
+            ->select(
+                'customer_id',
+                DB::raw('COUNT(*) as total_invoices'),
+                DB::raw("SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END) as total_revenue"),
+                DB::raw("SUM(CASE WHEN status IN ('sent','overdue') THEN total ELSE 0 END) as outstanding_amount")
+            )
+            ->groupBy('customer_id')
+            ->get()
+            ->keyBy('customer_id');
 
-        // Add calculated fields
-        $customers->getCollection()->transform(function ($customer) {
-            $customer->total_invoices = $customer->invoices->count();
-            $customer->total_revenue = $customer->invoices->where('status', 'paid')->sum('total');
-            $customer->outstanding_amount = $customer->invoices->whereIn('status', ['sent', 'overdue'])->sum('total');
+        $customers->getCollection()->transform(function ($customer) use ($invoiceStats) {
+            $stats = $invoiceStats->get($customer->id);
+            $customer->total_invoices      = $stats?->total_invoices      ?? 0;
+            $customer->total_revenue       = $stats?->total_revenue        ?? 0;
+            $customer->outstanding_amount  = $stats?->outstanding_amount   ?? 0;
             return $customer;
         });
 
         return Inertia::render('customers/index', [
             'customers' => $customers,
-            'filters' => $request->only(['search', 'status', 'sort_by', 'sort_order']),
-            'breadcrumbs' => $this->getBreadcrumbs(),
+            'filters'   => $request->only(['search', 'status', 'sort_by', 'sort_order']),
         ]);
     }
 
@@ -70,9 +83,7 @@ class CustomerController extends Controller
      */
     public function create()
     {
-        return Inertia::render('customers/create', [
-            'breadcrumbs' => $this->getBreadcrumbs(),
-        ]);
+        return Inertia::render('customers/create');
     }
 
     /**
@@ -129,12 +140,12 @@ class CustomerController extends Controller
 
         $customer->load([
             'invoices' => function ($query) {
-                $query->orderBy('created_at', 'desc');
+                $query->orderBy('issue_date', 'desc');
             },
             'offers' => function ($query) {
-                $query->orderBy('created_at', 'desc');
+                $query->orderBy('issue_date', 'desc');
             },
-            'documents'
+            'documents',
         ]);
 
         // Calculate customer statistics
@@ -150,8 +161,7 @@ class CustomerController extends Controller
 
         return Inertia::render('customers/show', [
             'customer' => $customer,
-            'stats' => $stats,
-            'breadcrumbs' => $this->getBreadcrumbs(),
+            'stats'    => $stats,
         ]);
     }
 
@@ -166,7 +176,6 @@ class CustomerController extends Controller
 
         return Inertia::render('customers/edit', [
             'customer' => $customer,
-            'breadcrumbs' => $this->getBreadcrumbs(),
         ]);
     }
 
@@ -202,13 +211,36 @@ class CustomerController extends Controller
     }
 
     /**
+     * Duplicate the specified customer
+     */
+    public function duplicate(Customer $customer)
+    {
+        $this->authorize('view', $customer);
+
+        $companyId = $this->getEffectiveCompanyId();
+        $company   = \App\Modules\Company\Models\Company::find($companyId);
+        $svc       = new NumberFormatService();
+        $format    = $svc->normaliseToFormat(
+            $company->getSetting('customer_number_format')
+                ?? $company->getSetting('customer_prefix', 'KU-')
+        );
+
+        $newCustomer = $customer->replicate(['number']);
+        $newCustomer->number = $svc->next($format, Customer::where('company_id', $companyId)->pluck('number'));
+        $newCustomer->name   = $customer->name . ' (Kopie)';
+        $newCustomer->save();
+
+        return redirect()->route('customers.edit', $newCustomer)
+            ->with('success', 'Kunde erfolgreich dupliziert.');
+    }
+
+    /**
      * Remove the specified customer
      */
     public function destroy(Customer $customer)
     {
         $this->authorize('delete', $customer);
 
-        // Check if customer has invoices or offers
         if ($customer->invoices()->count() > 0 || $customer->offers()->count() > 0) {
             return redirect()->route('customers.index')
                 ->with('error', 'Kunde kann nicht gelöscht werden, da Rechnungen oder Angebote vorhanden sind.');
@@ -216,42 +248,7 @@ class CustomerController extends Controller
 
         $customer->delete();
 
-        // Clear cache after deletion
-        $this->clearUserCache();
-
         return redirect()->route('customers.index')
             ->with('success', 'Kunde erfolgreich gelöscht.');
-    }
-
-    protected function getCompanyContext()
-    {
-        // Placeholder for company context retrieval logic
-        return [];
-    }
-
-    protected function clearUserCache(): void
-    {
-        // Placeholder for cache clearing logic
-    }
-
-    protected function inertia($view, $props = [])
-    {
-        return Inertia::render($view, $props);
-    }
-
-    protected function redirectWithSuccess($route, $message, array $parameters = [])
-    {
-        return redirect()->route($route)->with('success', $message);
-    }
-
-    protected function redirectWithError($route, $message, array $parameters = [])
-    {
-        return redirect()->route($route)->with('error', $message);
-    }
-
-    private function getBreadcrumbs()
-    {
-        // Placeholder for breadcrumbs logic
-        return [];
     }
 }

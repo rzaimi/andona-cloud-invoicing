@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Warehouse, Plus, Search, Filter, Edit, Eye, Trash2, Package, TrendingUp, AlertTriangle } from "lucide-react"
+import { Warehouse as WarehouseIcon, Plus, Search, Filter, Edit, Eye, Trash2, Package, TrendingUp, AlertTriangle } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { PaginatedResponse } from "@/types"
+import type { PaginatedResponse, BreadcrumbItem } from "@/types"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface Warehouse {
     id: string
@@ -41,9 +42,14 @@ interface WarehousesIndexProps {
     }
 }
 
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Lagerverwaltung" },
+]
+
 export default function WarehousesIndex({ warehouses, stats, filters }: WarehousesIndexProps) {
-    const { props } = usePage()
-    const user = (props as any).auth?.user || (props as any).user
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
     const [search, setSearch] = useState(filters.search || "")
     const [selectedStatus, setSelectedStatus] = useState(filters.status || "all")
 
@@ -70,12 +76,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
         }
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const getStatusBadge = (isActive: boolean) => {
         if (isActive) {
@@ -85,7 +86,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
     }
 
     return (
-        <AppLayout user={user}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Lagerbestand" />
 
             <div className="space-y-6">
@@ -108,7 +109,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Gesamt Lager</CardTitle>
-                            <Warehouse className="h-4 w-4 text-muted-foreground" />
+                            <WarehouseIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.total_warehouses}</div>
@@ -214,7 +215,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                     <CardContent>
                         {warehouses.data.length === 0 ? (
                             <div className="text-center py-12">
-                                <Warehouse className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                                <WarehouseIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                                 <h3 className="text-lg font-semibold mb-2">Keine Lager gefunden</h3>
                                 <p className="text-muted-foreground mb-4">
                                     {search || selectedStatus !== "all"

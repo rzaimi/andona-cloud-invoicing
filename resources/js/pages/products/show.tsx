@@ -1,6 +1,6 @@
 "use client"
 
-import { Head, Link, router, useForm } from "@inertiajs/react"
+import { Head, Link, router, useForm, usePage } from "@inertiajs/react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,7 +37,8 @@ import {
     Clock,
 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { User, Product, Category } from "@/types"
+import type { Product, Category, BreadcrumbItem } from "@/types"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface ProductShowProps {
     user: User
@@ -53,6 +54,8 @@ interface ProductShowProps {
             id: string
             type: "in" | "out" | "adjustment"
             quantity: number
+            quantity_before: number
+            quantity_after: number
             reason: string
             notes?: string
             created_at: string
@@ -70,6 +73,8 @@ interface ProductShowProps {
         id: string
         type: "in" | "out" | "adjustment"
         quantity: number
+        quantity_before: number
+        quantity_after: number
         reason: string
         notes?: string
         created_at: string
@@ -78,7 +83,15 @@ interface ProductShowProps {
     }>
 }
 
-export default function ProductShow({ user, product, warehouses = [], stock_movements = [] }: ProductShowProps) {
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Produkte", href: "/products" },
+    { title: "Produktdetails" },
+]
+
+export default function ProductShow({ product, warehouses = [], stock_movements = [] }: Omit<ProductShowProps, 'user'>) {
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
     const [adjustStockDialogOpen, setAdjustStockDialogOpen] = useState(false)
 
     // Merge stock_movements from props with product.stock_movements (props takes precedence)
@@ -163,12 +176,7 @@ export default function ProductShow({ user, product, warehouses = [], stock_move
         )
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("de-DE", {
@@ -183,7 +191,7 @@ export default function ProductShow({ user, product, warehouses = [], stock_move
     const profitMargin = product.cost_price ? ((product.price - product.cost_price) / product.price) * 100 : 0
 
     return (
-        <AppLayout user={user}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={product.name} />
 
             <div className="space-y-6">

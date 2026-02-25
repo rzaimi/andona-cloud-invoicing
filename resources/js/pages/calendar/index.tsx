@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Head, Link, router, useForm } from "@inertiajs/react"
+import { Head, Link, router, useForm, usePage } from "@inertiajs/react"
 import { route } from "ziggy-js"
 import AppLayout from "@/layouts/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,7 +25,10 @@ import {
     Download,
     Edit,
     Trash2,
+    CalendarDays,
 } from "lucide-react"
+import type { BreadcrumbItem } from "@/types"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface CalendarEvent {
     id: string
@@ -46,12 +49,17 @@ interface CalendarEvent {
 }
 
 interface CalendarProps {
-    user: any
-    stats: any
     events?: CalendarEvent[]
 }
 
-export default function CalendarIndex({ user, stats, events: propEvents = [] }: CalendarProps) {
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Kalender" },
+]
+
+export default function CalendarIndex({ events: propEvents = [] }: CalendarProps) {
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
     const [currentDate, setCurrentDate] = useState(new Date())
     const [selectedView, setSelectedView] = useState("month")
     const [selectedFilter, setSelectedFilter] = useState("all")
@@ -78,8 +86,7 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
         location: "",
     })
 
-    // Use events from props, fallback to empty array
-    const events = propEvents.length > 0 ? propEvents : []
+    const events = propEvents ?? []
 
     const eventTypes = {
         invoice_due: {
@@ -133,12 +140,7 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
 
     const expiringOffers = filteredEvents.filter((event) => event.type === "offer_expiry" && (event.status === "expiring" || event.status === "expired"))
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("de-DE", {
@@ -162,71 +164,128 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
         return firstDay === 0 ? 6 : firstDay - 1 // Convert Sunday (0) to 6, Monday (1) to 0, etc.
     }
 
+    const renderDayCell = (dateString: string, heightClass = "h-24") => {
+        const dayEvents = filteredEvents.filter((event) => event.date === dateString)
+        const isToday = new Date().toDateString() === new Date(dateString + "T12:00:00").toDateString()
+        const dayNum = parseInt(dateString.split("-")[2], 10)
+
+        return (
+            <div className={`${heightClass} border border-border p-1 ${isToday ? "bg-blue-50 dark:bg-blue-950/20" : ""}`}>
+                <div className={`text-sm font-medium mb-1 ${isToday ? "text-blue-600" : ""}`}>{dayNum}</div>
+                <div className="space-y-1">
+                    {dayEvents.slice(0, 2).map((event) => {
+                        const eventType = eventTypes[event.type as keyof typeof eventTypes]
+                        const canEdit = event.is_custom && event.calendar_event_id
+                        return (
+                            <div
+                                key={event.id}
+                                className={`text-xs p-1 rounded truncate ${eventType.color} text-white cursor-pointer hover:opacity-80 transition-opacity group/item relative`}
+                                title={event.title}
+                                onClick={() => {
+                                    if (canEdit) {
+                                        setSelectedEvent(event)
+                                        editForm.setData({
+                                            title: event.title,
+                                            type: event.type,
+                                            date: event.date,
+                                            time: event.time,
+                                            description: event.description || "",
+                                            location: event.location || "",
+                                        })
+                                        setEditDialogOpen(true)
+                                    }
+                                }}
+                            >
+                                {event.title}
+                                {canEdit && (
+                                    <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                        <Edit className="h-2.5 w-2.5 text-white" />
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+                    {dayEvents.length > 2 && (
+                        <div className="text-xs text-muted-foreground">+{dayEvents.length - 2} weitere</div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
     const renderCalendarGrid = () => {
+        if (selectedView === "week") {
+            // Find the Monday of the current week
+            const weekStart = new Date(currentDate)
+            const dayOfWeek = weekStart.getDay()
+            const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+            weekStart.setDate(weekStart.getDate() + diff)
+
+            const cells = []
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(weekStart)
+                d.setDate(weekStart.getDate() + i)
+                const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+                cells.push(<div key={ds}>{renderDayCell(ds, "h-48")}</div>)
+            }
+            return cells
+        }
+
+        if (selectedView === "day") {
+            const ds = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`
+            return [<div key={ds} className="col-span-7">{renderDayCell(ds, "min-h-64")}</div>]
+        }
+
+        // Month view
         const daysInMonth = getDaysInMonth(currentDate)
         const firstDay = getFirstDayOfMonth(currentDate)
         const days = []
 
-        // Empty cells for days before the first day of the month
         for (let i = 0; i < firstDay; i++) {
             days.push(<div key={`empty-${i}`} className="h-24 border border-border"></div>)
         }
 
-        // Days of the month
         for (let day = 1; day <= daysInMonth; day++) {
-            const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-            const dayEvents = filteredEvents.filter((event) => event.date === dateString)
-            const isToday = new Date().toDateString() === new Date(dateString).toDateString()
-
-            days.push(
-                <div key={day} className={`h-24 border border-border p-1 ${isToday ? "bg-blue-50" : ""}`}>
-                    <div className={`text-sm font-medium mb-1 ${isToday ? "text-blue-600" : ""}`}>{day}</div>
-                    <div className="space-y-1">
-                        {dayEvents.slice(0, 2).map((event) => {
-                            const eventType = eventTypes[event.type as keyof typeof eventTypes]
-                            const canEdit = event.is_custom && event.calendar_event_id
-                            return (
-                                <div
-                                    key={event.id}
-                                    className={`text-xs p-1 rounded truncate ${eventType.color} text-white cursor-pointer hover:opacity-80 transition-opacity group/item relative`}
-                                    title={event.title}
-                                    onClick={() => {
-                                        if (canEdit) {
-                                            setSelectedEvent(event)
-                                            editForm.setData({
-                                                title: event.title,
-                                                type: event.type,
-                                                date: event.date,
-                                                time: event.time,
-                                                description: event.description || "",
-                                                location: event.location || "",
-                                            })
-                                            setEditDialogOpen(true)
-                                        }
-                                    }}
-                                >
-                                    {event.title}
-                                    {canEdit && (
-                                        <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                                            <Edit className="h-2.5 w-2.5 text-white" />
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        })}
-                        {dayEvents.length > 2 && (
-                            <div className="text-xs text-muted-foreground">+{dayEvents.length - 2} weitere</div>
-                        )}
-                    </div>
-                </div>,
-            )
+            const ds = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+            days.push(<div key={day}>{renderDayCell(ds)}</div>)
         }
 
         return days
     }
 
+    const handleExportIcs = () => {
+        const lines = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//AndoBill//Calendar//DE",
+            "CALSCALE:GREGORIAN",
+        ]
+        filteredEvents.forEach((ev) => {
+            const dtStart = ev.date.replace(/-/g, "") + "T" + ev.time.replace(":", "") + "00"
+            lines.push(
+                "BEGIN:VEVENT",
+                `UID:${ev.id}@andobill`,
+                `DTSTART:${dtStart}`,
+                `SUMMARY:${ev.title}`,
+                ev.description ? `DESCRIPTION:${ev.description}` : "",
+                ev.location ? `LOCATION:${ev.location}` : "",
+                "END:VEVENT",
+            )
+        })
+        lines.push("END:VCALENDAR")
+        const blob = new Blob([lines.filter(Boolean).join("\r\n")], { type: "text/calendar;charset=utf-8;" })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `kalender-${new Date().toISOString().split("T")[0]}.ics`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+    }
+
     return (
-        <AppLayout user={user}>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Kalender" />
 
             <div className="space-y-6">
@@ -308,38 +367,61 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                             <CardHeader>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-4">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                        <h2 className="text-xl font-semibold">
-                                            {currentDate.toLocaleDateString("de-DE", { month: "long", year: "numeric" })}
-                                        </h2>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                                        >
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
+                                <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const d = new Date(currentDate)
+                                            if (selectedView === "month") d.setMonth(d.getMonth() - 1)
+                                            else if (selectedView === "week") d.setDate(d.getDate() - 7)
+                                            else d.setDate(d.getDate() - 1)
+                                            setCurrentDate(d)
+                                        }}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <h2 className="text-xl font-semibold min-w-48 text-center">
+                                        {selectedView === "month" && currentDate.toLocaleDateString("de-DE", { month: "long", year: "numeric" })}
+                                        {selectedView === "week" && (() => {
+                                            const ws = new Date(currentDate)
+                                            const dow = ws.getDay()
+                                            ws.setDate(ws.getDate() - (dow === 0 ? 6 : dow - 1))
+                                            const we = new Date(ws); we.setDate(ws.getDate() + 6)
+                                            return `${ws.toLocaleDateString("de-DE", { day: "numeric", month: "short" })} – ${we.toLocaleDateString("de-DE", { day: "numeric", month: "short", year: "numeric" })}`
+                                        })()}
+                                        {selectedView === "day" && currentDate.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                                    </h2>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const d = new Date(currentDate)
+                                            if (selectedView === "month") d.setMonth(d.getMonth() + 1)
+                                            else if (selectedView === "week") d.setDate(d.getDate() + 7)
+                                            else d.setDate(d.getDate() + 1)
+                                            setCurrentDate(d)
+                                        }}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
                                             Heute
                                         </Button>
-                                        <Select value={selectedView} onValueChange={setSelectedView}>
-                                            <SelectTrigger className="w-32">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="month">Monat</SelectItem>
-                                                <SelectItem value="week">Woche</SelectItem>
-                                                <SelectItem value="day">Tag</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="flex items-center gap-1 rounded-md border p-1">
+                                            {(["month", "week", "day"] as const).map((v) => (
+                                                <Button
+                                                    key={v}
+                                                    variant={selectedView === v ? "default" : "ghost"}
+                                                    size="sm"
+                                                    className="h-7 px-2 text-xs"
+                                                    onClick={() => setSelectedView(v)}
+                                                >
+                                                    {v === "month" ? "Monat" : v === "week" ? "Woche" : "Tag"}
+                                                </Button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </CardHeader>
@@ -347,7 +429,7 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                                 {/* Calendar Grid */}
                                 <div className="grid grid-cols-7 gap-0 border border-border">
                                     {/* Day headers */}
-                                    {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
+                                    {selectedView !== "day" && ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day) => (
                                         <div
                                             key={day}
                                             className="h-10 border border-border bg-muted flex items-center justify-center font-medium text-sm"
@@ -355,6 +437,11 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                                             {day}
                                         </div>
                                     ))}
+                                    {selectedView === "day" && (
+                                        <div className="col-span-7 h-10 border border-border bg-muted flex items-center justify-center font-medium text-sm">
+                                            {currentDate.toLocaleDateString("de-DE", { weekday: "long" })}
+                                        </div>
+                                    )}
                                     {/* Calendar days */}
                                     {renderCalendarGrid()}
                                 </div>
@@ -373,6 +460,12 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                                {upcomingEvents.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
+                                        <CalendarDays className="h-8 w-8 mb-2 opacity-40" />
+                                        <p className="text-sm">Keine anstehenden Ereignisse</p>
+                                    </div>
+                                )}
                                 {upcomingEvents.map((event) => {
                                     const eventType = eventTypes[event.type as keyof typeof eventTypes]
                                     const EventIcon = eventType.icon
@@ -478,9 +571,9 @@ export default function CalendarIndex({ user, stats, events: propEvents = [] }: 
                                         Neuer Kunde
                                     </Link>
                                 </Button>
-                                <Button variant="outline" size="sm" className="w-full justify-start bg-transparent">
+                                <Button variant="outline" size="sm" className="w-full justify-start bg-transparent" onClick={handleExportIcs}>
                                     <Download className="mr-2 h-4 w-4" />
-                                    Kalender exportieren
+                                    Kalender exportieren (.ics)
                                 </Button>
                             </CardContent>
                         </Card>

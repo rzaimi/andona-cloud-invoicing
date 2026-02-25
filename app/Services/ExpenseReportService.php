@@ -18,26 +18,26 @@ class ExpenseReportService
     {
         $startDate = $startDate ? Carbon::parse($startDate) : Carbon::now()->startOfMonth();
         $endDate = $endDate ? Carbon::parse($endDate) : Carbon::now()->endOfMonth();
-        
+
         $expenses = Expense::forCompany($companyId)
             ->whereBetween('expense_date', [$startDate, $endDate])
-            ->select('category_id', DB::raw('SUM(net_amount) as total_net'), DB::raw('SUM(vat_amount) as total_vat'))
-            ->groupBy('category_id')
+            ->leftJoin('expense_categories', 'expenses.category_id', '=', 'expense_categories.id')
+            ->select(
+                'expenses.category_id',
+                DB::raw("COALESCE(expense_categories.name, 'Ohne Kategorie') as category_name"),
+                DB::raw('SUM(expenses.net_amount) as total_net'),
+                DB::raw('SUM(expenses.vat_amount) as total_vat')
+            )
+            ->groupBy('expenses.category_id', 'expense_categories.name')
             ->get();
-        
-        $result = [];
-        foreach ($expenses as $expense) {
-            $categoryName = $expense->category ? $expense->category->name : 'Ohne Kategorie';
-            $result[] = [
-                'category_id' => $expense->category_id,
-                'category_name' => $categoryName,
-                'net_amount' => (float) $expense->total_net,
-                'vat_amount' => (float) $expense->total_vat,
-                'total_amount' => (float) $expense->total_net + (float) $expense->total_vat,
-            ];
-        }
-        
-        return $result;
+
+        return $expenses->map(fn ($row) => [
+            'category_id'   => $row->category_id,
+            'category_name' => $row->category_name,
+            'net_amount'    => (float) $row->total_net,
+            'vat_amount'    => (float) $row->total_vat,
+            'total_amount'  => (float) $row->total_net + (float) $row->total_vat,
+        ])->values()->all();
     }
     
     /**

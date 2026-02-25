@@ -122,78 +122,82 @@ class ReportsController extends Controller
         ];
     }
 
+    /**
+     * Return a SQL expression that formats a date column as 'YYYY-MM',
+     * compatible with MySQL, SQLite, and PostgreSQL.
+     */
+    private function yearMonthExpr(string $column): string
+    {
+        $driver = DB::getDriverName();
+
+        return match ($driver) {
+            'sqlite' => "strftime('%Y-%m', {$column})",
+            'pgsql'  => "TO_CHAR({$column}, 'YYYY-MM')",
+            default  => "DATE_FORMAT({$column}, '%Y-%m')",  // MySQL / MariaDB
+        };
+    }
+
     private function getRevenueData($companyId, $period)
     {
-        $now = Carbon::now();
-        $data = [];
+        $now   = Carbon::now();
+        $ymExpr = $this->yearMonthExpr('issue_date');
 
         switch ($period) {
             case 'year':
-                // Last 12 months
-                for ($i = 11; $i >= 0; $i--) {
-                    $month = $now->copy()->subMonths($i);
-                    $startOfMonth = $month->copy()->startOfMonth();
-                    $endOfMonth = $month->copy()->endOfMonth();
-
-                    $revenue = Invoice::where('company_id', $companyId)
-                        ->where('status', 'paid')
-                        ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
-                        ->sum('total');
-
-                    $data[] = [
-                        'period' => $month->format('M Y'),
-                        'revenue' => $revenue,
-                        'invoices' => Invoice::where('company_id', $companyId)
-                            ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
-                            ->count(),
-                    ];
-                }
+                $months = 12;
                 break;
-
-            case 'quarter':
-                // Last 4 quarters
-                for ($i = 3; $i >= 0; $i--) {
-                    $quarter = $now->copy()->subQuarters($i);
-                    $startOfQuarter = $quarter->copy()->startOfQuarter();
-                    $endOfQuarter = $quarter->copy()->endOfQuarter();
-
-                    $revenue = Invoice::where('company_id', $companyId)
-                        ->where('status', 'paid')
-                        ->whereBetween('issue_date', [$startOfQuarter, $endOfQuarter])
-                        ->sum('total');
-
-                    $data[] = [
-                        'period' => 'Q' . $quarter->quarter . ' ' . $quarter->year,
-                        'revenue' => $revenue,
-                        'invoices' => Invoice::where('company_id', $companyId)
-                            ->whereBetween('issue_date', [$startOfQuarter, $endOfQuarter])
-                            ->count(),
-                    ];
-                }
-                break;
-
             case 'month':
             default:
-                // Last 6 months
-                for ($i = 5; $i >= 0; $i--) {
-                    $month = $now->copy()->subMonths($i);
-                    $startOfMonth = $month->copy()->startOfMonth();
-                    $endOfMonth = $month->copy()->endOfMonth();
-
-                    $revenue = Invoice::where('company_id', $companyId)
-                        ->where('status', 'paid')
-                        ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
-                        ->sum('total');
-
-                    $data[] = [
-                        'period' => $month->format('M Y'),
-                        'revenue' => $revenue,
-                        'invoices' => Invoice::where('company_id', $companyId)
-                            ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
-                            ->count(),
-                    ];
-                }
+                $months = 6;
                 break;
+        }
+
+        if ($period !== 'quarter') {
+            $start = $now->copy()->subMonths($months - 1)->startOfMonth();
+            $end   = $now->copy()->endOfMonth();
+
+            $aggregated = Invoice::where('company_id', $companyId)
+                ->whereBetween('issue_date', [$start, $end])
+                ->selectRaw("{$ymExpr} as ym,
+                             COUNT(*) as invoice_count,
+                             SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END) as revenue")
+                ->groupByRaw($ymExpr)
+                ->get()
+                ->keyBy('ym');
+
+            $data = [];
+            for ($i = $months - 1; $i >= 0; $i--) {
+                $month = $now->copy()->subMonths($i);
+                $ym    = $month->format('Y-m');
+                $row   = $aggregated->get($ym);
+                $data[] = [
+                    'period'   => $month->format('M Y'),
+                    'revenue'  => (float) ($row->revenue ?? 0),
+                    'invoices' => (int) ($row->invoice_count ?? 0),
+                ];
+            }
+
+            return $data;
+        }
+
+        // Quarterly: 4 separate range queries (no reliable cross-DB quarter grouping)
+        $data = [];
+        for ($i = 3; $i >= 0; $i--) {
+            $quarter        = $now->copy()->subQuarters($i);
+            $startOfQuarter = $quarter->copy()->startOfQuarter();
+            $endOfQuarter   = $quarter->copy()->endOfQuarter();
+
+            $result = Invoice::where('company_id', $companyId)
+                ->whereBetween('issue_date', [$startOfQuarter, $endOfQuarter])
+                ->selectRaw("COUNT(*) as invoice_count,
+                             SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END) as revenue")
+                ->first();
+
+            $data[] = [
+                'period'   => 'Q' . $quarter->quarter . ' ' . $quarter->year,
+                'revenue'  => (float) ($result->revenue ?? 0),
+                'invoices' => (int) ($result->invoice_count ?? 0),
+            ];
         }
 
         return $data;
@@ -219,14 +223,15 @@ class ReportsController extends Controller
                 ];
             });
 
-        // Customer growth
+        // Customer growth: new customers created each month
         $now = Carbon::now();
-        $lastMonth = $now->copy()->subMonth();
         $customersLastMonth = Customer::where('company_id', $companyId)
-            ->where('created_at', '<=', $lastMonth->endOfMonth())
+            ->whereMonth('created_at', $now->copy()->subMonth()->month)
+            ->whereYear('created_at', $now->copy()->subMonth()->year)
             ->count();
         $customersThisMonth = Customer::where('company_id', $companyId)
-            ->where('created_at', '<=', $now->endOfMonth())
+            ->whereMonth('created_at', $now->month)
+            ->whereYear('created_at', $now->year)
             ->count();
 
         // Customers by status
@@ -249,62 +254,35 @@ class ReportsController extends Controller
 
     private function getTaxData($companyId, $period)
     {
-        $now = Carbon::now();
+        $now    = Carbon::now();
+        $months = $period === 'year' ? 12 : 6;
+        $start  = $now->copy()->subMonths($months - 1)->startOfMonth();
+        $end    = $now->copy()->endOfMonth();
+
+        $ymExpr = $this->yearMonthExpr('issue_date');
+
+        $rows = Invoice::where('company_id', $companyId)
+            ->where('status', 'paid')
+            ->whereBetween('issue_date', [$start, $end])
+            ->selectRaw("{$ymExpr} as ym,
+                         SUM(subtotal)    as subtotal,
+                         SUM(tax_amount)  as tax,
+                         SUM(total)       as total")
+            ->groupByRaw($ymExpr)
+            ->get()
+            ->keyBy('ym');
+
         $data = [];
-
-        switch ($period) {
-            case 'year':
-                // Last 12 months
-                for ($i = 11; $i >= 0; $i--) {
-                    $month = $now->copy()->subMonths($i);
-                    $startOfMonth = $month->copy()->startOfMonth();
-                    $endOfMonth = $month->copy()->endOfMonth();
-
-                    $invoices = Invoice::where('company_id', $companyId)
-                        ->where('status', 'paid')
-                        ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
-                        ->get();
-
-                    // Use actual subtotal and tax_amount from invoices
-                    $subtotal = $invoices->sum('subtotal');
-                    $tax = $invoices->sum('tax_amount');
-                    $total = $invoices->sum('total');
-
-                    $data[] = [
-                        'period' => $month->format('M Y'),
-                        'subtotal' => $subtotal,
-                        'tax' => $tax,
-                        'total' => $total,
-                    ];
-                }
-                break;
-
-            case 'month':
-            default:
-                // Last 6 months
-                for ($i = 5; $i >= 0; $i--) {
-                    $month = $now->copy()->subMonths($i);
-                    $startOfMonth = $month->copy()->startOfMonth();
-                    $endOfMonth = $month->copy()->endOfMonth();
-
-                    $invoices = Invoice::where('company_id', $companyId)
-                        ->where('status', 'paid')
-                        ->whereBetween('issue_date', [$startOfMonth, $endOfMonth])
-                        ->get();
-
-                    // Use actual subtotal and tax_amount from invoices
-                    $subtotal = $invoices->sum('subtotal');
-                    $tax = $invoices->sum('tax_amount');
-                    $total = $invoices->sum('total');
-
-                    $data[] = [
-                        'period' => $month->format('M Y'),
-                        'subtotal' => $subtotal,
-                        'tax' => $tax,
-                        'total' => $total,
-                    ];
-                }
-                break;
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $month = $now->copy()->subMonths($i);
+            $ym    = $month->format('Y-m');
+            $row   = $rows->get($ym);
+            $data[] = [
+                'period'   => $month->format('M Y'),
+                'subtotal' => (float) ($row->subtotal ?? 0),
+                'tax'      => (float) ($row->tax ?? 0),
+                'total'    => (float) ($row->total ?? 0),
+            ];
         }
 
         return $data;

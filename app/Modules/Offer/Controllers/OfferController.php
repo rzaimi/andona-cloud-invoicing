@@ -64,17 +64,27 @@ class OfferController extends Controller
 
         $offers = $query->paginate(15)->withQueryString();
 
-        // Calculate statistics
+        // Calculate statistics in a single aggregated query
+        $now = now()->toDateString();
+        $statusCounts = DB::table('offers')
+            ->where('company_id', $companyId)
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft,
+                SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent,
+                SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted,
+                SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
+                SUM(CASE WHEN status = 'sent' AND valid_until < ? THEN 1 ELSE 0 END) as expired
+            ", [$now])
+            ->first();
+
         $stats = [
-            'total' => Offer::forCompany($companyId)->count(),
-            'draft' => Offer::forCompany($companyId)->where('status', 'draft')->count(),
-            'sent' => Offer::forCompany($companyId)->where('status', 'sent')->count(),
-            'accepted' => Offer::forCompany($companyId)->where('status', 'accepted')->count(),
-            'rejected' => Offer::forCompany($companyId)->where('status', 'rejected')->count(),
-            'expired' => Offer::forCompany($companyId)
-                ->where('valid_until', '<', now())
-                ->whereIn('status', ['sent'])
-                ->count(),
+            'total'    => (int) ($statusCounts->total    ?? 0),
+            'draft'    => (int) ($statusCounts->draft    ?? 0),
+            'sent'     => (int) ($statusCounts->sent     ?? 0),
+            'accepted' => (int) ($statusCounts->accepted ?? 0),
+            'rejected' => (int) ($statusCounts->rejected ?? 0),
+            'expired'  => (int) ($statusCounts->expired  ?? 0),
         ];
 
         return Inertia::render('offers/index', [
@@ -399,16 +409,20 @@ class OfferController extends Controller
             $invoice->company_snapshot = $invoice->createCompanySnapshot();
             $invoice->save();
 
-            // Copy offer items to invoice items
+            // Copy offer items to invoice items (preserve product link, tax, discounts)
             foreach ($offer->items as $offerItem) {
                 InvoiceItem::create([
-                    'invoice_id' => $invoice->id,
-                    'description' => $offerItem->description,
-                    'quantity' => $offerItem->quantity,
-                    'unit_price' => $offerItem->unit_price,
-                    'unit' => $offerItem->unit,
-                    'total' => $offerItem->total,
-                    'sort_order' => $offerItem->sort_order,
+                    'invoice_id'     => $invoice->id,
+                    'product_id'     => $offerItem->product_id,
+                    'description'    => $offerItem->description,
+                    'quantity'       => $offerItem->quantity,
+                    'unit_price'     => $offerItem->unit_price,
+                    'unit'           => $offerItem->unit,
+                    'tax_rate'       => $offerItem->tax_rate,
+                    'discount_type'  => $offerItem->discount_type,
+                    'discount_value' => $offerItem->discount_value,
+                    'total'          => $offerItem->total,
+                    'sort_order'     => $offerItem->sort_order,
                 ]);
             }
 

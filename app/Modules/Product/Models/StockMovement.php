@@ -19,19 +19,26 @@ class StockMovement extends Model
         'product_id',
         'created_by',
         'type',
-        'quantity',
+        'quantity_before',
+        'quantity_change',
+        'quantity_after',
         'unit_cost',
         'total_cost',
         'reason',
         'reference_type',
         'reference_id',
+        'reference_number',
+        'from_warehouse_id',
+        'to_warehouse_id',
         'notes',
     ];
 
     protected $casts = [
-        'quantity' => 'decimal:2',
-        'unit_cost' => 'decimal:2',
-        'total_cost' => 'decimal:2',
+        'quantity_before' => 'decimal:2',
+        'quantity_change'  => 'decimal:2',
+        'quantity_after'  => 'decimal:2',
+        'unit_cost'       => 'decimal:2',
+        'total_cost'      => 'decimal:2',
     ];
 
     const TYPE_IN = 'in';

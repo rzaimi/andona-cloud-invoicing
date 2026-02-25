@@ -15,6 +15,7 @@ Route::delete('offers/{offer}', [OfferController::class, 'destroy'])->name('offe
 Route::post('offers/{offer}/duplicate', [OfferController::class, 'duplicate'])->name('offers.duplicate');
 Route::post('offers/{offer}/send', [OfferController::class, 'send'])->name('offers.send');
 Route::get('offers/{offer}/pdf', [OfferController::class, 'pdf'])->name('offers.pdf');
+Route::get('offers/{offer}/preview', [OfferController::class, 'preview'])->name('offers.preview');
 Route::post('offers/{offer}/convert-to-invoice', [OfferController::class, 'convertToInvoice'])->name('offers.convert-to-invoice');
 Route::post('offers/{offer}/accept', [OfferController::class, 'accept'])->name('offers.accept');
 Route::post('offers/{offer}/reject', [OfferController::class, 'reject'])->name('offers.reject');

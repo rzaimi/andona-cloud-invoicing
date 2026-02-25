@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -47,13 +47,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function ExpensesShow() {
     // @ts-ignore
     const { expense } = usePage<ExpensesShowProps>().props
+    const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString("de-DE", {

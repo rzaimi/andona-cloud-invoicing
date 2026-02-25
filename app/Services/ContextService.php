@@ -135,21 +135,21 @@ class ContextService
                 'revenue' => [
                     'this_month' => Invoice::where('company_id', $companyId)
                             ->where('status', 'paid')
-                            ->whereMonth('created_at', now()->month)
-                            ->whereYear('created_at', now()->year)
+                            ->whereMonth('issue_date', now()->month)
+                            ->whereYear('issue_date', now()->year)
                             ->sum('total') ?? 0,
                     'last_month' => Invoice::where('company_id', $companyId)
                             ->where('status', 'paid')
-                            ->whereMonth('created_at', now()->subMonth()->month)
-                            ->whereYear('created_at', now()->subMonth()->year)
+                            ->whereMonth('issue_date', now()->subMonth()->month)
+                            ->whereYear('issue_date', now()->subMonth()->year)
                             ->sum('total') ?? 0,
                     'this_year' => Invoice::where('company_id', $companyId)
                             ->where('status', 'paid')
-                            ->whereYear('created_at', now()->year)
+                            ->whereYear('issue_date', now()->year)
                             ->sum('total') ?? 0,
                     'last_year' => Invoice::where('company_id', $companyId)
                             ->where('status', 'paid')
-                            ->whereYear('created_at', now()->subYear()->year)
+                            ->whereYear('issue_date', now()->subYear()->year)
                             ->sum('total') ?? 0,
                 ],
             ];

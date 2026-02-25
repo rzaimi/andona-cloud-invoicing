@@ -1,6 +1,6 @@
 "use client"
 
-import { Head, Link } from "@inertiajs/react"
+import { Head, Link, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -8,6 +8,7 @@ import { Users, ArrowLeft, TrendingUp, TrendingDown, Download } from "lucide-rea
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
 interface TopCustomer {
@@ -38,12 +39,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function CustomerReports({ customerStats }: CustomerReportsProps) {
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
+    const settings = auth?.user?.company?.settings
+
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
     const handleExport = () => {
         const headers = ["Rang", "Kunde", "Anzahl Rechnungen", "Gesamtumsatz"]

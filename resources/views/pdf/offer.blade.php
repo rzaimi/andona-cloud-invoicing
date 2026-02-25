@@ -267,6 +267,16 @@
 @endphp
 @if($customer)
     <div class="din-5008-address">
+        {{-- DIN 5008: Rücksendeadresse (return address) in tiny font above recipient --}}
+        @php
+            $returnAddr = trim(($snapshot['name'] ?? '') . ', ' . ($snapshot['address'] ?? '') . ', ' . ($snapshot['postal_code'] ?? '') . ' ' . ($snapshot['city'] ?? ''));
+        @endphp
+        @if($returnAddr && trim($returnAddr, ', '))
+            <div style="font-size: 7px; color: #6b7280; border-bottom: 1px solid #d1d5db; margin-bottom: 4px; padding-bottom: 2px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ $returnAddr }}
+            </div>
+        @endif
+        {{-- Recipient address --}}
         <div style="font-weight: 600; margin-bottom: 3px; font-size: {{ $offerBodyFontSize }}px; line-height: 1.2;">
             {{ $customer->name ?? 'Unbekannt' }}
         </div>
@@ -426,9 +436,22 @@
     </div>
 
     <!-- Offer Title -->
+    @php
+        $statusLabels = [
+            'draft'    => 'Entwurf',
+            'sent'     => 'Versendet',
+            'accepted' => 'Angenommen',
+            'rejected' => 'Abgelehnt',
+        ];
+    @endphp
     <div class="offer-title">
         <h1>ANGEBOT</h1>
-        <div class="status-badge status-{{ $offer->status }}">{{ ucfirst($offer->status) }}</div>
+        {{-- Status badge only visible in preview mode (internal use), not on customer-facing PDFs --}}
+        @if(isset($preview) && $preview)
+            <div class="status-badge status-{{ $offer->status }}">
+                {{ $statusLabels[$offer->status] ?? ucfirst($offer->status) }}
+            </div>
+        @endif
     </div>
 
     <!-- Offer Meta Information -->
@@ -451,28 +474,33 @@
                 <span class="info-label">Gültig bis:</span>
                 <span>{{ formatInvoiceDate($offer->valid_until, $dateFormat ?? 'd.m.Y') }}</span>
             </div>
-            @if($layout->settings['content']['show_customer_number'] ?? true && $offer->customer->customer_number)
+            @if(($layout->settings['content']['show_customer_number'] ?? true) && ($offer->customer->number ?? null))
                 <div class="info-row">
-                    <span class="info-label">Kundennummer:</span>
-                    <span>{{ $offer->customer->customer_number }}</span>
+                    <span class="info-label">Kundennr.:</span>
+                    <span>{{ $offer->customer->number }}</span>
                 </div>
             @endif
-            @if($layout->settings['content']['show_tax_number'] ?? true && $company->tax_number)
+            @if(($layout->settings['content']['show_tax_number'] ?? true) && ($snapshot['tax_number'] ?? null))
                 <div class="info-row">
                     <span class="info-label">Steuernummer:</span>
-                    <span>{{ $company->tax_number }}</span>
+                    <span>{{ $snapshot['tax_number'] }}</span>
+                </div>
+            @endif
+            @if($snapshot['vat_number'] ?? null)
+                <div class="info-row">
+                    <span class="info-label">USt-IdNr.:</span>
+                    <span>{{ $snapshot['vat_number'] }}</span>
                 </div>
             @endif
         </div>
     </div>
 
-    <!-- Validity Notice -->
-    <div class="validity-notice">
-        <strong>Gültigkeitsdauer:</strong> Dieses Angebot ist gültig bis zum {{ formatInvoiceDate($offer->valid_until, $dateFormat ?? 'd.m.Y') }}
-        @if(\Carbon\Carbon::parse($offer->valid_until)->isPast())
-            <br><span style="color: #dc2626;">⚠️ Dieses Angebot ist abgelaufen</span>
-        @endif
-    </div>
+    {{-- Validity notice: clean professional line, only shown when expired in preview --}}
+    @if(isset($preview) && $preview && \Carbon\Carbon::parse($offer->valid_until)->isPast())
+        <div style="margin: 15px 0; padding: 8px 12px; border-left: 3px solid #dc2626; background: #fef2f2; font-size: {{ $bodyFontSize - 1 }}px; color: #dc2626;">
+            Hinweis: Dieses Angebot war gültig bis {{ formatInvoiceDate($offer->valid_until, $dateFormat ?? 'd.m.Y') }} und ist abgelaufen.
+        </div>
+    @endif
 
     @php
         $totalDiscount = 0;
@@ -521,7 +549,8 @@
                 @if($layout->settings['content']['show_unit_column'] ?? true)
                     <td class="text-center">{{ $item->unit }}</td>
                 @endif
-                <td class="text-right">{{ number_format(($offer->tax_rate ?? 0) * 100, 0, ',', '.') }}%</td>
+                @php $itemTaxRate = isset($item->tax_rate) && $item->tax_rate !== null && $item->tax_rate !== '' ? (float)$item->tax_rate : (float)($offer->tax_rate ?? 0); @endphp
+                <td class="text-right">{{ number_format($itemTaxRate * 100, 0, ',', '.') }}%</td>
                 <td class="text-right">{{ number_format($item->unit_price, 2, ',', '.') }} €</td>
                 <td class="text-right">
                     @if($hasDiscount)
@@ -546,6 +575,20 @@
     </table>
 
     <!-- Totals -->
+    @php
+        // Group items by tax rate for compliant breakdown
+        $taxGroups = [];
+        foreach ($offer->items as $it) {
+            $rate = isset($it->tax_rate) && $it->tax_rate !== null && $it->tax_rate !== '' ? (float)$it->tax_rate : (float)($offer->tax_rate ?? 0);
+            $rateKey = number_format($rate * 100, 0);
+            if (!isset($taxGroups[$rateKey])) {
+                $taxGroups[$rateKey] = ['rate' => $rate, 'net' => 0, 'tax' => 0];
+            }
+            $taxGroups[$rateKey]['net'] += (float)($it->total ?? 0);
+            $taxGroups[$rateKey]['tax'] += round((float)($it->total ?? 0) * $rate, 2);
+        }
+        $hasMixedTax = count($taxGroups) > 1;
+    @endphp
     <div class="totals">
         <table class="totals-table">
             @if($totalDiscount > 0.0001)
@@ -559,15 +602,24 @@
                 </tr>
             @endif
             <tr>
-                <td><strong>Zwischensumme:</strong></td>
+                <td><strong>Nettobetrag:</strong></td>
                 <td class="text-right">{{ number_format($offer->subtotal, 2, ',', '.') }} €</td>
             </tr>
-            <tr>
-                <td><strong>MwSt. ({{ number_format($offer->tax_rate * 100, 0) }}%):</strong></td>
-                <td class="text-right">{{ number_format($offer->tax_amount, 2, ',', '.') }} €</td>
-            </tr>
+            @if($hasMixedTax)
+                @foreach($taxGroups as $rateKey => $group)
+                    <tr>
+                        <td>MwSt. {{ $rateKey }}%:</td>
+                        <td class="text-right">{{ number_format($group['tax'], 2, ',', '.') }} €</td>
+                    </tr>
+                @endforeach
+            @else
+                <tr>
+                    <td>MwSt. ({{ number_format((float)($offer->tax_rate ?? 0) * 100, 0) }}%):</td>
+                    <td class="text-right">{{ number_format($offer->tax_amount, 2, ',', '.') }} €</td>
+                </tr>
+            @endif
             <tr class="total-row">
-                <td><strong>Gesamtbetrag:</strong></td>
+                <td><strong>Gesamtbetrag (brutto):</strong></td>
                 <td class="text-right"><strong>{{ number_format($offer->total, 2, ',', '.') }} €</strong></td>
             </tr>
         </table>
@@ -581,11 +633,11 @@
         </div>
     @endif
 
-    <!-- Terms -->
-    @if($offer->terms && ($layout->settings['content']['show_terms'] ?? true))
+    <!-- Terms & Conditions -->
+    @if($offer->terms_conditions && ($layout->settings['content']['show_terms'] ?? true))
         <div class="terms">
             <div class="section-title">Angebotsbedingungen</div>
-            <p>{{ $offer->terms }}</p>
+            <p style="white-space: pre-line;">{{ $offer->terms_conditions }}</p>
         </div>
     @endif
 

@@ -20,6 +20,7 @@ import {
     Clock,
     XCircle,
 } from "lucide-react"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -44,11 +45,17 @@ interface CustomerShowProps {
         last_invoice_date: string | null
         last_offer_date: string | null
     }
-    breadcrumbs: BreadcrumbItem[]
 }
 
 export default function CustomerShow() {
-    const { customer, stats, breadcrumbs } = usePage<CustomerShowProps>().props
+    const { customer, stats } = usePage<CustomerShowProps>().props
+    const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Kunden", href: "/customers" },
+        { title: customer.name },
+    ]
 
     const getStatusBadge = (status: string, type: "invoice" | "offer") => {
         const variants = {
@@ -91,14 +98,10 @@ export default function CustomerShow() {
         )
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-        }).format(amount)
-    }
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, settings)
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString: string | null | undefined) => {
+        if (!dateString) return "—"
         return new Date(dateString).toLocaleDateString("de-DE", {
             year: "numeric",
             month: "2-digit",
@@ -107,7 +110,7 @@ export default function CustomerShow() {
     }
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Kunde: ${customer.name}`} />
 
             <div className="space-y-6">
