@@ -188,30 +188,33 @@ export default function Step7Review({ data, logoPreview }: any) {
                         Rechnungseinstellungen
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-3 gap-3 text-sm">
-                    <div>
-                        <span className="font-medium">Rechnungspräfix:</span>
-                        <p>{inv.invoice_prefix || "-"}</p>
+                <CardContent className="space-y-3 text-sm">
+                    <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">
+                        {[
+                            ["Rechnung",  inv.invoice_number_format  || "RE-{YYYY}-{####}"],
+                            ["Storno",    inv.storno_number_format   || "STORNO-{YYYY}-{####}"],
+                            ["Angebot",   inv.offer_number_format    || "AN-{YYYY}-{####}"],
+                            ["Kunde",     inv.customer_number_format || "KU-{YYYY}-{####}"],
+                        ].map(([label, fmt]) => (
+                            <div key={label} className="contents">
+                                <span className="font-medium">{label}:</span>
+                                <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{fmt}</span>
+                            </div>
+                        ))}
                     </div>
-                    <div>
-                        <span className="font-medium">Angebotspräfix:</span>
-                        <p>{inv.offer_prefix || "-"}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Währung:</span>
-                        <p>{inv.currency || "-"}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Steuersatz:</span>
-                        <p>{inv.tax_rate != null ? `${(parseFloat(inv.tax_rate) * 100).toFixed(0)} %` : "-"}</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Zahlungsziel:</span>
-                        <p>{fmtInt(inv.payment_terms)} Tage</p>
-                    </div>
-                    <div>
-                        <span className="font-medium">Angebotsgültigkeit:</span>
-                        <p>{fmtInt(inv.offer_validity_days)} Tage</p>
+                    <div className="grid grid-cols-3 gap-3 pt-2 border-t">
+                        <div>
+                            <span className="font-medium">Währung:</span>
+                            <p>{inv.currency || "EUR"}</p>
+                        </div>
+                        <div>
+                            <span className="font-medium">Steuersatz:</span>
+                            <p>{inv.tax_rate != null ? `${(parseFloat(inv.tax_rate) * 100).toFixed(0)} %` : "19 %"}</p>
+                        </div>
+                        <div>
+                            <span className="font-medium">Zahlungsziel:</span>
+                            <p>{fmtInt(inv.payment_terms)} Tage</p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

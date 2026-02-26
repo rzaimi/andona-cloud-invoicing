@@ -88,16 +88,21 @@ class CompanyWizardController extends Controller
             'email_settings.smtp_from_address'  => $smtpRule . '|email|max:255',
             'email_settings.smtp_from_name'     => $smtpRule . '|string|max:255',
 
-            // Invoice settings
+            // Invoice settings — number formats
             'invoice_settings.invoice_number_format'  => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'invoice_settings.invoice_next_counter'   => 'nullable|integer|min:1|max:999999',
+            'invoice_settings.storno_number_format'   => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'invoice_settings.storno_next_counter'    => 'nullable|integer|min:1|max:999999',
             'invoice_settings.offer_number_format'    => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'invoice_settings.offer_next_counter'     => 'nullable|integer|min:1|max:999999',
             'invoice_settings.customer_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'invoice_settings.customer_next_counter'  => 'nullable|integer|min:1|max:999999',
             'invoice_settings.currency'             => 'nullable|in:EUR,USD,GBP,CHF',
             'invoice_settings.tax_rate'             => 'nullable|numeric|min:0|max:1',
             'invoice_settings.reduced_tax_rate'     => 'nullable|numeric|min:0|max:1',
             'invoice_settings.payment_terms'        => 'nullable|integer|min:1|max:365',
             'invoice_settings.offer_validity_days'  => 'nullable|integer|min:1|max:365',
-            'invoice_settings.date_format'          => 'nullable|in:d.m.Y,Y-m-d,m/d/Y',
+            'invoice_settings.date_format'          => 'nullable|in:d.m.Y,Y-m-d,d/m/Y,m/d/Y',
             'invoice_settings.decimal_separator'    => 'nullable|string|max:1',
             'invoice_settings.thousands_separator'  => 'nullable|string|max:1',
 
@@ -185,11 +190,13 @@ class CompanyWizardController extends Controller
             // ── Invoice settings ─────────────────────────────────────────────
             $invoiceDefaults = [
                 'invoice_number_format'  => 'RE-{YYYY}-{####}',
+                'invoice_next_counter'   => 1,
+                'storno_number_format'   => 'STORNO-{YYYY}-{####}',
+                'storno_next_counter'    => 1,
                 'offer_number_format'    => 'AN-{YYYY}-{####}',
+                'offer_next_counter'     => 1,
                 'customer_number_format' => 'KU-{YYYY}-{####}',
-                'invoice_prefix'         => 'RE-',
-                'offer_prefix'           => 'AN-',
-                'customer_prefix'        => 'KU-',
+                'customer_next_counter'  => 1,
                 'currency'            => 'EUR',
                 'tax_rate'            => 0.19,
                 'reduced_tax_rate'    => 0.07,
