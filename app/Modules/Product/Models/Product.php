@@ -110,22 +110,31 @@ class Product extends Model
     public function generateProductNumber(): string
     {
         $company = $this->company ?? Company::find($this->company_id);
-        $prefix = $company->getSetting('product_prefix', 'PR');
-        $year = date('Y');
+        $prefix  = $company->getSetting('product_prefix', 'PR');
+        $year    = date('Y');
 
+        // Find the highest existing sequence number for this prefix+year
         $lastProduct = static::where('company_id', $this->company_id)
             ->where('number', 'like', "{$prefix}-{$year}-%")
             ->orderBy('number', 'desc')
             ->first();
 
-        if ($lastProduct) {
-            $lastNumber = (int) substr($lastProduct->number, -4);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
-        }
+        $nextNumber = $lastProduct
+            ? (int) substr($lastProduct->number, -4) + 1
+            : 1;
 
-        return sprintf('%s-%s-%04d', $prefix, $year, $nextNumber);
+        // Ensure uniqueness — skip over any gaps left by imports/seeders
+        do {
+            $candidate = sprintf('%s-%s-%04d', $prefix, $year, $nextNumber);
+            $exists = static::where('company_id', $this->company_id)
+                ->where('number', $candidate)
+                ->exists();
+            if ($exists) {
+                $nextNumber++;
+            }
+        } while ($exists);
+
+        return $candidate;
     }
 
     public function isLowStock(): bool

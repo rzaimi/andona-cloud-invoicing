@@ -123,10 +123,25 @@ class ProductController extends Controller
             'status' => 'required|in:active,inactive,discontinued',
         ]);
 
-        Product::create([
-            ...$validated,
-            'company_id' => $this->getEffectiveCompanyId(),
-        ]);
+        $companyId = $this->getEffectiveCompanyId();
+        $attempts  = 0;
+
+        do {
+            try {
+                Product::create([
+                    ...$validated,
+                    'company_id' => $companyId,
+                ]);
+                $collision = false;
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                // Number was taken by a concurrent request — retry with fresh number
+                $collision = true;
+                $attempts++;
+                if ($attempts >= 5) {
+                    throw $e;
+                }
+            }
+        } while ($collision);
 
         return redirect()->route('products.index')
             ->with('success', 'Produkt wurde erfolgreich erstellt.');
