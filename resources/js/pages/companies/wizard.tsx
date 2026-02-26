@@ -7,17 +7,18 @@ import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
     Building2, Mail, FileText, Bell, Landmark, User,
-    CheckCircle, ArrowLeft, ArrowRight, X, AlertCircle,
+    CheckCircle, ArrowLeft, ArrowRight, X, AlertCircle, Briefcase,
 } from "lucide-react"
 import React, { useState, useRef, useEffect } from "react"
 
 import Step1CompanyInfo from "./wizard/Step1CompanyInfo"
-import Step2EmailSettings from "./wizard/Step2EmailSettings"
-import Step3InvoiceSettings from "./wizard/Step3InvoiceSettings"
-import Step4MahnungSettings from "./wizard/Step4MahnungSettings"
-import Step5BankingInfo from "./wizard/Step5BankingInfo"
-import Step6FirstUser from "./wizard/Step6FirstUser"
-import Step7Review from "./wizard/Step7Review"
+import Step2IndustryType from "./wizard/Step2IndustryType"
+import Step3EmailSettings from "./wizard/Step2EmailSettings"
+import Step4InvoiceSettings from "./wizard/Step3InvoiceSettings"
+import Step5MahnungSettings from "./wizard/Step4MahnungSettings"
+import Step6BankingInfo from "./wizard/Step5BankingInfo"
+import Step7FirstUser from "./wizard/Step6FirstUser"
+import Step8Review from "./wizard/Step7Review"
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: "Dashboard", href: "/dashboard" },
@@ -25,14 +26,17 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: "Neue Firma erstellen" },
 ]
 
+const TOTAL_STEPS = 8
+
 const steps = [
-    { number: 1, title: "Firmeninformationen",    icon: Building2,  description: "Grundlegende Unternehmensdaten" },
-    { number: 2, title: "E-Mail Konfiguration",   icon: Mail,       description: "SMTP-Einstellungen für E-Mail-Versand" },
-    { number: 3, title: "Rechnungseinstellungen", icon: FileText,   description: "Präfixe, Steuersätze und Formate" },
-    { number: 4, title: "Mahnungseinstellungen",  icon: Bell,       description: "Intervalle und Gebühren" },
-    { number: 5, title: "Bankinformationen",       icon: Landmark,   description: "IBAN und BIC für Zahlungen" },
-    { number: 6, title: "Erster Benutzer",         icon: User,       description: "Admin-Benutzer erstellen (optional)" },
-    { number: 7, title: "Überprüfen & Erstellen", icon: CheckCircle, description: "Zusammenfassung aller Einstellungen" },
+    { number: 1, title: "Firmeninformationen",    icon: Building2,   description: "Grundlegende Unternehmensdaten" },
+    { number: 2, title: "Branchenpaket",           icon: Briefcase,   description: "Passende Produkte & Layouts automatisch anlegen" },
+    { number: 3, title: "E-Mail Konfiguration",    icon: Mail,        description: "SMTP-Einstellungen für E-Mail-Versand" },
+    { number: 4, title: "Rechnungseinstellungen",  icon: FileText,    description: "Präfixe, Steuersätze und Formate" },
+    { number: 5, title: "Mahnungseinstellungen",   icon: Bell,        description: "Intervalle und Gebühren" },
+    { number: 6, title: "Bankinformationen",        icon: Landmark,    description: "IBAN und BIC für Zahlungen" },
+    { number: 7, title: "Erster Benutzer",          icon: User,        description: "Admin-Benutzer erstellen (optional)" },
+    { number: 8, title: "Überprüfen & Erstellen",  icon: CheckCircle, description: "Zusammenfassung aller Einstellungen" },
 ]
 
 // ─── Default form state ────────────────────────────────────────────────────────
@@ -43,6 +47,10 @@ const defaultData = {
         postal_code: "", city: "", country: "Deutschland",
         tax_number: "", vat_number: "", website: "",
         logo: null as string | null,
+    },
+    industry_type: {
+        slug: null as string | null,
+        initialize_data: true,
     },
     email_settings: {
         configure_smtp: false,
@@ -91,7 +99,7 @@ function validateStep(step: number, data: WizardFormData): Record<string, string
             e["company_info.website"] = "Die Webseite muss mit https:// oder http:// beginnen."
     }
 
-    if (step === 2 && es.configure_smtp) {
+    if (step === 3 && es.configure_smtp) {
         if (!es.smtp_host?.trim())
             e["email_settings.smtp_host"] = "Das Feld SMTP Host ist erforderlich."
         if (!es.smtp_username?.trim())
@@ -106,7 +114,7 @@ function validateStep(step: number, data: WizardFormData): Record<string, string
             e["email_settings.smtp_from_name"] = "Das Feld Absender Name ist erforderlich."
     }
 
-    if (step === 6 && fu.create_user) {
+    if (step === 7 && fu.create_user) {
         if (!fu.name?.trim())
             e["first_user.name"] = "Das Feld Name ist erforderlich."
         if (!fu.email?.trim())
@@ -173,7 +181,7 @@ export default function CompanyWizard() {
             return
         }
         setLocalErrors({})
-        setCurrentStep((s) => Math.min(s + 1, 7))
+        setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS))
         window.scrollTo({ top: 0, behavior: "smooth" })
     }
 
@@ -208,7 +216,7 @@ export default function CompanyWizard() {
 
     // ── Render ────────────────────────────────────────────────────────────────
 
-    const progress = ((currentStep - 1) / 6) * 100
+    const progress = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -239,7 +247,7 @@ export default function CompanyWizard() {
                     <CardContent className="pt-6">
                         <div className="space-y-3">
                             <div className="flex justify-between text-sm">
-                                <span className="font-medium">Schritt {currentStep} von 7</span>
+                                <span className="font-medium">Schritt {currentStep} von {TOTAL_STEPS}</span>
                                 <span className="text-muted-foreground">
                                     {Math.round(progress)}% abgeschlossen
                                 </span>
@@ -252,7 +260,7 @@ export default function CompanyWizard() {
                 {/* Step indicators */}
                 <Card>
                     <CardContent className="pt-6">
-                        <div className="grid grid-cols-7 gap-2">
+                        <div className="grid grid-cols-8 gap-2">
                             {steps.map((step) => {
                                 const Icon = step.icon
                                 const isActive = currentStep === step.number
@@ -313,22 +321,25 @@ export default function CompanyWizard() {
                             />
                         )}
                         {currentStep === 2 && (
-                            <Step2EmailSettings data={formData} setData={updateSection} errors={errors} />
+                            <Step2IndustryType data={formData} setData={updateSection} errors={errors} />
                         )}
                         {currentStep === 3 && (
-                            <Step3InvoiceSettings data={formData} setData={updateSection} errors={errors} />
+                            <Step3EmailSettings data={formData} setData={updateSection} errors={errors} />
                         )}
                         {currentStep === 4 && (
-                            <Step4MahnungSettings data={formData} setData={updateSection} errors={errors} />
+                            <Step4InvoiceSettings data={formData} setData={updateSection} errors={errors} />
                         )}
                         {currentStep === 5 && (
-                            <Step5BankingInfo data={formData} setData={updateSection} errors={errors} />
+                            <Step5MahnungSettings data={formData} setData={updateSection} errors={errors} />
                         )}
                         {currentStep === 6 && (
-                            <Step6FirstUser data={formData} setData={updateSection} errors={errors} />
+                            <Step6BankingInfo data={formData} setData={updateSection} errors={errors} />
                         )}
                         {currentStep === 7 && (
-                            <Step7Review data={formData} logoPreview={effectiveLogoPreview} />
+                            <Step7FirstUser data={formData} setData={updateSection} errors={errors} />
+                        )}
+                        {currentStep === 8 && (
+                            <Step8Review data={formData} logoPreview={effectiveLogoPreview} />
                         )}
                     </CardContent>
                 </Card>
@@ -352,7 +363,7 @@ export default function CompanyWizard() {
                                 </Button>
                             </div>
                             <div>
-                                {currentStep < 7 ? (
+                                {currentStep < TOTAL_STEPS ? (
                                     <Button onClick={handleNext} disabled={processing}>
                                         Weiter
                                         <ArrowRight className="ml-2 h-4 w-4" />

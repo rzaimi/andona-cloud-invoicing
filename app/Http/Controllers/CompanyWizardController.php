@@ -6,8 +6,10 @@ use App\Modules\Company\Models\Company;
 use App\Modules\User\Models\User;
 use App\Services\SettingsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -244,6 +246,20 @@ class CompanyWizardController extends Controller
             }
 
             DB::commit();
+
+            // Run industry initialisation after commit (non-blocking, non-fatal)
+            $industrySlug = $request->input('industry_type.slug');
+            $validSlugs   = ['gartenbau', 'bauunternehmen', 'raumausstattung', 'gebaudetechnik', 'logistik', 'handel', 'dienstleistung'];
+            if ($industrySlug && in_array($industrySlug, $validSlugs, true)) {
+                try {
+                    Artisan::call('company:init', [
+                        'company_id' => $company->id,
+                        '--type'     => $industrySlug,
+                    ]);
+                } catch (\Throwable $initEx) {
+                    Log::warning("company:init failed for {$company->id}: " . $initEx->getMessage());
+                }
+            }
 
             return Inertia::location(route('companies.index'));
 

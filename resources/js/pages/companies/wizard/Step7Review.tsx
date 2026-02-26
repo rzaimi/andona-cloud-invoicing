@@ -1,6 +1,16 @@
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { CheckCircle, Building2, Mail, FileText, Bell, Landmark, User } from "lucide-react"
+import { CheckCircle, Building2, Mail, FileText, Bell, Landmark, User, Briefcase } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
+const INDUSTRY_LABELS: Record<string, string> = {
+    gartenbau:       "Garten- und Außenanlagenbau",
+    bauunternehmen:  "Bauunternehmen",
+    raumausstattung: "Raumausstattung & Fliesenarbeiten",
+    gebaudetechnik:  "Gebäudetechnik",
+    logistik:        "Logistik & Palettenhandel",
+    handel:          "Handelsunternehmen",
+    dienstleistung:  "Sonstige Dienstleistungen",
+}
 
 function fmt(value: any, decimals = 2): string {
     const n = parseFloat(value)
@@ -14,6 +24,7 @@ function fmtInt(value: any): string {
 
 export default function Step7Review({ data, logoPreview }: any) {
     const ci = data.company_info ?? {}
+    const industry = data.industry_type ?? {}
     const es = data.email_settings ?? {}
     const inv = data.invoice_settings ?? {}
     const mah = data.mahnung_settings ?? {}
@@ -37,6 +48,35 @@ export default function Step7Review({ data, logoPreview }: any) {
                     Bitte überprüfen Sie alle Eingaben. Sie können zurückgehen, um Änderungen vorzunehmen.
                 </AlertDescription>
             </Alert>
+
+            {/* Industry Type */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                        <Briefcase className="h-5 w-5" />
+                        Branchenpaket
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {industry.slug ? (
+                        <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+                            <div>
+                                <p className="font-semibold text-sm text-green-900">
+                                    {INDUSTRY_LABELS[industry.slug] ?? industry.slug}
+                                </p>
+                                <p className="text-xs text-green-700 mt-0.5">
+                                    Produkte, Kategorien, Lager und Layouts werden automatisch angelegt.
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            Kein Branchenpaket gewählt — manuelle Einrichtung.
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
 
             {/* Company Info */}
             <Card>
