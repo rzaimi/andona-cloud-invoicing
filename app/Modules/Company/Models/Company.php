@@ -179,7 +179,7 @@ class Company extends Model
         return $defaults[$key] ?? $default;
     }
 
-    public function setSetting(string $key, $value, string $type = 'string', string $description = null): void
+    public function setSetting(string $key, $value, string $type = 'string', ?string $description = null): void
     {
         $this->settings()->updateOrCreate(
             ['key' => $key],
