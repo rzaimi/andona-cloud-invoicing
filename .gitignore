@@ -4,6 +4,7 @@
 /public/build
 /public/hot
 /public/deploy.php
+deploy-build.sh
 /public/storage
 /storage/*.key
 /storage/pail
