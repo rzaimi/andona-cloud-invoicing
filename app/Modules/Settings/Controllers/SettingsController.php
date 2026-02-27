@@ -709,6 +709,14 @@ class SettingsController extends Controller
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        // Handle logo removal
+        if ($request->input('remove_logo') === '1' && !$request->hasFile('logo')) {
+            if ($company->logo && \Storage::disk('public')->exists($company->logo)) {
+                \Storage::disk('public')->delete($company->logo);
+            }
+            $validated['logo'] = null;
+        }
+
         // Handle logo upload
         if ($request->hasFile('logo')) {
             if ($company->logo && \Storage::disk('public')->exists($company->logo)) {

@@ -37,24 +37,27 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
     })
 
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
+    const [removedLogo, setRemovedLogo] = useState(false)
 
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
             setData("logo", file)
             setLogoPreview(URL.createObjectURL(file))
+            setRemovedLogo(false)
         }
     }
 
     const handleRemoveLogo = () => {
         setData("logo", null)
         setLogoPreview(null)
+        setRemovedLogo(true)
     }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         // Use POST + method spoofing for reliable file uploads
-        transform((data) => ({ ...data, _method: "put" }))
+        transform((data) => ({ ...data, _method: "put", remove_logo: removedLogo ? "1" : "0" }))
         post(route("settings.company-info.update"), { 
             forceFormData: true, 
             preserveScroll: true 
@@ -62,7 +65,9 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
     }
 
     const currentLogo = company?.logo
-    const displayLogo = logoPreview || (currentLogo ? `/storage/${currentLogo}` : null)
+    // Backend already returns a full Storage URL (e.g. /storage/tenants/.../logo/file.jpg)
+    // Use logoPreview for newly selected file, otherwise existing logo (unless removed)
+    const displayLogo = logoPreview || (removedLogo ? null : currentLogo) || null
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
