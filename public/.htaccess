@@ -19,3 +19,32 @@
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 </IfModule>
+
+# Cache busting strategy:
+# - HTML/PHP responses: never cache (always fetch fresh, so new hashed asset URLs are picked up)
+# - Vite build assets (hashed filenames): cache for 1 year — they are content-addressed
+# - Other static assets (fonts, images, icons): cache for 30 days
+
+# Do not cache PHP / HTML responses
+<FilesMatch "\.(php)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-store, no-cache, must-revalidate"
+        Header set Pragma "no-cache"
+    </IfModule>
+</FilesMatch>
+
+# Long-term cache for Vite hashed assets (JS/CSS inside /build/)
+<IfModule mod_headers.c>
+    <FilesMatch "^build/.*\.(js|css)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# Medium-term cache for fonts and images
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType font/woff2                    "access plus 30 days"
+    ExpiresByType image/png                     "access plus 30 days"
+    ExpiresByType image/x-icon                  "access plus 30 days"
+    ExpiresByType image/svg+xml                 "access plus 30 days"
+</IfModule>
