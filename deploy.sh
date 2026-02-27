@@ -5,10 +5,13 @@
 # Usage:
 #   bash deploy.sh
 #
-# Before running on the server, do the following on your LOCAL machine:
-#   1. npm run build              → upload public/build/ to server
-#   2. (see step 2 below)         → upload vendor/ to server
-#   3. git tag -a vX.Y.Z -m "..."
+# LOCAL MACHINE — do these steps before running this script on the server:
+#   1. npm run build
+#      → DELETE public/build/ on server first (removes stale hashed files)
+#      → then upload the new public/build/ folder via SFTP
+#   2. composer install --no-dev --optimize-autoloader
+#      → upload vendor/ folder via SFTP  (only when dependencies changed)
+#   3. git tag -a vX.Y.Z -m "Release vX.Y.Z"
 #   4. git push origin main --tags
 # =============================================================================
 
