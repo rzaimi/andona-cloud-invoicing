@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Head, Link, router } from "@inertiajs/react"
+import { Head, Link, router, usePage } from "@inertiajs/react"
 import { useState } from "react"
 import AppLayout from "@/layouts/app-layout"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Plus, Search, Edit, Trash2, Eye, Users, Building2 } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Plus, Search, Edit, Trash2, Eye, Users, Building2, AlertCircle, CheckCircle2 } from "lucide-react"
 import type { User, Company, PaginatedResponse } from "@/types"
 
 interface Props {
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function UsersIndex({ users, search: initialSearch, can_create, can_manage_companies }: Props) {
+    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props
     const [search, setSearch] = useState(initialSearch ?? "")
 
     const handleSearch = (e: React.FormEvent) => {
@@ -88,6 +90,20 @@ export default function UsersIndex({ users, search: initialSearch, can_create, c
                         )}
                     </div>
                 </div>
+
+                {/* Flash Messages */}
+                {flash?.success && (
+                    <Alert className="border-green-200 bg-green-50">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <AlertDescription className="text-green-800">{flash.success}</AlertDescription>
+                    </Alert>
+                )}
+                {flash?.error && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{flash.error}</AlertDescription>
+                    </Alert>
+                )}
 
                 {/* Search */}
                 <Card>
