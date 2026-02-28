@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { Head, Link, useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import AppLayout from "@/layouts/app-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +20,9 @@ interface Props {
     is_super_admin: boolean
 }
 
-export default function CreateUser({ companies, current_company_id, is_super_admin }: Props) {
+export default function CreateUser({
+    companies, current_company_id, is_super_admin }: Props) {
+    const { t } = useTranslation()
     const { data, setData, post, processing, errors } = useForm({
         name: "",
         email: "",
@@ -50,12 +53,12 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                     <Button variant="outline" size="sm" asChild>
                         <Link href={route("users.index")}>
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
+                            {t('common.back')}
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Neuer Benutzer</h1>
-                        <p className="text-muted-foreground">Erstellen Sie einen neuen Benutzer</p>
+                        <h1 className="text-2xl font-bold text-foreground">{t('pages.users.new')}</h1>
+                        <p className="text-muted-foreground">{t('pages.users.createDesc')}</p>
                     </div>
                 </div>
 
@@ -66,7 +69,7 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                             <User className="h-5 w-5" />
                             Benutzerinformationen
                         </CardTitle>
-                        <CardDescription>Geben Sie die Informationen für den neuen Benutzer ein</CardDescription>
+                        <CardDescription>{t('pages.users.infoDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -74,7 +77,7 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                                 {/* Name */}
                                 <div className="space-y-2">
                                     <Label htmlFor="name">
-                                        Vollständiger Name <span className="text-red-500">*</span>
+                                        {t('pages.users.fullName_users')} <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
                                         id="name"
@@ -133,7 +136,7 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                                 {/* Password Confirmation */}
                                 <div className="space-y-2">
                                     <Label htmlFor="password_confirmation">
-                                        Passwort bestätigen <span className="text-red-500">*</span>
+                                        {t('auth.confirmPassword')} <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
                                         id="password_confirmation"
@@ -141,7 +144,7 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                                         value={data.password_confirmation}
                                         onChange={(e) => setData("password_confirmation", e.target.value)}
                                         className={errors.password_confirmation ? "border-red-500" : ""}
-                                        placeholder="Passwort wiederholen"
+                                        placeholder={t('auth.repeatPassword')}
                                     />
                                     {errors.password_confirmation && (
                                         <Alert variant="destructive">
@@ -157,10 +160,10 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                                     </Label>
                                     <Select value={data.role} onValueChange={(value) => setData("role", value)}>
                                         <SelectTrigger className={errors.role ? "border-red-500" : ""}>
-                                            <SelectValue placeholder="Rolle auswählen" />
+                                            <SelectValue placeholder={t('pages.users.selectRole')} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="user">Benutzer</SelectItem>
+                                            <SelectItem value="user">{t('pages.users.role')}</SelectItem>
                                             <SelectItem value="admin">Administrator</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -179,7 +182,7 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                                         </Label>
                                         <Select value={data.company_id} onValueChange={(value) => setData("company_id", value)}>
                                             <SelectTrigger className={errors.company_id ? "border-red-500" : ""}>
-                                                <SelectValue placeholder="Firma auswählen" />
+                                                <SelectValue placeholder={t('pages.users.selectCompany_users')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {companies.map((company) => (
@@ -201,7 +204,7 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                             {/* Submit */}
                             <div className="flex justify-end gap-4">
                                 <Button variant="outline" asChild>
-                                    <Link href={route("users.index")}>Abbrechen</Link>
+                                    <Link href={route("users.index")}>{t('common.cancel')}</Link>
                                 </Button>
                                 <Button type="submit" disabled={processing}>
                                     <Save className="mr-2 h-4 w-4" />

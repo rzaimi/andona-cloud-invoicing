@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,7 +42,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: "Gewinn- und Verlustbericht" },
 ]
 
-export default function ProfitReports({ profit, months, filters }: ProfitReportsProps) {
+export default function ProfitReports({
+    profit, months, filters }: ProfitReportsProps) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
 
@@ -71,12 +74,12 @@ export default function ProfitReports({ profit, months, filters }: ProfitReports
                         <Link href={route("reports.index")}>
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
                             <h1 className="text-1xl font-bold text-gray-900">Gewinn- und Verlustbericht</h1>
-                            <p className="text-gray-600">Einnahmen vs. Ausgaben</p>
+                            <p className="text-gray-600">{t('pages.reports.profitDesc')}</p>
                         </div>
                     </div>
                 </div>
@@ -125,7 +128,7 @@ export default function ProfitReports({ profit, months, filters }: ProfitReports
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ausgaben</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.expenses')}</CardTitle>
                             <TrendingDown className="h-4 w-4 text-red-600" />
                         </CardHeader>
                         <CardContent>

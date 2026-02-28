@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,6 +30,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function ExpensesCategories() {
+    const { t } = useTranslation()
     // @ts-ignore
     const { categories } = usePage<ExpensesCategoriesProps>().props
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -68,10 +70,10 @@ export default function ExpensesCategories() {
 
     const handleDelete = (category: ExpenseCategory) => {
         if (category.expenses_count > 0) {
-            alert("Diese Kategorie kann nicht gelöscht werden, da sie noch Ausgaben enthält.")
+            alert(t('pages.expenses.categoryDeleteError'))
             return
         }
-        if (confirm(`Möchten Sie die Kategorie "${category.name}" wirklich löschen?`)) {
+        if (confirm(t('pages.expenses.categoryDeleteConfirm', { name: category.name }))) {
             router.delete(`/expenses/categories/${category.id}`)
         }
     }
@@ -83,7 +85,7 @@ export default function ExpensesCategories() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Ausgabenkategorien" />
+            <Head title={t('pages.expenses.categories')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 <div className="flex items-center justify-between">
@@ -91,12 +93,12 @@ export default function ExpensesCategories() {
                         <Link href="/expenses">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-1xl font-bold text-gray-900">Ausgabenkategorien</h1>
-                            <p className="text-gray-600">Verwalten Sie Ihre Ausgabenkategorien</p>
+                            <h1 className="text-1xl font-bold text-gray-900">{t('pages.expenses.categories')}</h1>
+                            <p className="text-gray-600">{t('pages.expenses.categoriesDesc')}</p>
                         </div>
                     </div>
 
@@ -109,7 +111,7 @@ export default function ExpensesCategories() {
                 {showCreateForm && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Neue Kategorie erstellen</CardTitle>
+                            <CardTitle>{t('pages.categories.create')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleCreate} className="space-y-4">
@@ -119,7 +121,7 @@ export default function ExpensesCategories() {
                                         id="name"
                                         value={createData.name}
                                         onChange={(e) => setCreateData("name", e.target.value)}
-                                        placeholder="z.B. Büromaterial, Reisekosten, etc."
+                                        placeholder={t('pages.expenses.categoryPlaceholder')}
                                         required
                                     />
                                     {createErrors.name && (
@@ -138,7 +140,7 @@ export default function ExpensesCategories() {
                                             resetCreate()
                                         }}
                                     >
-                                        Abbrechen
+                                        {t('common.cancel')}
                                     </Button>
                                 </div>
                             </form>
@@ -149,15 +151,15 @@ export default function ExpensesCategories() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Kategorien</CardTitle>
-                        <CardDescription>Alle verfügbaren Ausgabenkategorien</CardDescription>
+                        <CardDescription>{t('pages.expenses.allCategoriesDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Anzahl Ausgaben</TableHead>
-                                    <TableHead>Aktionen</TableHead>
+                                    <TableHead>{t('common.name')}</TableHead>
+                                    <TableHead>{t('pages.expenses.categoryCount')}</TableHead>
+                                    <TableHead>{t('common.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -198,7 +200,7 @@ export default function ExpensesCategories() {
                                                             {editProcessing ? "Speichern..." : "Speichern"}
                                                         </Button>
                                                         <Button size="sm" variant="outline" onClick={cancelEdit}>
-                                                            Abbrechen
+                                                            {t('common.cancel')}
                                                         </Button>
                                                     </div>
                                                 ) : (

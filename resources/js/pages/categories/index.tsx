@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +30,9 @@ interface CategoriesIndexProps {
     }
 }
 
-export default function CategoriesIndex({ user, categories, stats, parentCategories, filters }: CategoriesIndexProps) {
+export default function CategoriesIndex({
+    user, categories, stats, parentCategories, filters }: CategoriesIndexProps) {
+    const { t } = useTranslation()
     const [search, setSearch] = useState(filters.search || "")
     const [selectedStatus, setSelectedStatus] = useState(filters.status || "all")
     const [selectedParent, setSelectedParent] = useState(filters.parent || "all")
@@ -54,7 +57,7 @@ export default function CategoriesIndex({ user, categories, stats, parentCategor
     }
 
     const deleteCategory = (id: string) => {
-        if (confirm("Sind Sie sicher, dass Sie diese Kategorie löschen möchten?")) {
+        if (confirm(t('pages.categories.deleteConfirm'))) {
             router.delete(`/categories/${id}`)
         }
     }
@@ -79,7 +82,7 @@ export default function CategoriesIndex({ user, categories, stats, parentCategor
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">Kategorieverwaltung</h1>
-                        <p className="text-muted-foreground">Organisieren Sie Ihre Produkte in Kategorien</p>
+                        <p className="text-muted-foreground">{t('pages.categories.subtitle')}</p>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button asChild>
@@ -125,7 +128,7 @@ export default function CategoriesIndex({ user, categories, stats, parentCategor
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Mit Produkten</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.categories.withProducts')}</CardTitle>
                             <Package className="h-4 w-4 text-purple-600" />
                         </CardHeader>
                         <CardContent>
@@ -137,7 +140,7 @@ export default function CategoriesIndex({ user, categories, stats, parentCategor
                 {/* Filters */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Filter</CardTitle>
+                        <CardTitle>{t('common.filters')}</CardTitle>
                         <CardDescription>Filtern Sie Ihre Kategorien nach verschiedenen Kriterien</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -156,21 +159,21 @@ export default function CategoriesIndex({ user, categories, stats, parentCategor
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Status</label>
+                                <label className="text-sm font-medium">{t('common.status')}</label>
                                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Alle Status" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">Alle Status</SelectItem>
-                                        <SelectItem value="active">Aktiv</SelectItem>
-                                        <SelectItem value="inactive">Inaktiv</SelectItem>
+                                        <SelectItem value="active">{t('common.active')}</SelectItem>
+                                        <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Übergeordnete Kategorie</label>
+                                <label className="text-sm font-medium">{t('pages.categories.parentCategory')}</label>
                                 <Select value={selectedParent} onValueChange={setSelectedParent}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Alle Kategorien" />
@@ -193,7 +196,7 @@ export default function CategoriesIndex({ user, categories, stats, parentCategor
                                     Filtern
                                 </Button>
                                 <Button variant="outline" onClick={handleReset}>
-                                    Zurücksetzen
+                                    {t('common.reset')}
                                 </Button>
                             </div>
                         </div>
@@ -210,13 +213,13 @@ export default function CategoriesIndex({ user, categories, stats, parentCategor
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Übergeordnete Kategorie</TableHead>
-                                        <TableHead>Beschreibung</TableHead>
-                                        <TableHead>Produkte</TableHead>
+                                        <TableHead>{t('common.name')}</TableHead>
+                                        <TableHead>{t('pages.categories.parentCategory')}</TableHead>
+                                        <TableHead>{t('common.description')}</TableHead>
+                                        <TableHead>{t('nav.products')}</TableHead>
                                         <TableHead>Reihenfolge</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Aktionen</TableHead>
+                                        <TableHead>{t('common.status')}</TableHead>
+                                        <TableHead className="text-right">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { Head, Link, useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +14,9 @@ import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
 
-export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: BreadcrumbItem[] }) {
+export default function CustomersCreate({
+    breadcrumbs }: { breadcrumbs?: BreadcrumbItem[] }) {
+    const { t } = useTranslation()
     const { data, setData, post, processing, errors } = useForm({
         name: "",
         email: "",
@@ -35,7 +38,7 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
 
     const countries = [
         "Deutschland",
-        "Österreich",
+        t('pages.customers.austria'),
         "Schweiz",
         "Niederlande",
         "Belgien",
@@ -52,7 +55,7 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
             { title: "Kunden", href: route("customers.index") },
             { title: "Neuer Kunde" },
         ]}>
-            <Head title="Neuer Kunde" />
+            <Head title={t('pages.customers.new')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 {/* Header */}
@@ -60,12 +63,12 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                     <Link href={route("customers.index")}>
                         <Button variant="outline" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
+                            {t('common.back')}
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Neuer Kunde</h1>
-                        <p className="text-muted-foreground">Erstellen Sie einen neuen Kunden</p>
+                        <h1 className="text-2xl font-bold text-foreground">{t('pages.customers.new')}</h1>
+                        <p className="text-muted-foreground">{t('pages.customers.createDesc')}</p>
                     </div>
                 </div>
 
@@ -73,8 +76,8 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                     {/* Customer Type */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Kundentyp</CardTitle>
-                            <CardDescription>Wählen Sie den Typ des Kunden aus</CardDescription>
+                            <CardTitle>{t('pages.customers.type')}</CardTitle>
+                            <CardDescription>{t('pages.customers.typeDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-2 gap-4">
@@ -89,8 +92,8 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                                     <div className="flex items-center gap-3">
                                         <Building2 className="h-6 w-6" />
                                         <div>
-                                            <h3 className="font-medium">Unternehmen</h3>
-                                            <p className="text-sm text-gray-500">Geschäftskunde mit Steuernummer</p>
+                                            <h3 className="font-medium">{t('pages.customers.typeBusiness')}</h3>
+                                            <p className="text-sm text-gray-500">{t('pages.customers.typeBusinessDesc')}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -118,8 +121,8 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                     {/* Basic Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Grundinformationen</CardTitle>
-                            <CardDescription>Grundlegende Informationen über den Kunden</CardDescription>
+                            <CardTitle>{t('pages.products.basicInfo')}</CardTitle>
+                            <CardDescription>{t('pages.customers.infoDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -166,7 +169,7 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                                             id="contact_person"
                                             value={data.contact_person}
                                             onChange={(e) => setData("contact_person", e.target.value)}
-                                            placeholder="z.B. Herr Müller"
+                                            placeholder={t('pages.customers.contactPersonPlaceholder')}
                                         />
                                         {errors.contact_person && <p className="text-red-600 text-sm">{errors.contact_person}</p>}
                                     </div>
@@ -179,16 +182,16 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                     <Card>
                         <CardHeader>
                             <CardTitle>Adressinformationen</CardTitle>
-                            <CardDescription>Rechnungsadresse des Kunden</CardDescription>
+                            <CardDescription>{t('pages.customers.billingAddress')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="address">Straße und Hausnummer</Label>
+                                <Label htmlFor="address">{t('pages.customers.streetAndNumber')}</Label>
                                 <Textarea
                                     id="address"
                                     value={data.address}
                                     onChange={(e) => setData("address", e.target.value)}
-                                    placeholder="z.B. Musterstraße 123"
+                                    placeholder={t('settings.streetPlaceholder')}
                                     rows={2}
                                 />
                                 {errors.address && <p className="text-red-600 text-sm">{errors.address}</p>}
@@ -241,8 +244,8 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                     {data.customer_type === "business" && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Steuerinformationen</CardTitle>
-                                <CardDescription>Steuernummern für Geschäftskunden</CardDescription>
+                                <CardTitle>{t('pages.customers.taxInfo')}</CardTitle>
+                                <CardDescription>{t('pages.customers.taxInfoDesc')}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -276,7 +279,7 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                     <div className="flex justify-end space-x-2">
                         <Link href={route("customers.index")}>
                             <Button type="button" variant="outline">
-                                Abbrechen
+                                {t('common.cancel')}
                             </Button>
                         </Link>
                         <Button type="submit" disabled={processing}>

@@ -37,7 +37,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const countries = [
     { value: "DE", label: "Deutschland" },
-    { value: "AT", label: "Österreich" },
+    { value: "AT", label: t('pages.customers.austria')},
     { value: "CH", label: "Schweiz" },
     { value: "NL", label: "Niederlande" },
     { value: "BE", label: "Belgien" },
@@ -83,7 +83,7 @@ export default function WarehouseCreate() {
                         <Button variant="ghost" asChild>
                             <Link href="/warehouses">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
@@ -115,8 +115,8 @@ export default function WarehouseCreate() {
                         {/* Basic Information */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Grundinformationen</CardTitle>
-                                <CardDescription>Grundlegende Informationen über das Lager</CardDescription>
+                                <CardTitle>{t('pages.products.basicInfo')}</CardTitle>
+                                <CardDescription>{t('pages.warehouse.infoDesc')}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
@@ -125,7 +125,7 @@ export default function WarehouseCreate() {
                                         id="name"
                                         value={data.name}
                                         onChange={(e) => setData("name", e.target.value)}
-                                        placeholder="z.B. Hauptlager München"
+                                        placeholder={t('pages.warehouse.namePlaceholder')}
                                         required
                                         className={errors.name ? "border-red-500" : ""}
                                     />
@@ -145,7 +145,7 @@ export default function WarehouseCreate() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="description">Beschreibung</Label>
+                                    <Label htmlFor="description">{t('common.description')}</Label>
                                     <Textarea
                                         id="description"
                                         value={data.description}
@@ -194,12 +194,12 @@ export default function WarehouseCreate() {
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="street">Straße</Label>
+                                        <Label htmlFor="street">{t('settings.street')}</Label>
                                         <Input
                                             id="street"
                                             value={data.street}
                                             onChange={(e) => setData("street", e.target.value)}
-                                            placeholder="Musterstraße"
+                                            placeholder={t('settings.streetPlaceholder')}
                                             className={errors.street ? "border-red-500" : ""}
                                         />
                                         {errors.street && <p className="text-sm text-red-600">{errors.street}</p>}
@@ -235,7 +235,7 @@ export default function WarehouseCreate() {
                                             id="city"
                                             value={data.city}
                                             onChange={(e) => setData("city", e.target.value)}
-                                            placeholder="München"
+                                            placeholder={t('settings.cityPlaceholder')}
                                             className={errors.city ? "border-red-500" : ""}
                                         />
                                         {errors.city && <p className="text-sm text-red-600">{errors.city}</p>}
@@ -276,7 +276,7 @@ export default function WarehouseCreate() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Kontaktinformationen</CardTitle>
-                                <CardDescription>Telefon und E-Mail für das Lager</CardDescription>
+                                <CardDescription>{t('pages.warehouse.contactDesc')}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
@@ -312,7 +312,7 @@ export default function WarehouseCreate() {
                     {/* Actions */}
                     <div className="flex items-center justify-end space-x-4">
                         <Button variant="outline" asChild>
-                            <Link href="/warehouses">Abbrechen</Link>
+                            <Link href="/warehouses">{t('common.cancel')}</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
                             <Save className="mr-2 h-4 w-4" />
@@ -329,7 +329,7 @@ function getFieldLabel(field: string): string {
     const labels: Record<string, string> = {
         name: "Lagername",
         description: "Beschreibung",
-        street: "Straße",
+        street: t('settings.street'),
         street_number: "Hausnummer",
         postal_code: "Postleitzahl",
         city: "Stadt",

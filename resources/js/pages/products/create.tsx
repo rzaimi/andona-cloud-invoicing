@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { Head, Link, useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,7 +39,9 @@ interface ProductFormData {
     custom_fields: Record<string, any>
 }
 
-export default function ProductCreate({ user, categories }: ProductCreateProps) {
+export default function ProductCreate({
+    user, categories }: ProductCreateProps) {
+    const { t } = useTranslation()
     const { data, setData, post, processing, errors } = useForm<ProductFormData>({
         name: "",
         description: "",
@@ -66,7 +69,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
 
     const taxRates = [
         { value: 0, label: "0% (Steuerbefreit)" },
-        { value: 0.07, label: "7% (Ermäßigt)" }, // Changed to decimal
+        { value: 0.07, label: `7% (${t('pages.products.reducedRate')})` }, // Changed to decimal
         { value: 0.19, label: "19% (Standard)" }, // Changed to decimal
     ]
 
@@ -75,7 +78,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
 
     return (
         <AppLayout user={user}>
-            <Head title="Neues Produkt erstellen" />
+            <Head title={t('pages.products.create')} />
 
             <div className="space-y-6">
                 {/* Header */}
@@ -84,12 +87,12 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                         <Button variant="ghost" asChild>
                             <Link href="/products">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-1xl font-bold tracking-tight">Neues Produkt erstellen</h1>
-                            <p className="text-muted-foreground">Erstellen Sie ein neues Produkt oder eine Dienstleistung</p>
+                            <h1 className="text-1xl font-bold tracking-tight">{t('pages.products.create')}</h1>
+                            <p className="text-muted-foreground">{t('pages.products.createSubtitle')}</p>
                         </div>
                     </div>
                 </div>
@@ -116,7 +119,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                         <TabsList>
                             <TabsTrigger value="basic">Grunddaten</TabsTrigger>
                             <TabsTrigger value="pricing">Preise & Steuern</TabsTrigger>
-                            <TabsTrigger value="inventory">Lagerbestand</TabsTrigger>
+                            <TabsTrigger value="inventory">{t('pages.products.tabInventory')}</TabsTrigger>
                             <TabsTrigger value="advanced">Erweitert</TabsTrigger>
                         </TabsList>
 
@@ -124,8 +127,8 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                         <TabsContent value="basic">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Grundinformationen</CardTitle>
-                                    <CardDescription>Grundlegende Informationen über das Produkt</CardDescription>
+                                    <CardTitle>{t('pages.products.basicInfo')}</CardTitle>
+                                    <CardDescription>{t('pages.products.basicInfoDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="grid gap-6 md:grid-cols-2">
@@ -156,7 +159,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="description">Beschreibung</Label>
+                                        <Label htmlFor="description">{t('common.description')}</Label>
                                         <Textarea
                                             id="description"
                                             value={data.description}
@@ -173,7 +176,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                                             <Label htmlFor="category_id">Kategorie</Label>
                                             <Select value={data.category_id} onValueChange={(value) => setData("category_id", value)}>
                                                 <SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
-                                                    <SelectValue placeholder="Kategorie wählen" />
+                                                    <SelectValue placeholder={t('pages.products.selectCategory')} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="none">Keine Kategorie</SelectItem>
@@ -205,14 +208,14 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="status">Status</Label>
+                                            <Label htmlFor="status">{t('common.status')}</Label>
                                             <Select value={data.status} onValueChange={(value) => setData("status", value)}>
                                                 <SelectTrigger className={errors.status ? "border-red-500" : ""}>
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="active">Aktiv</SelectItem>
-                                                    <SelectItem value="inactive">Inaktiv</SelectItem>
+                                                    <SelectItem value="active">{t('common.active')}</SelectItem>
+                                                    <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
                                                     <SelectItem value="discontinued">Eingestellt</SelectItem>
                                                 </SelectContent>
                                             </Select>
@@ -237,7 +240,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Preise & Steuern</CardTitle>
-                                    <CardDescription>Verkaufspreise, Einkaufspreise und Steuersätze</CardDescription>
+                                    <CardDescription>{t('pages.products.pricingDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="grid gap-6 md:grid-cols-2">
@@ -301,7 +304,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
 
                                     {data.price > 0 && (
                                         <div className="rounded-lg bg-muted p-4">
-                                            <h4 className="font-medium mb-2">Preisübersicht</h4>
+                                            <h4 className="font-medium mb-2">{t('pages.products.priceOverview')}</h4>
                                             <div className="space-y-1 text-sm">
                                                 <div className="flex justify-between">
                                                     <span>Netto-Preis:</span>
@@ -347,8 +350,8 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                         <TabsContent value="inventory">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Lagerbestand</CardTitle>
-                                    <CardDescription>Bestandsverwaltung und Lagereinstellungen</CardDescription>
+                                    <CardTitle>{t('pages.products.tabInventory')}</CardTitle>
+                                    <CardDescription>{t('pages.products.inventoryDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="flex items-center space-x-2">
@@ -394,7 +397,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                                                     <span className="absolute right-3 top-2.5 text-sm text-muted-foreground">{data.unit}</span>
                                                 </div>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Sie erhalten eine Warnung, wenn der Bestand unter diesen Wert fällt
+                                                    {t('pages.products.minStockHint')}
                                                 </p>
                                                 {errors.min_stock_level && <p className="text-sm text-red-600">{errors.min_stock_level}</p>}
                                             </div>
@@ -420,13 +423,13 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                         <TabsContent value="advanced">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Erweiterte Einstellungen</CardTitle>
-                                    <CardDescription>Zusätzliche Felder und Einstellungen</CardDescription>
+                                    <CardTitle>{t('settings.advancedSettings')}</CardTitle>
+                                    <CardDescription>{t('pages.products.advancedDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="text-center py-8 text-muted-foreground">
                                         <Package className="mx-auto h-12 w-12 mb-4" />
-                                        <p>Erweiterte Einstellungen werden in einer zukünftigen Version verfügbar sein.</p>
+                                        <p>{t('pages.products.advancedFuture')}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -436,7 +439,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                     {/* Actions */}
                     <div className="flex items-center justify-end space-x-4">
                         <Button variant="outline" asChild>
-                            <Link href="/products">Abbrechen</Link>
+                            <Link href="/products">{t('common.cancel')}</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
                             <Save className="mr-2 h-4 w-4" />

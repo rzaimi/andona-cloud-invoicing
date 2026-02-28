@@ -45,7 +45,7 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                 <div>
                     <h3 className="font-semibold">Nummernformat</h3>
                     <p className="text-sm text-muted-foreground mt-0.5">
-                        Dynamisches Format für automatisch generierte Nummern. Verfügbare Tokens:
+                        {t('settings.numberFormatHint')}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-2">
                         {TOKENS.map(([token, desc]) => (
@@ -59,7 +59,7 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                 {/* Column headers */}
                 <div className="grid grid-cols-[1fr_120px] gap-3 text-xs font-medium text-muted-foreground px-1">
                     <span>Format</span>
-                    <span>Nächste Nr.</span>
+                    <span>{t('settings.nextNumber')}</span>
                 </div>
 
                 {/* Rechnung */}
@@ -179,16 +179,16 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
 
                 <p className="text-xs text-muted-foreground pt-1 flex items-start gap-1.5">
                     <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                    Die nächste Nummer kann nur erhöht werden — sie wird nie kleiner als die höchste bereits vergebene Nummer.
+                    {t('settings.nextNumberHint')}ummer.
                 </p>
             </div>
 
             {/* ── Währung & Steuern ──────────────────────────────────────────── */}
             <div className="space-y-3">
-                <h3 className="font-semibold">Währung & Steuern</h3>
+                <h3 className="font-semibold">{t('settings.currencyAndTax')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
-                        <Label>Währung *</Label>
+                        <Label>{t('settings.currency')} *</Label>
                         <Select
                             value={inv.currency ?? "EUR"}
                             onValueChange={(v) => set("currency", v)}
@@ -209,23 +209,23 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                             value={inv.tax_rate ?? 0.19}
                             onChange={(e) => set("tax_rate", parseFloat(e.target.value) || 0)}
                         />
-                        <p className="text-xs text-muted-foreground">z.B. 0.19 für 19%</p>
+                        <p className="text-xs text-muted-foreground">{t('settings.taxRateExample')}</p>
                     </div>
                     <div className="space-y-1">
-                        <Label>Ermäßigter Steuersatz</Label>
+                        <Label>{t('settings.reducedTaxRate')}</Label>
                         <Input
                             type="number" step="0.01" min="0" max="1"
                             value={inv.reduced_tax_rate ?? 0.07}
                             onChange={(e) => set("reduced_tax_rate", parseFloat(e.target.value) || 0)}
                         />
-                        <p className="text-xs text-muted-foreground">z.B. 0.07 für 7%</p>
+                        <p className="text-xs text-muted-foreground">{t('settings.reducedTaxRateExample')}</p>
                     </div>
                 </div>
             </div>
 
             {/* ── Zahlungs- & Gültigkeitsbedingungen ────────────────────────── */}
             <div className="space-y-3">
-                <h3 className="font-semibold">Zahlungsbedingungen</h3>
+                <h3 className="font-semibold">{t('settings.paymentTerms')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <Label>Zahlungsziel (Tage) *</Label>
@@ -236,7 +236,7 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                         />
                     </div>
                     <div className="space-y-1">
-                        <Label>Angebotsgültigkeit (Tage) *</Label>
+                        <Label>{t('settings.offerValidityDays')} *</Label>
                         <Input
                             type="number" min="1"
                             value={inv.offer_validity_days ?? 30}

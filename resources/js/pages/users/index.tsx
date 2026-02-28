@@ -4,6 +4,7 @@ import type React from "react"
 
 import { Head, Link, router, usePage } from "@inertiajs/react"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import AppLayout from "@/layouts/app-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export default function UsersIndex({ users, search: initialSearch, can_create, can_manage_companies }: Props) {
+    const { t } = useTranslation()
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props
     const [search, setSearch] = useState(initialSearch ?? "")
 
@@ -32,7 +34,7 @@ export default function UsersIndex({ users, search: initialSearch, can_create, c
     }
 
     const handleDelete = (user: User) => {
-        if (confirm("Sind Sie sicher, dass Sie diesen Benutzer löschen möchten?")) {
+        if (confirm(t('pages.users.deleteConfirm'))) {
             router.delete(route("users.destroy", user.id))
         }
     }
@@ -51,24 +53,24 @@ export default function UsersIndex({ users, search: initialSearch, can_create, c
     const getRoleLabel = (role: string) => {
         switch (role) {
             case "super_admin":
-                return "Super Admin"
+                return t('pages.users.roleSuperAdmin')
             case "admin":
-                return "Administrator"
+                return t('pages.users.roleAdmin')
             default:
-                return "Benutzer"
+                return t('pages.users.roleUser')
         }
     }
 
     return (
-        <AppLayout breadcrumbs={[{ title: "Dashboard", href: "/dashboard" }, { title: "Benutzerverwaltung" }]}>
-            <Head title="Benutzerverwaltung" />
+        <AppLayout breadcrumbs={[{ title: "Dashboard", href: "/dashboard" }, { title: t('pages.users.title')}]}>
+            <Head title={t('pages.users.title')} />
 
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Benutzerverwaltung</h1>
-                        <p className="text-muted-foreground">Verwalten Sie Benutzer in Ihrem System</p>
+                        <h1 className="text-2xl font-bold text-foreground">{t('pages.users.title')}</h1>
+                        <p className="text-muted-foreground">{t('pages.users.subtitle')}</p>
                     </div>
 
                     <div className="flex gap-2">
@@ -76,7 +78,7 @@ export default function UsersIndex({ users, search: initialSearch, can_create, c
                             <Button variant="outline" asChild>
                                 <Link href={route("companies.index")}>
                                     <Building2 className="mr-2 h-4 w-4" />
-                                    Firmen verwalten
+                                    {t('pages.users.manageCompanies')}
                                 </Link>
                             </Button>
                         )}
@@ -84,7 +86,7 @@ export default function UsersIndex({ users, search: initialSearch, can_create, c
                             <Button asChild>
                                 <Link href={route("users.create")}>
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Neuer Benutzer
+                                    {t('pages.users.new')}
                                 </Link>
                             </Button>
                         )}
@@ -108,21 +110,21 @@ export default function UsersIndex({ users, search: initialSearch, can_create, c
                 {/* Search */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Benutzer suchen</CardTitle>
-                        <CardDescription>Suchen Sie nach Benutzern anhand von Name oder E-Mail</CardDescription>
+                        <CardTitle>{t('common.search')}</CardTitle>
+                        <CardDescription>{t('pages.users.searchPlaceholder')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSearch} className="flex gap-2">
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
-                                    placeholder="Name oder E-Mail eingeben..."
+                                    placeholder={t('pages.users.searchPlaceholder')}
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="pl-10"
                                 />
                             </div>
-                            <Button type="submit">Suchen</Button>
+                            <Button type="submit">{t('common.search')}</Button>
                         </form>
                     </CardContent>
                 </Card>
@@ -132,28 +134,28 @@ export default function UsersIndex({ users, search: initialSearch, can_create, c
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Users className="h-5 w-5" />
-                            Benutzer ({users.total})
+                            {t('pages.users.title')} ({users.total})
                         </CardTitle>
-                        <CardDescription>Alle Benutzer im System</CardDescription>
+                        <CardDescription>{t('pages.users.subtitle')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="rounded-md border">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Benutzer</TableHead>
-                                        <TableHead>Firma</TableHead>
-                                        <TableHead>Rolle</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Erstellt</TableHead>
-                                        <TableHead className="w-[120px]">Aktionen</TableHead>
+                                        <TableHead>{t('common.name')}</TableHead>
+                                        <TableHead>{t('nav.companies')}</TableHead>
+                                        <TableHead>{t('pages.users.role')}</TableHead>
+                                        <TableHead>{t('common.status')}</TableHead>
+                                        <TableHead>{t('common.createdAt')}</TableHead>
+                                        <TableHead className="w-[120px]">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {users.data.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                                Keine Benutzer gefunden
+                                                {t('pages.users.noUsers')}
                                             </TableCell>
                                         </TableRow>
                                     ) : (
@@ -210,7 +212,7 @@ export default function UsersIndex({ users, search: initialSearch, can_create, c
                                                                 size="sm"
                                                                 onClick={() => handleDelete(user)}
                                                                 className="text-red-600 hover:text-red-700"
-                                                                title="Löschen"
+                                                                title={t('common.delete')}
                                                             >
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
@@ -228,7 +230,7 @@ export default function UsersIndex({ users, search: initialSearch, can_create, c
                         {users.last_page > 1 && (
                             <div className="flex items-center justify-between px-2 py-4">
                                 <div className="text-sm text-muted-foreground">
-                                    Zeige {users.from} bis {users.to} von {users.total} Einträgen
+                                    {t('common.showingEntries', { from: users.from, to: users.to, total: users.total })}
                                 </div>
                                 <div className="flex gap-2">
                                     {users.links.map((link, index) => (

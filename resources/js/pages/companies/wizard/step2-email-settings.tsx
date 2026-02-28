@@ -40,9 +40,9 @@ export default function Step2EmailSettings({ data, updateData }: Step2Props) {
         try {
             // Simulate test - replace with actual test endpoint if needed
             await new Promise((resolve) => setTimeout(resolve, 1500))
-            setTestResult({ success: true, message: "Verbindung erfolgreich!" })
+            setTestResult({ success: true, message: t('settings.smtpTestSuccess') })
         } catch (error) {
-            setTestResult({ success: false, message: "Verbindung fehlgeschlagen. Bitte überprüfen Sie Ihre Einstellungen." })
+            setTestResult({ success: false, message: t('settings.smtpTestFailed') })
         } finally {
             setIsTesting(false)
         }
@@ -54,7 +54,7 @@ export default function Step2EmailSettings({ data, updateData }: Step2Props) {
                 <Mail className="h-4 w-4" />
                 <AlertDescription>
                     <strong>Wichtig:</strong> SMTP-Einstellungen sind erforderlich, um Rechnungen, Angebote und Mahnungen per E-Mail zu versenden.
-                    Ohne diese Konfiguration kann die Firma nicht vollständig genutzt werden.
+                    {t('pages.companies.emailRequiredDesc')}
                 </AlertDescription>
             </Alert>
 
@@ -91,7 +91,7 @@ export default function Step2EmailSettings({ data, updateData }: Step2Props) {
                 <div className="space-y-2">
                     <Label htmlFor="smtp_encryption" className="flex items-center gap-2">
                         <Shield className="h-4 w-4" />
-                        Verschlüsselung
+                        {t('settings.smtpEncryption')}
                     </Label>
                     <Select
                         value={formData.smtp_encryption}
@@ -138,7 +138,7 @@ export default function Step2EmailSettings({ data, updateData }: Step2Props) {
                         required
                     />
                     <p className="text-xs text-muted-foreground">
-                        Bei Gmail/Outlook benötigen Sie ein App-spezifisches Passwort
+                        {t('settings.gmailAppPasswordHint')}
                     </p>
                 </div>
 
@@ -195,7 +195,7 @@ export default function Step2EmailSettings({ data, updateData }: Step2Props) {
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
-                    <strong>Tipp:</strong> Verwenden Sie für Gmail ein App-Passwort (2FA erforderlich). Für Outlook/Microsoft 365 verwenden Sie Ihr normales Passwort oder OAuth2.
+                    <strong>{t('common.tip')}:</strong> {t('settings.smtpTip')}osoft 365 verwenden Sie Ihr normales Passwort oder OAuth2.
                 </p>
             </div>
         </div>

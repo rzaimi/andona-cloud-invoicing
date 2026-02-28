@@ -66,7 +66,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
     const deleteProduct = () => {
         if (
             confirm(
-                "Sind Sie sicher, dass Sie dieses Produkt löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+                t('pages.products.deleteConfirmFull')
             )
         ) {
             router.delete(`/products/${product.id}`)
@@ -77,7 +77,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
 
     const taxRates = [
         { value: 0, label: "0% (Steuerbefreit)" },
-        { value: 0.07, label: "7% (Ermäßigt)" },
+        { value: 0.07, label: `7% (${t('pages.products.reducedRate')})` },
         { value: 0.19, label: "19% (Standard)" },
     ]
 
@@ -95,11 +95,11 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                         <Button variant="ghost" asChild>
                             <Link href="/products">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-1xl font-bold tracking-tight">Produkt bearbeiten</h1>
+                            <h1 className="text-1xl font-bold tracking-tight">{t('pages.products.edit')}</h1>
                             <p className="text-muted-foreground">
                                 {product.number} - {product.name}
                             </p>
@@ -107,7 +107,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                     </div>
                     <Button variant="destructive" onClick={deleteProduct}>
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Löschen
+                        {t('common.delete')}
                     </Button>
                 </div>
 
@@ -133,7 +133,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                         <TabsList>
                             <TabsTrigger value="basic">Grunddaten</TabsTrigger>
                             <TabsTrigger value="pricing">Preise & Steuern</TabsTrigger>
-                            <TabsTrigger value="inventory">Lagerbestand</TabsTrigger>
+                            <TabsTrigger value="inventory">{t('pages.products.tabInventory')}</TabsTrigger>
                             <TabsTrigger value="advanced">Erweitert</TabsTrigger>
                         </TabsList>
 
@@ -141,8 +141,8 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                         <TabsContent value="basic">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Grundinformationen</CardTitle>
-                                    <CardDescription>Grundlegende Informationen über das Produkt</CardDescription>
+                                    <CardTitle>{t('pages.products.basicInfo')}</CardTitle>
+                                    <CardDescription>{t('pages.products.basicInfoDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="grid gap-6 md:grid-cols-2">
@@ -173,7 +173,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="description">Beschreibung</Label>
+                                        <Label htmlFor="description">{t('common.description')}</Label>
                                         <Textarea
                                             id="description"
                                             value={data.description}
@@ -190,7 +190,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                                             <Label htmlFor="category_id">Kategorie</Label>
                                             <Select value={data.category_id} onValueChange={(value) => setData("category_id", value)}>
                                                 <SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
-                                                    <SelectValue placeholder="Kategorie wählen" />
+                                                    <SelectValue placeholder={t('pages.products.selectCategory')} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="none">Keine Kategorie</SelectItem>
@@ -222,14 +222,14 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="status">Status</Label>
+                                            <Label htmlFor="status">{t('common.status')}</Label>
                                             <Select value={data.status} onValueChange={(value) => setData("status", value)}>
                                                 <SelectTrigger className={errors.status ? "border-red-500" : ""}>
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="active">Aktiv</SelectItem>
-                                                    <SelectItem value="inactive">Inaktiv</SelectItem>
+                                                    <SelectItem value="active">{t('common.active')}</SelectItem>
+                                                    <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
                                                     <SelectItem value="discontinued">Eingestellt</SelectItem>
                                                 </SelectContent>
                                             </Select>
@@ -254,7 +254,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Preise & Steuern</CardTitle>
-                                    <CardDescription>Verkaufspreise, Einkaufspreise und Steuersätze</CardDescription>
+                                    <CardDescription>{t('pages.products.pricingDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="grid gap-6 md:grid-cols-2">
@@ -318,7 +318,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
 
                                     {data.price > 0 && (
                                         <div className="rounded-lg bg-muted p-4">
-                                            <h4 className="font-medium mb-2">Preisübersicht</h4>
+                                            <h4 className="font-medium mb-2">{t('pages.products.priceOverview')}</h4>
                                             <div className="space-y-1 text-sm">
                                                 <div className="flex justify-between">
                                                     <span>Netto-Preis:</span>
@@ -364,8 +364,8 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                         <TabsContent value="inventory">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Lagerbestand</CardTitle>
-                                    <CardDescription>Bestandsverwaltung und Lagereinstellungen</CardDescription>
+                                    <CardTitle>{t('pages.products.tabInventory')}</CardTitle>
+                                    <CardDescription>{t('pages.products.inventoryDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="flex items-center space-x-2">
@@ -411,7 +411,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                                                     <span className="absolute right-3 top-2.5 text-sm text-muted-foreground">{data.unit}</span>
                                                 </div>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Sie erhalten eine Warnung, wenn der Bestand unter diesen Wert fällt
+                                                    {t('pages.products.minStockHint')}
                                                 </p>
                                                 {errors.min_stock_level && <p className="text-sm text-red-600">{errors.min_stock_level}</p>}
                                             </div>
@@ -434,7 +434,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                                     <div className="rounded-lg bg-muted p-4">
                                         <h4 className="font-medium mb-2">Bestandshistorie</h4>
                                         <p className="text-sm text-muted-foreground">
-                                            Bestandshistorie wird in einer zukünftigen Version verfügbar sein.
+                                            {t('pages.products.stockHistoryFuture')}
                                         </p>
                                     </div>
                                 </CardContent>
@@ -445,13 +445,13 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                         <TabsContent value="advanced">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Erweiterte Einstellungen</CardTitle>
-                                    <CardDescription>Zusätzliche Felder und Einstellungen</CardDescription>
+                                    <CardTitle>{t('settings.advancedSettings')}</CardTitle>
+                                    <CardDescription>{t('pages.products.advancedDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="text-center py-8 text-muted-foreground">
                                         <Package className="mx-auto h-12 w-12 mb-4" />
-                                        <p>Erweiterte Einstellungen werden in einer zukünftigen Version verfügbar sein.</p>
+                                        <p>{t('pages.products.advancedFuture')}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -461,11 +461,11 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                     {/* Actions */}
                     <div className="flex items-center justify-end space-x-4">
                         <Button variant="outline" asChild>
-                            <Link href="/products">Abbrechen</Link>
+                            <Link href="/products">{t('common.cancel')}</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
                             <Save className="mr-2 h-4 w-4" />
-                            {processing ? "Speichern..." : "Änderungen speichern"}
+                            {processing ? t('common.saving') : t('pages.invoices.saveChanges')}
                         </Button>
                     </div>
                 </form>

@@ -1,6 +1,7 @@
 "use client"
 
 import { Head, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +18,7 @@ interface ImportExportProps {
 }
 
 export default function ImportExportSettings() {
+    const { t } = useTranslation()
     const { props } = usePage<ImportExportProps>()
     const user = props.auth?.user || props.user
 
@@ -67,15 +69,15 @@ export default function ImportExportSettings() {
                 <div>
                     <h1 className="text-1xl font-bold text-gray-900">Import & Export</h1>
                     <p className="text-gray-600 mt-2">
-                        Importieren Sie Daten aus alten Systemen oder exportieren Sie Daten für Backup und Analyse
+                        {t('settings.importExportDesc')}
                     </p>
                 </div>
 
                 <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                        <strong>Hinweis:</strong> Import-Funktionen sind nur für Administratoren verfügbar. 
-                        Export-Funktionen können von allen Benutzern verwendet werden.
+                        <strong>{t('common.note')}:</strong> {t('settings.importAdminOnly')} 
+                        {t('settings.exportAllUsers')}
                     </AlertDescription>
                 </Alert>
 
@@ -91,15 +93,15 @@ export default function ImportExportSettings() {
                             <CardHeader>
                                 <CardTitle>Daten exportieren</CardTitle>
                                 <CardDescription>
-                                    Exportieren Sie Ihre Daten als CSV-Datei für Backup oder Analyse
+                                    {t('settings.exportCsvDesc')}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
-                                        <h3 className="font-semibold">Kunden exportieren</h3>
+                                        <h3 className="font-semibold">{t('settings.exportCustomers')}</h3>
                                         <p className="text-sm text-gray-600">
-                                            Exportieren Sie alle Kunden mit ihren Kontaktdaten
+                                            {t('settings.exportCustomersDesc')}
                                         </p>
                                         <Button
                                             variant="outline"
@@ -113,9 +115,9 @@ export default function ImportExportSettings() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <h3 className="font-semibold">Produkte exportieren</h3>
+                                        <h3 className="font-semibold">{t('settings.exportProducts')}</h3>
                                         <p className="text-sm text-gray-600">
-                                            Exportieren Sie alle Produkte mit Preisen und Lagerbeständen
+                                            {t('settings.exportProductsDesc')}
                                         </p>
                                         <Button
                                             variant="outline"
@@ -131,7 +133,7 @@ export default function ImportExportSettings() {
                                     <div className="space-y-2">
                                         <h3 className="font-semibold">Rechnungen exportieren</h3>
                                         <p className="text-sm text-gray-600">
-                                            Exportieren Sie alle Rechnungen mit Kundendaten und Beträgen
+                                            {t('settings.exportInvoicesDesc')}
                                         </p>
                                         <Button
                                             variant="outline"
@@ -147,7 +149,7 @@ export default function ImportExportSettings() {
                                     <div className="space-y-2">
                                         <h3 className="font-semibold">Angebote exportieren</h3>
                                         <p className="text-sm text-gray-600">
-                                            Exportieren Sie alle Angebote mit Kundendaten und Beträgen
+                                            {t('settings.exportOffersDesc')}
                                         </p>
                                         <Button
                                             variant="outline"
@@ -314,7 +316,7 @@ export default function ImportExportSettings() {
                                         <AlertTriangle className="h-4 w-4" />
                                         <AlertDescription>
                                             <strong>Wichtig:</strong> Rechnungen werden mit einer einzelnen Position importiert. 
-                                            Sie können die Rechnungen nach dem Import bearbeiten, um weitere Positionen hinzuzufügen.
+                                            {t('settings.importInvoicesHint')}
                                         </AlertDescription>
                                     </Alert>
 
@@ -347,17 +349,17 @@ export default function ImportExportSettings() {
                                     <h3 className="font-semibold mb-2">CSV-Format:</h3>
                                     <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
                                         <li>Semikolon (;) als Trennzeichen</li>
-                                        <li>UTF-8 Kodierung (mit BOM für Excel-Kompatibilität)</li>
-                                        <li>Erste Zeile enthält Spaltenüberschriften auf Deutsch</li>
-                                        <li>Maximale Dateigröße: 10MB</li>
+                                        <li>{t('settings.csvUtf8')}</li>
+                                        <li>{t('settings.csvHeaders')}</li>
+                                        <li>{t('settings.csvMaxSize')}</li>
                                     </ul>
                                 </div>
 
                                 <div>
                                     <h3 className="font-semibold mb-2">Import-Hinweise:</h3>
                                     <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                        <li>Bestehende Einträge (gleiche Nummer/E-Mail/SKU) werden übersprungen</li>
-                                        <li>Fehlerhafte Zeilen werden übersprungen und in einem Bericht angezeigt</li>
+                                        <li>{t('settings.csvSkipDuplicates')}</li>
+                                        <li>{t('settings.csvSkipErrors')}</li>
                                         <li>Der Import erfolgt in einer Transaktion - bei Fehlern wird nichts gespeichert</li>
                                         <li>Bei Rechnungen: Kunden werden automatisch erstellt, falls sie nicht existieren</li>
                                     </ul>

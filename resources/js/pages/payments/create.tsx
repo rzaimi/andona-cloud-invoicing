@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Head, Link, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,6 +33,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function PaymentsCreate() {
+    const { t } = useTranslation()
     const { invoices, selectedInvoice } = usePage<PaymentCreateProps>().props
     // @ts-ignore
     const settingsPaymentMethods: string[] = (usePage().props.auth as any)?.user?.company?.settings?.payment_methods ?? []
@@ -57,7 +59,7 @@ export default function PaymentsCreate() {
     const selectedInvoiceData = invoices.find((inv) => inv.id === data.invoice_id)
 
     const paymentMethods = settingsPaymentMethods.length > 0 ? settingsPaymentMethods : [
-        "Überweisung",
+        t('pages.payments.bankTransfer'),
         "SEPA-Lastschrift",
         "Bar",
         "Kreditkarte",
@@ -90,19 +92,19 @@ export default function PaymentsCreate() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Neue Zahlung" />
+            <Head title={t('pages.payments.new')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 <div className="flex items-center gap-4">
                     <Link href="/payments">
                         <Button variant="ghost" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
+                            {t('common.back')}
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900">Neue Zahlung</h1>
-                        <p className="text-gray-600">Erfassen Sie eine neue Zahlung für eine Rechnung</p>
+                        <h1 className="text-1xl font-bold text-gray-900">{t('pages.payments.new')}</h1>
+                        <p className="text-gray-600">{t('pages.payments.createDesc')}</p>
                     </div>
                 </div>
 
@@ -112,8 +114,8 @@ export default function PaymentsCreate() {
                         <div className="lg:col-span-2 space-y-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Zahlungsinformationen</CardTitle>
-                                    <CardDescription>Grundlegende Informationen zur Zahlung</CardDescription>
+                                    <CardTitle>{t('pages.payments.info')}</CardTitle>
+                                    <CardDescription>{t('pages.payments.infoDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
@@ -134,7 +136,7 @@ export default function PaymentsCreate() {
                                             }}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Rechnung auswählen" />
+                                                <SelectValue placeholder={t('pages.payments.selectInvoice')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {invoices.map((invoice) => (
@@ -151,7 +153,7 @@ export default function PaymentsCreate() {
 
                                     {selectedInvoiceData && (
                                         <div className="p-4 bg-blue-50 rounded-lg">
-                                            <div className="text-sm font-medium text-blue-900 mb-2">Rechnungsdetails</div>
+                                            <div className="text-sm font-medium text-blue-900 mb-2">{t('pages.invoices.details')}</div>
                                             <div className="text-sm text-blue-800 space-y-1">
                                                 <div>Rechnungsbetrag: {formatCurrency(selectedInvoiceData.total)}</div>
                                                 <div>
@@ -203,13 +205,13 @@ export default function PaymentsCreate() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="payment_method">Zahlungsmethode</Label>
+                                        <Label htmlFor="payment_method">{t('pages.payments.method')}</Label>
                                         <Select
                                             value={data.payment_method}
                                             onValueChange={(value) => setData("payment_method", value)}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Zahlungsmethode auswählen" />
+                                                <SelectValue placeholder={t('pages.payments.selectPaymentMethod')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {paymentMethods.map((method) => (
@@ -225,12 +227,12 @@ export default function PaymentsCreate() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="reference">Referenz / Verwendungszweck</Label>
+                                        <Label htmlFor="reference">{t('pages.payments.referenceLabel')}</Label>
                                         <Input
                                             id="reference"
                                             value={data.reference}
                                             onChange={(e) => setData("reference", e.target.value)}
-                                            placeholder="z.B. Rechnungsnummer oder Überweisungsreferenz"
+                                            placeholder={t('pages.expenses.referencePlaceholder')}
                                         />
                                         {errors.reference && (
                                             <p className="text-sm text-red-600">{errors.reference}</p>
@@ -238,7 +240,7 @@ export default function PaymentsCreate() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="status">Status</Label>
+                                        <Label htmlFor="status">{t('common.status')}</Label>
                                         <Select
                                             value={data.status}
                                             onValueChange={(value) => setData("status", value as "pending" | "completed" | "cancelled")}
@@ -247,9 +249,9 @@ export default function PaymentsCreate() {
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="completed">Abgeschlossen</SelectItem>
-                                                <SelectItem value="pending">Ausstehend</SelectItem>
-                                                <SelectItem value="cancelled">Storniert</SelectItem>
+                                                <SelectItem value="completed">{t('common.completed')}</SelectItem>
+                                                <SelectItem value="pending">{t('common.pending')}</SelectItem>
+                                                <SelectItem value="cancelled">{t('common.cancelled')}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         {errors.status && (
@@ -258,12 +260,12 @@ export default function PaymentsCreate() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="notes">Notizen</Label>
+                                        <Label htmlFor="notes">{t('common.notes')}</Label>
                                         <Textarea
                                             id="notes"
                                             value={data.notes || ""}
                                             onChange={(e) => setData("notes", e.target.value)}
-                                            placeholder="Zusätzliche Informationen zur Zahlung..."
+                                            placeholder={t('pages.payments.notesPlaceholder')}
                                             rows={4}
                                         />
                                         {errors.notes && (
@@ -282,18 +284,18 @@ export default function PaymentsCreate() {
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div>
-                                        <div className="text-sm text-gray-600">Zahlungsbetrag</div>
+                                        <div className="text-sm text-gray-600">{t('pages.payments.paymentAmount')}</div>
                                         <div className="text-2xl font-bold">{formatCurrency(data.amount)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Zahlungsdatum</div>
+                                        <div className="text-sm text-gray-600">{t('pages.payments.date')}</div>
                                         <div className="font-medium">
                                             {new Date(data.payment_date).toLocaleDateString("de-DE")}
                                         </div>
                                     </div>
                                     {data.payment_method && (
                                         <div>
-                                            <div className="text-sm text-gray-600">Zahlungsmethode</div>
+                                            <div className="text-sm text-gray-600">{t('pages.payments.method')}</div>
                                             <div className="font-medium">{data.payment_method}</div>
                                         </div>
                                     )}

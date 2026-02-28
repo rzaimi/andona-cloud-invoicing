@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,6 +38,7 @@ interface InvoicesShowProps {
 }
 
 export default function InvoicesShow() {
+    const { t } = useTranslation()
     // @ts-ignore
     const { invoice, settings, paidAmount, remainingBalance } = usePage<InvoicesShowProps>().props
 
@@ -48,11 +50,11 @@ export default function InvoicesShow() {
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
-            draft: { label: "Entwurf", variant: "outline" as const },
-            sent: { label: "Versendet", variant: "secondary" as const },
-            paid: { label: "Bezahlt", variant: "default" as const },
-            overdue: { label: "Überfällig", variant: "destructive" as const },
-            cancelled: { label: "Storniert", variant: "outline" as const },
+            draft: { label: t('common.draft'), variant: "outline" as const },
+            sent: { label: t('common.sent'), variant: "secondary" as const },
+            paid: { label: t('common.paid'), variant: "default" as const },
+            overdue: { label: t('common.overdue'), variant: "destructive" as const },
+            cancelled: { label: t('common.cancelled'), variant: "outline" as const },
         }
 
         const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
@@ -84,7 +86,7 @@ export default function InvoicesShow() {
     }
 
     const handleDelete = () => {
-        if (confirm(`Möchten Sie die Rechnung "${invoice.number}" wirklich löschen?`)) {
+        if (confirm(t('pages.invoices.deleteConfirm', { number: invoice.number }))) {
             router.delete(`/invoices/${invoice.id}`)
         }
     }
@@ -103,7 +105,7 @@ export default function InvoicesShow() {
                         <Link href="/invoices">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
@@ -132,7 +134,7 @@ export default function InvoicesShow() {
                         <Link href={`/invoices/${invoice.id}/edit`}>
                             <Button variant="outline">
                                 <Edit className="mr-2 h-4 w-4" />
-                                Bearbeiten
+                                {t('common.edit')}
                             </Button>
                         </Link>
                         <Button
@@ -144,7 +146,7 @@ export default function InvoicesShow() {
                         </Button>
                         <Button variant="destructive" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Löschen
+                            {t('common.delete')}
                         </Button>
                     </div>
                 </div>
@@ -155,24 +157,24 @@ export default function InvoicesShow() {
                         {/* Invoice Details */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Rechnungsdetails</CardTitle>
+                                <CardTitle>{t('pages.invoices.details')}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <div className="text-sm text-gray-600">Rechnungsnummer</div>
+                                        <div className="text-sm text-gray-600">{t('pages.invoices.number')}</div>
                                         <div className="font-medium">{invoice.number}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Status</div>
+                                        <div className="text-sm text-gray-600">{t('common.status')}</div>
                                         <div className="mt-1">{getStatusBadge(invoice.status)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Rechnungsdatum</div>
+                                        <div className="text-sm text-gray-600">{t('pages.invoices.issueDate')}</div>
                                         <div className="font-medium">{formatDate(invoice.issue_date)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Fälligkeitsdatum</div>
+                                        <div className="text-sm text-gray-600">{t('pages.invoices.dueDate')}</div>
                                         <div className="font-medium">{formatDate(invoice.due_date)}</div>
                                     </div>
                                     <div>
@@ -192,20 +194,20 @@ export default function InvoicesShow() {
                         {/* Invoice Items */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Rechnungsposten</CardTitle>
+                                <CardTitle>{t('pages.invoices.items_')}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Produkt-Nr.</TableHead>
-                                            <TableHead>Beschreibung</TableHead>
-                                            <TableHead>Menge</TableHead>
+                                            <TableHead>{t('common.description')}</TableHead>
+                                            <TableHead>{t('common.quantity')}</TableHead>
                                             <TableHead>USt.</TableHead>
                                             <TableHead>Einzelpreis</TableHead>
                                             <TableHead>Rabatt</TableHead>
                                             <TableHead>Rabatt-Wert</TableHead>
-                                            <TableHead className="text-right">Gesamt</TableHead>
+                                            <TableHead className="text-right">{t('common.total')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -296,12 +298,12 @@ export default function InvoicesShow() {
                                         </div>
                                         {(Number(invoice.reminder_fee) || 0) > 0 && (
                                             <div className="flex justify-between text-orange-600">
-                                                <span>Mahngebühr</span>
+                                                <span>{t('pages.invoices.reminderFee')}</span>
                                                 <span className="font-medium">{formatCurrency(invoice.reminder_fee)}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between pt-2 border-t text-lg font-bold">
-                                            <span>Rechnungsbetrag</span>
+                                            <span>{t('pages.invoices.invoiceAmount')}</span>
                                             <span>{formatCurrency((Number(invoice.total) || 0) + (Number(invoice.reminder_fee) || 0))}</span>
                                         </div>
                                     </div>
@@ -312,8 +314,8 @@ export default function InvoicesShow() {
                         {/* Payment History */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Zahlungshistorie</CardTitle>
-                                <CardDescription>Alle Zahlungen für diese Rechnung</CardDescription>
+                                <CardTitle>{t('pages.invoices.paymentHistory')}</CardTitle>
+                                <CardDescription>{t('pages.invoices.paymentHistoryDesc')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {payments.length === 0 ? (
@@ -325,11 +327,11 @@ export default function InvoicesShow() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Datum</TableHead>
-                                                <TableHead>Betrag</TableHead>
-                                                <TableHead>Zahlungsmethode</TableHead>
+                                                <TableHead>{t('common.amount')}</TableHead>
+                                                <TableHead>{t('pages.payments.method')}</TableHead>
                                                 <TableHead>Referenz</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>Aktionen</TableHead>
+                                                <TableHead>{t('common.status')}</TableHead>
+                                                <TableHead>{t('common.actions')}</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -360,7 +362,7 @@ export default function InvoicesShow() {
                         {invoice.notes && (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Notizen</CardTitle>
+                                    <CardTitle>{t('common.notes')}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="whitespace-pre-wrap">{invoice.notes}</p>
@@ -374,11 +376,11 @@ export default function InvoicesShow() {
                         {/* Payment Summary */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Zahlungsübersicht</CardTitle>
+                                <CardTitle>{t('pages.invoices.paymentSummary')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <div className="text-sm text-gray-600">Rechnungsbetrag</div>
+                                    <div className="text-sm text-gray-600">{t('pages.invoices.invoiceAmount')}</div>
                                     <div className="text-2xl font-bold">{formatCurrency((Number(invoice.total) || 0) + (Number(invoice.reminder_fee) || 0))}</div>
                                 </div>
                                 <div>

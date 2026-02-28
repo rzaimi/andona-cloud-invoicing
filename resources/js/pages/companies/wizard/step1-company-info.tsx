@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -10,6 +11,7 @@ interface Step1Props {
 }
 
 export default function Step1CompanyInfo({ data, updateData }: Step1Props) {
+    const { t } = useTranslation()
     const [formData, setFormData] = useState(data.company_info || {
         name: "",
         email: "",
@@ -90,7 +92,7 @@ export default function Step1CompanyInfo({ data, updateData }: Step1Props) {
                         id="address"
                         value={formData.address}
                         onChange={(e) => handleChange("address", e.target.value)}
-                        placeholder="Straße und Hausnummer"
+                        placeholder={t('settings.streetAndNumber')}
                         rows={2}
                     />
                 </div>
@@ -174,7 +176,7 @@ export default function Step1CompanyInfo({ data, updateData }: Step1Props) {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                    <strong>Hinweis:</strong> Felder mit * sind Pflichtfelder. Alle anderen Angaben können Sie auch später noch ergänzen.
+                    <strong>{t('settings.bankingNoteTitle')}</strong> {t('settings.mandatoryFieldsNote')}
                 </p>
             </div>
         </div>

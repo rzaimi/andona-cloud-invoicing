@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useEffect, useRef, useState } from "react"
 import { Head, router, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -242,7 +243,9 @@ const mergeWithDefaults = (settings: Partial<OfferLayoutSettings> | null): Offer
     }
 }
 
-export default function OfferLayoutsPage({ layouts, templates, company }: OfferLayoutsPageProps) {
+export default function OfferLayoutsPage({
+    layouts, templates, company }: OfferLayoutsPageProps) {
+    const { t } = useTranslation()
     const page = usePage<{ flash?: { success?: string; error?: string }; csrf_token?: string }>()
     const { flash, csrf_token } = page.props
 
@@ -429,7 +432,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
     }, [isLayoutDialogOpen, layoutFormData])
 
     const handleDeleteLayout = (id: string) => {
-        if (confirm("Sind Sie sicher, dass Sie dieses Angebotslayout löschen möchten?")) {
+        if (confirm(t('pages.offers.confirmDeleteLayout'))) {
             router.delete(route("offer-layouts.destroy", id))
         }
     }
@@ -488,8 +491,8 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
 
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Angebotslayouts</h1>
-                        <p className="text-muted-foreground">Verwalten Sie Ihre Angebotslayouts und Templates</p>
+                        <h1 className="text-2xl font-bold text-foreground">{t('nav.offerLayouts')}</h1>
+                        <p className="text-muted-foreground">{t('settings.offerLayoutsDesc')}</p>
                     </div>
 
                     <Dialog open={isLayoutDialogOpen} onOpenChange={setIsLayoutDialogOpen}>
@@ -529,7 +532,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                             <div className="text-sm font-medium mb-2">Konfigurator</div>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("basic")}>
-                                                    1. Layout wählen
+                                                    {t('settings.layoutChoose')}
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("design", "step-colors")}>
                                                     2. Farben
@@ -541,10 +544,10 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                     4. Logo & Branding
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-header-footer")}>
-                                                    5. Kopf-/Fußzeile
+                                                    {t('settings.layoutHeaderFooter')}
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-margins")}>
-                                                    6. Seitenränder
+                                                    {t('settings.layoutMargins')}
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start sm:col-span-2" onClick={() => goToStep("content", "step-additional")}>
                                                     7. Weitere Optionen
@@ -569,7 +572,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                         </div>
 
                                                         <div className="grid gap-4">
-                                                            <Label>Template auswählen</Label>
+                                                            <Label>{t('settings.selectTemplate')}</Label>
                                                             <div className="grid grid-cols-2 gap-4">
                                                                 {templates.map((template) => (
                                                                     <div
@@ -583,7 +586,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                                     >
                                                                         <div className="flex items-start justify-between mb-2">
                                                                             <h3 className="font-semibold">{template.name}</h3>
-                                                                            {layoutFormData.template === template.id && <Badge variant="default">Ausgewählt</Badge>}
+                                                                            {layoutFormData.template === template.id && <Badge variant="default">{t('common.selected')}</Badge>}
                                                                         </div>
                                                                         <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
                                                                         <div className="flex flex-wrap gap-1 mb-3">
@@ -611,7 +614,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                                 {(["primary", "secondary", "accent", "text"] as const).map((colorKey) => (
                                                                     <div key={colorKey} className="grid gap-2">
                                                                         <Label htmlFor={`${colorKey}-color`}>
-                                                                            {colorKey === "primary" ? "Primärfarbe" : colorKey === "secondary" ? "Sekundärfarbe" : colorKey === "accent" ? "Akzentfarbe" : "Textfarbe"}
+                                                                            {colorKey === "primary" ? t('settings.primaryColor') : colorKey === "accent" ? t('settings.accentColor') : t('settings.textColor')}
                                                                         </Label>
                                                                         <div className="flex gap-2">
                                                                             <Input id={`${colorKey}-color`} type="color" value={layoutFormData.settings.colors[colorKey]} onChange={(e) => updateColorSetting(colorKey, e.target.value)} className="w-16 h-10" />
@@ -626,7 +629,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                             <h3 className="text-lg font-semibold mb-3">Schriftarten</h3>
                                                             <div className="grid grid-cols-3 gap-4">
                                                                 <div className="grid gap-2">
-                                                                    <Label>Überschrift</Label>
+                                                                    <Label>{t('settings.heading')}</Label>
                                                                     <Select value={layoutFormData.settings.fonts.heading} onValueChange={(v) => updateFontSetting("heading", v)}>
                                                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                                                         <SelectContent>
@@ -635,7 +638,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                                     </Select>
                                                                 </div>
                                                                 <div className="grid gap-2">
-                                                                    <Label>Fließtext</Label>
+                                                                    <Label>{t('settings.bodyFont')}</Label>
                                                                     <Select value={layoutFormData.settings.fonts.body} onValueChange={(v) => updateFontSetting("body", v)}>
                                                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                                                         <SelectContent>
@@ -644,13 +647,13 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                                     </Select>
                                                                 </div>
                                                                 <div className="grid gap-2">
-                                                                    <Label>Schriftgröße</Label>
+                                                                    <Label>{t('settings.fontSize')}</Label>
                                                                     <Select value={layoutFormData.settings.fonts.size} onValueChange={(v) => updateFontSetting("size", v)}>
                                                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                                                         <SelectContent>
                                                                             <SelectItem value="small">Klein (14px)</SelectItem>
                                                                             <SelectItem value="medium">Mittel (16px)</SelectItem>
-                                                                            <SelectItem value="large">Groß (18px)</SelectItem>
+                                                                            <SelectItem value="large">{t('settings.fontSizeLarge')}</SelectItem>
                                                                         </SelectContent>
                                                                     </Select>
                                                                 </div>
@@ -662,7 +665,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                 <TabsContent value="layout" className="space-y-4">
                                                     <div className="grid gap-6">
                                                         <div id="step-margins">
-                                                            <h3 className="text-lg font-semibold mb-3">Seitenränder (mm)</h3>
+                                                            <h3 className="text-lg font-semibold mb-3">{t('settings.marginsTitle')}</h3>
                                                             <div className="grid grid-cols-2 gap-4">
                                                                 {([["margin_top","Oben"],["margin_bottom","Unten"],["margin_left","Links"],["margin_right","Rechts"]] as const).map(([key, label]) => (
                                                                     <div key={key} className="grid gap-2">
@@ -677,11 +680,11 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                             <h3 className="text-lg font-semibold mb-3">Bereiche (px)</h3>
                                                             <div className="grid grid-cols-2 gap-4">
                                                                 <div className="grid gap-2">
-                                                                    <Label>Kopfzeile Höhe</Label>
+                                                                    <Label>{t('settings.headerHeight')}</Label>
                                                                     <Input type="number" value={layoutFormData.settings.layout.header_height} onChange={(e) => updateLayoutSetting("header_height", parseInt(e.target.value) || 0)} min="50" max="300" />
                                                                 </div>
                                                                 <div className="grid gap-2">
-                                                                    <Label>Fußzeile Höhe</Label>
+                                                                    <Label>{t('settings.footerHeight')}</Label>
                                                                     <Input type="number" value={layoutFormData.settings.layout.footer_height} onChange={(e) => updateLayoutSetting("footer_height", parseInt(e.target.value) || 0)} min="30" max="200" />
                                                                 </div>
                                                             </div>
@@ -778,16 +781,16 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
 
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="space-y-0.5">
-                                                                        <Label>Fußzeile anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Fußzeile mit Firmeninformationen anzeigen</p>
+                                                                        <Label>{t('settings.showFooter')}</Label>
+                                                                        <p className="text-sm text-muted-foreground">{t('settings.showFooterDesc')}</p>
                                                                     </div>
                                                                     <Switch checked={layoutFormData.settings.branding.show_footer} onCheckedChange={(v) => updateBrandingSetting("show_footer", v)} />
                                                                 </div>
 
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="space-y-0.5">
-                                                                        <Label>Fußzeilen-Linie anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Linie über der Fußzeile anzeigen</p>
+                                                                        <Label>{t('settings.showFooterLine')}</Label>
+                                                                        <p className="text-sm text-muted-foreground">{t('settings.showFooterLineDesc')}</p>
                                                                     </div>
                                                                     <Switch checked={layoutFormData.settings.branding.show_footer_line} onCheckedChange={(v) => updateBrandingSetting("show_footer_line", v)} />
                                                                 </div>
@@ -819,7 +822,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                         </div>
 
                                                         <div>
-                                                            <h3 className="text-lg font-semibold mb-3">Angebotsinformationen</h3>
+                                                            <h3 className="text-lg font-semibold mb-3">{t('pages.offers.infoTitle')}</h3>
                                                             <div className="space-y-4">
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="space-y-0.5">
@@ -858,8 +861,8 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                                 </div>
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="space-y-0.5">
-                                                                        <Label>Gültigkeitsdauer anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Gültigkeitsdauer des Angebots hervorheben</p>
+                                                                        <Label>{t('settings.showValidity')}</Label>
+                                                                        <p className="text-sm text-muted-foreground">{t('settings.showValidityDesc')}</p>
                                                                     </div>
                                                                     <Switch checked={layoutFormData.settings.content.show_validity_period} onCheckedChange={(v) => updateContentSetting("show_validity_period", v)} />
                                                                 </div>
@@ -867,7 +870,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                         </div>
 
                                                         <div>
-                                                            <h3 className="text-lg font-semibold mb-3">Fußzeilen-Informationen</h3>
+                                                            <h3 className="text-lg font-semibold mb-3">{t('settings.footerInfoTitle')}</h3>
                                                             <div className="space-y-4">
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="space-y-0.5">
@@ -919,7 +922,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                                 </div>
                                                                 <div className="flex items-center justify-between">
                                                                     <div className="space-y-0.5">
-                                                                        <Label>Steueraufschlüsselung anzeigen</Label>
+                                                                        <Label>{t('settings.showTaxBreakdown')}</Label>
                                                                         <p className="text-sm text-muted-foreground">Detaillierte Steuerberechnung anzeigen</p>
                                                                     </div>
                                                                     <Switch checked={layoutFormData.settings.content.show_tax_breakdown} onCheckedChange={(v) => updateContentSetting("show_tax_breakdown", v)} />
@@ -928,12 +931,12 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                         </div>
 
                                                         <div className="grid gap-2">
-                                                            <Label htmlFor="custom-footer">Benutzerdefinierter Fußzeilentext</Label>
+                                                            <Label htmlFor="custom-footer">{t('settings.customFooter')}</Label>
                                                             <Textarea
                                                                 id="custom-footer"
                                                                 value={layoutFormData.settings.content.custom_footer_text}
                                                                 onChange={(e) => updateContentSetting("custom_footer_text", e.target.value)}
-                                                                placeholder="z.B. Wir freuen uns auf Ihre Rückmeldung!"
+                                                                placeholder={t('settings.customFooterPlaceholderOffer')}
                                                                 rows={3}
                                                             />
                                                             <p className="text-sm text-muted-foreground">Dieser Text wird am Ende jedes Angebots angezeigt.</p>
@@ -945,7 +948,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
 
                                         <div className="mt-4 flex items-center justify-between border-t pt-4">
                                             <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isSubmitting}>
-                                                Abbrechen
+                                                {t('common.cancel')}
                                             </Button>
                                             <Button type="submit" disabled={isSubmitting} onClick={() => setSaveAndPreview(true)}>
                                                 {isSubmitting ? "Speichert..." : "Speichern & Vorschau"}
@@ -961,9 +964,9 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                             </div>
                                         )}
                                         {livePreviewPdfUrl ? (
-                                            <iframe src={livePreviewPdfUrl} className="w-full h-full border-0" title="Angebotslayout Live Vorschau (PDF)" />
+                                            <iframe src={livePreviewPdfUrl} className="w-full h-full border-0" title={t('settings.offerLayoutPreviewPdf')} />
                                         ) : (
-                                            <iframe srcDoc={livePreviewHtml || "<html><body></body></html>"} className="w-full h-full border-0" title="Angebotslayout Live Vorschau (lädt)" />
+                                            <iframe srcDoc={livePreviewHtml || "<html><body></body></html>"} className="w-full h-full border-0" title={t('settings.offerLayoutPreviewLoading')} />
                                         )}
                                     </div>
                                 </div>
@@ -989,8 +992,8 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                 ) : (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Verfügbare Angebotslayouts ({layouts.length})</CardTitle>
-                            <CardDescription>Verwalten Sie Ihre Angebotslayouts und Templates</CardDescription>
+                            <CardTitle>{t('settings.availableOfferLayouts')} ({layouts.length})</CardTitle>
+                            <CardDescription>{t('settings.offerLayoutsDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
@@ -1000,7 +1003,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                         <TableHead>Template</TableHead>
                                         <TableHead>Standard</TableHead>
                                         <TableHead>Erstellt</TableHead>
-                                        <TableHead className="text-right">Aktionen</TableHead>
+                                        <TableHead className="text-right">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1040,7 +1043,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                         onClick={() => handleDeleteLayout(layout.id)}
                                                         disabled={layout.is_default}
                                                         className="text-red-600 hover:text-red-700 disabled:opacity-50"
-                                                        title={layout.is_default ? "Standard-Layout kann nicht gelöscht werden" : "Layout löschen"}
+                                                        title={layout.is_default ? t('settings.defaultLayoutCannotDelete') : t('settings.deleteLayout')}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -1079,12 +1082,12 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
 
                         <DialogFooter>
                             <Button variant="outline" onClick={() => { setIsPreviewOpen(false); setPreviewLayout(null) }}>
-                                Schließen
+                                {t('common.close')}
                             </Button>
                             {previewLayout && (
                                 <Button onClick={() => window.open(route("offer-layouts.preview", previewLayout.id), "_blank")}>
                                     <Download className="mr-2 h-4 w-4" />
-                                    In neuem Tab öffnen
+                                    {t('common.openInNewTab')}
                                 </Button>
                             )}
                         </DialogFooter>

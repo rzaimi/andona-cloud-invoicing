@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,11 +16,13 @@ interface PaymentMethodsSettingsTabProps {
     paymentMethodSettings: any
 }
 
-export default function PaymentMethodsSettingsTab({ paymentMethodSettings }: PaymentMethodsSettingsTabProps) {
+export default function PaymentMethodsSettingsTab({
+    paymentMethodSettings }: PaymentMethodsSettingsTabProps) {
+    const { t } = useTranslation()
     const [newMethod, setNewMethod] = useState("")
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
-        payment_methods: paymentMethodSettings?.payment_methods || ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
-        default_payment_method: paymentMethodSettings?.default_payment_method || 'Überweisung',
+        payment_methods: paymentMethodSettings?.payment_methods || [t('pages.payments.bankTransfer'), 'SEPA', 'PayPal'],
+        default_payment_method: paymentMethodSettings?.default_payment_method || t('pages.payments.bankTransfer'),
     })
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -57,17 +60,17 @@ export default function PaymentMethodsSettingsTab({ paymentMethodSettings }: Pay
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Zahlungsmethoden</CardTitle>
+                    <CardTitle>{t('settings.paymentMethodsTitle')}</CardTitle>
                     <CardDescription>
-                        Verwalten Sie verfügbare Zahlungsmethoden für Rechnungen und Angebote
+                        {t('settings.paymentMethodsDesc')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <Alert>
                         <Info className="h-4 w-4" />
                         <AlertDescription>
-                            Diese Zahlungsmethoden stehen bei der Erstellung von Rechnungen und Angeboten zur Verfügung.
-                            Die Standard-Zahlungsmethode wird automatisch vorausgewählt.
+                            {t('settings.paymentMethodsHint1')}
+                            {t('settings.paymentMethodsHint2')}
                         </AlertDescription>
                     </Alert>
 
@@ -78,7 +81,7 @@ export default function PaymentMethodsSettingsTab({ paymentMethodSettings }: Pay
                             onValueChange={(value) => setData("default_payment_method", value)}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Standard-Zahlungsmethode wählen" />
+                                <SelectValue placeholder={t('settings.selectDefaultPaymentMethod')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {data.payment_methods.map((method: string) => (
@@ -92,12 +95,12 @@ export default function PaymentMethodsSettingsTab({ paymentMethodSettings }: Pay
                             <p className="text-sm text-red-600">{errors.default_payment_method}</p>
                         )}
                         <p className="text-sm text-muted-foreground">
-                            Diese Zahlungsmethode wird standardmäßig bei neuen Rechnungen und Angeboten verwendet.
+                            {t('settings.defaultPaymentMethodHint')}
                         </p>
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Verfügbare Zahlungsmethoden</Label>
+                        <Label>{t('settings.availablePaymentMethods')}</Label>
                         <div className="space-y-2">
                             {data.payment_methods.map((method: string, index: number) => (
                                 <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
@@ -126,7 +129,7 @@ export default function PaymentMethodsSettingsTab({ paymentMethodSettings }: Pay
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="new_method">Neue Zahlungsmethode hinzufügen</Label>
+                        <Label htmlFor="new_method">{t('settings.addPaymentMethod')}</Label>
                         <div className="flex gap-2">
                             <Input
                                 id="new_method"
@@ -147,7 +150,7 @@ export default function PaymentMethodsSettingsTab({ paymentMethodSettings }: Pay
                                 disabled={!newMethod.trim() || data.payment_methods.includes(newMethod.trim())}
                             >
                                 <Plus className="h-4 w-4 mr-2" />
-                                Hinzufügen
+                                {t('common.add')}
                             </Button>
                         </div>
                     </div>

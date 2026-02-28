@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +29,7 @@ interface CustomersIndexProps {
 const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" }, { title: "Kunden" }]
 
 export default function CustomersIndex() {
+    const { t } = useTranslation()
     const { customers, filters } = usePage<CustomersIndexProps>().props
     const [search, setSearch] = useState(filters.search || "")
 
@@ -37,7 +39,7 @@ export default function CustomersIndex() {
     }
 
     const handleDelete = (customer: Customer) => {
-        if (confirm(`Möchten Sie den Kunden "${customer.name}" wirklich löschen?`)) {
+        if (confirm(t('pages.customers.deleteConfirm', { name: customer.name }))) {
             router.delete(`/customers/${customer.id}`)
         }
     }
@@ -52,14 +54,14 @@ export default function CustomersIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Kunden" />
+            <Head title={t('pages.customers.title')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Kundenverwaltung</h1>
-                        <p className="text-muted-foreground">Verwalten Sie Ihre Kunden und deren Informationen</p>
+                        <h1 className="text-2xl font-bold text-foreground">{t('pages.customers.title')}</h1>
+                        <p className="text-muted-foreground">{t('pages.customers.subtitle')}</p>
                     </div>
 
                     <div className="flex gap-2">
@@ -72,12 +74,12 @@ export default function CustomersIndex() {
                             }}
                         >
                             <Download className="mr-2 h-4 w-4" />
-                            Exportieren
+                            {t('common.export')}
                         </Button>
                         <Link href="/customers/create">
                             <Button>
                                 <Plus className="mr-2 h-4 w-4" />
-                                Neuer Kunde
+                                {t('pages.customers.new')}
                             </Button>
                         </Link>
                     </div>
@@ -86,8 +88,8 @@ export default function CustomersIndex() {
                 {/* Search */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Kunden suchen</CardTitle>
-                        <CardDescription>Suchen Sie nach Kunden anhand von Name oder E-Mail</CardDescription>
+                        <CardTitle>{t('pages.customers.searchTitle')}</CardTitle>
+                        <CardDescription>{t('pages.customers.searchDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSearch} className="flex gap-2">
@@ -100,7 +102,7 @@ export default function CustomersIndex() {
                                     className="pl-10"
                                 />
                             </div>
-                            <Button type="submit">Suchen</Button>
+                            <Button type="submit">{t('common.search')}</Button>
                             {filters.search && (
                                 <Button
                                     type="button"
@@ -110,7 +112,7 @@ export default function CustomersIndex() {
                                         router.get("/customers")
                                     }}
                                 >
-                                    Zurücksetzen
+                                    {t('common.reset')}
                                 </Button>
                             )}
                         </form>
@@ -121,7 +123,7 @@ export default function CustomersIndex() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Kunden ({customers.meta?.total ?? customers.data.length})</CardTitle>
-                        <CardDescription>Alle registrierten Kunden in Ihrem System</CardDescription>
+                        <CardDescription>{t('pages.customers.allCustomers')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -132,9 +134,9 @@ export default function CustomersIndex() {
                                     <TableHead>Kontakt</TableHead>
                                     <TableHead>Adresse</TableHead>
                                     <TableHead>Steuernummer</TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead>{t('common.status')}</TableHead>
                                     <TableHead>Erstellt</TableHead>
-                                    <TableHead>Aktionen</TableHead>
+                                    <TableHead>{t('common.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

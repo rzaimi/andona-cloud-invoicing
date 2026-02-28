@@ -20,7 +20,7 @@ export default function Step4MahnungSettings({ data, setData, errors }: any) {
 
             <div className="space-y-6">
                 <div>
-                    <h3 className="font-semibold mb-3">Mahnintervalle (Tage nach Fälligkeit)</h3>
+                    <h3 className="font-semibold mb-3">{t('settings.mahnungIntervals')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <Label htmlFor="reminder_friendly_days">Freundliche Erinnerung</Label>
@@ -96,10 +96,10 @@ export default function Step4MahnungSettings({ data, setData, errors }: any) {
                 </div>
 
                 <div>
-                    <h3 className="font-semibold mb-3">Mahngebühren (€)</h3>
+                    <h3 className="font-semibold mb-3">{t('settings.mahnungFees')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <Label htmlFor="reminder_mahnung1_fee">1. Mahnung Gebühr</Label>
+                            <Label htmlFor="reminder_mahnung1_fee">{t('settings.mahnung1Fee')}</Label>
                             <Input
                                 id="reminder_mahnung1_fee"
                                 type="number"
@@ -114,7 +114,7 @@ export default function Step4MahnungSettings({ data, setData, errors }: any) {
                             )}
                         </div>
                         <div>
-                            <Label htmlFor="reminder_mahnung2_fee">2. Mahnung Gebühr</Label>
+                            <Label htmlFor="reminder_mahnung2_fee">{t('settings.mahnung2Fee')}</Label>
                             <Input
                                 id="reminder_mahnung2_fee"
                                 type="number"
@@ -129,7 +129,7 @@ export default function Step4MahnungSettings({ data, setData, errors }: any) {
                             )}
                         </div>
                         <div>
-                            <Label htmlFor="reminder_mahnung3_fee">3. Mahnung Gebühr</Label>
+                            <Label htmlFor="reminder_mahnung3_fee">{t('settings.mahnung3Fee')}</Label>
                             <Input
                                 id="reminder_mahnung3_fee"
                                 type="number"
@@ -157,7 +157,7 @@ export default function Step4MahnungSettings({ data, setData, errors }: any) {
                             value={ms.reminder_interest_rate ?? 9.00}
                             onChange={(e) => set('reminder_interest_rate', parseFloat(e.target.value) || 0)}
                         />
-                        <p className="text-xs text-muted-foreground mt-1">Gesetzlich: Basiszins + 9 % für Geschäftskunden</p>
+                        <p className="text-xs text-muted-foreground mt-1">{t('settings.legalInterestBusiness')}</p>
                         {errors?.['mahnung_settings.reminder_interest_rate'] && (
                             <p className="text-sm text-red-500 mt-1">{errors['mahnung_settings.reminder_interest_rate']}</p>
                         )}

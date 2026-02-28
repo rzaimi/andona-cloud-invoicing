@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Head, Link, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,16 +32,16 @@ interface OfferItem {
     discount_amount?: number
 }
 
-function buildTaxRates(taxRate: number, reducedTaxRate?: number) {
+function buildTaxRates(taxRate: number, reducedTaxRate: number | undefined, t: (key: string) => string) {
     const standard = Math.round(taxRate * 100)
     const reduced  = Math.round((reducedTaxRate ?? 0.07) * 100)
     const rates: { value: number; label: string }[] = [
-        { value: taxRate, label: `${standard}% (Regelsteuersatz)` },
+        { value: taxRate, label: `${standard}% (${t('pages.invoices.standardRate')})` },
     ]
     if (reduced !== standard) {
-        rates.push({ value: reducedTaxRate ?? 0.07, label: `${reduced}% (Ermäßigter Satz)` })
+        rates.push({ value: reducedTaxRate ?? 0.07, label: `${reduced}% (${t('pages.invoices.reducedRate')})` })
     }
-    rates.push({ value: 0.00, label: "0% (Steuerfrei)" })
+    rates.push({ value: 0.00, label: `0% (${t('pages.invoices.taxFree')})` })
     return rates
 }
 
@@ -78,8 +79,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function OffersCreate() {
+    const { t } = useTranslation()
     const { customers, layouts, products, settings, nextNumber } = usePage<OffersCreateProps>().props
-    const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate)
+    const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate, t)
 
     const { data, setData, post, processing, errors } = useForm({
         customer_id: "",
@@ -205,7 +207,7 @@ export default function OffersCreate() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Neues Angebot" />
+            <Head title={t('pages.offers.new')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 {/* Header with Action Buttons */}
@@ -214,12 +216,12 @@ export default function OffersCreate() {
                         <Link href="/offers">
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div className="flex-1">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-1xl font-bold text-gray-900">Neues Angebot erstellen</h1>
+                                <h1 className="text-1xl font-bold text-gray-900">{t('pages.offers.new')}</h1>
                                 {nextNumber && (
                                     <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-blue-300 bg-blue-50 px-2.5 py-0.5 text-xs font-mono font-medium text-blue-700" title="Voraussichtliche Angebotsnummer">
                                         <Hash className="h-3 w-3" />
@@ -227,7 +229,7 @@ export default function OffersCreate() {
                                     </span>
                                 )}
                             </div>
-                            <p className="text-gray-600">Erstellen Sie ein neues Angebot für Ihre Kunden</p>
+                            <p className="text-gray-600">{t('pages.offers.createDesc')}</p>
                         </div>
                     </div>
                     
@@ -235,7 +237,7 @@ export default function OffersCreate() {
                     <div className="flex justify-end gap-2">
                         <Link href="/offers">
                             <Button type="button" variant="outline">
-                                Abbrechen
+                                {t('common.cancel')}
                             </Button>
                         </Link>
                         <Button 
@@ -252,16 +254,16 @@ export default function OffersCreate() {
                     {/* Basic Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Angebotsinformationen</CardTitle>
-                            <CardDescription>Grundlegende Informationen zum Angebot</CardDescription>
+                            <CardTitle>{t('pages.offers.infoTitle')}</CardTitle>
+                            <CardDescription>{t('pages.offers.infoDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="customer_id">Kunde *</Label>
+                                    <Label htmlFor="customer_id">{t('pages.invoices.customer')} *</Label>
                                     <Select value={data.customer_id} onValueChange={(value) => setData("customer_id", value)}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Kunde auswählen" />
+                                            <SelectValue placeholder={t('pages.invoices.selectCustomer')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {customers.map((customer) => (
@@ -278,7 +280,7 @@ export default function OffersCreate() {
                                     <Label htmlFor="layout_id">Layout</Label>
                                     <Select value={data.layout_id} onValueChange={(value) => setData("layout_id", value)}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Layout auswählen" />
+                                            <SelectValue placeholder="Select layout" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {layouts.map((layout) => (
@@ -304,7 +306,7 @@ export default function OffersCreate() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="valid_until">Gültig bis *</Label>
+                                    <Label htmlFor="valid_until">{t('pages.offers.validUntil')} *</Label>
                                     <Input
                                         id="valid_until"
                                         type="date"
@@ -322,7 +324,7 @@ export default function OffersCreate() {
                                         type="text"
                                         value={data.bauvorhaben}
                                         onChange={(e) => setData("bauvorhaben", e.target.value)}
-                                        placeholder="z.B. Neubau Musterstraße 12, Berlin"
+                                        placeholder={t('pages.invoices.projectPlaceholder')}
                                     />
                                     {errors.bauvorhaben && <p className="text-red-600 text-sm">{errors.bauvorhaben}</p>}
                                 </div>
@@ -334,8 +336,8 @@ export default function OffersCreate() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Angebotspositionen</CardTitle>
-                                <CardDescription>Fügen Sie Positionen zu Ihrem Angebot hinzu</CardDescription>
+                                <CardTitle>{t('pages.offers.items')}</CardTitle>
+                                <CardDescription>{t('pages.offers.addItems')}</CardDescription>
                             </div>
                             <ProductSelectorDialog 
                                 products={products || []} 
@@ -383,15 +385,15 @@ export default function OffersCreate() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead className="w-[12%]">Produkt-Nr.</TableHead>
-                                            <TableHead className="w-[26%]">Beschreibung</TableHead>
-                                            <TableHead className="w-[8%]">Menge</TableHead>
+                                            <TableHead className="w-[26%]">{t('common.description')}</TableHead>
+                                            <TableHead className="w-[8%]">{t('common.quantity')}</TableHead>
                                             <TableHead className="w-[8%]">Einheit</TableHead>
                                             <TableHead className="w-[6%]">USt.</TableHead>
                                             <TableHead className="w-[12%]">Einzelpreis</TableHead>
                                             <TableHead className="w-[10%]">Rabatt</TableHead>
                                             <TableHead className="w-[10%]">Rabatt-Wert</TableHead>
                                             <TableHead className="w-[12%]">Gesamtpreis</TableHead>
-                                            <TableHead className="w-[10%]">Aktionen</TableHead>
+                                            <TableHead className="w-[10%]">{t('common.actions')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -400,8 +402,8 @@ export default function OffersCreate() {
                                                 <TableCell colSpan={10} className="py-12 text-center">
                                                     <div className="flex flex-col items-center gap-3 text-muted-foreground">
                                                         <PackagePlus className="h-10 w-10 opacity-30" />
-                                                        <p className="text-sm font-medium">Noch keine Positionen vorhanden</p>
-                                                        <p className="text-xs">Klicken Sie auf „Position hinzufügen", um zu beginnen.</p>
+                                                        <p className="text-sm font-medium">{t('pages.invoices.noItems')}</p>
+                                                        <p className="text-xs">{t('pages.invoices.noItemsHint')}</p>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -575,17 +577,17 @@ export default function OffersCreate() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Notizen</CardTitle>
-                                <CardDescription>Zusätzliche Informationen zum Angebot</CardDescription>
+                                <CardTitle>{t('common.notes')}</CardTitle>
+                                <CardDescription>{t('pages.offers.additionalInfo')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-2">
-                                    <Label htmlFor="notes">Notizen</Label>
+                                    <Label htmlFor="notes">{t('common.notes')}</Label>
                                     <Textarea
                                         id="notes"
                                         value={data.notes}
                                         onChange={(e) => setData("notes", e.target.value)}
-                                        placeholder="Zusätzliche Informationen..."
+                                        placeholder={t('pages.offers.notesPlaceholder')}
                                         rows={4}
                                     />
                                     {errors.notes && <p className="text-red-600 text-sm">{errors.notes}</p>}
@@ -595,8 +597,8 @@ export default function OffersCreate() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Geschäftsbedingungen</CardTitle>
-                                <CardDescription>Bedingungen für dieses Angebot</CardDescription>
+                                <CardTitle>{t('pages.offers.terms')}</CardTitle>
+                                <CardDescription>{t('pages.offers.termsDesc')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-2">
@@ -605,7 +607,7 @@ export default function OffersCreate() {
                                         id="terms_conditions"
                                         value={data.terms_conditions}
                                         onChange={(e) => setData("terms_conditions", e.target.value)}
-                                        placeholder="Geschäftsbedingungen, Zahlungsmodalitäten..."
+                                        placeholder={t('pages.offers.termsPlaceholder')}
                                         rows={4}
                                     />
                                     {errors.terms_conditions && <p className="text-red-600 text-sm">{errors.terms_conditions}</p>}

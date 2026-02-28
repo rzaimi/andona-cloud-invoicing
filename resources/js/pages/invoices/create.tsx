@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Head, Link, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,16 +61,16 @@ interface InvoicesCreateProps {
     }
 }
 
-function buildTaxRates(taxRate: number, reducedTaxRate?: number) {
+function buildTaxRates(taxRate: number, reducedTaxRate: number | undefined, t: (key: string) => string) {
     const standard = Math.round(taxRate * 100)
     const reduced  = Math.round((reducedTaxRate ?? 0.07) * 100)
     const rates: { value: number; label: string }[] = [
-        { value: taxRate,                label: `${standard}% (Regelsteuersatz)` },
+        { value: taxRate, label: `${standard}% (${t('pages.invoices.standardRate')})` },
     ]
     if (reduced !== standard) {
-        rates.push({ value: reducedTaxRate ?? 0.07, label: `${reduced}% (Ermäßigter Satz)` })
+        rates.push({ value: reducedTaxRate ?? 0.07, label: `${reduced}% (${t('pages.invoices.reducedRate')})` })
     }
-    rates.push({ value: 0.00, label: "0% (Steuerfrei)" })
+    rates.push({ value: 0.00, label: `0% (${t('pages.invoices.taxFree')})` })
     return rates
 }
 
@@ -80,8 +81,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function InvoicesCreate() {
+    const { t } = useTranslation()
     const { customers, layouts, products, settings, nextNumber } = usePage().props as unknown as InvoicesCreateProps
-    const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate)
+    const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate, t)
 
     const { data, setData, post, processing, errors } = useForm<Record<string, any>>({
         customer_id: "",
@@ -239,7 +241,7 @@ export default function InvoicesCreate() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Neue Rechnung" />
+            <Head title={t('pages.invoices.new')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 {/* Header with Action Buttons */}
@@ -248,12 +250,12 @@ export default function InvoicesCreate() {
                         <Link href="/invoices">
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div className="flex-1">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-1xl font-bold text-gray-900">Neue Rechnung erstellen</h1>
+                                <h1 className="text-1xl font-bold text-gray-900">{t('pages.invoices.new')}</h1>
                                 {nextNumber && (
                                     <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-blue-300 bg-blue-50 px-2.5 py-0.5 text-xs font-mono font-medium text-blue-700" title="Voraussichtliche Rechnungsnummer">
                                         <Hash className="h-3 w-3" />
@@ -261,7 +263,7 @@ export default function InvoicesCreate() {
                                     </span>
                                 )}
                             </div>
-                            <p className="text-gray-600">Erstellen Sie eine neue Rechnung für Ihre Kunden</p>
+                            <p className="text-gray-600">{t('pages.invoices.createDesc')}</p>
                         </div>
                     </div>
                     
@@ -269,7 +271,7 @@ export default function InvoicesCreate() {
                     <div className="flex justify-end gap-2">
                         <Link href="/invoices">
                             <Button type="button" variant="outline">
-                                Abbrechen
+                                {t('common.cancel')}
                             </Button>
                         </Link>
                         <Button 
@@ -286,16 +288,16 @@ export default function InvoicesCreate() {
                     {/* Basic Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Rechnungsinformationen</CardTitle>
-                            <CardDescription>Grundlegende Informationen zur Rechnung</CardDescription>
+                            <CardTitle>{t('pages.invoices.infoTitle')}</CardTitle>
+                            <CardDescription>{t('pages.invoices.infoDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="customer_id">Kunde *</Label>
+                                    <Label htmlFor="customer_id">{t('pages.invoices.customer')} *</Label>
                                     <Select value={data.customer_id} onValueChange={(value) => setData("customer_id", value)}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Kunde auswählen" />
+                                            <SelectValue placeholder={t('pages.invoices.selectCustomer')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {customers.map((customer) => (
@@ -312,7 +314,7 @@ export default function InvoicesCreate() {
                                     <Label htmlFor="layout_id">Layout</Label>
                                     <Select value={data.layout_id} onValueChange={(value) => setData("layout_id", value)}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Layout auswählen" />
+                                            <SelectValue placeholder="Select layout" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {layouts.map((layout) => (
@@ -326,7 +328,7 @@ export default function InvoicesCreate() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="issue_date">Rechnungsdatum *</Label>
+                                    <Label htmlFor="issue_date">{t('pages.invoices.issueDate')} *</Label>
                                     <Input
                                         id="issue_date"
                                         type="date"
@@ -338,7 +340,7 @@ export default function InvoicesCreate() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="due_date">Fälligkeitsdatum *</Label>
+                                    <Label htmlFor="due_date">{t('pages.invoices.dueDate')} *</Label>
                                     <Input
                                         id="due_date"
                                         type="date"
@@ -356,22 +358,22 @@ export default function InvoicesCreate() {
                                         type="text"
                                         value={data.bauvorhaben}
                                         onChange={(e) => setData("bauvorhaben", e.target.value)}
-                                        placeholder="z.B. Neubau Musterstraße 12, Berlin"
+                                        placeholder={t('pages.invoices.projectPlaceholder')}
                                     />
                                     {errors.bauvorhaben && <p className="text-red-600 text-sm">{errors.bauvorhaben}</p>}
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="vat_regime">Umsatzsteuer-Regelung *</Label>
+                                    <Label htmlFor="vat_regime">{t('pages.invoices.vatRegime')} *</Label>
                                     <Select value={data.vat_regime} onValueChange={(value) => setData("vat_regime", value)}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Regelung auswählen" />
+                                            <SelectValue placeholder={t('pages.invoices.selectRegulation')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="standard">Regelbesteuerung (19% / 7%)</SelectItem>
                                             <SelectItem value="small_business">Kleinunternehmerregelung (§ 19 UStG)</SelectItem>
                                             <SelectItem value="reverse_charge">Reverse Charge – Ausland (§ 13b UStG)</SelectItem>
-                                            <SelectItem value="reverse_charge_domestic">§ 13b UStG – Inland (Steuerschuldnerschaft des Leistungsempfängers)</SelectItem>
+                                            <SelectItem value="reverse_charge_domestic">{t('pages.invoices.reverseChargeDomestic')}</SelectItem>
                                             <SelectItem value="intra_community">Innergemeinschaftliche Lieferung (§ 4 Nr. 1b UStG)</SelectItem>
                                             <SelectItem value="export">Ausfuhrlieferung (§ 4 Nr. 1a UStG)</SelectItem>
                                         </SelectContent>
@@ -380,7 +382,7 @@ export default function InvoicesCreate() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="service_date">Leistungsdatum (einzelner Tag)</Label>
+                                    <Label htmlFor="service_date">{t('pages.invoices.serviceDate')}</Label>
                                     <Input
                                         id="service_date"
                                         type="date"
@@ -399,7 +401,7 @@ export default function InvoicesCreate() {
 
                                 <div className="grid grid-cols-2 gap-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="service_period_start">Leistungszeitraum von</Label>
+                                        <Label htmlFor="service_period_start">{t('pages.invoices.servicePeriodFrom')}</Label>
                                         <Input
                                             id="service_period_start"
                                             type="date"
@@ -441,14 +443,14 @@ export default function InvoicesCreate() {
                     {/* Rechnungstyp & Skonto */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Rechnungstyp &amp; Zahlungsbedingungen</CardTitle>
-                            <CardDescription>Typ, Skonto und erweiterte Zahlungsoptionen</CardDescription>
+                            <CardTitle>{t('pages.invoices.invoiceType')}</CardTitle>
+                            <CardDescription>{t('pages.invoices.invoiceTypeDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Rechnungstyp */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="invoice_type">Rechnungstyp</Label>
+                                    <Label htmlFor="invoice_type">{t('pages.invoices.invoiceType')}</Label>
                                     <Select
                                         value={data.invoice_type || "standard"}
                                         onValueChange={(v) => {
@@ -463,7 +465,7 @@ export default function InvoicesCreate() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="standard">Rechnung</SelectItem>
+                                            <SelectItem value="standard">{t('nav.invoices')}</SelectItem>
                                             <SelectItem value="abschlagsrechnung">Abschlagsrechnung</SelectItem>
                                             <SelectItem value="schlussrechnung">Schlussrechnung</SelectItem>
                                             <SelectItem value="nachtragsrechnung">Nachtragsrechnung</SelectItem>
@@ -482,7 +484,7 @@ export default function InvoicesCreate() {
                                             onValueChange={(v) => setData("sequence_number", v)}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Abschlag wählen" />
+                                                <SelectValue placeholder={t('pages.invoices.selectDiscount')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
@@ -500,12 +502,12 @@ export default function InvoicesCreate() {
                             {/* Skonto */}
                             <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
                                 <div>
-                                    <p className="font-medium text-sm">Skonto (Zahlungsrabatt)</p>
-                                    <p className="text-xs text-muted-foreground">Optionaler Rabatt bei frühzeitiger Zahlung</p>
+                                    <p className="font-medium text-sm">{t('pages.invoices.skonto')}</p>
+                                    <p className="text-xs text-muted-foreground">{t('pages.invoices.skontoDesc')}</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="skonto_percent">Skonto-Prozentsatz</Label>
+                                        <Label htmlFor="skonto_percent">{t('pages.invoices.skontoPercent')}</Label>
                                         <Select
                                             value={data.skonto_percent?.toString() || "none"}
                                             onValueChange={(v) => setData("skonto_percent", v === "none" ? "" : v)}
@@ -524,13 +526,13 @@ export default function InvoicesCreate() {
                                         {errors.skonto_percent && <p className="text-red-600 text-sm">{errors.skonto_percent}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="skonto_days">Skonto-Frist (Tage)</Label>
+                                        <Label htmlFor="skonto_days">{t('pages.invoices.skontoDays')}</Label>
                                         <Select
                                             value={data.skonto_days?.toString() || "none"}
                                             onValueChange={(v) => setData("skonto_days", v === "none" ? "" : v)}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Frist wählen" />
+                                                <SelectValue placeholder={t('pages.invoices.selectDeadline')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="none">Keine Frist</SelectItem>
@@ -567,8 +569,8 @@ export default function InvoicesCreate() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Rechnungspositionen</CardTitle>
-                                <CardDescription>Fügen Sie Positionen zu Ihrer Rechnung hinzu</CardDescription>
+                                <CardTitle>{t('pages.invoices.items')}</CardTitle>
+                                <CardDescription>{t('pages.invoices.addItems')}</CardDescription>
                             </div>
                             <ProductSelectorDialog 
                                 products={products} 
@@ -616,15 +618,15 @@ export default function InvoicesCreate() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead className="w-[12%]">Produkt-Nr.</TableHead>
-                                            <TableHead className="w-[26%]">Beschreibung</TableHead>
-                                            <TableHead className="w-[8%]">Menge</TableHead>
+                                            <TableHead className="w-[26%]">{t('common.description')}</TableHead>
+                                            <TableHead className="w-[8%]">{t('common.quantity')}</TableHead>
                                             <TableHead className="w-[8%]">Einheit</TableHead>
                                             <TableHead className="w-[6%]">USt.</TableHead>
                                             <TableHead className="w-[12%]">Einzelpreis</TableHead>
                                             <TableHead className="w-[10%]">Rabatt</TableHead>
                                             <TableHead className="w-[10%]">Rabatt-Wert</TableHead>
                                             <TableHead className="w-[12%]">Gesamtpreis</TableHead>
-                                            <TableHead className="w-[10%]">Aktionen</TableHead>
+                                            <TableHead className="w-[10%]">{t('common.actions')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -633,8 +635,8 @@ export default function InvoicesCreate() {
                                                 <TableCell colSpan={10} className="py-12 text-center">
                                                     <div className="flex flex-col items-center gap-3 text-muted-foreground">
                                                         <PackagePlus className="h-10 w-10 opacity-30" />
-                                                        <p className="text-sm font-medium">Noch keine Positionen vorhanden</p>
-                                                        <p className="text-xs">Klicken Sie auf „Position hinzufügen", um zu beginnen.</p>
+                                                        <p className="text-sm font-medium">{t('pages.invoices.noItems')}</p>
+                                                        <p className="text-xs">{t('pages.invoices.noItemsHint')}</p>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -808,17 +810,17 @@ export default function InvoicesCreate() {
                     {/* Notes */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Zusätzliche Informationen</CardTitle>
-                            <CardDescription>Notizen und Bemerkungen zur Rechnung</CardDescription>
+                            <CardTitle>{t('pages.invoices.notes')}</CardTitle>
+                            <CardDescription>{t('pages.invoices.notesDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2">
-                                <Label htmlFor="notes">Notizen</Label>
+                                <Label htmlFor="notes">{t('common.notes')}</Label>
                                 <Textarea
                                     id="notes"
                                     value={data.notes}
                                     onChange={(e) => setData("notes", e.target.value)}
-                                    placeholder="Zusätzliche Informationen, Zahlungsbedingungen, etc..."
+                                    placeholder={t('pages.invoices.notesPlaceholder')}
                                     rows={4}
                                 />
                                 {errors.notes && <p className="text-red-600 text-sm">{errors.notes}</p>}

@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useEffect, useRef, useState } from "react"
 import { Head, router, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -442,7 +443,9 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
     }
 }
 
-export default function InvoiceLayoutsPage({ layouts, templates, company }: InvoiceLayoutsPageProps) {
+export default function InvoiceLayoutsPage({
+    layouts, templates, company }: InvoiceLayoutsPageProps) {
+    const { t } = useTranslation()
     const page = usePage<{ flash?: { success?: string; error?: string }; csrf_token?: string }>()
     const { flash, csrf_token } = page.props
     const [isLayoutDialogOpen, setIsLayoutDialogOpen] = useState(false)
@@ -668,7 +671,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
     }, [isLayoutDialogOpen, layoutFormData])
 
     const handleDeleteLayout = (id: string) => {
-        if (confirm("Sind Sie sicher, dass Sie dieses Layout löschen möchten?")) {
+        if (confirm(t('pages.invoices.confirmDeleteLayout'))) {
             router.delete(route("invoice-layouts.destroy", id))
         }
     }
@@ -845,8 +848,8 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Rechnungslayouts</h1>
-                        <p className="text-muted-foreground">Verwalten Sie Ihre Rechnungs- und Angebotslayouts</p>
+                        <h1 className="text-2xl font-bold text-foreground">{t('nav.invoiceLayouts')}</h1>
+                        <p className="text-muted-foreground">{t('settings.invoiceLayoutsDesc')}</p>
                     </div>
 
                     <Dialog open={isLayoutDialogOpen} onOpenChange={setIsLayoutDialogOpen}>
@@ -890,7 +893,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                             <div className="text-sm font-medium mb-2">Konfigurator</div>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("basic")}>
-                                                    1. Layout wählen
+                                                    {t('settings.layoutChoose')}
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("design", "step-colors")}>
                                                     2. Farben
@@ -902,10 +905,10 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     4. Logo & Branding
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-header-footer")}>
-                                                    5. Kopf-/Fußzeile
+                                                    {t('settings.layoutHeaderFooter')}
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start" onClick={() => goToStep("layout", "step-margins")}>
-                                                    6. Seitenränder
+                                                    {t('settings.layoutMargins')}
                                                 </Button>
                                                 <Button type="button" variant="outline" className="justify-start sm:col-span-2" onClick={() => goToStep("content", "step-additional")}>
                                                     7. Weitere Optionen
@@ -942,14 +945,14 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="both">Rechnungen & Angebote</SelectItem>
-                                                        <SelectItem value="invoice">Nur Rechnungen</SelectItem>
-                                                        <SelectItem value="offer">Nur Angebote</SelectItem>
+                                                        <SelectItem value="invoice">{t('settings.onlyInvoices')}</SelectItem>
+                                                        <SelectItem value="offer">{t('settings.onlyOffers')}</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
 
                                             <div className="grid gap-4">
-                                                <Label>Template auswählen</Label>
+                                                <Label>{t('settings.selectTemplate')}</Label>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     {templates.map((template) => (
                                                         <div
@@ -963,7 +966,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                         >
                                                             <div className="flex items-start justify-between mb-2">
                                                                 <h3 className="font-semibold">{template.name}</h3>
-                                                                {layoutFormData.template === template.id && <Badge variant="default">Ausgewählt</Badge>}
+                                                                {layoutFormData.template === template.id && <Badge variant="default">{t('common.selected')}</Badge>}
                                                             </div>
                                                             <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
                                                             <div className="flex flex-wrap gap-1 mb-3">
@@ -996,7 +999,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                 <h3 className="text-lg font-semibold mb-3">Farben</h3>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor="primary-color">Primärfarbe</Label>
+                                                        <Label htmlFor="primary-color">{t('settings.primaryColor')}</Label>
                                                         <div className="flex gap-2">
                                                             <Input
                                                                 id="primary-color"
@@ -1014,7 +1017,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     </div>
 
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor="secondary-color">Sekundärfarbe</Label>
+                                                        <Label htmlFor="secondary-color">{t('settings.secondaryColor')}</Label>
                                                         <div className="flex gap-2">
                                                             <Input
                                                                 id="secondary-color"
@@ -1073,7 +1076,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                 <h3 className="text-lg font-semibold mb-3">Schriftarten</h3>
                                                 <div className="grid grid-cols-3 gap-4">
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor="heading-font">Überschrift</Label>
+                                                        <Label htmlFor="heading-font">{t('settings.heading')}</Label>
                                                         <Select
                                                             value={layoutFormData.settings.fonts.heading}
                                                             onValueChange={(value) => updateFontSetting("heading", value)}
@@ -1094,7 +1097,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     </div>
 
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor="body-font">Fließtext</Label>
+                                                        <Label htmlFor="body-font">{t('settings.bodyFont')}</Label>
                                                         <Select
                                                             value={layoutFormData.settings.fonts.body}
                                                             onValueChange={(value) => updateFontSetting("body", value)}
@@ -1114,7 +1117,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     </div>
 
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor="font-size">Schriftgröße</Label>
+                                                        <Label htmlFor="font-size">{t('settings.fontSize')}</Label>
                                                         <Select
                                                             value={layoutFormData.settings.fonts.size}
                                                             onValueChange={(value) => updateFontSetting("size", value)}
@@ -1125,7 +1128,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                             <SelectContent>
                                                                 <SelectItem value="small">Klein (14px)</SelectItem>
                                                                 <SelectItem value="medium">Mittel (16px)</SelectItem>
-                                                                <SelectItem value="large">Groß (18px)</SelectItem>
+                                                                <SelectItem value="large">{t('settings.fontSizeLarge')}</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                     </div>
@@ -1138,7 +1141,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                     <TabsContent value="layout" className="space-y-4">
                                         <div className="grid gap-6">
                                             <div id="step-margins">
-                                                <h3 className="text-lg font-semibold mb-3">Seitenränder (mm)</h3>
+                                                <h3 className="text-lg font-semibold mb-3">{t('settings.marginsTitle')}</h3>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="grid gap-2">
                                                         <Label htmlFor="margin-top">Oben</Label>
@@ -1198,7 +1201,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                 <h3 className="text-lg font-semibold mb-3">Bereiche (px)</h3>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor="header-height">Kopfzeile Höhe</Label>
+                                                        <Label htmlFor="header-height">{t('settings.headerHeight')}</Label>
                                                         <Input
                                                             id="header-height"
                                                             type="number"
@@ -1212,7 +1215,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     </div>
 
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor="footer-height">Fußzeile Höhe</Label>
+                                                        <Label htmlFor="footer-height">{t('settings.footerHeight')}</Label>
                                                         <Input
                                                             id="footer-height"
                                                             type="number"
@@ -1234,7 +1237,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                         <div className="space-y-1">
                                                             <div className="text-sm font-medium">Logo (Firma)</div>
                                                             <p className="text-sm text-muted-foreground">
-                                                                Dieses Layout nutzt das Firmenlogo. Hier können Sie es hochladen/ersetzen.
+                                                                {t('settings.logoUploadHint')}
                                                             </p>
                                                         </div>
                                                         {(logoPreviewUrl || company?.logo) ? (
@@ -1340,8 +1343,8 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
-                                                            <Label>Fußzeile anzeigen</Label>
-                                                            <p className="text-sm text-muted-foreground">Fußzeile mit Firmeninformationen anzeigen</p>
+                                                            <Label>{t('settings.showFooter')}</Label>
+                                                            <p className="text-sm text-muted-foreground">{t('settings.showFooterDesc')}</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.branding.show_footer}
@@ -1351,8 +1354,8 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
-                                                            <Label>Fußzeilen-Linie anzeigen</Label>
-                                                            <p className="text-sm text-muted-foreground">Linie über der Fußzeile anzeigen</p>
+                                                            <Label>{t('settings.showFooterLine')}</Label>
+                                                            <p className="text-sm text-muted-foreground">{t('settings.showFooterLineDesc')}</p>
                                                         </div>
                                                         <Switch
                                                             checked={layoutFormData.settings.branding.show_footer_line}
@@ -1394,7 +1397,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                             </div>
 
                                             <div>
-                                                <h3 className="text-lg font-semibold mb-3">Rechnungsinformationen</h3>
+                                                <h3 className="text-lg font-semibold mb-3">{t('pages.invoices.infoTitle')}</h3>
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
@@ -1454,7 +1457,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                             </div>
 
                                             <div>
-                                                <h3 className="text-lg font-semibold mb-3">Fußzeilen-Informationen</h3>
+                                                <h3 className="text-lg font-semibold mb-3">{t('settings.footerInfoTitle')}</h3>
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
@@ -1529,7 +1532,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
-                                                            <Label>Steueraufschlüsselung anzeigen</Label>
+                                                            <Label>{t('settings.showTaxBreakdown')}</Label>
                                                             <p className="text-sm text-muted-foreground">Detaillierte Steuerberechnung anzeigen</p>
                                                         </div>
                                                         <Switch
@@ -1541,12 +1544,12 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                             </div>
 
                                             <div className="grid gap-2">
-                                                <Label htmlFor="custom-footer">Benutzerdefinierter Fußzeilentext</Label>
+                                                <Label htmlFor="custom-footer">{t('settings.customFooter')}</Label>
                                                 <Textarea
                                                     id="custom-footer"
                                                     value={layoutFormData.settings.content.custom_footer_text}
                                                     onChange={(e) => updateContentSetting("custom_footer_text", e.target.value)}
-                                                    placeholder="z.B. Vielen Dank für Ihr Vertrauen!"
+                                                    placeholder={t('settings.customFooterPlaceholder')}
                                                     rows={3}
                                                 />
                                                 <p className="text-sm text-gray-500">Dieser Text wird am Ende jedes Dokuments angezeigt.</p>
@@ -1558,7 +1561,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
                                         <div className="mt-4 flex items-center justify-between border-t pt-4">
                                             <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isSubmitting}>
-                                                Abbrechen
+                                                {t('common.cancel')}
                                             </Button>
                                             <Button
                                                 type="submit"
@@ -1614,8 +1617,8 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                 ) : (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Verfügbare Layouts ({layouts.length})</CardTitle>
-                            <CardDescription>Verwalten Sie Ihre Rechnungs- und Angebotslayouts</CardDescription>
+                            <CardTitle>{t('settings.availableLayouts')} ({layouts.length})</CardTitle>
+                            <CardDescription>{t('settings.invoiceLayoutsDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
@@ -1626,7 +1629,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                         <TableHead>Template</TableHead>
                                         <TableHead>Standard</TableHead>
                                         <TableHead>Erstellt</TableHead>
-                                        <TableHead className="text-right">Aktionen</TableHead>
+                                        <TableHead className="text-right">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1684,7 +1687,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                         onClick={() => handleDeleteLayout(layout.id)}
                                                         disabled={layout.is_default}
                                                         className="text-red-600 hover:text-red-700 disabled:opacity-50"
-                                                        title={layout.is_default ? "Standard-Layout kann nicht gelöscht werden" : "Layout löschen"}
+                                                        title={layout.is_default ? t('settings.defaultLayoutCannotDelete') : t('settings.deleteLayout')}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -1723,12 +1726,12 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
                         <DialogFooter>
                             <Button variant="outline" onClick={handleClosePreview}>
-                                Schließen
+                                {t('common.close')}
                             </Button>
                             {previewLayout && (
                                 <Button onClick={() => window.open(route("invoice-layouts.preview", previewLayout.id), "_blank")}>
                                     <Download className="mr-2 h-4 w-4" />
-                                    In neuem Tab öffnen
+                                    {t('common.openInNewTab')}
                                 </Button>
                             )}
                         </DialogFooter>

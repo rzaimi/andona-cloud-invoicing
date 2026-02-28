@@ -68,7 +68,7 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
 
     const colorOptions = [
         { value: "#3b82f6", label: "Blau", color: "#3b82f6" },
-        { value: "#10b981", label: "Grün", color: "#10b981" },
+        { value: "#10b981", label: t('common.colorGreen'), color: "#10b981" },
         { value: "#f59e0b", label: "Orange", color: "#f59e0b" },
         { value: "#ef4444", label: "Rot", color: "#ef4444" },
         { value: "#8b5cf6", label: "Lila", color: "#8b5cf6" },
@@ -100,12 +100,12 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
                         <Button variant="ghost" asChild>
                             <Link href="/categories">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-1xl font-bold tracking-tight">Neue Kategorie erstellen</h1>
-                            <p className="text-muted-foreground">Erstellen Sie eine neue Produktkategorie</p>
+                            <h1 className="text-1xl font-bold tracking-tight">{t('pages.categories.create')}</h1>
+                            <p className="text-muted-foreground">{t('pages.categories.createDesc')}</p>
                         </div>
                     </div>
                 </div>
@@ -131,7 +131,7 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
                     <Card>
                         <CardHeader>
                             <CardTitle>Kategorieinformationen</CardTitle>
-                            <CardDescription>Grundlegende Informationen über die Kategorie</CardDescription>
+                            <CardDescription>{t('pages.categories.infoDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid gap-6 md:grid-cols-2">
@@ -149,13 +149,13 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="parent_id">Übergeordnete Kategorie</Label>
+                                    <Label htmlFor="parent_id">{t('pages.categories.parentCategory')}</Label>
                                     <Select
                                         value={data.parent_id || "none"}
                                         onValueChange={handleParentChange}
                                     >
                                         <SelectTrigger className={errors.parent_id ? "border-red-500" : ""}>
-                                            <SelectValue placeholder="Kategorie wählen" />
+                                            <SelectValue placeholder={t('pages.categories.selectParent')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">Hauptkategorie</SelectItem>
@@ -171,7 +171,7 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="description">Beschreibung</Label>
+                                <Label htmlFor="description">{t('common.description')}</Label>
                                 <Textarea
                                     id="description"
                                     value={data.description}
@@ -211,7 +211,7 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
                                         onValueChange={handleIconChange}
                                     >
                                         <SelectTrigger className={errors.icon ? "border-red-500" : ""}>
-                                            <SelectValue placeholder="Icon wählen" />
+                                            <SelectValue placeholder={t('pages.categories.selectIcon')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {iconOptions.map((option) => (
@@ -251,7 +251,7 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
 
                             {/* Preview */}
                             <div className="rounded-lg bg-muted p-4">
-                                <h4 className="font-medium mb-2">Vorschau</h4>
+                                <h4 className="font-medium mb-2">{t('common.preview')}</h4>
                                 <div className="flex items-center space-x-2">
                                     <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: data.color }} />
                                     <Folder className="h-4 w-4 text-muted-foreground" />
@@ -263,7 +263,7 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
                                 {data.description && <p className="text-sm text-muted-foreground mt-2">{data.description}</p>}
                                 {data.parent_id && data.parent_id !== "none" && (
                                     <p className="text-sm text-muted-foreground mt-1">
-                                        Übergeordnete Kategorie: {parentCategories.find(cat => cat.id.toString() === data.parent_id)?.name}
+                                        {t('pages.categories.parentCategory')}: {parentCategories.find(cat => cat.id.toString() === data.parent_id)?.name}
                                     </p>
                                 )}
                             </div>
@@ -273,7 +273,7 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
                     {/* Actions */}
                     <div className="flex items-center justify-end space-x-4">
                         <Button variant="outline" asChild>
-                            <Link href="/categories">Abbrechen</Link>
+                            <Link href="/categories">{t('common.cancel')}</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
                             <Save className="mr-2 h-4 w-4" />
@@ -293,7 +293,7 @@ function getFieldLabel(field: string): string {
         description: "Beschreibung",
         color: "Farbe",
         icon: "Icon",
-        parent_id: "Übergeordnete Kategorie",
+        parent_id: t('pages.categories.parentCategory'),
         sort_order: "Reihenfolge",
         is_active: "Status",
     }

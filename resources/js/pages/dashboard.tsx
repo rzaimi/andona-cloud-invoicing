@@ -22,6 +22,7 @@ import {
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, User, Customer, Invoice, Offer, Product } from "@/types"
 import { Head, Link, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface DashboardStats {
@@ -91,6 +92,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function Dashboard() {
+    const { t } = useTranslation()
     const { stats, growth, recent, alerts, user } = usePage<DashboardProps>().props
 
     const getStatusColor = (status: string) => {
@@ -157,29 +159,29 @@ export default function Dashboard() {
 
     const translateStatus = (status: string) => {
         const statusMap: Record<string, string> = {
-            draft: "Entwurf",
-            sent: "Versendet",
-            paid: "Bezahlt",
-            overdue: "Überfällig",
-            cancelled: "Storniert",
-            accepted: "Angenommen",
-            rejected: "Abgelehnt",
-            expired: "Abgelaufen",
+            draft: t("common.draft"),
+            sent: t("common.sent"),
+            paid: t("common.paid"),
+            overdue: t("common.overdue"),
+            cancelled: t("common.cancelled"),
+            accepted: t("common.accepted"),
+            rejected: t("common.rejected"),
+            expired: t("common.expired"),
         }
         return statusMap[status] || status
     }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
+            <Head title={t('pages.dashboard.title')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 {/* Welcome Section */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-                        <p className="text-gray-600">Willkommen zurück, {user.name}</p>
-                        <p className="text-sm text-gray-500">{user.company?.name || "Keine Firma"}</p>
+                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">{t('nav.dashboard')}</h1>
+                        <p className="text-gray-600">{t('pages.dashboard.welcomeBack', { name: user.name })}</p>
+                        <p className="text-sm text-gray-500">{user.company?.name || t('pages.dashboard.noCompany')}</p>
                     </div>
 
                     <div className="flex gap-2">
@@ -202,7 +204,7 @@ export default function Dashboard() {
                 <div className="grid auto-rows-min gap-4 md:grid-cols-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Kunden</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.customers')}</CardTitle>
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -220,7 +222,7 @@ export default function Dashboard() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Rechnungen</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.invoices')}</CardTitle>
                             <ReceiptText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -228,7 +230,7 @@ export default function Dashboard() {
                             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                                 <span className="text-green-600">{stats.invoices.paid} bezahlt</span>
                                 <span>•</span>
-                                <span className="text-red-600">{stats.invoices.overdue} überfällig</span>
+                                <span className="text-red-600">{stats.invoices.overdue} {t('common.overdue')}</span>
                             </div>
                             <Link href="/invoices" className="text-xs text-muted-foreground hover:underline">
                                 Alle Rechnungen anzeigen
@@ -238,15 +240,15 @@ export default function Dashboard() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Angebote</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.offers')}</CardTitle>
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.offers.total}</div>
                             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                                <span className="text-green-600">{stats.offers.accepted} angenommen</span>
+                                <span className="text-green-600">{stats.offers.accepted} {t('common.accepted')}</span>
                                 <span>•</span>
-                                <span className="text-blue-600">{stats.offers.sent} versendet</span>
+                                <span className="text-blue-600">{stats.offers.sent} {t('common.sent')}</span>
                             </div>
                             <Link href="/offers" className="text-xs text-muted-foreground hover:underline">
                                 Alle Angebote anzeigen
@@ -256,15 +258,15 @@ export default function Dashboard() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Produkte</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.products')}</CardTitle>
                             <Package className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.products.total}</div>
                             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                                <span className="text-orange-600">{stats.products.low_stock} wenig Lager</span>
+                                <span className="text-orange-600">{stats.products.low_stock} {t('pages.dashboard.lowStockItems')}</span>
                                 <span>•</span>
-                                <span className="text-red-600">{stats.products.out_of_stock} ausverkauft</span>
+                                <span className="text-red-600">{stats.products.out_of_stock} {t('pages.dashboard.outOfStock')}</span>
                             </div>
                             <Link href="/products" className="text-xs text-muted-foreground hover:underline">
                                 Alle Produkte anzeigen
@@ -277,7 +279,7 @@ export default function Dashboard() {
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Umsatz diesen Monat</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.dashboard.revenueThisMonth')}</CardTitle>
                             <Euro className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -286,7 +288,7 @@ export default function Dashboard() {
                                 {getGrowthIcon(growth.revenue_growth)}
                                 <span className={getGrowthColor(growth.revenue_growth)}>
                   {growth.revenue_growth > 0 ? "+" : ""}
-                                    {growth.revenue_growth}% vs. letzter Monat
+                                    {growth.revenue_growth}% {t('pages.dashboard.vsLastMonth')}
                 </span>
                             </div>
                         </CardContent>
@@ -294,26 +296,26 @@ export default function Dashboard() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Offene Rechnungen</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.reports.openInvoices')}</CardTitle>
                             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{formatCurrency(stats.invoices.outstanding_amount)}</div>
                             <div className="text-xs text-muted-foreground">
-                                {stats.invoices.sent + stats.invoices.overdue} Rechnungen offen
+                                {stats.invoices.sent + stats.invoices.overdue} {t('pages.dashboard.invoicesOpen')}
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Umsatz dieses Jahr</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.dashboard.revenueThisYear')}</CardTitle>
                             <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{formatCurrency(stats.revenue.this_year)}</div>
                             <div className="text-xs text-muted-foreground">
-                                Bezahlte Rechnungen: {formatCurrency(stats.invoices.paid_amount)}
+                                {t('pages.dashboard.paidInvoices')}: {formatCurrency(stats.invoices.paid_amount)}
                             </div>
                         </CardContent>
                     </Card>
@@ -328,7 +330,7 @@ export default function Dashboard() {
                                 <CardHeader>
                                     <CardTitle className="text-red-800 flex items-center">
                                         <AlertTriangle className="mr-2 h-5 w-5" />
-                                        Überfällige Rechnungen ({alerts.overdue_invoices.length})
+                                        {t('pages.dashboard.overdueInvoices')} ({alerts.overdue_invoices.length})
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -341,13 +343,13 @@ export default function Dashboard() {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="font-medium text-red-600">{formatCurrency(invoice.total)}</p>
-                                                    <p className="text-xs text-gray-500">Fällig: {formatDate(invoice.due_date)}</p>
+                                                    <p className="text-xs text-gray-500">{t('pages.dashboard.due')}: {formatDate(invoice.due_date)}</p>
                                                 </div>
                                             </div>
                                         ))}
                                         {alerts.overdue_invoices.length > 5 && (
                                             <Link href="/invoices?status=overdue" className="text-sm text-blue-600 hover:underline">
-                                                Alle {alerts.overdue_invoices.length} überfälligen Rechnungen anzeigen
+                                                {t('pages.dashboard.showAllOverdue', { count: alerts.overdue_invoices.length })}
                                             </Link>
                                         )}
                                     </div>
@@ -361,7 +363,7 @@ export default function Dashboard() {
                                 <CardHeader>
                                     <CardTitle className="text-orange-800 flex items-center">
                                         <Package className="mr-2 h-5 w-5" />
-                                        Niedriger Lagerbestand ({alerts.low_stock_products.length})
+                                        {t('pages.dashboard.lowStock')} ({alerts.low_stock_products.length})
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -376,13 +378,13 @@ export default function Dashboard() {
                                                     <p className="font-medium text-orange-600">
                                                         {product.stock_quantity} {product.unit}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">Min: {product.min_stock_level}</p>
+                                                    <p className="text-xs text-gray-500">{t('pages.dashboard.min')}: {product.min_stock_level}</p>
                                                 </div>
                                             </div>
                                         ))}
                                         {alerts.low_stock_products.length > 5 && (
                                             <Link href="/products?filter=low_stock" className="text-sm text-blue-600 hover:underline">
-                                                Alle {alerts.low_stock_products.length} Produkte mit niedrigem Lagerbestand anzeigen
+                                                {t('pages.dashboard.showAllLowStock', { count: alerts.low_stock_products.length })}
                                             </Link>
                                         )}
                                     </div>
@@ -397,7 +399,7 @@ export default function Dashboard() {
                     {/* Recent Invoices */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Aktuelle Rechnungen</CardTitle>
+                            <CardTitle>{t('pages.dashboard.recentInvoices')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -419,10 +421,10 @@ export default function Dashboard() {
                                     </div>
                                 ))}
                                 {recent.invoices.length === 0 && (
-                                    <p className="text-gray-500 text-center py-4">Keine aktuellen Rechnungen</p>
+                                    <p className="text-gray-500 text-center py-4">{t('pages.dashboard.noRecentInvoices')}</p>
                                 )}
                                 <Link href="/invoices" className="text-sm text-blue-600 hover:underline block text-center">
-                                    Alle Rechnungen anzeigen
+                                    {t('pages.dashboard.showAllInvoices')}
                                 </Link>
                             </div>
                         </CardContent>
@@ -431,7 +433,7 @@ export default function Dashboard() {
                     {/* Recent Offers */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Aktuelle Angebote</CardTitle>
+                            <CardTitle>{t('pages.dashboard.recentOffers')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -453,10 +455,10 @@ export default function Dashboard() {
                                     </div>
                                 ))}
                                 {recent.offers.length === 0 && (
-                                    <p className="text-gray-500 text-center py-4">Keine aktuellen Angebote</p>
+                                    <p className="text-gray-500 text-center py-4">{t('pages.dashboard.noRecentOffers')}</p>
                                 )}
                                 <Link href="/offers" className="text-sm text-blue-600 hover:underline block text-center">
-                                    Alle Angebote anzeigen
+                                    {t('pages.dashboard.showAllOffers')}
                                 </Link>
                             </div>
                         </CardContent>
@@ -472,14 +474,14 @@ export default function Dashboard() {
                                 <Link href="/customers/create">
                                     <Button variant="outline" className="w-full justify-start bg-transparent">
                                         <Users className="mr-2 h-4 w-4" />
-                                        Neuen Kunden hinzufügen
+                                        {t('pages.dashboard.addNewCustomer')}
                                     </Button>
                                 </Link>
 
                                 <Link href="/products/create">
                                     <Button variant="outline" className="w-full justify-start bg-transparent">
                                         <Package className="mr-2 h-4 w-4" />
-                                        Neues Produkt hinzufügen
+                                        {t('pages.dashboard.addNewProduct')}
                                     </Button>
                                 </Link>
 
@@ -487,7 +489,7 @@ export default function Dashboard() {
                                     <Link href="/users">
                                         <Button variant="outline" className="w-full justify-start bg-transparent">
                                             <Users className="mr-2 h-4 w-4" />
-                                            Benutzer verwalten
+                                            {t('nav.manageUsers')}
                                         </Button>
                                     </Link>
                                 )}
@@ -495,7 +497,7 @@ export default function Dashboard() {
                                 <Link href="/settings">
                                     <Button variant="outline" className="w-full justify-start bg-transparent">
                                         <Settings className="mr-2 h-4 w-4" />
-                                        Firmeneinstellungen
+                                        {t('pages.settings.companySettings')}
                                     </Button>
                                 </Link>
 
@@ -503,7 +505,7 @@ export default function Dashboard() {
                                     <Link href="/settings/invoice-layouts">
                                         <Button variant="outline" className="w-full justify-start bg-transparent">
                                             <FileText className="mr-2 h-4 w-4" />
-                                            Rechnungslayouts
+                                            {t('nav.invoiceLayouts')}
                                         </Button>
                                     </Link>
                                 )}
@@ -511,7 +513,7 @@ export default function Dashboard() {
                                 <Link href="/reports">
                                     <Button variant="outline" className="w-full justify-start bg-transparent">
                                         <TrendingUp className="mr-2 h-4 w-4" />
-                                        Berichte anzeigen
+                                        {t('pages.dashboard.showReports')}
                                     </Button>
                                 </Link>
                             </div>
@@ -523,7 +525,7 @@ export default function Dashboard() {
                 {recent.customers.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Neue Kunden</CardTitle>
+                            <CardTitle>{t('pages.dashboard.newCustomers')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -532,7 +534,7 @@ export default function Dashboard() {
                                         <div>
                                             <p className="font-medium">{customer.name}</p>
                                             <p className="text-sm text-gray-600">{customer.email}</p>
-                                            <p className="text-xs text-gray-500">Erstellt: {formatDate(customer.created_at)}</p>
+                                            <p className="text-xs text-gray-500">{t('pages.dashboard.created')}: {formatDate(customer.created_at)}</p>
                                         </div>
                                         <div className="flex space-x-1">
                                             <Link href={`/customers/${customer.id}`}>

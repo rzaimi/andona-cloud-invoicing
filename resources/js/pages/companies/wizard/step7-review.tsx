@@ -27,8 +27,8 @@ export default function Step7Review({ data }: Step7Props) {
                     <div>
                         <h3 className="font-semibold text-green-900">Fast geschafft!</h3>
                         <p className="text-sm text-green-800 mt-1">
-                            Überprüfen Sie Ihre Eingaben und klicken Sie dann auf "Firma erstellen",
-                            um die vollständig konfigurierte Firma anzulegen.
+                            {t('pages.companies.reviewDesc1')}
+                            {t('pages.companies.reviewDesc2')}
                         </p>
                     </div>
                 </div>
@@ -42,7 +42,7 @@ export default function Step7Review({ data }: Step7Props) {
                         Firmeninformationen
                     </h3>
                     <Badge variant={isComplete(companyInfo, ["name", "email"]) ? "default" : "destructive"}>
-                        {isComplete(companyInfo, ["name", "email"]) ? "Vollständig" : "Unvollständig"}
+                        {isComplete(companyInfo, ["name", "email"]) ? t('common.complete') : t('common.incomplete')}
                     </Badge>
                 </div>
                 <div className="grid gap-2 text-sm">
@@ -124,7 +124,7 @@ export default function Step7Review({ data }: Step7Props) {
                         <span className="font-medium">{emailSettings.smtp_port || "-"}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Verschlüsselung:</span>
+                        <span className="text-muted-foreground">{t('settings.smtpEncryption')}:</span>
                         <span className="font-medium uppercase">
                             {emailSettings.smtp_encryption || "TLS"}
                         </span>
@@ -147,15 +147,15 @@ export default function Step7Review({ data }: Step7Props) {
                 </div>
                 <div className="grid gap-2 text-sm">
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Rechnungs-Präfix:</span>
+                        <span className="text-muted-foreground">{t('settings.invoicePrefix')}:</span>
                         <span className="font-medium">{invoiceSettings.invoice_prefix || "RE-"}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Angebots-Präfix:</span>
+                        <span className="text-muted-foreground">{t('settings.offerPrefix')}:</span>
                         <span className="font-medium">{invoiceSettings.offer_prefix || "AN-"}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Währung:</span>
+                        <span className="text-muted-foreground">{t('settings.currency')}:</span>
                         <span className="font-medium">{invoiceSettings.currency || "EUR"}</span>
                     </div>
                     <div className="flex justify-between">
@@ -184,7 +184,7 @@ export default function Step7Review({ data }: Step7Props) {
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Freundliche Erinnerung:</span>
                         <span className="font-medium">
-                            Tag {mahnungSettings.reminder_friendly_days || 7} (keine Gebühr)
+                            {t('settings.day')} {mahnungSettings.reminder_friendly_days || 7} ({t('settings.noFee')})
                         </span>
                     </div>
                     <div className="flex justify-between">
@@ -260,7 +260,7 @@ export default function Step7Review({ data }: Step7Props) {
                         Erster Administrator
                     </h3>
                     <Badge variant={firstUser.create_user ? "default" : "secondary"}>
-                        {firstUser.create_user ? "Wird erstellt" : "Übersprungen"}
+                        {firstUser.create_user ? t('common.willBeCreated') : t('common.skipped')}
                     </Badge>
                 </div>
                 {firstUser.create_user ? (
@@ -282,7 +282,7 @@ export default function Step7Review({ data }: Step7Props) {
                     </div>
                 ) : (
                     <p className="text-sm text-muted-foreground">
-                        Kein Benutzer wird erstellt. Sie können später Benutzer hinzufügen.
+                        {t('pages.companies.noUserCreated')}
                     </p>
                 )}
             </div>
@@ -290,8 +290,8 @@ export default function Step7Review({ data }: Step7Props) {
             {/* Final Note */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                    <strong>Hinweis:</strong> Nach dem Erstellen der Firma können Sie alle Einstellungen
-                    jederzeit über die Firmeneinstellungen anpassen.
+                    <strong>{t('common.note')}:</strong> {t('pages.companies.reviewNote')}
+                    
                 </p>
             </div>
         </div>

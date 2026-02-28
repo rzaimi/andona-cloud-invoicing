@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -47,7 +48,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: "Lagerverwaltung" },
 ]
 
-export default function WarehousesIndex({ warehouses, stats, filters }: WarehousesIndexProps) {
+export default function WarehousesIndex({
+    warehouses, stats, filters }: WarehousesIndexProps) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
     const [search, setSearch] = useState(filters.search || "")
@@ -71,7 +74,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
     }
 
     const deleteWarehouse = (id: string, name: string) => {
-        if (confirm(`Sind Sie sicher, dass Sie das Lager "${name}" löschen möchten?`)) {
+        if (confirm(t('pages.warehouse.deleteConfirm', { name: name }))) {
             router.delete(`/warehouses/${id}`)
         }
     }
@@ -80,9 +83,9 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
 
     const getStatusBadge = (isActive: boolean) => {
         if (isActive) {
-            return <Badge variant="default">Aktiv</Badge>
+            return <Badge variant="default">{t('common.active')}</Badge>
         }
-        return <Badge variant="secondary">Inaktiv</Badge>
+        return <Badge variant="secondary">{t('common.inactive')}</Badge>
     }
 
     return (
@@ -93,8 +96,8 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">Lagerbestand</h1>
-                        <p className="text-muted-foreground">Verwalten Sie Ihre Lager und Bestände</p>
+                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">{t('pages.products.tabInventory')}</h1>
+                        <p className="text-muted-foreground">{t('pages.warehouse.subtitle')}</p>
                     </div>
                     <Button asChild>
                         <Link href="/warehouses/create">
@@ -143,7 +146,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Niedrige Bestände</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.warehouse.lowStock')}</CardTitle>
                             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -156,7 +159,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                 {/* Filters */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Filter</CardTitle>
+                        <CardTitle>{t('common.filters')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-col gap-4 md:flex-row md:items-end">
@@ -179,15 +182,15 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                             </div>
 
                             <div className="w-full md:w-[200px]">
-                                <label className="text-sm font-medium mb-2 block">Status</label>
+                                <label className="text-sm font-medium mb-2 block">{t('common.status')}</label>
                                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Alle</SelectItem>
-                                        <SelectItem value="active">Aktiv</SelectItem>
-                                        <SelectItem value="inactive">Inaktiv</SelectItem>
+                                        <SelectItem value="all">{t('common.all')}</SelectItem>
+                                        <SelectItem value="active">{t('common.active')}</SelectItem>
+                                        <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -195,11 +198,11 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                             <div className="flex gap-2">
                                 <Button onClick={handleSearch}>
                                     <Search className="mr-2 h-4 w-4" />
-                                    Suchen
+                                    {t('common.search')}
                                 </Button>
                                 <Button variant="outline" onClick={handleReset}>
                                     <Filter className="mr-2 h-4 w-4" />
-                                    Zurücksetzen
+                                    {t('common.reset')}
                                 </Button>
                             </div>
                         </div>
@@ -210,7 +213,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                 <Card>
                     <CardHeader>
                         <CardTitle>Lager ({warehouses.total})</CardTitle>
-                        <CardDescription>Übersicht aller Lager</CardDescription>
+                        <CardDescription>{t('pages.warehouse.allWarehouses')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {warehouses.data.length === 0 ? (
@@ -238,12 +241,12 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Code</TableHead>
-                                                <TableHead>Name</TableHead>
+                                                <TableHead>{t('common.name')}</TableHead>
                                                 <TableHead>Stadt</TableHead>
-                                                <TableHead>Produkte</TableHead>
+                                                <TableHead>{t('nav.products')}</TableHead>
                                                 <TableHead>Bewegungen</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead className="text-right">Aktionen</TableHead>
+                                                <TableHead>{t('common.status')}</TableHead>
+                                                <TableHead className="text-right">{t('common.actions')}</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -302,7 +305,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                                                     size="sm"
                                                     onClick={() => router.get(warehouses.prev_page_url || "/warehouses")}
                                                 >
-                                                    Zurück
+                                                    {t('common.back')}
                                                 </Button>
                                             )}
                                             {warehouses.current_page < warehouses.last_page && (
@@ -311,7 +314,7 @@ export default function WarehousesIndex({ warehouses, stats, filters }: Warehous
                                                     size="sm"
                                                     onClick={() => router.get(warehouses.next_page_url || "/warehouses")}
                                                 >
-                                                    Weiter
+                                                    {t('common.next')}
                                                 </Button>
                                             )}
                                         </div>

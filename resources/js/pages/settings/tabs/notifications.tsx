@@ -1,6 +1,7 @@
 "use client"
 
 import { useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -13,7 +14,9 @@ interface NotificationsSettingsTabProps {
     notificationSettings: any
 }
 
-export default function NotificationsSettingsTab({ notificationSettings }: NotificationsSettingsTabProps) {
+export default function NotificationsSettingsTab({
+    notificationSettings }: NotificationsSettingsTabProps) {
+    const { t } = useTranslation()
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         notify_on_invoice_created: notificationSettings?.notify_on_invoice_created ?? false,
         notify_on_invoice_sent: notificationSettings?.notify_on_invoice_sent ?? true,
@@ -35,24 +38,24 @@ export default function NotificationsSettingsTab({ notificationSettings }: Notif
                 <Alert className="border-green-500 bg-green-50">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <AlertDescription className="text-green-600">
-                        Benachrichtigungseinstellungen wurden erfolgreich aktualisiert.
+                        {t('pages.settings.saved')}
                     </AlertDescription>
                 </Alert>
             )}
 
             <Card>
                 <CardHeader>
-                    <CardTitle>E-Mail-Benachrichtigungen</CardTitle>
+                    <CardTitle>{t('settings.emailNotifications')}</CardTitle>
                     <CardDescription>
-                        Legen Sie fest, wann E-Mail-Benachrichtigungen gesendet werden sollen
+                        {t('settings.emailNotificationsDesc')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="email_notifications_enabled">E-Mail-Benachrichtigungen aktivieren</Label>
+                            <Label htmlFor="email_notifications_enabled">{t('settings.enableEmailNotifications')}</Label>
                             <p className="text-sm text-muted-foreground">
-                                Alle E-Mail-Benachrichtigungen ein- oder ausschalten
+                                {t('settings.enableEmailNotificationsDesc')}
                             </p>
                         </div>
                         <Switch
@@ -64,9 +67,9 @@ export default function NotificationsSettingsTab({ notificationSettings }: Notif
 
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="notify_on_invoice_created">Bei Rechnungserstellung</Label>
+                            <Label htmlFor="notify_on_invoice_created">{t('settings.notifyOnInvoiceCreate')}</Label>
                             <p className="text-sm text-muted-foreground">
-                                Benachrichtigung bei Erstellung einer neuen Rechnung
+                                {t('settings.notifyOnInvoiceCreateDesc')}
                             </p>
                         </div>
                         <Switch
@@ -78,9 +81,9 @@ export default function NotificationsSettingsTab({ notificationSettings }: Notif
 
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="notify_on_invoice_sent">Bei Rechnungsversand</Label>
+                            <Label htmlFor="notify_on_invoice_sent">{t('settings.notifyOnInvoiceSend')}</Label>
                             <p className="text-sm text-muted-foreground">
-                                Benachrichtigung wenn eine Rechnung versendet wurde
+                                {t('settings.notifyOnInvoiceSendDesc')}
                             </p>
                         </div>
                         <Switch
@@ -92,7 +95,7 @@ export default function NotificationsSettingsTab({ notificationSettings }: Notif
 
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="notify_on_payment_received">Bei Zahlungseingang</Label>
+                            <Label htmlFor="notify_on_payment_received">{t('settings.notifyOnPayment')}</Label>
                             <p className="text-sm text-muted-foreground">
                                 Benachrichtigung wenn eine Zahlung eingegangen ist
                             </p>
@@ -106,9 +109,9 @@ export default function NotificationsSettingsTab({ notificationSettings }: Notif
 
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="notify_on_offer_created">Bei Angebotserstellung</Label>
+                            <Label htmlFor="notify_on_offer_created">{t('settings.notifyOnOfferCreate')}</Label>
                             <p className="text-sm text-muted-foreground">
-                                Benachrichtigung bei Erstellung eines neuen Angebots
+                                {t('settings.notifyOnOfferCreateDesc')}
                             </p>
                         </div>
                         <Switch
@@ -120,9 +123,9 @@ export default function NotificationsSettingsTab({ notificationSettings }: Notif
 
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="notify_on_offer_accepted">Bei Angebotsannahme</Label>
+                            <Label htmlFor="notify_on_offer_accepted">{t('settings.notifyOnOfferAccept')}</Label>
                             <p className="text-sm text-muted-foreground">
-                                Benachrichtigung wenn ein Angebot angenommen wurde
+                                {t('settings.notifyOnOfferAcceptDesc')}
                             </p>
                         </div>
                         <Switch
@@ -134,9 +137,9 @@ export default function NotificationsSettingsTab({ notificationSettings }: Notif
 
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="notify_on_offer_rejected">Bei Angebotsablehnung</Label>
+                            <Label htmlFor="notify_on_offer_rejected">{t('settings.notifyOnOfferReject')}</Label>
                             <p className="text-sm text-muted-foreground">
-                                Benachrichtigung wenn ein Angebot abgelehnt wurde
+                                {t('settings.notifyOnOfferRejectDesc')}
                             </p>
                         </div>
                         <Switch

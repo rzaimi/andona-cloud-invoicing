@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FileText, LoaderCircle, ArrowRight } from 'lucide-react';
 import { FormEventHandler } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -21,6 +22,7 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
+    const { t } = useTranslation()
     const { data, setData, post, processing, errors, reset } = useForm<Required<LoginForm>>({
         email: '',
         password: '',
@@ -36,7 +38,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     return (
         <>
-            <Head title="Anmelden" />
+            <Head title={t('auth.login')} />
             
             <div className="flex min-h-screen">
                 {/* Left Side - 70% Image/Branding */}
@@ -61,7 +63,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         {/* Center Content */}
                         <div className="max-w-2xl">
                             <h1 className="mb-6 text-5xl font-bold leading-tight">
-                                Professionelle Rechnungsverwaltung
+                                {t('auth.marketingTitle')}
                             </h1>
                             <p className="text-xl text-white/90 leading-relaxed">
                                 Erstellen, versenden und verwalten Sie Ihre Rechnungen effizient und sicher. 
@@ -110,10 +112,10 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         {/* Header */}
                         <div className="text-center">
                             <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
-                                Willkommen zurück
+                                {t('auth.loginTitle')}
                             </h2>
                             <p className="mt-3 text-base text-gray-600 dark:text-gray-400">
-                                Melden Sie sich an, um fortzufahren
+                                {t('auth.loginSubtitle')}
                             </p>
                         </div>
 
@@ -130,7 +132,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 {/* Email */}
                                 <div className="space-y-2.5">
                                     <Label htmlFor="email" className="text-base font-medium text-gray-700 dark:text-gray-300">
-                                        E-Mail-Adresse
+                                        {t('auth.email')}
                                     </Label>
                                     <Input
                                         id="email"
@@ -150,7 +152,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 {/* Password */}
                                 <div className="space-y-2.5">
                                     <Label htmlFor="password" className="text-base font-medium text-gray-700 dark:text-gray-300">
-                                        Passwort
+                                        {t('auth.password')}
                                     </Label>
                                     <Input
                                         id="password"
@@ -179,7 +181,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                         htmlFor="remember" 
                                         className="text-base font-normal text-gray-600 dark:text-gray-400 cursor-pointer"
                                     >
-                                        Angemeldet bleiben
+                                        {t('auth.rememberMe')}
                                     </Label>
                                 </div>
                             </div>
@@ -195,10 +197,10 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 {processing ? (
                                     <>
                                         <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-                                        Anmelden...
+                                        {t('common.loading')}
                                     </>
                                 ) : (
-                                    'Anmelden'
+                                    t('auth.login')
                                 )}
                             </Button>
                         </form>
@@ -206,7 +208,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         {/* Footer */}
                         <div className="text-center text-base text-gray-600 dark:text-gray-400">
                             <p>
-                                Sicherer Login mit modernster Verschlüsselung
+                                {t('auth.marketingSubtitle')}
                             </p>
                         </div>
                     </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -5,19 +6,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { User } from "lucide-react"
 
 export default function Step6FirstUser({ data, setData, errors }: any) {
+    const { t } = useTranslation()
     return (
         <div className="space-y-6">
             <Alert>
                 <User className="h-4 w-4" />
                 <AlertDescription>
-                    Optional: Erstellen Sie einen Administrator-Benutzer für diese Firma. Sie können auch später Benutzer hinzufügen.
+                    {t('settings.firstUserOptionalDesc')}
                 </AlertDescription>
             </Alert>
 
             <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
                 <div className="space-y-0.5">
-                    <Label className="text-base">Ersten Benutzer erstellen?</Label>
-                    <p className="text-sm text-muted-foreground">Einen Admin-Benutzer für diese Firma anlegen</p>
+                    <Label className="text-base">{t('settings.firstUserCreateLabel')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('settings.firstUserAdminDesc')}</p>
                 </div>
                 <Switch
                     checked={data.first_user?.create_user || false}

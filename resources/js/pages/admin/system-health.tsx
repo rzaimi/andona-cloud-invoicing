@@ -284,13 +284,13 @@ export default function SystemHealth({ health }: Props) {
     }
 
     const artisanCommands = [
-        { command: 'cache:clear', label: 'Cache leeren', icon: Trash2, description: 'Löscht alle Cache-Daten' },
-        { command: 'config:clear', label: 'Config leeren', icon: Settings, description: 'Löscht Config-Cache' },
-        { command: 'route:clear', label: 'Routes leeren', icon: Route, description: 'Löscht Route-Cache' },
-        { command: 'view:clear', label: 'Views leeren', icon: Eye, description: 'Löscht View-Cache' },
-        { command: 'optimize:clear', label: 'Optimierung leeren', icon: RefreshCw, description: 'Löscht alle Optimierungs-Caches' },
-        { command: 'optimize', label: 'Optimieren', icon: Wrench, description: 'Optimiert die Anwendung' },
-        { command: 'queue:clear', label: 'Queue leeren', icon: Trash2, description: 'Löscht alle Queue-Jobs' },
+        { command: 'cache:clear', label: t('admin.cacheClear'), icon: Trash2, description: t('admin.cacheClearDesc')},
+        { command: 'config:clear', label: t('admin.configClear'), icon: Settings, description: t('admin.configClearDesc')},
+        { command: 'route:clear', label: t('admin.routesClear'), icon: Route, description: t('admin.routesClearDesc')},
+        { command: 'view:clear', label: t('admin.viewsClear'), icon: Eye, description: t('admin.viewsClearDesc')},
+        { command: 'optimize:clear', label: t('admin.optimizeClear'), icon: RefreshCw, description: t('admin.optimizeClearDesc')},
+        { command: 'optimize', label: t('admin.optimize'), icon: Wrench, description: t('admin.optimizeDesc')},
+        { command: 'queue:clear', label: t('admin.queueClear'), icon: Trash2, description: t('admin.queueClearDesc')},
     ]
 
     return (
@@ -301,7 +301,7 @@ export default function SystemHealth({ health }: Props) {
                 <div>
                     <h1 className="text-1xl font-bold tracking-tight">System Gesundheit</h1>
                     <p className="text-muted-foreground mt-2">
-                        Überwachung und Status des Systems
+                        {t('admin.systemHealthDesc')}
                     </p>
                 </div>
 
@@ -313,7 +313,7 @@ export default function SystemHealth({ health }: Props) {
 
                 <Tabs defaultValue="overview" className="space-y-4">
                     <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="overview">Übersicht</TabsTrigger>
+                        <TabsTrigger value="overview">{t('common.overview')}</TabsTrigger>
                         <TabsTrigger value="processes">Prozesse</TabsTrigger>
                         <TabsTrigger value="logs">Logs</TabsTrigger>
                         <TabsTrigger value="commands">Befehle</TabsTrigger>
@@ -516,7 +516,7 @@ export default function SystemHealth({ health }: Props) {
                                         <p className="text-lg font-semibold">{health.database.version}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Größe</p>
+                                        <p className="text-sm font-medium text-muted-foreground">{t('common.size')}</p>
                                         <p className="text-lg font-semibold">
                                             {typeof health.database.size_mb === 'number' 
                                                 ? `${health.database.size_mb} MB` 
@@ -558,7 +558,7 @@ export default function SystemHealth({ health }: Props) {
                                 </div>
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
-                                        <p className="text-sm font-medium">Öffentlicher Speicher</p>
+                                        <p className="text-sm font-medium">{t('admin.publicStorage')}</p>
                                         <p className="text-sm text-muted-foreground">
                                             {health.storage.public.used_gb} GB / {health.storage.public.total_gb} GB
                                         </p>
@@ -590,7 +590,7 @@ export default function SystemHealth({ health }: Props) {
                                         <p className="text-lg font-semibold">{health.cache.driver}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Status</p>
+                                        <p className="text-sm font-medium text-muted-foreground">{t('common.status')}</p>
                                         <StatusBadge status={health.cache.working ? 'working' : 'error'} />
                                     </div>
                                 </div>
@@ -686,10 +686,10 @@ export default function SystemHealth({ health }: Props) {
                             <CardContent className="space-y-4">
                                 <div className="flex gap-4">
                                     <div className="flex-1">
-                                        <label className="text-sm font-medium mb-2 block">Log-Datei auswählen</label>
+                                        <label className="text-sm font-medium mb-2 block">{t('admin.selectLogFile')}</label>
                                         <Select value={selectedLogFile} onValueChange={setSelectedLogFile}>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Datei auswählen" />
+                                                <SelectValue placeholder={t('admin.selectFile')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {health.logs.log_files.map((file) => (
@@ -707,7 +707,7 @@ export default function SystemHealth({ health }: Props) {
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="all">Alle</SelectItem>
+                                                <SelectItem value="all">{t('common.all')}</SelectItem>
                                                 <SelectItem value="error">Fehler</SelectItem>
                                                 <SelectItem value="warning">Warnungen</SelectItem>
                                                 <SelectItem value="info">Info</SelectItem>
@@ -746,13 +746,13 @@ export default function SystemHealth({ health }: Props) {
 
                                 {!loadingLogs && selectedLogFile && logEntries.length === 0 && (
                                     <div className="text-center py-8 text-muted-foreground">
-                                        Keine Log-Einträge gefunden
+                                        {t('admin.noLogEntries')}
                                     </div>
                                 )}
 
                                 {!selectedLogFile && (
                                     <div className="text-center py-8 text-muted-foreground">
-                                        Bitte wählen Sie eine Log-Datei aus
+                                        {t('admin.selectLogFilePrompt')}
                                     </div>
                                 )}
                             </CardContent>
@@ -767,7 +767,7 @@ export default function SystemHealth({ health }: Props) {
                                     <Terminal className="h-5 w-5" />
                                     <CardTitle>Artisan Befehle</CardTitle>
                                 </div>
-                                <CardDescription>Wichtige Artisan-Befehle ausführen</CardDescription>
+                                <CardDescription>{t('admin.runArtisanCommands')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -790,12 +790,12 @@ export default function SystemHealth({ health }: Props) {
                                                 {executing === cmd.command ? (
                                                     <>
                                                         <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                                        Wird ausgeführt...
+                                                        {t('admin.executing')}
                                                     </>
                                                 ) : (
                                                     <>
                                                         <Terminal className="mr-2 h-4 w-4" />
-                                                        Ausführen
+                                                        {t('admin.execute')}
                                                     </>
                                                 )}
                                             </Button>

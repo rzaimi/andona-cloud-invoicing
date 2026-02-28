@@ -1,6 +1,7 @@
 "use client"
 
 import { Head, Link, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -38,7 +39,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: "Kundenberichte" },
 ]
 
-export default function CustomerReports({ customerStats }: CustomerReportsProps) {
+export default function CustomerReports({
+    customerStats }: CustomerReportsProps) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
 
@@ -61,7 +64,7 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
         const link = document.createElement("a")
         const url = URL.createObjectURL(blob)
         link.setAttribute("href", url)
-        link.setAttribute("download", `kundenbericht-${new Date().toISOString().split('T')[0]}.csv`)
+        link.setAttribute("download", `kundenbericht-${new Date().toISOString().split('T')}.csv`)
         link.style.visibility = "hidden"
         document.body.appendChild(link)
         link.click()
@@ -78,17 +81,17 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
                         <Link href={route("reports.index")}>
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-1xl font-bold text-gray-900">Kundenberichte</h1>
-                            <p className="text-gray-600">Kundenstatistiken und Top-Kunden</p>
+                            <h1 className="text-1xl font-bold text-gray-900">{t('nav.reportsCustomers')}</h1>
+                            <p className="text-gray-600">{t('pages.reports.customersSubtitle')}</p>
                         </div>
                     </div>
                     <Button variant="outline" onClick={handleExport}>
                         <Download className="mr-2 h-4 w-4" />
-                        Exportieren
+                        {t('common.export')}
                     </Button>
                 </div>
 
@@ -96,7 +99,7 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Kundenwachstum</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.reports.customerGrowth')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center justify-between">
@@ -116,7 +119,7 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
                                             <span className="text-sm font-medium">{customerStats.growth.change}</span>
                                         </div>
                                     ) : (
-                                        <span className="text-sm text-muted-foreground">Keine Änderung</span>
+                                        <span className="text-sm text-muted-foreground">{t('pages.reports.noChange')}</span>
                                     )}
                                     <p className="text-xs text-muted-foreground">vs. Vormonat</p>
                                 </div>
@@ -126,7 +129,7 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Kunden nach Status</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.reports.customersByStatus')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2">
@@ -142,11 +145,11 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Top Kunden</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.reports.topCustomers')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{customerStats.top_customers.length}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Kunden mit höchstem Umsatz</p>
+                            <p className="text-xs text-muted-foreground mt-1">{t('pages.reports.topCustomersByRevenue')}</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -156,7 +159,7 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
                     <Card>
                         <CardHeader>
                             <CardTitle>Top 10 Kunden - Umsatzvergleich</CardTitle>
-                            <CardDescription>Visualisierung der Top-Kunden nach Umsatz</CardDescription>
+                            <CardDescription>{t('pages.reports.topCustomersByRevenueDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={350}>
@@ -198,24 +201,24 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
                 {/* Top Customers Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Top 10 Kunden nach Umsatz</CardTitle>
-                        <CardDescription>Kunden mit dem höchsten Gesamtumsatz</CardDescription>
+                        <CardTitle>{t('pages.reports.top10CustomersByRevenue')}</CardTitle>
+                        <CardDescription>{t('pages.reports.top10CustomersDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Rang</TableHead>
-                                    <TableHead>Kunde</TableHead>
-                                    <TableHead className="text-right">Anzahl Rechnungen</TableHead>
-                                    <TableHead className="text-right">Gesamtumsatz</TableHead>
+                                    <TableHead>{t('pages.reports.rank')}</TableHead>
+                                    <TableHead>{t('pages.reports.customer')}</TableHead>
+                                    <TableHead className="text-right">{t('pages.reports.invoiceCount')}</TableHead>
+                                    <TableHead className="text-right">{t('pages.reports.totalRevenue')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {customerStats.top_customers.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                                            Keine Daten verfügbar
+                                            {t('pages.reports.noData')}
                                         </TableCell>
                                     </TableRow>
                                 ) : (

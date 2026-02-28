@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { route } from 'ziggy-js';
 import {
     FileText,
@@ -9,10 +10,6 @@ import {
     CreditCard,
     BarChart3,
     Calendar,
-    ArrowRight,
-    CheckCircle2,
-    TrendingUp,
-    Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -25,6 +22,7 @@ interface WelcomeProps {
 }
 
 export default function Welcome({ canLogin }: WelcomeProps) {
+    const { t } = useTranslation();
     const [impressumOpen, setImpressumOpen] = useState(false);
     const [datenschutzOpen, setDatenschutzOpen] = useState(false);
     const [demoDialogOpen, setDemoDialogOpen] = useState(false);
@@ -37,14 +35,57 @@ export default function Welcome({ canLogin }: WelcomeProps) {
         message: '',
     });
 
+    const features = [
+        {
+            icon: ReceiptText,
+            title: t('welcome.feat1Title'),
+            tagline: t('welcome.feat1Tagline'),
+            description: t('welcome.feat1Desc'),
+            bullets: [t('welcome.feat1B1'), t('welcome.feat1B2'), t('welcome.feat1B3')],
+        },
+        {
+            icon: Users,
+            title: t('welcome.feat2Title'),
+            tagline: t('welcome.feat2Tagline'),
+            description: t('welcome.feat2Desc'),
+            bullets: [t('welcome.feat2B1'), t('welcome.feat2B2'), t('welcome.feat2B3')],
+        },
+        {
+            icon: Mail,
+            title: t('welcome.feat3Title'),
+            tagline: t('welcome.feat3Tagline'),
+            description: t('welcome.feat3Desc'),
+            bullets: [t('welcome.feat3B1'), t('welcome.feat3B2'), t('welcome.feat3B3')],
+        },
+        {
+            icon: CreditCard,
+            title: t('welcome.feat4Title'),
+            tagline: t('welcome.feat4Tagline'),
+            description: t('welcome.feat4Desc'),
+            bullets: [t('welcome.feat4B1'), t('welcome.feat4B2'), t('welcome.feat4B3')],
+        },
+        {
+            icon: BarChart3,
+            title: t('welcome.feat5Title'),
+            tagline: t('welcome.feat5Tagline'),
+            description: t('welcome.feat5Desc'),
+            bullets: [t('welcome.feat5B1'), t('welcome.feat5B2'), t('welcome.feat5B3')],
+        },
+        {
+            icon: Calendar,
+            title: t('welcome.feat6Title'),
+            tagline: t('welcome.feat6Tagline'),
+            description: t('welcome.feat6Desc'),
+            bullets: [t('welcome.feat6B1'), t('welcome.feat6B2'), t('welcome.feat6B3')],
+        },
+    ];
+
     return (
         <>
             <Head title="AndoBill – Rechnungs- und Verwaltungssoftware" />
             <div
                 className="min-h-screen text-white relative overflow-hidden"
-                style={{
-                    background: '#0B4194',
-                }}
+                style={{ background: '#0B4194' }}
             >
                 {/* Decorative Elements */}
                 <div className="absolute inset-0">
@@ -59,10 +100,7 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                             <Link href="#top" className="flex items-center gap-3 font-bold tracking-wide">
                                 <div
                                     className="w-10 h-10 rounded-xl flex items-center justify-center"
-                                    style={{
-                                        background: '#0B4194',
-                                        boxShadow: '0 10px 24px rgba(11,65,148,.35)',
-                                    }}
+                                    style={{ background: '#0B4194', boxShadow: '0 10px 24px rgba(11,65,148,.35)' }}
                                 >
                                     <FileText className="h-5 w-5 text-white" />
                                 </div>
@@ -70,18 +108,10 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                             </Link>
 
                             <div className="hidden md:flex items-center gap-4 text-sm text-white/80">
-                                <a href="#leistungen" className="hover:text-white transition-colors">
-                                    Leistungen
-                                </a>
-                                <a href="#zielgruppe" className="hover:text-white transition-colors">
-                                    Für wen?
-                                </a>
-                                <a href="#vorteile" className="hover:text-white transition-colors">
-                                    Vorteile
-                                </a>
-                                <a href="#starten" className="hover:text-white transition-colors">
-                                    Starten
-                                </a>
+                                <a href="#leistungen" className="hover:text-white transition-colors">{t('welcome.navFeatures')}</a>
+                                <a href="#zielgruppe" className="hover:text-white transition-colors">{t('welcome.navForWhom')}</a>
+                                <a href="#vorteile" className="hover:text-white transition-colors">{t('welcome.navAdvantages')}</a>
+                                <a href="#starten" className="hover:text-white transition-colors">{t('welcome.navStart')}</a>
                             </div>
 
                             {canLogin && (
@@ -91,17 +121,14 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                         className="px-4 py-3 rounded-xl border border-white/12 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:bg-white/10 hover:border-white/18"
                                         style={{ background: 'rgba(255,255,255,.06)' }}
                                     >
-                                        Mehr erfahren
+                                        {t('welcome.learnMore')}
                                     </a>
                                     <Link
                                         href="/login"
                                         className="px-4 py-3 rounded-xl border border-white/12 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:bg-white/10 hover:border-white/18"
-                                        style={{
-                                            background: '#0B4194',
-                                            boxShadow: '0 16px 40px rgba(11,65,148,.32)',
-                                        }}
+                                        style={{ background: '#0B4194', boxShadow: '0 16px 40px rgba(11,65,148,.32)' }}
                                     >
-                                        Jetzt starten
+                                        {t('welcome.startNow')}
                                     </Link>
                                 </div>
                             )}
@@ -119,36 +146,26 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                         className="inline-flex items-center gap-2.5 text-xs text-white/80 border border-white/12 rounded-full px-3 py-2 mb-3.5"
                                         style={{ background: 'rgba(255,255,255,.05)' }}
                                     >
-                                        <span
-                                            className="w-2.5 h-2.5 rounded-full"
-                                            style={{
-                                                background: '#0B4194',
-                                                boxShadow: '0 0 0 4px rgba(11,65,148,.15)',
-                                            }}
-                                        />
-                                        <span>Rechnungen, Angebote, Zahlungen und Reports – zentral verwalten</span>
+                                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#0B4194', boxShadow: '0 0 0 4px rgba(11,65,148,.15)' }} />
+                                        <span>{t('welcome.tagline')}</span>
                                     </div>
 
                                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-2.5" style={{ letterSpacing: '-0.6px' }}>
-                                        Die smarte Rechnungs- und Verwaltungssoftware für Ihr Unternehmen
+                                        {t('welcome.headline')}
                                     </h1>
 
-                                    <p className="text-base sm:text-lg text-white/80 mb-5 max-w-[58ch] leading-relaxed">
-                                        <strong>AndoBill</strong> unterstützt Sie dabei, Ihre kaufmännischen Prozesse effizient, übersichtlich und professionell zu verwalten –
-                                        von der Dokumentenerstellung bis zur Auswertung von Umsätzen und Ausgaben.
-                                    </p>
+                                    <p className="text-base sm:text-lg text-white/80 mb-5 max-w-[58ch] leading-relaxed"
+                                        dangerouslySetInnerHTML={{ __html: t('welcome.description') }}
+                                    />
 
                                     <div className="flex flex-wrap gap-3 mt-5">
                                         {canLogin && (
                                             <Link
                                                 href="/login"
                                                 className="px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-105 text-white"
-                                                style={{
-                                                    background: '#0B4194',
-                                                    boxShadow: '0 16px 40px rgba(11,65,148,.32)',
-                                                }}
+                                                style={{ background: '#0B4194', boxShadow: '0 16px 40px rgba(11,65,148,.32)' }}
                                             >
-                                                Jetzt mit AndoBill starten
+                                                {t('welcome.startWithAndoBill')}
                                             </Link>
                                         )}
                                         <a
@@ -156,31 +173,22 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                             className="px-4 py-3 rounded-xl border border-white/12 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:bg-white/10 hover:border-white/18"
                                             style={{ background: 'rgba(255,255,255,.06)' }}
                                         >
-                                            Leistungen ansehen
+                                            {t('welcome.viewFeatures')}
                                         </a>
                                     </div>
 
                                     <div className="flex flex-wrap gap-4 mt-4 text-xs text-white/80">
-                                        <div
-                                            className="flex items-center gap-2.5 px-3 py-2.5 border border-white/12 rounded-xl"
-                                            style={{ background: 'rgba(255,255,255,.04)' }}
-                                        >
+                                        <div className="flex items-center gap-2.5 px-3 py-2.5 border border-white/12 rounded-xl" style={{ background: 'rgba(255,255,255,.04)' }}>
                                             <ReceiptText className="w-4.5 h-4.5 text-white" />
-                                            <span>Professionelle Dokumente</span>
+                                            <span>{t('welcome.professionalDocs')}</span>
                                         </div>
-                                        <div
-                                            className="flex items-center gap-2.5 px-3 py-2.5 border border-white/12 rounded-xl"
-                                            style={{ background: 'rgba(255,255,255,.04)' }}
-                                        >
+                                        <div className="flex items-center gap-2.5 px-3 py-2.5 border border-white/12 rounded-xl" style={{ background: 'rgba(255,255,255,.04)' }}>
                                             <CreditCard className="w-4.5 h-4.5 text-white" />
-                                            <span>Übersicht über Zahlungen</span>
+                                            <span>{t('welcome.paymentOverview')}</span>
                                         </div>
-                                        <div
-                                            className="flex items-center gap-2.5 px-3 py-2.5 border border-white/12 rounded-xl"
-                                            style={{ background: 'rgba(255,255,255,.04)' }}
-                                        >
+                                        <div className="flex items-center gap-2.5 px-3 py-2.5 border border-white/12 rounded-xl" style={{ background: 'rgba(255,255,255,.04)' }}>
                                             <BarChart3 className="w-4.5 h-4.5 text-white" />
-                                            <span>Reports zu Umsatz & Ausgaben</span>
+                                            <span>{t('welcome.reportsTagline')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -188,18 +196,12 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                 {/* Hero Preview Card */}
                                 <aside
                                     className="border border-white/12 rounded-[18px] p-4.5"
-                                    style={{
-                                        background: 'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))',
-                                        boxShadow: '0 18px 60px rgba(0,0,0,.35)',
-                                    }}
+                                    style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))', boxShadow: '0 18px 60px rgba(0,0,0,.35)' }}
                                 >
-                                    <h3 className="text-base font-semibold mb-2">Vorschau: Geschäft im Blick</h3>
-                                    <p className="text-sm text-white/80 mb-3.5">Einfacher Überblick über Dokumente, Zahlungen und Kennzahlen.</p>
+                                    <h3 className="text-base font-semibold mb-2">{t('welcome.previewTitle')}</h3>
+                                    <p className="text-sm text-white/80 mb-3.5">{t('welcome.previewSubtitle')}</p>
 
-                                    <div
-                                        className="border border-dashed border-white/22 rounded-2xl p-3.5"
-                                        style={{ background: 'rgba(11,18,32,.35)' }}
-                                    >
+                                    <div className="border border-dashed border-white/22 rounded-2xl p-3.5" style={{ background: 'rgba(11,18,32,.35)' }}>
                                         <div className="flex items-center justify-between py-2.5 border-b border-white/8 gap-3">
                                             <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
                                                 Rechnung #2025-0148
@@ -208,21 +210,21 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                         </div>
                                         <div className="flex items-center justify-between py-2.5 border-b border-white/8 gap-3">
                                             <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
-                                                Status
+                                                {t('welcome.previewStatus')}
                                             </span>
                                             <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
-                                                Teilzahlung
+                                                {t('welcome.previewPartial')}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between py-2.5 border-b border-white/8 gap-3">
                                             <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
-                                                Offen
+                                                {t('welcome.previewOpen')}
                                             </span>
                                             <span className="font-bold tracking-wide">340,00 €</span>
                                         </div>
                                         <div className="flex items-center justify-between py-2.5 gap-3">
                                             <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
-                                                Nächste Fälligkeit
+                                                {t('welcome.previewNextDue')}
                                             </span>
                                             <span className="text-xs px-2.5 py-1.5 rounded-full border border-white/12 text-white/80" style={{ background: 'rgba(255,255,255,.04)' }}>
                                                 03.01.2026
@@ -238,36 +240,25 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                     <section className="py-11">
                         <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
                             <div className="mb-4.5">
-                                <h2 className="text-2xl font-bold mb-0" style={{ letterSpacing: '-0.2px' }}>
-                                    Warum AndoBill?
-                                </h2>
-                                <p className="text-white/80 text-[15px] max-w-[70ch] mt-0">
-                                    AndoBill wurde für Unternehmen entwickelt, die eine moderne, intuitive und leistungsstarke Lösung für die tägliche Verwaltung benötigen.
-                                    Weniger Aufwand, mehr Übersicht und ein professioneller Außenauftritt.
-                                </p>
+                                <h2 className="text-2xl font-bold mb-0" style={{ letterSpacing: '-0.2px' }}>{t('welcome.whyTitle')}</h2>
+                                <p className="text-white/80 text-[15px] max-w-[70ch] mt-0">{t('welcome.whyDesc')}</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div
-                                    className="border border-white/12 rounded-[18px] p-4.5"
-                                    style={{ background: 'rgba(255,255,255,.04)' }}
-                                >
-                                    <h3 className="text-base font-semibold mb-2">Fokus auf Effizienz</h3>
+                                <div className="border border-white/12 rounded-[18px] p-4.5" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                    <h3 className="text-base font-semibold mb-2">{t('welcome.focusTitle')}</h3>
                                     <ul className="list-disc list-inside text-white/80 text-sm space-y-2 ml-0 pl-4">
-                                        <li>Klare Prozesse statt komplizierter Workflows</li>
-                                        <li>Schneller Zugriff auf alle relevanten Informationen</li>
-                                        <li>Übersichtliche Status- und Historienansichten</li>
+                                        <li>{t('welcome.focusBullet1')}</li>
+                                        <li>{t('welcome.focusBullet2')}</li>
+                                        <li>{t('welcome.focusBullet3')}</li>
                                     </ul>
                                 </div>
-                                <div
-                                    className="border border-white/12 rounded-[18px] p-4.5"
-                                    style={{ background: 'rgba(255,255,255,.04)' }}
-                                >
-                                    <h3 className="text-base font-semibold mb-2">Skalierbar für Wachstum</h3>
+                                <div className="border border-white/12 rounded-[18px] p-4.5" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                    <h3 className="text-base font-semibold mb-2">{t('welcome.scaleTitle')}</h3>
                                     <ul className="list-disc list-inside text-white/80 text-sm space-y-2 ml-0 pl-4">
-                                        <li>Geeignet für Selbstständige bis KMU</li>
-                                        <li>Strukturierte Datenbasis für Auswertungen</li>
-                                        <li>Professionelles Auftreten gegenüber Kunden</li>
+                                        <li>{t('welcome.scaleBullet1')}</li>
+                                        <li>{t('welcome.scaleBullet2')}</li>
+                                        <li>{t('welcome.scaleBullet3')}</li>
                                     </ul>
                                 </div>
                             </div>
@@ -278,88 +269,38 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                     <section id="leistungen" className="py-11">
                         <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
                             <div className="mb-4.5">
-                                <h2 className="text-2xl font-bold mb-0" style={{ letterSpacing: '-0.2px' }}>
-                                    Leistungen
-                                </h2>
-                                <p className="text-white/80 text-[15px] max-w-[70ch] mt-0">
-                                    Von Rechnungen und Angeboten über Zahlungsverwaltung bis hin zu Reports und Kalender – AndoBill bündelt Ihre wichtigsten Funktionen in einer Plattform.
-                                </p>
+                                <h2 className="text-2xl font-bold mb-0" style={{ letterSpacing: '-0.2px' }}>{t('welcome.featuresTitle')}</h2>
+                                <p className="text-white/80 text-[15px] max-w-[70ch] mt-0">{t('welcome.featuresDesc')}</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {[
-                                    {
-                                        icon: ReceiptText,
-                                        title: 'Rechnungen & Angebote',
-                                        tagline: 'Professionelle Dokumente in Sekunden erstellen',
-                                        description: 'Erstellen Sie Dokumente schnell, einheitlich und übersichtlich – mit klaren Statusansichten.',
-                                        bullets: ['Schnelle Erstellung & Verwaltung', 'Professionelles Layout', 'Status: Entwurf, gesendet, bezahlt'],
-                                    },
-                                    {
-                                        icon: Users,
-                                        title: 'Kundenverwaltung',
-                                        tagline: 'Zentrale Verwaltung mit Historie und schnellem Zugriff',
-                                        description: 'Alle Kundendaten inklusive Vorgangshistorie zentral organisiert – für maximale Transparenz.',
-                                        bullets: ['Zentrale Kundendatenbank', 'Historie zu Dokumenten & Zahlungen', 'Schnelle Suche & Zugriff'],
-                                    },
-                                    {
-                                        icon: Mail,
-                                        title: 'E-Mail Versand',
-                                        tagline: 'Direkter Versand per E-Mail mit professionellen Vorlagen',
-                                        description: 'Versenden Sie Dokumente direkt aus dem System – einheitlich, professionell und effizient.',
-                                        bullets: ['Vorlagen für E-Mails', 'Dokumente automatisch anhängen', 'Einheitlicher Markenauftritt'],
-                                    },
-                                    {
-                                        icon: CreditCard,
-                                        title: 'Zahlungsverwaltung',
-                                        tagline: 'Verwalten Sie Teil- und Vollzahlungen einfach und übersichtlich',
-                                        description: 'Behalten Sie offene Posten im Blick und verwalten Sie Teil- sowie Vollzahlungen strukturiert.',
-                                        bullets: ['Teil- & Vollzahlungen', 'Status und Restbeträge im Blick', 'Übersichtliche Offene-Posten-Liste'],
-                                    },
-                                    {
-                                        icon: BarChart3,
-                                        title: 'Auswertungen & Reports',
-                                        tagline: 'Umfassende Statistiken zu Umsätzen und Ausgaben',
-                                        description: 'Nutzen Sie aussagekräftige Auswertungen als Grundlage für Entscheidungen und Planung.',
-                                        bullets: ['Umsatzübersichten', 'Ausgaben & Kostenkontrolle', 'Zeitraum-basierte Reports'],
-                                    },
-                                    {
-                                        icon: Calendar,
-                                        title: 'Kalender & Termine',
-                                        tagline: 'Behalten Sie Fälligkeiten und Termine im Überblick',
-                                        description: 'Verpassen Sie keine Fristen: Fälligkeiten, Termine und To-dos zentral im Blick.',
-                                        bullets: ['Fälligkeiten übersichtlich dargestellt', 'Terminverwaltung & Erinnerungen', 'Besserer Überblick im Alltag'],
-                                    },
-                                ].map((feature, idx) => {
+                                {features.map((feature, idx) => {
                                     const IconComponent = feature.icon;
                                     return (
                                         <article
-                                        key={idx}
-                                        className="border border-white/12 rounded-[18px] p-4.5 transition-all hover:translate-y-[-2px] hover:bg-white/6 hover:border-white/18"
-                                        style={{ background: 'rgba(255,255,255,.04)' }}
-                                    >
-                                        <div className="flex gap-3 items-start mb-2">
-                                            <div
-                                                className="w-10 h-10 rounded-xl flex items-center justify-center border"
-                                                style={{
-                                                    background: 'rgba(11,65,148,.18)',
-                                                    borderColor: 'rgba(11,65,148,.25)',
-                                                }}
-                                            >
-                                                <IconComponent className="h-5 w-5 text-white" />
+                                            key={idx}
+                                            className="border border-white/12 rounded-[18px] p-4.5 transition-all hover:translate-y-[-2px] hover:bg-white/6 hover:border-white/18"
+                                            style={{ background: 'rgba(255,255,255,.04)' }}
+                                        >
+                                            <div className="flex gap-3 items-start mb-2">
+                                                <div
+                                                    className="w-10 h-10 rounded-xl flex items-center justify-center border"
+                                                    style={{ background: 'rgba(11,65,148,.18)', borderColor: 'rgba(11,65,148,.25)' }}
+                                                >
+                                                    <IconComponent className="h-5 w-5 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-base font-semibold mb-0">{feature.title}</h3>
+                                                    <p className="text-xs text-white/70 mt-0.5 mb-0">„{feature.tagline}"</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="text-base font-semibold mb-0">{feature.title}</h3>
-                                                <p className="text-xs text-white/70 mt-0.5 mb-0">„{feature.tagline}"</p>
-                                            </div>
-                                        </div>
-                                        <p className="text-sm text-white/80 mt-2.5 mb-0">{feature.description}</p>
-                                        <ul className="list-disc list-inside text-sm text-white/80 mt-3 mb-0 pl-4.5 space-y-1.5">
-                                            {feature.bullets.map((bullet, i) => (
-                                                <li key={i}>{bullet}</li>
-                                            ))}
-                                        </ul>
-                                    </article>
+                                            <p className="text-sm text-white/80 mt-2.5 mb-0">{feature.description}</p>
+                                            <ul className="list-disc list-inside text-sm text-white/80 mt-3 mb-0 pl-4.5 space-y-1.5">
+                                                {feature.bullets.map((bullet, i) => (
+                                                    <li key={i}>{bullet}</li>
+                                                ))}
+                                            </ul>
+                                        </article>
                                     );
                                 })}
                             </div>
@@ -370,38 +311,27 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                     <section id="zielgruppe" className="py-11">
                         <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
                             <div className="mb-4.5">
-                                <h2 className="text-2xl font-bold mb-0" style={{ letterSpacing: '-0.2px' }}>
-                                    Für wen ist AndoBill geeignet?
-                                </h2>
-                                <p className="text-white/80 text-[15px] max-w-[70ch] mt-0">
-                                    AndoBill passt sich an Ihre Arbeitsweise an – ideal für Unternehmen, die Struktur, Übersicht und professionelle Dokumente benötigen.
-                                </p>
+                                <h2 className="text-2xl font-bold mb-0" style={{ letterSpacing: '-0.2px' }}>{t('welcome.audienceTitle')}</h2>
+                                <p className="text-white/80 text-[15px] max-w-[70ch] mt-0">{t('welcome.audienceDesc')}</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div
-                                    className="border border-white/12 rounded-[18px] p-4.5"
-                                    style={{ background: 'rgba(255,255,255,.04)' }}
-                                >
-                                    <h3 className="text-base font-semibold mb-2">Zielgruppen</h3>
+                                <div className="border border-white/12 rounded-[18px] p-4.5" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                    <h3 className="text-base font-semibold mb-2">{t('welcome.audienceGroupTitle')}</h3>
                                     <ul className="list-disc list-inside text-sm text-white/80 space-y-2 ml-0 pl-4">
-                                        <li>Selbstständige & Freelancer</li>
-                                        <li>Kleine und mittelständische Unternehmen</li>
-                                        <li>Dienstleister & Agenturen</li>
-                                        <li>Startups mit Wachstumspotenzial</li>
+                                        <li>{t('welcome.audienceB1')}</li>
+                                        <li>{t('welcome.audienceB2')}</li>
+                                        <li>{t('welcome.audienceB3')}</li>
+                                        <li>{t('welcome.audienceB4')}</li>
                                     </ul>
                                 </div>
-                                <div
-                                    id="vorteile"
-                                    className="border border-white/12 rounded-[18px] p-4.5"
-                                    style={{ background: 'rgba(255,255,255,.04)' }}
-                                >
-                                    <h3 className="text-base font-semibold mb-2">Ihr Vorteil mit AndoBill</h3>
+                                <div id="vorteile" className="border border-white/12 rounded-[18px] p-4.5" style={{ background: 'rgba(255,255,255,.04)' }}>
+                                    <h3 className="text-base font-semibold mb-2">{t('welcome.advantagesTitle')}</h3>
                                     <ul className="list-disc list-inside text-sm text-white/80 space-y-2 ml-0 pl-4">
-                                        <li>Weniger Verwaltungsaufwand</li>
-                                        <li>Mehr Zeit für Ihr Kerngeschäft</li>
-                                        <li>Professioneller Außenauftritt</li>
-                                        <li>Volle Kontrolle über Einnahmen & Ausgaben</li>
+                                        <li>{t('welcome.advantagesB1')}</li>
+                                        <li>{t('welcome.advantagesB2')}</li>
+                                        <li>{t('welcome.advantagesB3')}</li>
+                                        <li>{t('welcome.advantagesB4')}</li>
                                     </ul>
                                 </div>
                             </div>
@@ -413,31 +343,20 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                         <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
                             <div
                                 className="border rounded-3xl p-5.5 flex flex-wrap items-center justify-between gap-4"
-                                style={{
-                                    borderColor: 'rgba(255,255,255,.16)',
-                                    background: 'rgba(11,65,148,.18)',
-                                    boxShadow: '0 18px 60px rgba(0,0,0,.35)',
-                                }}
+                                style={{ borderColor: 'rgba(255,255,255,.16)', background: 'rgba(11,65,148,.18)', boxShadow: '0 18px 60px rgba(0,0,0,.35)' }}
                             >
                                 <div className="max-w-[70ch]">
-                                    <h2 className="text-2xl font-bold mb-1.5">Jetzt mit AndoBill starten</h2>
-                                    <p className="text-white/80 mb-0">
-                                        Machen Sie Ihre Rechnungs- und Verwaltungsprozesse einfacher, schneller und transparenter.
-                                        AndoBill – Einfach. Übersichtlich. Professionell.
-                                    </p>
+                                    <h2 className="text-2xl font-bold mb-1.5">{t('welcome.ctaTitle')}</h2>
+                                    <p className="text-white/80 mb-0">{t('welcome.ctaDesc')}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-2.5">
                                     {canLogin && (
                                         <button
                                             onClick={() => setDemoDialogOpen(true)}
                                             className="px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-105"
-                                            style={{
-                                                background: 'linear-gradient(135deg, #2f7df6, #00c2ff)',
-                                                boxShadow: '0 16px 40px rgba(47,125,246,.32)',
-                                                color: '#071225',
-                                            }}
+                                            style={{ background: 'linear-gradient(135deg, #2f7df6, #00c2ff)', boxShadow: '0 16px 40px rgba(47,125,246,.32)', color: '#071225' }}
                                         >
-                                            Demo anfragen
+                                            {t('welcome.requestDemo')}
                                         </button>
                                     )}
                                     <a
@@ -445,7 +364,7 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                         className="px-4 py-3 rounded-xl border border-white/12 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:bg-white/10 hover:border-white/18"
                                         style={{ background: 'rgba(255,255,255,.06)' }}
                                     >
-                                        Leistungen ansehen
+                                        {t('welcome.viewFeatures')}
                                     </a>
                                 </div>
                             </div>
@@ -458,22 +377,16 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: '1120px', width: 'min(1120px, 92vw)' }}>
                         <div className="flex flex-wrap justify-between items-center gap-2.5">
                             <div>
-                                <strong>AndoBill</strong> – Rechnungs- und Verwaltungssoftware
+                                <strong>AndoBill</strong> – {t('welcome.footerTagline')}
                             </div>
                             <div className="flex items-center gap-4">
-                                <span>© {new Date().getFullYear()} AndoBill. Alle Rechte vorbehalten.</span>
-                                <button
-                                    onClick={() => setImpressumOpen(true)}
-                                    className="text-white/80 hover:text-white transition-colors cursor-pointer"
-                                >
-                                    Impressum
+                                <span>© {new Date().getFullYear()} AndoBill. {t('welcome.allRightsReserved')}</span>
+                                <button onClick={() => setImpressumOpen(true)} className="text-white/80 hover:text-white transition-colors cursor-pointer">
+                                    {t('welcome.impressum')}
                                 </button>
                                 <span className="text-white/30">|</span>
-                                <button
-                                    onClick={() => setDatenschutzOpen(true)}
-                                    className="text-white/80 hover:text-white transition-colors cursor-pointer"
-                                >
-                                    Datenschutz
+                                <button onClick={() => setDatenschutzOpen(true)} className="text-white/80 hover:text-white transition-colors cursor-pointer">
+                                    {t('welcome.datenschutz')}
                                 </button>
                             </div>
                         </div>
@@ -491,83 +404,56 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">Verantwortlich für den Inhalt nach § 10 Absatz 3 MDStV:</h3>
                                 <p className="mb-4">
-                                    <strong>Andona GmbH</strong>
-                                    <br />
-                                    Bahnhofstraße 16
-                                    <br />
-                                    63571 Gelnhausen
-                                    <br />
+                                    <strong>Andona GmbH</strong><br />
+                                    Bahnhofstraße 16<br />
+                                    63571 Gelnhausen<br />
                                     Deutschland
                                 </p>
                                 <p className="mb-2">
-                                    E-Mail: <a href="mailto:info@andona.de" className="text-blue-600 hover:underline">info@andona.de</a>
-                                    <br />
-                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a>
-                                    <br />
+                                    E-Mail: <a href="mailto:info@andona.de" className="text-blue-600 hover:underline">info@andona.de</a><br />
+                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a><br />
                                     Fax: +49 (0) 6051 – 53 83 659
                                 </p>
                             </div>
-
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">Rechtliche Angaben:</h3>
                                 <p className="mb-2">
-                                    USt-IdNr.: DE369264419
-                                    <br />
-                                    St. Nr.: 019 228 35202
-                                    <br />
-                                    Finanzamt: Gelnhausen
-                                    <br />
-                                    Amtsgericht: Hanau, HRB 100017
-                                    <br />
+                                    USt-IdNr.: DE369264419<br />
+                                    St. Nr.: 019 228 35202<br />
+                                    Finanzamt: Gelnhausen<br />
+                                    Amtsgericht: Hanau, HRB 100017<br />
                                     Geschäftsführer: Lirim Ziberi
                                 </p>
                             </div>
-
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">Entwicklung & Implementierung:</h3>
                                 <p className="mb-2">
-                                    <strong>Andona Cloud</strong>
-                                    <br />
-                                    Digitale Webagentur
-                                    <br />
-                                    Gohlstraße 1
-                                    <br />
-                                    70597 Stuttgart
-                                    <br />
+                                    <strong>Andona Cloud</strong><br />
+                                    Digitale Webagentur<br />
+                                    Gohlstraße 1<br />
+                                    70597 Stuttgart<br />
                                     Deutschland
                                 </p>
                                 <p className="mb-2">
-                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a>
-                                    <br />
-                                    E-Mail: <a href="mailto:info@andona-cloud.de" className="text-blue-600 hover:underline">info@andona-cloud.de</a>
-                                    <br />
-                                    Website:{' '}
-                                    <a href="https://andona-cloud.de" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                        https://andona-cloud.de
-                                    </a>
+                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a><br />
+                                    E-Mail: <a href="mailto:info@andona-cloud.de" className="text-blue-600 hover:underline">info@andona-cloud.de</a><br />
+                                    Website:{' '}<a href="https://andona-cloud.de" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://andona-cloud.de</a>
                                 </p>
                             </div>
-
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">Haftungsausschluss:</h3>
                                 <div className="space-y-3">
                                     <div>
                                         <h4 className="font-medium text-gray-900 mb-1">Haftung für Inhalte</h4>
-                                        <p>
-                                            Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.
-                                        </p>
+                                        <p>Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.</p>
                                     </div>
                                     <div>
                                         <h4 className="font-medium text-gray-900 mb-1">Haftung für Links</h4>
-                                        <p>
-                                            Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen Einfluss haben. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
-                                        </p>
+                                        <p>Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen Einfluss haben.</p>
                                     </div>
                                     <div>
                                         <h4 className="font-medium text-gray-900 mb-1">Urheberrecht</h4>
-                                        <p>
-                                            Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
-                                        </p>
+                                        <p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht.</p>
                                     </div>
                                 </div>
                             </div>
@@ -585,53 +471,25 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                         <div className="space-y-6 text-sm text-gray-700">
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">1. Datenschutz auf einen Blick</h3>
-                                <div className="space-y-3">
-                                    <div>
-                                        <h4 className="font-medium text-gray-900 mb-1">Allgemeine Hinweise</h4>
-                                        <p>
-                                            Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.
-                                        </p>
-                                    </div>
-                                </div>
+                                <h4 className="font-medium text-gray-900 mb-1">Allgemeine Hinweise</h4>
+                                <p>Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen.</p>
                             </div>
-
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">2. Verantwortliche Stelle</h3>
-                                <p className="mb-4">Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:</p>
                                 <p className="mb-2">
-                                    <strong>Andona GmbH</strong>
-                                    <br />
-                                    Bahnhofstraße 16
-                                    <br />
-                                    63571 Gelnhausen
-                                    <br />
-                                    Deutschland
-                                </p>
-                                <p>
-                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a>
-                                    <br />
+                                    <strong>Andona GmbH</strong><br />
+                                    Bahnhofstraße 16, 63571 Gelnhausen<br />
+                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a><br />
                                     E-Mail: <a href="mailto:info@andona.de" className="text-blue-600 hover:underline">info@andona.de</a>
                                 </p>
                             </div>
-
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">3. Datenerfassung auf dieser Website</h3>
-                                <div className="space-y-3">
-                                    <div>
-                                        <h4 className="font-medium text-gray-900 mb-1">Cookies</h4>
-                                        <p>
-                                            Die Internetseiten verwenden teilweise so genannte Cookies. Cookies richten auf Ihrem Rechner keinen Schaden an und enthalten keine Viren. Cookies dienen dazu, unser Angebot nutzerfreundlicher, effektiver und sicherer zu machen.
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-medium text-gray-900 mb-1">Server-Log-Dateien</h4>
-                                        <p>
-                                            Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien, die Ihr Browser automatisch an uns übermittelt. Dies sind: Browsertyp und Browserversion, verwendetes Betriebssystem, Referrer URL, Hostname des zugreifenden Rechners, Uhrzeit der Serveranfrage, IP-Adresse.
-                                        </p>
-                                    </div>
-                                </div>
+                                <h4 className="font-medium text-gray-900 mb-1">Cookies</h4>
+                                <p>Die Internetseiten verwenden teilweise so genannte Cookies. Cookies dienen dazu, unser Angebot nutzerfreundlicher, effektiver und sicherer zu machen.</p>
+                                <h4 className="font-medium text-gray-900 mb-1 mt-2">Server-Log-Dateien</h4>
+                                <p>Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien.</p>
                             </div>
-
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">4. Ihre Rechte</h3>
                                 <p className="mb-2">Sie haben jederzeit das Recht:</p>
@@ -642,18 +500,13 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                     <li>Einschränkung der Datenverarbeitung zu verlangen</li>
                                     <li>Widerspruch gegen die Verarbeitung Ihrer Daten einzulegen</li>
                                     <li>Datenübertragbarkeit zu verlangen</li>
-                                    <li>Beschwerde bei einer Aufsichtsbehörde einzulegen</li>
                                 </ul>
                             </div>
-
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">5. Technische Umsetzung</h3>
                                 <p>
-                                    Diese Anwendung wurde entwickelt und implementiert von <strong>Andona Cloud</strong>, einer digitalen Webagentur in Stuttgart. Weitere Informationen finden Sie unter{' '}
-                                    <a href="https://andona-cloud.de" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                        https://andona-cloud.de
-                                    </a>
-                                    .
+                                    Diese Anwendung wurde entwickelt von <strong>Andona Cloud</strong>.{' '}
+                                    <a href="https://andona-cloud.de" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://andona-cloud.de</a>
                                 </p>
                             </div>
                         </div>
@@ -664,10 +517,8 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                 <Dialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen}>
                     <DialogContent className="sm:max-w-[500px] bg-[#0f1a2e] border-white/12">
                         <DialogHeader>
-                            <DialogTitle className="text-white">Demo anfragen</DialogTitle>
-                            <DialogDescription className="text-white/80">
-                                Füllen Sie das Formular aus und wir melden uns bei Ihnen für eine persönliche Demo.
-                            </DialogDescription>
+                            <DialogTitle className="text-white">{t('welcome.demoTitle')}</DialogTitle>
+                            <DialogDescription className="text-white/80">{t('welcome.demoDesc')}</DialogDescription>
                         </DialogHeader>
                         <form
                             onSubmit={(e) => {
@@ -683,102 +534,79 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                             className="space-y-4"
                         >
                             <div className="space-y-2">
-                                <Label htmlFor="demo-name" className="text-white">
-                                    Name *
-                                </Label>
+                                <Label htmlFor="demo-name" className="text-white">{t('welcome.demoName')} *</Label>
                                 <Input
                                     id="demo-name"
                                     value={demoForm.data.name}
                                     onChange={(e) => demoForm.setData('name', e.target.value)}
-                                    placeholder="Ihr Name"
+                                    placeholder={t('welcome.demoNamePlaceholder')}
                                     required
                                     className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                 />
-                                {demoForm.errors.name && (
-                                    <p className="text-sm text-red-400">{demoForm.errors.name}</p>
-                                )}
+                                {demoForm.errors.name && <p className="text-sm text-red-400">{demoForm.errors.name}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="demo-email" className="text-white">
-                                    E-Mail *
-                                </Label>
+                                <Label htmlFor="demo-email" className="text-white">{t('welcome.demoEmail')} *</Label>
                                 <Input
                                     id="demo-email"
                                     type="email"
                                     value={demoForm.data.email}
                                     onChange={(e) => demoForm.setData('email', e.target.value)}
-                                    placeholder="ihre@email.de"
+                                    placeholder={t('welcome.demoEmailPlaceholder')}
                                     required
                                     className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                 />
-                                {demoForm.errors.email && (
-                                    <p className="text-sm text-red-400">{demoForm.errors.email}</p>
-                                )}
+                                {demoForm.errors.email && <p className="text-sm text-red-400">{demoForm.errors.email}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="demo-company" className="text-white">
-                                    Unternehmen *
-                                </Label>
+                                <Label htmlFor="demo-company" className="text-white">{t('welcome.demoCompany')} *</Label>
                                 <Input
                                     id="demo-company"
                                     value={demoForm.data.company}
                                     onChange={(e) => demoForm.setData('company', e.target.value)}
-                                    placeholder="Ihr Unternehmen"
+                                    placeholder={t('welcome.demoCompanyPlaceholder')}
                                     required
                                     className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                 />
-                                {demoForm.errors.company && (
-                                    <p className="text-sm text-red-400">{demoForm.errors.company}</p>
-                                )}
+                                {demoForm.errors.company && <p className="text-sm text-red-400">{demoForm.errors.company}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="demo-phone" className="text-white">
-                                    Telefon
-                                </Label>
+                                <Label htmlFor="demo-phone" className="text-white">{t('welcome.demoPhone')}</Label>
                                 <Input
                                     id="demo-phone"
                                     type="tel"
                                     value={demoForm.data.phone}
                                     onChange={(e) => demoForm.setData('phone', e.target.value)}
-                                    placeholder="+49 123 456789"
+                                    placeholder={t('welcome.demoPhonePlaceholder')}
                                     className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                 />
-                                {demoForm.errors.phone && (
-                                    <p className="text-sm text-red-400">{demoForm.errors.phone}</p>
-                                )}
+                                {demoForm.errors.phone && <p className="text-sm text-red-400">{demoForm.errors.phone}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="demo-message" className="text-white">
-                                    Nachricht
-                                </Label>
+                                <Label htmlFor="demo-message" className="text-white">{t('welcome.demoMessage')}</Label>
                                 <Textarea
                                     id="demo-message"
                                     value={demoForm.data.message}
                                     onChange={(e) => demoForm.setData('message', e.target.value)}
-                                    placeholder="Haben Sie spezielle Fragen oder Anforderungen?"
+                                    placeholder={t('welcome.demoMessagePlaceholder')}
                                     rows={4}
                                     className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                 />
-                                {demoForm.errors.message && (
-                                    <p className="text-sm text-red-400">{demoForm.errors.message}</p>
-                                )}
+                                {demoForm.errors.message && <p className="text-sm text-red-400">{demoForm.errors.message}</p>}
                             </div>
 
                             <DialogFooter>
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => {
-                                        setDemoDialogOpen(false);
-                                        demoForm.reset();
-                                    }}
+                                    onClick={() => { setDemoDialogOpen(false); demoForm.reset(); }}
                                     className="border-white/20 text-white hover:bg-white/10"
                                 >
-                                    Abbrechen
+                                    {t('common.cancel')}
                                 </Button>
                                 <Button
                                     type="submit"
@@ -786,7 +614,7 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                     className="text-white hover:opacity-90"
                                     style={{ background: '#0B4194' }}
                                 >
-                                    {demoForm.processing ? 'Wird gesendet...' : 'Anfrage senden'}
+                                    {demoForm.processing ? t('welcome.demoSending') : t('welcome.demoSubmit')}
                                 </Button>
                             </DialogFooter>
                         </form>

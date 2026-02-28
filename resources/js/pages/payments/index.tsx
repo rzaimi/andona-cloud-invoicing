@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,6 +66,7 @@ interface PaymentsIndexProps {
 const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" }, { title: "Zahlungen" }]
 
 export default function PaymentsIndex() {
+    const { t } = useTranslation()
     // @ts-ignore
     const { payments, filters, stats } = usePage<PaymentsIndexProps>().props
     const [search, setSearch] = useState(filters.search || "")
@@ -87,7 +89,7 @@ export default function PaymentsIndex() {
     }
 
     const handleDelete = (payment: Payment) => {
-        if (confirm(`Möchten Sie die Zahlung vom ${new Date(payment.payment_date).toLocaleDateString('de-DE')} wirklich löschen?`)) {
+        if (confirm(t('pages.payments.deleteConfirm'))) {
             router.delete(`/payments/${payment.id}`)
         }
     }
@@ -116,20 +118,20 @@ export default function PaymentsIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Zahlungen" />
+            <Head title={t('pages.payments.title')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Zahlungsverwaltung</h1>
-                        <p className="text-gray-600">Verwalten Sie alle Zahlungen für Ihre Rechnungen</p>
+                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">{t('pages.payments.title')}</h1>
+                        <p className="text-gray-600">{t('pages.payments.subtitle')}</p>
                     </div>
 
                     <Link href="/payments/create">
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
-                            Neue Zahlung
+                            {t('pages.payments.new')}
                         </Button>
                     </Link>
                 </div>
@@ -138,7 +140,7 @@ export default function PaymentsIndex() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Gesamt</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.total')}</CardTitle>
                             <CreditCard className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -148,7 +150,7 @@ export default function PaymentsIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Abgeschlossen</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.completed')}</CardTitle>
                             <CheckCircle className="h-4 w-4 text-green-600" />
                         </CardHeader>
                         <CardContent>
@@ -158,7 +160,7 @@ export default function PaymentsIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ausstehend</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.pending')}</CardTitle>
                             <Clock className="h-4 w-4 text-yellow-600" />
                         </CardHeader>
                         <CardContent>
@@ -180,8 +182,8 @@ export default function PaymentsIndex() {
                 {/* Filters */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Zahlungen filtern</CardTitle>
-                        <CardDescription>Suchen und filtern Sie Ihre Zahlungen</CardDescription>
+                        <CardTitle>{t('pages.payments.filterTitle')}</CardTitle>
+                        <CardDescription>{t('pages.payments.filterDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSearch} className="flex gap-4">
@@ -196,16 +198,16 @@ export default function PaymentsIndex() {
                             </div>
                             <Select value={status} onValueChange={handleStatusChange}>
                                 <SelectTrigger className="w-48">
-                                    <SelectValue placeholder="Status wählen" />
+                                    <SelectValue placeholder={t('common.selectPlaceholder')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Alle Status</SelectItem>
-                                    <SelectItem value="completed">Abgeschlossen</SelectItem>
-                                    <SelectItem value="pending">Ausstehend</SelectItem>
-                                    <SelectItem value="cancelled">Storniert</SelectItem>
+                                    <SelectItem value="completed">{t('common.completed')}</SelectItem>
+                                    <SelectItem value="pending">{t('common.pending')}</SelectItem>
+                                    <SelectItem value="cancelled">{t('common.cancelled')}</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <Button type="submit">Suchen</Button>
+                            <Button type="submit">{t('common.search')}</Button>
                             {(filters.search || filters.status) && (
                                 <Button
                                     type="button"
@@ -216,7 +218,7 @@ export default function PaymentsIndex() {
                                         router.get("/payments")
                                     }}
                                 >
-                                    Zurücksetzen
+                                    {t('common.reset')}
                                 </Button>
                             )}
                         </form>
@@ -226,21 +228,21 @@ export default function PaymentsIndex() {
                 {/* Payments Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Zahlungen</CardTitle>
-                        <CardDescription>Alle Zahlungen in Ihrem System</CardDescription>
+                        <CardTitle>{t('nav.payments')}</CardTitle>
+                        <CardDescription>{t('pages.payments.subtitle')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Zahlungsdatum</TableHead>
-                                    <TableHead>Rechnung</TableHead>
+                                    <TableHead>{t('pages.payments.date')}</TableHead>
+                                    <TableHead>{t('nav.invoices')}</TableHead>
                                     <TableHead>Kunde</TableHead>
-                                    <TableHead>Betrag</TableHead>
-                                    <TableHead>Zahlungsmethode</TableHead>
+                                    <TableHead>{t('common.amount')}</TableHead>
+                                    <TableHead>{t('pages.payments.method')}</TableHead>
                                     <TableHead>Referenz</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Aktionen</TableHead>
+                                    <TableHead>{t('common.status')}</TableHead>
+                                    <TableHead>{t('common.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

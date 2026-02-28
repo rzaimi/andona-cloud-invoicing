@@ -36,7 +36,7 @@ export default function Step3InvoiceSettings({ data, updateData }: Step3Props) {
                 <div className="space-y-2">
                     <Label htmlFor="invoice_prefix" className="flex items-center gap-2">
                         <FileText className="h-4 w-4" />
-                        Rechnungs-Präfix
+                        {t('settings.invoicePrefix')}
                     </Label>
                     <Input
                         id="invoice_prefix"
@@ -53,7 +53,7 @@ export default function Step3InvoiceSettings({ data, updateData }: Step3Props) {
                 <div className="space-y-2">
                     <Label htmlFor="offer_prefix" className="flex items-center gap-2">
                         <FileText className="h-4 w-4" />
-                        Angebots-Präfix
+                        {t('settings.offerPrefix')}
                     </Label>
                     <Input
                         id="offer_prefix"
@@ -70,7 +70,7 @@ export default function Step3InvoiceSettings({ data, updateData }: Step3Props) {
                 <div className="space-y-2">
                     <Label htmlFor="currency" className="flex items-center gap-2">
                         <Coins className="h-4 w-4" />
-                        Währung
+                        {t('settings.currency')}
                     </Label>
                     <Select
                         value={formData.currency}
@@ -138,7 +138,7 @@ export default function Step3InvoiceSettings({ data, updateData }: Step3Props) {
                 <div className="space-y-2">
                     <Label htmlFor="reduced_tax_rate" className="flex items-center gap-2">
                         <Percent className="h-4 w-4" />
-                        Ermäßigter MwSt.-Satz
+                        {t('settings.reducedTaxRate')}
                     </Label>
                     <div className="flex items-center gap-2">
                         <Input
@@ -170,13 +170,13 @@ export default function Step3InvoiceSettings({ data, updateData }: Step3Props) {
                         onChange={(e) => handleChange("payment_terms", parseInt(e.target.value))}
                     />
                     <p className="text-xs text-muted-foreground">
-                        Standard Fälligkeit: 14 Tage nach Rechnungsdatum
+                        {t('settings.defaultDueDate')}
                     </p>
                 </div>
 
                 {/* Offer Validity */}
                 <div className="space-y-2">
-                    <Label htmlFor="offer_validity_days">Angebotsgültigkeit (Tage)</Label>
+                    <Label htmlFor="offer_validity_days">{t('settings.offerValidityDays')}</Label>
                     <Input
                         id="offer_validity_days"
                         type="number"
@@ -192,7 +192,7 @@ export default function Step3InvoiceSettings({ data, updateData }: Step3Props) {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                    <strong>Hinweis:</strong> Diese Einstellungen dienen als Standardwerte und können bei jeder Rechnung/Angebot individuell angepasst werden.
+                    <strong>{t('common.note')}:</strong> {t('settings.invoiceSettingsNote')}/Angebot individuell angepasst werden.
                 </p>
             </div>
         </div>

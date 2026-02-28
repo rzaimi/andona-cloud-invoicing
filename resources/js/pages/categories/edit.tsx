@@ -67,7 +67,7 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
     const deleteCategory = () => {
         if (
             confirm(
-                "Sind Sie sicher, dass Sie diese Kategorie löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+                t('pages.categories.deleteConfirmFull')
             )
         ) {
             router.delete(`/categories/${category.id}`)
@@ -79,7 +79,7 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
 
     const colorOptions = [
         { value: "#3b82f6", label: "Blau", color: "#3b82f6" },
-        { value: "#10b981", label: "Grün", color: "#10b981" },
+        { value: "#10b981", label: t('common.colorGreen'), color: "#10b981" },
         { value: "#f59e0b", label: "Orange", color: "#f59e0b" },
         { value: "#ef4444", label: "Rot", color: "#ef4444" },
         { value: "#8b5cf6", label: "Lila", color: "#8b5cf6" },
@@ -111,7 +111,7 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
                         <Button variant="ghost" asChild>
                             <Link href="/categories">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
@@ -121,7 +121,7 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
                     </div>
                     <Button variant="destructive" onClick={deleteCategory}>
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Löschen
+                        {t('common.delete')}
                     </Button>
                 </div>
 
@@ -164,10 +164,10 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="parent_id">Übergeordnete Kategorie</Label>
+                                    <Label htmlFor="parent_id">{t('pages.categories.parentCategory')}</Label>
                                     <Select value={data.parent_id || "none"} onValueChange={handleParentChange}>
                                         <SelectTrigger className={errors.parent_id ? "border-red-500" : ""}>
-                                            <SelectValue placeholder="Kategorie wählen" />
+                                            <SelectValue placeholder={t('pages.categories.selectParent')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">Hauptkategorie</SelectItem>
@@ -183,7 +183,7 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="description">Beschreibung</Label>
+                                <Label htmlFor="description">{t('common.description')}</Label>
                                 <Textarea
                                     id="description"
                                     value={data.description}
@@ -220,7 +220,7 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
                                     <Label htmlFor="icon">Icon</Label>
                                     <Select value={data.icon || "none"} onValueChange={handleIconChange}>
                                         <SelectTrigger className={errors.icon ? "border-red-500" : ""}>
-                                            <SelectValue placeholder="Icon wählen" />
+                                            <SelectValue placeholder={t('pages.categories.selectIcon')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {iconOptions.map((option) => (
@@ -260,7 +260,7 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
 
                             {/* Preview */}
                             <div className="rounded-lg bg-muted p-4">
-                                <h4 className="font-medium mb-2">Vorschau</h4>
+                                <h4 className="font-medium mb-2">{t('common.preview')}</h4>
                                 <div className="flex items-center space-x-2">
                                     <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: data.color }} />
                                     <Folder className="h-4 w-4 text-muted-foreground" />
@@ -272,7 +272,7 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
                                 {data.description && <p className="text-sm text-muted-foreground mt-2">{data.description}</p>}
                                 {data.parent_id && data.parent_id !== "none" && (
                                     <p className="text-sm text-muted-foreground mt-1">
-                                        Übergeordnete Kategorie:{" "}
+                                        {t('pages.categories.parentCategory')}:{" "}
                                         {parentCategories.find((cat) => cat.id.toString() === data.parent_id)?.name}
                                     </p>
                                 )}
@@ -283,11 +283,11 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
                     {/* Actions */}
                     <div className="flex items-center justify-end space-x-4">
                         <Button variant="outline" asChild>
-                            <Link href="/categories">Abbrechen</Link>
+                            <Link href="/categories">{t('common.cancel')}</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
                             <Save className="mr-2 h-4 w-4" />
-                            {processing ? "Speichern..." : "Änderungen speichern"}
+                            {processing ? t('common.saving') : t('pages.invoices.saveChanges')}
                         </Button>
                     </div>
                 </form>
@@ -303,7 +303,7 @@ function getFieldLabel(field: string): string {
         description: "Beschreibung",
         color: "Farbe",
         icon: "Icon",
-        parent_id: "Übergeordnete Kategorie",
+        parent_id: t('pages.categories.parentCategory'),
         sort_order: "Reihenfolge",
         is_active: "Status",
     }

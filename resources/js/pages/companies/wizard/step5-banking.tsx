@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Building2, CreditCard } from "lucide-react"
@@ -10,6 +11,7 @@ interface Step5Props {
 }
 
 export default function Step5Banking({ data, updateData }: Step5Props) {
+    const { t } = useTranslation()
     const [formData, setFormData] = useState(data.banking_info || {
         bank_name: "",
         iban: "",
@@ -37,8 +39,7 @@ export default function Step5Banking({ data, updateData }: Step5Props) {
             <Alert>
                 <CreditCard className="h-4 w-4" />
                 <AlertDescription>
-                    Ihre Bankverbindung wird auf Rechnungen angezeigt, damit Kunden Zahlungen vornehmen können.
-                    Diese Angaben sind optional, aber empfohlen.
+                    {t('settings.bankingAlertDesc')}
                 </AlertDescription>
             </Alert>
 
@@ -105,8 +106,7 @@ export default function Step5Banking({ data, updateData }: Step5Props) {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                    <strong>Hinweis:</strong> Ihre Bankverbindung wird auf allen Rechnungen im Fußbereich angezeigt.
-                    Kunden nutzen diese Informationen für Überweisungen.
+                    <strong>{t('settings.bankingNoteTitle')}</strong> {t('settings.bankingNoteDesc')}
                 </p>
             </div>
 

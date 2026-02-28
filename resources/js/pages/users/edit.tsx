@@ -4,6 +4,7 @@ import type React from "react"
 
 import AppLayout from "@/layouts/app-layout"
 import { Head, Link, useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -43,7 +44,9 @@ interface Props {
     assigned_permissions: string[]
 }
 
-export default function EditUser({ user, companies, is_super_admin, available_roles, available_permissions, assigned_roles, assigned_permissions }: Props) {
+export default function EditUser({
+    user, companies, is_super_admin, available_roles, available_permissions, assigned_roles, assigned_permissions }: Props) {
+    const { t } = useTranslation()
     const { data, setData, put, processing, errors } = useForm({
         name: user.name || "",
         email: user.email || "",
@@ -77,12 +80,12 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                     <Button variant="outline" size="sm" asChild>
                         <Link href={route("users.index")}> 
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
+                            {t('common.back')}
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Benutzer bearbeiten</h1>
-                        <p className="text-muted-foreground">Aktualisieren Sie die Benutzerinformationen</p>
+                        <h1 className="text-2xl font-bold text-foreground">{t('pages.users.edit')}</h1>
+                        <p className="text-muted-foreground">{t('pages.users.editDesc')}</p>
                     </div>
                 </div>
 
@@ -93,7 +96,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                             <UserIcon className="h-5 w-5" />
                             Benutzerinformationen
                         </CardTitle>
-                        <CardDescription>Passen Sie die Informationen für den Benutzer an</CardDescription>
+                        <CardDescription>{t('pages.users.editInfoDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -101,7 +104,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                 {/* Name */}
                                 <div className="space-y-2">
                                     <Label htmlFor="name">
-                                        Vollständiger Name <span className="text-red-500">*</span>
+                                        {t('pages.users.fullName')} <span className="text-red-500">*</span>
                                     </Label>
                                     <Input
                                         id="name"
@@ -144,10 +147,10 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                     </Label>
                                     <Select value={data.role} onValueChange={(value) => setData("role", value)}>
                                         <SelectTrigger className={errors.role ? "border-red-500" : ""}>
-                                            <SelectValue placeholder="Rolle auswählen" />
+                                            <SelectValue placeholder={t('pages.users.selectRole')} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="user">Benutzer</SelectItem>
+                                            <SelectItem value="user">{t('pages.users.role')}</SelectItem>
                                             <SelectItem value="admin">Administrator</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -165,11 +168,11 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                     </Label>
                                     <Select value={data.status} onValueChange={(value) => setData("status", value)}>
                                         <SelectTrigger className={errors.status ? "border-red-500" : ""}>
-                                            <SelectValue placeholder="Status auswählen" />
+                                            <SelectValue placeholder={t('pages.users.selectStatus')} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="active">Aktiv</SelectItem>
-                                            <SelectItem value="inactive">Inaktiv</SelectItem>
+                                            <SelectItem value="active">{t('common.active')}</SelectItem>
+                                            <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {errors.status && (
@@ -187,7 +190,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                         </Label>
                                         <Select value={data.company_id} onValueChange={(value) => setData("company_id", value)}>
                                             <SelectTrigger className={errors.company_id ? "border-red-500" : ""}>
-                                                <SelectValue placeholder="Firma auswählen" />
+                                                <SelectValue placeholder={t('pages.users.selectCompany')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {companies.map((company) => (
@@ -214,7 +217,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                         value={data.password}
                                         onChange={(e) => setData("password", e.target.value)}
                                         className={errors.password ? "border-red-500" : ""}
-                                        placeholder="Leer lassen, um es nicht zu ändern"
+                                        placeholder={t('pages.users.passwordPlaceholder')}
                                     />
                                     {errors.password && (
                                         <Alert variant="destructive">
@@ -225,7 +228,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
 
                                 {/* Password Confirmation */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="password_confirmation">Passwort bestätigen</Label>
+                                    <Label htmlFor="password_confirmation">{t('auth.confirmPassword')}</Label>
                                     <Input
                                         id="password_confirmation"
                                         type="password"
@@ -277,8 +280,8 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                 <Separator />
                                 <div className="flex items-center gap-2">
                                     <Key className="h-4 w-4 text-muted-foreground" />
-                                    <Label className="text-base font-semibold">Zusätzliche Berechtigungen</Label>
-                                    <span className="text-xs text-muted-foreground">(überschreibt Rollen-Berechtigungen)</span>
+                                    <Label className="text-base font-semibold">{t('pages.users.additionalPermissions')}</Label>
+                                    <span className="text-xs text-muted-foreground">({t('pages.users.overridesRole')})</span>
                                 </div>
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     {available_permissions.map((p) => {
@@ -305,7 +308,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                             {/* Submit */}
                             <div className="flex justify-end gap-4">
                                 <Button variant="outline" asChild>
-                                    <Link href={route("users.index")}>Abbrechen</Link>
+                                    <Link href={route("users.index")}>{t('common.cancel')}</Link>
                                 </Button>
                                 <Button type="submit" disabled={processing}>
                                     <Save className="mr-2 h-4 w-4" />

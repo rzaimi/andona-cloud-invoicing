@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -54,6 +55,7 @@ interface OffersIndexProps {
 const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" }, { title: "Angebote" }]
 
 export default function OffersIndex() {
+    const { t } = useTranslation()
     const { offers, filters, stats } = usePage<OffersIndexProps>().props
     const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
     const [search, setSearch] = useState(filters.search || "")
@@ -101,13 +103,13 @@ export default function OffersIndex() {
     }
 
     const handleDelete = (offer: Offer) => {
-        if (confirm(`Möchten Sie das Angebot "${offer.number}" wirklich löschen?`)) {
+        if (confirm(t('pages.offers.deleteConfirm', { number: offer.number }))) {
             router.delete(route("offers.destroy", offer.id))
         }
     }
 
     const handleConvertToInvoice = (offer: Offer) => {
-        if (confirm("Möchten Sie dieses Angebot in eine Rechnung umwandeln?")) {
+        if (confirm(t('pages.offers.confirmConvert'))) {
             router.post(route("offers.convert-to-invoice", offer.id))
         }
     }
@@ -116,7 +118,7 @@ export default function OffersIndex() {
         const isExpired = new Date(offer.valid_until) < new Date() && offer.status !== "accepted"
 
         if (isExpired && offer.status === "sent") {
-            return <Badge variant="destructive">Abgelaufen</Badge>
+            return <Badge variant="destructive">{t('common.expired')}</Badge>
         }
 
         const statusConfig = {
@@ -146,14 +148,14 @@ export default function OffersIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Angebote" />
+            <Head title={t('pages.offers.title')} />
 
             <div className="flex flex-1 flex-col gap-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Angebote</h1>
-                        <p className="text-muted-foreground">Verwalten Sie Ihre Kundenangebote</p>
+                        <h1 className="text-2xl font-bold text-foreground">{t('pages.offers.title')}</h1>
+                        <p className="text-muted-foreground">{t('pages.offers.subtitle')}</p>
                     </div>
                     <div className="flex gap-2">
                         <Button
@@ -166,7 +168,7 @@ export default function OffersIndex() {
                             }}
                         >
                             <Download className="mr-2 h-4 w-4" />
-                            Exportieren
+                            {t('common.export')}
                         </Button>
                         <Link href="/offers/create">
                             <Button>
@@ -181,7 +183,7 @@ export default function OffersIndex() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Gesamt</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.total')}</CardTitle>
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -191,7 +193,7 @@ export default function OffersIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Entwürfe</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.draft')}</CardTitle>
                             <Edit className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -201,7 +203,7 @@ export default function OffersIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Versendet</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.sent')}</CardTitle>
                             <Clock className="h-4 w-4 text-blue-600" />
                         </CardHeader>
                         <CardContent>
@@ -211,7 +213,7 @@ export default function OffersIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Angenommen</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.accepted')}</CardTitle>
                             <CheckCircle className="h-4 w-4 text-green-600" />
                         </CardHeader>
                         <CardContent>
@@ -221,7 +223,7 @@ export default function OffersIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Abgelehnt</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.rejected')}</CardTitle>
                             <Trash2 className="h-4 w-4 text-red-600" />
                         </CardHeader>
                         <CardContent>
@@ -231,7 +233,7 @@ export default function OffersIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Abgelaufen</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.expired')}</CardTitle>
                             <AlertTriangle className="h-4 w-4 text-orange-600" />
                         </CardHeader>
                         <CardContent>
@@ -243,8 +245,8 @@ export default function OffersIndex() {
                 {/* Filters */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Filter</CardTitle>
-                        <CardDescription>Filtern und durchsuchen Sie Ihre Angebote</CardDescription>
+                        <CardTitle>{t('common.filters')}</CardTitle>
+                        <CardDescription>{t('pages.offers.filterDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-col sm:flex-row gap-4">
@@ -262,14 +264,14 @@ export default function OffersIndex() {
                             </div>
                             <Select value={status} onValueChange={handleStatusChange}>
                                 <SelectTrigger className="w-full sm:w-48">
-                                    <SelectValue placeholder="Status auswählen" />
+                                    <SelectValue placeholder={t('pages.users.selectStatus')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Alle Status</SelectItem>
-                                    <SelectItem value="draft">Entwurf</SelectItem>
-                                    <SelectItem value="sent">Versendet</SelectItem>
-                                    <SelectItem value="accepted">Angenommen</SelectItem>
-                                    <SelectItem value="rejected">Abgelehnt</SelectItem>
+                                    <SelectItem value="draft">{t('common.draft')}</SelectItem>
+                                    <SelectItem value="sent">{t('common.sent')}</SelectItem>
+                                    <SelectItem value="accepted">{t('common.accepted')}</SelectItem>
+                                    <SelectItem value="rejected">{t('common.rejected')}</SelectItem>
                                 </SelectContent>
                             </Select>
                             <Button onClick={handleSearch}>
@@ -283,7 +285,7 @@ export default function OffersIndex() {
                 {/* Offers Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Angebotsliste</CardTitle>
+                        <CardTitle>{t('pages.offers.offerList')}</CardTitle>
                         <CardDescription>{offers.total} Angebote gefunden</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -327,7 +329,7 @@ export default function OffersIndex() {
                                                 onClick={() => handleSort("valid_until")}
                                                 className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
                                             >
-                                                Gültig bis
+                                                {t('pages.offers.validUntil')}
                                                 {renderSortIcon("valid_until")}
                                             </button>
                                         </TableHead>
@@ -351,8 +353,8 @@ export default function OffersIndex() {
                                                 {renderSortIcon("status")}
                                             </button>
                                         </TableHead>
-                                        <TableHead className="py-2">Gültigkeit</TableHead>
-                                        <TableHead className="w-[156px] py-2 text-right">Aktionen</TableHead>
+                                        <TableHead className="py-2">{t('pages.offers.validUntil')}</TableHead>
+                                        <TableHead className="w-[156px] py-2 text-right">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -398,7 +400,7 @@ export default function OffersIndex() {
                                                         ) : (
                                                             <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
                                                                 <CheckCircle className="w-3 h-3 mr-1" />
-                                                                Gültig
+                                                                {t('common.valid')}
                                                             </Badge>
                                                         )}
                                                     </TableCell>
@@ -449,12 +451,12 @@ export default function OffersIndex() {
                                                                     <DropdownMenuItem asChild>
                                                                         <Link href={route("offers.edit", offer.id)}>
                                                                             <Edit className="mr-2 h-4 w-4" />
-                                                                            Bearbeiten
+                                                                            {t('common.edit')}
                                                                         </Link>
                                                                     </DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => window.open(route("offers.pdf", offer.id), "_blank")}>
                                                                         <FileText className="mr-2 h-4 w-4" />
-                                                                        PDF öffnen
+                                                                        {t('pages.invoices.openPdf')}
                                                                     </DropdownMenuItem>
 
                                                                     {offer.status === "draft" && (
@@ -481,7 +483,7 @@ export default function OffersIndex() {
                                                                         onClick={() => handleDelete(offer)}
                                                                     >
                                                                         <Trash2 className="mr-2 h-4 w-4" />
-                                                                        Löschen
+                                                                        {t('common.delete')}
                                                                     </DropdownMenuItem>
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>

@@ -1,15 +1,17 @@
+import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Landmark } from "lucide-react"
 
 export default function Step5BankingInfo({ data, setData, errors }: any) {
+    const { t } = useTranslation()
     return (
         <div className="space-y-6">
             <Alert>
                 <Landmark className="h-4 w-4" />
                 <AlertDescription>
-                    Geben Sie Ihre Bankverbindung ein. Diese wird auf Rechnungen angezeigt, damit Kunden Zahlungen vornehmen können.
+                    {t('settings.bankingAlertDescAlt')}
                 </AlertDescription>
             </Alert>
 

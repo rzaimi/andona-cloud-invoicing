@@ -33,8 +33,8 @@ export default function Step6FirstUser({ data, updateData }: Step6Props) {
             <Alert>
                 <User className="h-4 w-4" />
                 <AlertDescription>
-                    Optional: Erstellen Sie einen ersten Administrator für diese Firma.
-                    Sie können Benutzer auch später über die Benutzerverwaltung hinzufügen.
+                    {t('settings.firstUserDesc1')}
+                    {t('settings.firstUserDesc2')}
                 </AlertDescription>
             </Alert>
 
@@ -46,7 +46,7 @@ export default function Step6FirstUser({ data, updateData }: Step6Props) {
                             Ersten Benutzer erstellen
                         </Label>
                         <p className="text-sm text-muted-foreground">
-                            Dieser Benutzer erhält die Administrator-Rolle für diese Firma
+                            {t('settings.firstUserAdminRole')}
                         </p>
                     </div>
                     <Switch
@@ -112,7 +112,7 @@ export default function Step6FirstUser({ data, updateData }: Step6Props) {
 
                         {/* Password Confirmation */}
                         <div className="space-y-2">
-                            <Label htmlFor="password_confirmation">Passwort bestätigen *</Label>
+                            <Label htmlFor="password_confirmation">{t('auth.confirmPassword')} *</Label>
                             <Input
                                 id="password_confirmation"
                                 type="password"
@@ -130,7 +130,7 @@ export default function Step6FirstUser({ data, updateData }: Step6Props) {
                         formData.password !== formData.password_confirmation && (
                             <Alert className="border-yellow-500 bg-yellow-50">
                                 <AlertDescription className="text-yellow-800">
-                                    Die Passwörter stimmen nicht überein!
+                                    {t('pages.users.passwordMismatch')}
                                 </AlertDescription>
                             </Alert>
                         )}
@@ -144,7 +144,7 @@ export default function Step6FirstUser({ data, updateData }: Step6Props) {
                                     Willkommens-E-Mail senden
                                 </Label>
                                 <p className="text-sm text-muted-foreground">
-                                    Benutzer erhält eine E-Mail mit Zugangsdaten
+                                    {t('settings.firstUserEmailCredentials')}
                                 </p>
                             </div>
                             <Switch
@@ -164,7 +164,7 @@ export default function Step6FirstUser({ data, updateData }: Step6Props) {
                         Aktivieren Sie den Schalter oben, um einen ersten Administrator zu erstellen.
                     </p>
                     <p className="text-sm text-muted-foreground mt-2">
-                        Sie können diesen Schritt auch überspringen und Benutzer später hinzufügen.
+                        {t('settings.firstUserSkipHint')}
                     </p>
                 </div>
             )}

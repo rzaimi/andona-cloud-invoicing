@@ -3,10 +3,10 @@ import { CheckCircle, Building2, Mail, FileText, Bell, Landmark, User, Briefcase
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const INDUSTRY_LABELS: Record<string, string> = {
-    gartenbau:       "Garten- und Außenanlagenbau",
+    gartenbau:       t('pages.companies.industryGarden'),
     bauunternehmen:  "Bauunternehmen",
     raumausstattung: "Raumausstattung & Fliesenarbeiten",
-    gebaudetechnik:  "Gebäudetechnik",
+    gebaudetechnik:  t('pages.companies.industryBuilding'),
     logistik:        "Logistik & Palettenhandel",
     handel:          "Handelsunternehmen",
     dienstleistung:  "Sonstige Dienstleistungen",
@@ -45,7 +45,7 @@ export default function Step7Review({ data, logoPreview }: any) {
             <Alert>
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription>
-                    Bitte überprüfen Sie alle Eingaben. Sie können zurückgehen, um Änderungen vorzunehmen.
+                    {t('pages.companies.reviewInstruction')}
                 </AlertDescription>
             </Alert>
 
@@ -72,7 +72,7 @@ export default function Step7Review({ data, logoPreview }: any) {
                         </div>
                     ) : (
                         <p className="text-sm text-muted-foreground">
-                            Kein Branchenpaket gewählt — manuelle Einrichtung.
+                            {t('pages.companies.noIndustryPackage')}
                         </p>
                     )}
                 </CardContent>
@@ -164,7 +164,7 @@ export default function Step7Review({ data, logoPreview }: any) {
                                 <p>{es.smtp_username || "-"}</p>
                             </div>
                             <div>
-                                <span className="font-medium">Verschlüsselung:</span>
+                                <span className="font-medium">{t('settings.smtpEncryption')}:</span>
                                 <p className="uppercase">{es.smtp_encryption || "-"}</p>
                             </div>
                             <div>
@@ -204,7 +204,7 @@ export default function Step7Review({ data, logoPreview }: any) {
                     </div>
                     <div className="grid grid-cols-3 gap-3 pt-2 border-t">
                         <div>
-                            <span className="font-medium">Währung:</span>
+                            <span className="font-medium">{t('settings.currency')}:</span>
                             <p>{inv.currency || "EUR"}</p>
                         </div>
                         <div>

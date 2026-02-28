@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -62,6 +63,7 @@ interface OffersShowProps {
 }
 
 export default function OffersShow() {
+    const { t } = useTranslation()
     const { offer } = usePage<OffersShowProps>().props
     const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
 
@@ -75,7 +77,7 @@ export default function OffersShow() {
         const isExpired = new Date(offer.valid_until) < new Date() && offer.status !== "accepted"
 
         if (isExpired && offer.status === "sent") {
-            return <Badge variant="destructive">Abgelaufen</Badge>
+            return <Badge variant="destructive">{t('common.expired')}</Badge>
         }
 
         const statusConfig = {
@@ -100,25 +102,25 @@ export default function OffersShow() {
     }
 
     const handleDelete = () => {
-        if (confirm(`Möchten Sie das Angebot "${offer.number}" wirklich löschen?`)) {
+        if (confirm(t('pages.offers.deleteConfirm', { number: offer.number }))) {
             router.delete(route("offers.destroy", offer.id))
         }
     }
 
     const handleConvertToInvoice = () => {
-        if (confirm("Möchten Sie dieses Angebot in eine Rechnung umwandeln?")) {
+        if (confirm(t('pages.offers.confirmConvert'))) {
             router.post(route("offers.convert-to-invoice", offer.id))
         }
     }
 
     const handleAccept = () => {
-        if (confirm("Möchten Sie dieses Angebot als angenommen markieren?")) {
+        if (confirm(t('pages.offers.confirmAccept'))) {
             router.post(route("offers.accept", offer.id))
         }
     }
 
     const handleReject = () => {
-        if (confirm("Möchten Sie dieses Angebot als abgelehnt markieren?")) {
+        if (confirm(t('pages.offers.confirmReject'))) {
             router.post(route("offers.reject", offer.id))
         }
     }
@@ -140,7 +142,7 @@ export default function OffersShow() {
                         <Link href="/offers">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
@@ -186,7 +188,7 @@ export default function OffersShow() {
                         <Link href={route("offers.edit", offer.id)}>
                             <Button variant="outline">
                                 <Edit className="mr-2 h-4 w-4" />
-                                Bearbeiten
+                                {t('common.edit')}
                             </Button>
                         </Link>
                         <Button
@@ -204,7 +206,7 @@ export default function OffersShow() {
                         )}
                         <Button variant="destructive" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Löschen
+                            {t('common.delete')}
                         </Button>
                     </div>
                 </div>
@@ -215,24 +217,24 @@ export default function OffersShow() {
                         {/* Offer Details */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Angebotsdetails</CardTitle>
+                                <CardTitle>{t('pages.offers.details')}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <div className="text-sm text-muted-foreground">Angebotsnummer</div>
+                                        <div className="text-sm text-muted-foreground">{t('pages.offers.number')}</div>
                                         <div className="font-medium">{offer.number}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-muted-foreground">Status</div>
+                                        <div className="text-sm text-muted-foreground">{t('common.status')}</div>
                                         <div className="mt-1">{getStatusBadge(offer.status)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-muted-foreground">Angebotsdatum</div>
+                                        <div className="text-sm text-muted-foreground">{t('pages.offers.issueDate')}</div>
                                         <div className="font-medium">{formatDate(offer.issue_date)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-muted-foreground">Gültig bis</div>
+                                        <div className="text-sm text-muted-foreground">{t('pages.offers.validUntil')}</div>
                                         <div className={`font-medium ${isExpired ? "text-red-600" : ""}`}>
                                             {formatDate(offer.valid_until)}
                                             {isExpired && " (abgelaufen)"}
@@ -262,13 +264,13 @@ export default function OffersShow() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Produkt-Nr.</TableHead>
-                                            <TableHead>Beschreibung</TableHead>
-                                            <TableHead>Menge</TableHead>
+                                            <TableHead>{t('common.description')}</TableHead>
+                                            <TableHead>{t('common.quantity')}</TableHead>
                                             <TableHead>USt.</TableHead>
                                             <TableHead>Einzelpreis</TableHead>
                                             <TableHead>Rabatt</TableHead>
                                             <TableHead>Rabatt-Wert</TableHead>
-                                            <TableHead className="text-right">Gesamt</TableHead>
+                                            <TableHead className="text-right">{t('common.total')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -369,7 +371,7 @@ export default function OffersShow() {
                         {offer.notes && (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Notizen</CardTitle>
+                                    <CardTitle>{t('common.notes')}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="whitespace-pre-wrap">{offer.notes}</p>
@@ -380,7 +382,7 @@ export default function OffersShow() {
                         {offer.terms_conditions && (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Allgemeine Geschäftsbedingungen</CardTitle>
+                                    <CardTitle>{t('pages.offers.offerTerms')}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="whitespace-pre-wrap">{offer.terms_conditions}</p>
@@ -394,7 +396,7 @@ export default function OffersShow() {
                         {/* Offer Summary */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Angebotsübersicht</CardTitle>
+                                <CardTitle>{t('pages.offers.offerSummary')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
@@ -402,7 +404,7 @@ export default function OffersShow() {
                                     <div className="text-2xl font-bold">{formatCurrency(offer.total)}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-muted-foreground">Status</div>
+                                    <div className="text-sm text-muted-foreground">{t('common.status')}</div>
                                     <div className="mt-1">{getStatusBadge(offer.status)}</div>
                                 </div>
                                 {isExpired && (

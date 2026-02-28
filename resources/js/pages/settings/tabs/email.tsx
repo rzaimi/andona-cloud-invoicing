@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,56 +29,56 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     {
         id: 'invoice-sent',
         name: 'Rechnung versendet',
-        description: 'E-Mail-Vorlage für versendete Rechnungen',
+        description: t('settings.emailTemplateInvoiceSent'),
         route: 'settings.emails.preview.invoice-sent',
         category: 'invoice',
     },
     {
         id: 'invoice-reminder',
         name: 'Rechnungserinnerung',
-        description: 'Allgemeine Erinnerung für Rechnungen',
+        description: t('settings.emailTemplateInvoiceReminder'),
         route: 'settings.emails.preview.invoice-reminder',
         category: 'invoice',
     },
     {
         id: 'offer-sent',
         name: 'Angebot versendet',
-        description: 'E-Mail-Vorlage für versendete Angebote',
+        description: t('settings.emailTemplateOfferSent'),
         route: 'settings.emails.preview.offer-sent',
         category: 'offer',
     },
     {
         id: 'offer-accepted',
         name: 'Angebot angenommen',
-        description: 'E-Mail-Vorlage für angenommene Angebote',
+        description: t('settings.emailTemplateOfferAccepted'),
         route: 'settings.emails.preview.offer-accepted',
         category: 'offer',
     },
     {
         id: 'offer-reminder',
         name: 'Angebotserinnerung',
-        description: 'Erinnerung für ablaufende Angebote',
+        description: t('settings.emailTemplateOfferReminder'),
         route: 'settings.emails.preview.offer-reminder',
         category: 'offer',
     },
     {
         id: 'payment-received',
         name: 'Zahlung erhalten',
-        description: 'Bestätigung bei erhaltenen Zahlungen',
+        description: t('settings.emailTemplatePaymentReceived'),
         route: 'settings.emails.preview.payment-received',
         category: 'invoice',
     },
     {
         id: 'welcome',
         name: 'Willkommens-E-Mail',
-        description: 'Willkommensnachricht für neue Kunden',
+        description: t('settings.emailTemplateWelcome'),
         route: 'settings.emails.preview.welcome',
         category: 'general',
     },
     {
         id: 'friendly-reminder',
         name: 'Freundliche Erinnerung',
-        description: 'Erste freundliche Erinnerung bei überfälligen Rechnungen',
+        description: t('settings.emailTemplateFirstReminder'),
         route: 'settings.emails.preview.friendly-reminder',
         category: 'reminder',
     },
@@ -111,7 +112,9 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     },
 ]
 
-export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProps) {
+export default function EmailSettingsTab({
+    emailSettings }: EmailSettingsTabProps) {
+    const { t } = useTranslation()
     const [showPassword, setShowPassword] = useState(false)
     const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null)
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
@@ -178,7 +181,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="smtp_encryption">Verschlüsselung *</Label>
+                            <Label htmlFor="smtp_encryption">{t('settings.smtpEncryption')} *</Label>
                             <Select
                                 value={data.smtp_encryption}
                                 onValueChange={(value) => setData("smtp_encryption", value)}
@@ -231,7 +234,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                         </div>
                         {errors.smtp_password && <p className="text-sm text-red-600">{errors.smtp_password}</p>}
                         <p className="text-xs text-muted-foreground">
-                            Lassen Sie das Feld leer, wenn Sie das Passwort nicht ändern möchten.
+                            {t('settings.smtpPasswordHint')}
                         </p>
                     </div>
 
@@ -265,14 +268,14 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                 <CardHeader>
                     <CardTitle>E-Mail Vorlagen Vorschau</CardTitle>
                     <CardDescription>
-                        Vorschau aller verfügbaren E-Mail-Vorlagen
+                        {t('settings.emailTemplatesPreview')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-6">
                         {/* Rechnungen */}
                         <div>
-                            <h3 className="font-semibold text-lg mb-3">Rechnungen</h3>
+                            <h3 className="font-semibold text-lg mb-3">{t('nav.invoices')}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {EMAIL_TEMPLATES.filter(t => t.category === 'invoice').map((template) => (
                                     <div key={template.id} className="border rounded-lg p-4 flex items-center justify-between">
@@ -287,7 +290,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                                             onClick={() => setPreviewTemplate(template)}
                                         >
                                             <Eye className="mr-2 h-4 w-4" />
-                                            Vorschau
+                                            {t('common.preview')}
                                         </Button>
                                     </div>
                                 ))}
@@ -296,7 +299,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
 
                         {/* Angebote */}
                         <div>
-                            <h3 className="font-semibold text-lg mb-3">Angebote</h3>
+                            <h3 className="font-semibold text-lg mb-3">{t('nav.offers')}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {EMAIL_TEMPLATES.filter(t => t.category === 'offer').map((template) => (
                                     <div key={template.id} className="border rounded-lg p-4 flex items-center justify-between">
@@ -311,7 +314,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                                             onClick={() => setPreviewTemplate(template)}
                                         >
                                             <Eye className="mr-2 h-4 w-4" />
-                                            Vorschau
+                                            {t('common.preview')}
                                         </Button>
                                     </div>
                                 ))}
@@ -335,7 +338,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                                             onClick={() => setPreviewTemplate(template)}
                                         >
                                             <Eye className="mr-2 h-4 w-4" />
-                                            Vorschau
+                                            {t('common.preview')}
                                         </Button>
                                     </div>
                                 ))}
@@ -359,7 +362,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                                             onClick={() => setPreviewTemplate(template)}
                                         >
                                             <Eye className="mr-2 h-4 w-4" />
-                                            Vorschau
+                                            {t('common.preview')}
                                         </Button>
                                     </div>
                                 ))}
@@ -403,11 +406,11 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                             onClick={() => window.open(route(previewTemplate.route), "_blank")}
                         >
                             <ExternalLink className="mr-2 h-4 w-4" />
-                            In neuem Tab öffnen
+                            {t('common.openInNewTab')}
                         </Button>
                     )}
                     <Button variant="outline" onClick={() => setPreviewTemplate(null)}>
-                        Schließen
+                        {t('common.close')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

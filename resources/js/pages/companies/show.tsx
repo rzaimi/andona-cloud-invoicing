@@ -27,6 +27,7 @@ import {
     XCircle,
 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
+import { useTranslation } from "react-i18next"
 import type { User } from "@/types"
 
 interface Company {
@@ -86,6 +87,7 @@ interface ShowProps {
 }
 
 export default function Show({ auth, company, stats }: ShowProps) {
+    const { t } = useTranslation()
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("de-DE", {
             style: "currency",
@@ -143,19 +145,19 @@ export default function Show({ auth, company, stats }: ShowProps) {
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/companies">
                                 <ArrowLeft className="h-4 w-4 mr-2" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
                             <h1 className="text-1xl font-bold tracking-tight">{company.name}</h1>
-                            <p className="text-muted-foreground">Firmendetails und Einstellungen</p>
+                            <p className="text-muted-foreground">{t('settings.companyDetailsTitle')}</p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button variant="outline" asChild>
                             <Link href={`/companies/${company.id}/edit`}>
                                 <Edit className="h-4 w-4 mr-2" />
-                                Bearbeiten
+                                {t('common.edit')}
                             </Link>
                         </Button>
                     </div>
@@ -165,7 +167,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Benutzer</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.users.role')}</CardTitle>
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -175,7 +177,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Kunden</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.customers')}</CardTitle>
                             <UserCircle className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -185,7 +187,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Rechnungen</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.invoices')}</CardTitle>
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -195,7 +197,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Angebote</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.offers')}</CardTitle>
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -215,7 +217,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Offene Rechnungen</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.reports.openInvoices')}</CardTitle>
                             <DollarSign className="h-4 w-4 text-yellow-600" />
                         </CardHeader>
                         <CardContent>
@@ -227,9 +229,9 @@ export default function Show({ auth, company, stats }: ShowProps) {
                 {/* Tabs */}
                 <Tabs defaultValue="overview" className="space-y-4">
                     <TabsList>
-                        <TabsTrigger value="overview">Übersicht</TabsTrigger>
+                        <TabsTrigger value="overview">{t('common.overview')}</TabsTrigger>
                         <TabsTrigger value="users">Benutzer ({stats.users_count})</TabsTrigger>
-                        <TabsTrigger value="settings">Einstellungen</TabsTrigger>
+                        <TabsTrigger value="settings">{t('nav.settings')}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="overview" className="space-y-4">
@@ -422,7 +424,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
                                                 <div className="flex items-start">
                                                     <Settings className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
                                                     <div>
-                                                        <div className="text-sm font-medium">Verschlüsselung</div>
+                                                        <div className="text-sm font-medium">{t('settings.smtpEncryption')}</div>
                                                         <div className="text-sm text-muted-foreground uppercase">{company.smtp_encryption}</div>
                                                     </div>
                                                 </div>
@@ -439,7 +441,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
                     <TabsContent value="users" className="space-y-4">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Benutzer</CardTitle>
+                                <CardTitle>{t('pages.users.role')}</CardTitle>
                                 <CardDescription>Alle Benutzer dieser Firma</CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -448,10 +450,10 @@ export default function Show({ auth, company, stats }: ShowProps) {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
-                                                    <TableHead>Name</TableHead>
+                                                    <TableHead>{t('common.name')}</TableHead>
                                                     <TableHead>E-Mail</TableHead>
                                                     <TableHead>Rolle</TableHead>
-                                                    <TableHead>Status</TableHead>
+                                                    <TableHead>{t('common.status')}</TableHead>
                                                     <TableHead>Erstellt am</TableHead>
                                                 </TableRow>
                                             </TableHeader>
@@ -479,7 +481,7 @@ export default function Show({ auth, company, stats }: ShowProps) {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Firmeneinstellungen</CardTitle>
-                                <CardDescription>Alle gespeicherten Einstellungen für diese Firma</CardDescription>
+                                <CardDescription>{t('pages.companies.allSettings')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {company.settings && company.settings.length > 0 ? (
@@ -487,9 +489,9 @@ export default function Show({ auth, company, stats }: ShowProps) {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
-                                                    <TableHead>Schlüssel</TableHead>
-                                                    <TableHead>Wert</TableHead>
-                                                    <TableHead>Typ</TableHead>
+                                                    <TableHead>{t('common.key')}</TableHead>
+                                                    <TableHead>{t('common.value')}</TableHead>
+                                                    <TableHead>{t('common.type')}</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>

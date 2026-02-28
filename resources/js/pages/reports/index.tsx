@@ -1,6 +1,7 @@
 "use client"
 
 import { Head, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, Euro, Users, EuroIcon, TrendingUp } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
@@ -35,6 +36,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function ReportsIndex({ stats }: ReportsIndexProps) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
 
@@ -42,12 +44,12 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Berichte & Analysen" />
+            <Head title={t('pages.reports.title')} />
 
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-1xl font-bold text-gray-900">Berichte & Analysen</h1>
-                    <p className="text-gray-600">Übersicht über alle wichtigen Kennzahlen</p>
+                    <h1 className="text-1xl font-bold text-gray-900">{t('pages.reports.title')}</h1>
+                    <p className="text-gray-600">{t('pages.reports.overviewSubtitle')}</p>
                 </div>
 
                 {/* Statistics Cards */}
@@ -67,7 +69,7 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Jährlicher Umsatz</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.reports.annualRevenue')}</CardTitle>
                             <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -78,7 +80,7 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Aktive Kunden</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.reports.activeCustomers')}</CardTitle>
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -91,7 +93,7 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Angebote</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.offers')}</CardTitle>
                             <EuroIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -126,7 +128,7 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
                                 <Users className="h-5 w-5" />
                                 Kundenberichte
                             </CardTitle>
-                            <CardDescription>Kundenstatistiken und Top-Kunden</CardDescription>
+                            <CardDescription>{t('pages.reports.customersSubtitle')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <a href="/reports/customers" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -141,7 +143,7 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
                                 <EuroIcon className="h-5 w-5" />
                                 Steuerberichte
                             </CardTitle>
-                            <CardDescription>Steuerübersicht und MwSt-Berichte</CardDescription>
+                            <CardDescription>{t('pages.reports.taxSubtitle')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <a href="/reports/tax" className="text-blue-600 hover:text-blue-800 text-sm font-medium">

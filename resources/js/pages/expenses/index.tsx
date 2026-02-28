@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -67,6 +68,7 @@ interface ExpensesIndexProps {
 const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" }, { title: "Ausgaben" }]
 
 export default function ExpensesIndex() {
+    const { t } = useTranslation()
     // @ts-ignore
     const { expenses, categories, filters, totals } = usePage<ExpensesIndexProps>().props
     const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
@@ -86,7 +88,7 @@ export default function ExpensesIndex() {
     }
 
     const handleDelete = (expense: Expense) => {
-        if (confirm(`Möchten Sie die Ausgabe "${expense.title}" wirklich löschen?`)) {
+        if (confirm(t('pages.expenses.deleteConfirm', { title: expense.title }))) {
             router.delete(`/expenses/${expense.id}`)
         }
     }
@@ -100,20 +102,20 @@ export default function ExpensesIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Ausgaben" />
+            <Head title={t('pages.expenses.title')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Ausgabenverwaltung</h1>
-                        <p className="text-gray-600">Verwalten Sie alle Geschäftsausgaben</p>
+                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">{t('pages.expenses.title')}</h1>
+                        <p className="text-gray-600">{t('pages.expenses.subtitle')}</p>
                     </div>
 
                     <Link href="/expenses/create">
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
-                            Neue Ausgabe
+                            {t('pages.expenses.new')}
                         </Button>
                     </Link>
                 </div>
@@ -156,8 +158,8 @@ export default function ExpensesIndex() {
                 {/* Filters */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Ausgaben filtern</CardTitle>
-                        <CardDescription>Suchen und filtern Sie Ihre Ausgaben</CardDescription>
+                        <CardTitle>{t('pages.expenses.filterTitle')}</CardTitle>
+                        <CardDescription>{t('pages.expenses.filterDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSearch} className="flex flex-col gap-4">
@@ -185,7 +187,7 @@ export default function ExpensesIndex() {
                                 />
                                 <Select value={categoryId} onValueChange={setCategoryId}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Kategorie wählen" />
+                                        <SelectValue placeholder={t('pages.expenses.selectCategory')} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">Alle Kategorien</SelectItem>
@@ -198,7 +200,7 @@ export default function ExpensesIndex() {
                                 </Select>
                             </div>
                             <div className="flex gap-2">
-                                <Button type="submit">Suchen</Button>
+                                <Button type="submit">{t('common.search')}</Button>
                                 {(filters.search || filters.start_date || filters.end_date || filters.category_id) && (
                                     <Button
                                         type="button"
@@ -211,7 +213,7 @@ export default function ExpensesIndex() {
                                             router.get("/expenses")
                                         }}
                                     >
-                                        Zurücksetzen
+                                        {t('common.reset')}
                                     </Button>
                                 )}
                             </div>
@@ -222,8 +224,8 @@ export default function ExpensesIndex() {
                 {/* Expenses Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Ausgaben</CardTitle>
-                        <CardDescription>Alle Ausgaben in Ihrem System</CardDescription>
+                        <CardTitle>{t('nav.expenses')}</CardTitle>
+                        <CardDescription>{t('pages.expenses.subtitle')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -234,9 +236,9 @@ export default function ExpensesIndex() {
                                     <TableHead>Kategorie</TableHead>
                                     <TableHead>Netto</TableHead>
                                     <TableHead>MwSt.</TableHead>
-                                    <TableHead>Gesamt</TableHead>
+                                    <TableHead>{t('common.total')}</TableHead>
                                     <TableHead>Beleg</TableHead>
-                                    <TableHead>Aktionen</TableHead>
+                                    <TableHead>{t('common.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { route } from "ziggy-js"
 
 export default function PasswordSettingsTab() {
+    const { t } = useTranslation()
     const { data, setData, put, processing, errors } = useForm({
         current_password: '',
         password: '',
@@ -23,9 +25,9 @@ export default function PasswordSettingsTab() {
         <form onSubmit={handleSubmit} className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Passwort ändern</CardTitle>
+                    <CardTitle>{t('settings.changePassword')}</CardTitle>
                     <CardDescription>
-                        Aktualisieren Sie Ihr Passwort für mehr Sicherheit
+                        {t('settings.passwordDesc')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -54,7 +56,7 @@ export default function PasswordSettingsTab() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="password_confirmation">Passwort bestätigen</Label>
+                        <Label htmlFor="password_confirmation">{t('auth.confirmPassword')}</Label>
                         <Input
                             id="password_confirmation"
                             type="password"

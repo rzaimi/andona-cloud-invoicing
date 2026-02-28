@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -39,6 +40,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function ProductsIndex({ products, categories, stats, filters }: Omit<ProductsIndexProps, 'user'>) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
     const [search, setSearch] = useState(filters.search || "")
@@ -68,7 +70,7 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
     }
 
     const deleteProduct = (id: string) => {
-        if (confirm("Sind Sie sicher, dass Sie dieses Produkt löschen möchten?")) {
+        if (confirm(t('pages.products.deleteConfirm'))) {
             router.delete(`/products/${id}`)
         }
     }
@@ -109,14 +111,14 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Produktverwaltung" />
+            <Head title={t('pages.products.title')} />
 
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">Produktverwaltung</h1>
-                        <p className="text-muted-foreground">Verwalten Sie Ihre Produkte und Dienstleistungen</p>
+                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">{t('pages.products.title')}</h1>
+                        <p className="text-muted-foreground">{t('pages.products.subtitle')}</p>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button
@@ -130,12 +132,12 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
                             }}
                         >
                             <Download className="mr-2 h-4 w-4" />
-                            Exportieren
+                            {t('common.export')}
                         </Button>
                         <Button asChild>
                             <Link href="/products/create">
                                 <Plus className="mr-2 h-4 w-4" />
-                                Neues Produkt
+                                {t('pages.products.new')}
                             </Link>
                         </Button>
                     </div>
@@ -145,7 +147,7 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Gesamt Produkte</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.products.statsTotal')}</CardTitle>
                             <Package className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -155,7 +157,7 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Aktive Produkte</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.products.statsActive')}</CardTitle>
                             <TrendingUp className="h-4 w-4 text-green-600" />
                         </CardHeader>
                         <CardContent>
@@ -197,8 +199,8 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
                 {/* Filters */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Filter</CardTitle>
-                        <CardDescription>Filtern Sie Ihre Produkte nach verschiedenen Kriterien</CardDescription>
+                        <CardTitle>{t('common.filters')}</CardTitle>
+                        <CardDescription>{t('pages.products.filterDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -233,28 +235,28 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Status</label>
+                                <label className="text-sm font-medium">{t('common.status')}</label>
                                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Alle Status" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">Alle Status</SelectItem>
-                                        <SelectItem value="active">Aktiv</SelectItem>
-                                        <SelectItem value="inactive">Inaktiv</SelectItem>
+                                        <SelectItem value="active">{t('common.active')}</SelectItem>
+                                        <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
                                         <SelectItem value="discontinued">Eingestellt</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Lagerbestand</label>
+                                <label className="text-sm font-medium">{t('pages.products.tabInventory')}</label>
                                 <Select value={selectedStockStatus} onValueChange={setSelectedStockStatus}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Alle Bestände" />
+                                        <SelectValue placeholder={t('pages.products.allStocks')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Alle Bestände</SelectItem>
+                                        <SelectItem value="all">{t('pages.products.allStocks')}</SelectItem>
                                         <SelectItem value="in_stock">Auf Lager</SelectItem>
                                         <SelectItem value="low_stock">Niedriger Bestand</SelectItem>
                                         <SelectItem value="out_of_stock">Ausverkauft</SelectItem>
@@ -268,7 +270,7 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
                                     Filtern
                                 </Button>
                                 <Button variant="outline" onClick={handleReset}>
-                                    Zurücksetzen
+                                    {t('common.reset')}
                                 </Button>
                             </div>
                         </div>
@@ -285,14 +287,14 @@ export default function ProductsIndex({ products, categories, stats, filters }: 
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Nummer</TableHead>
-                                        <TableHead>Name</TableHead>
+                                        <TableHead>{t('common.number')}</TableHead>
+                                        <TableHead>{t('common.name')}</TableHead>
                                         <TableHead>Kategorie</TableHead>
-                                        <TableHead>Preis</TableHead>
+                                        <TableHead>{t('common.price')}</TableHead>
                                         <TableHead>Bestand</TableHead>
-                                        <TableHead>Status</TableHead>
+                                        <TableHead>{t('common.status')}</TableHead>
                                         <TableHead>Lager-Status</TableHead>
-                                        <TableHead className="text-right">Aktionen</TableHead>
+                                        <TableHead className="text-right">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

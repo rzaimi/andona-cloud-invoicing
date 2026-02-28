@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -71,6 +72,7 @@ interface InvoicesIndexProps {
 const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" }, { title: "Rechnungen" }]
 
 export default function InvoicesIndex() {
+    const { t } = useTranslation()
     // @ts-ignore
     const { invoices, filters, stats } = usePage<InvoicesIndexProps>().props
     const [search, setSearch] = useState(filters.search || "")
@@ -130,13 +132,13 @@ export default function InvoicesIndex() {
     }
 
     const handleDelete = (invoice: Invoice) => {
-        if (confirm(`Möchten Sie die Rechnung "${invoice.number}" wirklich löschen?`)) {
+        if (confirm(t('pages.invoices.deleteConfirm', { number: invoice.number }))) {
             router.delete(`/invoices/${invoice.id}`)
         }
     }
 
     const handleSendReminder = (invoice: Invoice) => {
-        if (confirm(`Möchten Sie die nächste Mahnung für Rechnung "${invoice.number}" versenden?`)) {
+        if (confirm(t('pages.invoices.confirmSendReminder', { number: invoice.number }))) {
             router.post(route("invoices.send-reminder", invoice.id))
         }
     }
@@ -195,11 +197,11 @@ export default function InvoicesIndex() {
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
-            draft: { label: "Entwurf", variant: "outline" as const },
-            sent: { label: "Versendet", variant: "secondary" as const },
-            paid: { label: "Bezahlt", variant: "default" as const },
-            overdue: { label: "Überfällig", variant: "destructive" as const },
-            cancelled: { label: "Storniert", variant: "outline" as const },
+            draft: { label: t('common.draft'), variant: "outline" as const },
+            sent: { label: t('common.sent'), variant: "secondary" as const },
+            paid: { label: t('common.paid'), variant: "default" as const },
+            overdue: { label: t('common.overdue'), variant: "destructive" as const },
+            cancelled: { label: t('common.cancelled'), variant: "outline" as const },
         }
 
         const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
@@ -215,14 +217,14 @@ export default function InvoicesIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Rechnungen" />
+            <Head title={t('pages.invoices.title')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Rechnungsverwaltung</h1>
-                        <p className="text-gray-600">Verwalten Sie Ihre Rechnungen und deren Status</p>
+                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">{t('pages.invoices.title')}</h1>
+                        <p className="text-gray-600">{t('pages.invoices.subtitle')}</p>
                     </div>
 
                     <div className="flex gap-2">
@@ -238,12 +240,12 @@ export default function InvoicesIndex() {
                             }}
                         >
                             <Download className="mr-2 h-4 w-4" />
-                            Exportieren
+                            {t('common.export')}
                         </Button>
                         <Link href="/invoices/create">
                             <Button>
                                 <Plus className="mr-2 h-4 w-4" />
-                                Neue Rechnung
+                                {t('pages.invoices.new')}
                             </Button>
                         </Link>
                     </div>
@@ -253,7 +255,7 @@ export default function InvoicesIndex() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Gesamt</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.invoices.statsTotal')}</CardTitle>
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -263,7 +265,7 @@ export default function InvoicesIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Entwürfe</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.invoices.statsDraft')}</CardTitle>
                             <Edit className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -273,7 +275,7 @@ export default function InvoicesIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Versendet</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.invoices.statsSent')}</CardTitle>
                             <Clock className="h-4 w-4 text-blue-600" />
                         </CardHeader>
                         <CardContent>
@@ -283,7 +285,7 @@ export default function InvoicesIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Bezahlt</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.invoices.statsPaid')}</CardTitle>
                             <CheckCircle className="h-4 w-4 text-green-600" />
                         </CardHeader>
                         <CardContent>
@@ -293,7 +295,7 @@ export default function InvoicesIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Überfällig</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.invoices.statsOverdue')}</CardTitle>
                             <AlertTriangle className="h-4 w-4 text-red-600" />
                         </CardHeader>
                         <CardContent>
@@ -303,7 +305,7 @@ export default function InvoicesIndex() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Storniert</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('common.cancelled')}</CardTitle>
                             <XCircle className="h-4 w-4 text-gray-600" />
                         </CardHeader>
                         <CardContent>
@@ -315,15 +317,15 @@ export default function InvoicesIndex() {
                 {/* Filters */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Rechnungen filtern</CardTitle>
-                        <CardDescription>Suchen und filtern Sie Ihre Rechnungen</CardDescription>
+                        <CardTitle>{t('pages.invoices.filterTitle')}</CardTitle>
+                        <CardDescription>{t('pages.invoices.filterDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSearch} className="flex gap-4">
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                 <Input
-                                    placeholder="Nach Rechnungsnummer oder Kunde suchen..."
+                                    placeholder={t('pages.invoices.searchPlaceholder')}
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="pl-10"
@@ -331,18 +333,18 @@ export default function InvoicesIndex() {
                             </div>
                             <Select value={status} onValueChange={handleStatusChange}>
                                 <SelectTrigger className="w-48">
-                                    <SelectValue placeholder="Status wählen" />
+                                    <SelectValue placeholder={t('common.status')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Alle Status</SelectItem>
-                                    <SelectItem value="draft">Entwurf</SelectItem>
-                                    <SelectItem value="sent">Versendet</SelectItem>
-                                    <SelectItem value="paid">Bezahlt</SelectItem>
-                                    <SelectItem value="overdue">Überfällig</SelectItem>
-                                    <SelectItem value="cancelled">Storniert</SelectItem>
+                                    <SelectItem value="all">{t('pages.invoices.allStatuses')}</SelectItem>
+                                    <SelectItem value="draft">{t('common.draft')}</SelectItem>
+                                    <SelectItem value="sent">{t('common.sent')}</SelectItem>
+                                    <SelectItem value="paid">{t('common.paid')}</SelectItem>
+                                    <SelectItem value="overdue">{t('common.overdue')}</SelectItem>
+                                    <SelectItem value="cancelled">{t('common.cancelled')}</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <Button type="submit">Suchen</Button>
+                            <Button type="submit">{t('common.search')}</Button>
                             {(filters.search || filters.status || filters.sort) && (
                                 <Button
                                     type="button"
@@ -353,7 +355,7 @@ export default function InvoicesIndex() {
                                         router.get("/invoices")
                                     }}
                                 >
-                                    Zurücksetzen
+                                    {t('common.reset')}
                                 </Button>
                             )}
                         </form>
@@ -363,8 +365,8 @@ export default function InvoicesIndex() {
                 {/* Invoices Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Rechnungen ({stats.total})</CardTitle>
-                        <CardDescription>Alle Rechnungen in Ihrem System</CardDescription>
+                        <CardTitle>{t('nav.invoices')} ({stats.total})</CardTitle>
+                        <CardDescription>{t('pages.invoices.subtitle')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -377,7 +379,7 @@ export default function InvoicesIndex() {
                                             className="-ml-3 h-8 data-[state=open]:bg-accent"
                                             onClick={() => handleSort("number")}
                                         >
-                                            Rechnungsnummer
+                                            {t('pages.invoices.number')}
                                             {getSortIcon("number")}
                                         </Button>
                                     </TableHead>
@@ -388,7 +390,7 @@ export default function InvoicesIndex() {
                                             className="-ml-3 h-8 data-[state=open]:bg-accent"
                                             onClick={() => handleSort("customer")}
                                         >
-                                            Kunde
+                                            {t('pages.invoices.customer')}
                                             {getSortIcon("customer")}
                                         </Button>
                                     </TableHead>
@@ -399,7 +401,7 @@ export default function InvoicesIndex() {
                                             className="-ml-3 h-8 data-[state=open]:bg-accent"
                                             onClick={() => handleSort("issue_date")}
                                         >
-                                            Rechnungsdatum
+                                            {t('pages.invoices.issueDate')}
                                             {getSortIcon("issue_date")}
                                         </Button>
                                     </TableHead>
@@ -410,7 +412,7 @@ export default function InvoicesIndex() {
                                             className="-ml-3 h-8 data-[state=open]:bg-accent"
                                             onClick={() => handleSort("due_date")}
                                         >
-                                            Fälligkeitsdatum
+                                            {t('pages.invoices.dueDate')}
                                             {getSortIcon("due_date")}
                                         </Button>
                                     </TableHead>
@@ -421,7 +423,7 @@ export default function InvoicesIndex() {
                                             className="-ml-3 h-8 data-[state=open]:bg-accent"
                                             onClick={() => handleSort("total")}
                                         >
-                                            Betrag
+                                            {t('common.amount')}
                                             {getSortIcon("total")}
                                         </Button>
                                     </TableHead>
@@ -432,12 +434,12 @@ export default function InvoicesIndex() {
                                             className="-ml-3 h-8 data-[state=open]:bg-accent"
                                             onClick={() => handleSort("status")}
                                         >
-                                            Status
+                                            {t('common.status')}
                                             {getSortIcon("status")}
                                         </Button>
                                     </TableHead>
                                     <TableHead>Mahnung</TableHead>
-                                    <TableHead className="w-[156px] text-right">Aktionen</TableHead>
+                                    <TableHead className="w-[156px] text-right">{t('common.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -461,7 +463,7 @@ export default function InvoicesIndex() {
                                             {formatCurrency(invoice.total)}
                                             {invoice.reminder_fee > 0 && (
                                                 <div className="text-xs text-orange-600">
-                                                    + {formatCurrency(invoice.reminder_fee)} Gebühr
+                                                    + {formatCurrency(invoice.reminder_fee)} {t('settings.mahnungFee_short')}
                                                 </div>
                                             )}
                                         </TableCell>
@@ -500,7 +502,7 @@ export default function InvoicesIndex() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-9 w-9"
-                                                        title="PDF öffnen"
+                                                        title={t('pages.invoices.openPdf')}
                                                         onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}
                                                     >
                                                         <FileText className="h-4 w-4" />
@@ -523,19 +525,19 @@ export default function InvoicesIndex() {
                                                         <DropdownMenuItem asChild>
                                                             <Link href={`/invoices/${invoice.id}`}>
                                                                 <Eye className="mr-2 h-4 w-4" />
-                                                                Anzeigen
+                                                                {t('common.view')}
                                                             </Link>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem asChild>
                                                             <Link href={`/invoices/${invoice.id}/edit`}>
                                                                 <Edit className="mr-2 h-4 w-4" />
-                                                                Bearbeiten
+                                                                {t('common.edit')}
                                                             </Link>
                                                         </DropdownMenuItem>
 
                                                         <DropdownMenuItem onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}>
                                                             <FileText className="mr-2 h-4 w-4" />
-                                                            PDF öffnen
+                                                            PDF
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem onClick={() => window.open(route("invoices.xrechnung", invoice.id), "_blank")}>
                                                             <FileText className="mr-2 h-4 w-4" />
@@ -554,7 +556,7 @@ export default function InvoicesIndex() {
                                                                 }}
                                                             >
                                                                 <Send className="mr-2 h-4 w-4" />
-                                                                Versenden
+                                                                {t('common.send')}
                                                             </DropdownMenuItem>
                                                         )}
 
@@ -570,7 +572,7 @@ export default function InvoicesIndex() {
                                                             onClick={() => handleDelete(invoice)}
                                                         >
                                                             <Trash2 className="mr-2 h-4 w-4" />
-                                                            Löschen
+                                                            {t('common.delete')}
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -584,13 +586,13 @@ export default function InvoicesIndex() {
                         {invoices.data.length === 0 && (
                             <div className="text-center py-8">
                                 <p className="text-gray-500">
-                                    {filters.search || filters.status ? "Keine Rechnungen gefunden." : "Noch keine Rechnungen vorhanden."}
+                                    {filters.search || filters.status ? t('common.noResults') : t('common.noData')}
                                 </p>
                                 {!filters.search && !filters.status && (
                                     <Link href="/invoices/create">
                                         <Button className="mt-4">
                                             <Plus className="mr-2 h-4 w-4" />
-                                            Erste Rechnung erstellen
+                                            {t('pages.invoices.new')}
                                         </Button>
                                     </Link>
                                 )}
@@ -623,7 +625,7 @@ export default function InvoicesIndex() {
                     <DialogHeader>
                         <DialogTitle>Mahnhistorie</DialogTitle>
                         <DialogDescription>
-                            Alle versendeten Mahnungen für diese Rechnung
+                            {t('pages.invoices.allReminders')}
                         </DialogDescription>
                     </DialogHeader>
                     {reminderHistory && (
@@ -634,13 +636,13 @@ export default function InvoicesIndex() {
                                     <p className="text-2xl font-bold">{reminderHistory.reminder_level_name}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">Gesamte Mahngebühren</p>
+                                    <p className="text-sm font-medium">{t('pages.invoices.totalReminderFees')}</p>
                                     <p className="text-2xl font-bold text-orange-600">
                                         {formatCurrency(reminderHistory.reminder_fee || 0)}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">Tage überfällig</p>
+                                    <p className="text-sm font-medium">{t('pages.invoices.daysOverdue')}</p>
                                     <p className="text-2xl font-bold text-red-600">{reminderHistory.days_overdue || 0}</p>
                                 </div>
                                 <div>
@@ -682,11 +684,11 @@ export default function InvoicesIndex() {
                                                         })}
                                                     </p>
                                                     <p className="text-sm text-gray-600">
-                                                        {entry.days_overdue} Tage überfällig
+                                                        {entry.days_overdue} {t('pages.invoices.daysOverdue')}
                                                     </p>
                                                     {entry.fee > 0 && (
                                                         <p className="text-sm font-medium text-orange-600">
-                                                            Gebühr: {formatCurrency(entry.fee)}
+                                                            {t('pages.invoices.fee')}: {formatCurrency(entry.fee)}
                                                         </p>
                                                     )}
                                                 </div>
@@ -703,7 +705,7 @@ export default function InvoicesIndex() {
                             {reminderHistory.can_send_next && (
                                 <div className="border-t pt-4">
                                     <div className="bg-orange-50 p-4 rounded-lg">
-                                        <p className="text-sm font-medium">Nächste Mahnstufe</p>
+                                        <p className="text-sm font-medium">{t('pages.invoices.nextLevel')}</p>
                                         <p className="text-lg font-bold">{reminderHistory.next_level_name}</p>
                                         <Button
                                             className="mt-2"

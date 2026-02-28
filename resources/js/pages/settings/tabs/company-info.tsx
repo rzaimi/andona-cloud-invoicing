@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +17,9 @@ interface CompanyInfoTabProps {
     company: any
 }
 
-export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
+export default function CompanyInfoTab({
+    company }: CompanyInfoTabProps) {
+    const { t } = useTranslation()
     const { data, setData, post, processing, errors, transform } = useForm({
         name: company?.name || '',
         email: company?.email || '',
@@ -126,8 +129,8 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
             {/* Basic Information */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Grundinformationen</CardTitle>
-                    <CardDescription>Grundlegende Informationen über Ihre Firma</CardDescription>
+                    <CardTitle>{t('pages.products.basicInfo')}</CardTitle>
+                    <CardDescription>{t('settings.companyBasicInfo')}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
@@ -186,7 +189,7 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="managing_director">Geschäftsführer</Label>
+                        <Label htmlFor="managing_director">{t('settings.ceo')}</Label>
                         <Input
                             id="managing_director"
                             value={data.managing_director}
@@ -205,7 +208,7 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="address">Straße und Hausnummer</Label>
+                        <Label htmlFor="address">{t('settings.streetAndNumber')}</Label>
                         <Input
                             id="address"
                             value={data.address}
@@ -254,7 +257,7 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
             {/* Tax Information */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Steuerinformationen</CardTitle>
+                    <CardTitle>{t('pages.customers.taxInfo')}</CardTitle>
                     <CardDescription>Steuerliche Angaben Ihrer Firma</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
@@ -274,7 +277,7 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
                             id="tax_office"
                             value={data.tax_office}
                             onChange={(e) => setData("tax_office", e.target.value)}
-                            placeholder="z.B. Finanzamt Gießen"
+                            placeholder={t('settings.taxOfficePlaceholder')}
                         />
                         {errors.tax_office && <p className="text-red-600 text-sm">{errors.tax_office}</p>}
                     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +17,9 @@ interface RemindersSettingsTabProps {
     reminderSettings: any
 }
 
-export default function RemindersSettingsTab({ reminderSettings }: RemindersSettingsTabProps) {
+export default function RemindersSettingsTab({
+    reminderSettings }: RemindersSettingsTabProps) {
+    const { t } = useTranslation()
     const [previewTemplate, setPreviewTemplate] = useState<string | null>(null)
     const { data, setData, post, processing, errors } = useForm({
         reminder_friendly_days: reminderSettings?.reminder_friendly_days || 7,
@@ -50,7 +53,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
             <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                    Diese Einstellungen steuern den automatischen Eskalationsprozess für überfällige Rechnungen: Freundliche Erinnerung → 1. Mahnung → 2. Mahnung → 3. Mahnung → Inkasso
+                    {t('settings.remindersDesc')}iche Erinnerung → 1. Mahnung → 2. Mahnung → 3. Mahnung → Inkasso
                 </AlertDescription>
             </Alert>
 
@@ -58,7 +61,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                 <CardHeader>
                     <CardTitle>Mahnintervalle</CardTitle>
                     <CardDescription>
-                        Tage nach Fälligkeitsdatum, an denen Mahnungen automatisch versendet werden
+                        {t('settings.remindersDaysHint')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -74,7 +77,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                                     className="h-7 text-xs"
                                 >
                                     <Eye className="h-3 w-3 mr-1" />
-                                    Vorschau
+                                    {t('common.preview')}
                                 </Button>
                             </div>
                             <Input
@@ -99,7 +102,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                                     className="h-7 text-xs"
                                 >
                                     <Eye className="h-3 w-3 mr-1" />
-                                    Vorschau
+                                    {t('common.preview')}
                                 </Button>
                             </div>
                             <Input
@@ -124,7 +127,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                                     className="h-7 text-xs"
                                 >
                                     <Eye className="h-3 w-3 mr-1" />
-                                    Vorschau
+                                    {t('common.preview')}
                                 </Button>
                             </div>
                             <Input
@@ -149,7 +152,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                                     className="h-7 text-xs"
                                 >
                                     <Eye className="h-3 w-3 mr-1" />
-                                    Vorschau
+                                    {t('common.preview')}
                                 </Button>
                             </div>
                             <Input
@@ -174,7 +177,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                                     className="h-7 text-xs"
                                 >
                                     <Eye className="h-3 w-3 mr-1" />
-                                    Vorschau
+                                    {t('common.preview')}
                                 </Button>
                             </div>
                             <Input
@@ -193,15 +196,15 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Mahngebühren</CardTitle>
+                    <CardTitle>{t('settings.reminderFees')}</CardTitle>
                     <CardDescription>
-                        Gebühren in Euro, die bei jeder Mahnstufe berechnet werden
+                        {t('settings.remindersFeesHint')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <Label htmlFor="reminder_mahnung1_fee">1. Mahnung Gebühr (€)</Label>
+                            <Label htmlFor="reminder_mahnung1_fee">{t('settings.mahnung1Fee')}</Label>
                             <Input
                                 id="reminder_mahnung1_fee"
                                 type="number"
@@ -215,7 +218,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                         </div>
 
                         <div>
-                            <Label htmlFor="reminder_mahnung2_fee">2. Mahnung Gebühr (€)</Label>
+                            <Label htmlFor="reminder_mahnung2_fee">{t('settings.mahnung2Fee')}</Label>
                             <Input
                                 id="reminder_mahnung2_fee"
                                 type="number"
@@ -229,7 +232,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                         </div>
 
                         <div>
-                            <Label htmlFor="reminder_mahnung3_fee">3. Mahnung Gebühr (€)</Label>
+                            <Label htmlFor="reminder_mahnung3_fee">{t('settings.mahnung3Fee')}</Label>
                             <Input
                                 id="reminder_mahnung3_fee"
                                 type="number"
@@ -315,10 +318,10 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                             onClick={() => window.open(route(mahnungTemplates.find(t => t.id === previewTemplate)?.route || ''), "_blank")}
                         >
                             <ExternalLink className="h-4 w-4 mr-2" />
-                            In neuem Tab öffnen
+                            {t('common.openInNewTab')}
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => setPreviewTemplate(null)}>
-                            Schließen
+                            {t('common.close')}
                         </Button>
                     </div>
                 )}

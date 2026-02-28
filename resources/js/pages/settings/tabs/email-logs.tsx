@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { router } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -49,7 +50,9 @@ interface EmailLogsTabProps {
     } | null
 }
 
-export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilters }: EmailLogsTabProps) {
+export default function EmailLogsTab({
+    emailLogs, emailLogsStats, emailLogsFilters }: EmailLogsTabProps) {
+    const { t } = useTranslation()
     const [search, setSearch] = useState(emailLogsFilters?.search || "")
     const [type, setType] = useState(emailLogsFilters?.type || "all")
     const [status, setStatus] = useState(emailLogsFilters?.status || "all")
@@ -121,7 +124,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                     <CardHeader>
                         <CardTitle>E-Mail-Verlauf</CardTitle>
                         <CardDescription>
-                            Übersicht über alle versendeten E-Mails
+                            {t('settings.emailLogsOverview')}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -140,7 +143,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <Card>
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium">Gesamt</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('common.total')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{emailLogsStats.total}</div>
@@ -148,7 +151,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                 </Card>
                 <Card>
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium">Rechnungen</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('nav.invoices')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-blue-600">{emailLogsStats.invoice}</div>
@@ -156,7 +159,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                 </Card>
                 <Card>
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium">Angebote</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('nav.offers')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-purple-600">{emailLogsStats.offer}</div>
@@ -183,14 +186,14 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
             {/* Filters */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Filter</CardTitle>
+                    <CardTitle>{t('common.filters')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
                         <div className="flex-1 relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                             <Input
-                                placeholder="E-Mail, Empfänger oder Betreff suchen..."
+                                placeholder={t('settings.emailLogsSearch')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="pl-10"
@@ -202,7 +205,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Alle Typen</SelectItem>
-                                <SelectItem value="invoice">Rechnung</SelectItem>
+                                <SelectItem value="invoice">{t('nav.invoices')}</SelectItem>
                                 <SelectItem value="offer">Angebot</SelectItem>
                                 <SelectItem value="mahnung">Mahnung</SelectItem>
                                 <SelectItem value="reminder">Erinnerung</SelectItem>
@@ -214,7 +217,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Alle Status</SelectItem>
-                                <SelectItem value="sent">Versendet</SelectItem>
+                                <SelectItem value="sent">{t('common.sent')}</SelectItem>
                                 <SelectItem value="failed">Fehlgeschlagen</SelectItem>
                             </SelectContent>
                         </Select>
@@ -233,7 +236,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                                     router.get("/settings", { tab: 'email-logs' })
                                 }}
                             >
-                                Zurücksetzen
+                                {t('common.reset')}
                             </Button>
                         )}
                     </form>
@@ -252,9 +255,9 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                             <TableRow>
                                 <TableHead>Datum</TableHead>
                                 <TableHead>Typ</TableHead>
-                                <TableHead>Empfänger</TableHead>
+                                <TableHead>{t('settings.emailLogsRecipient')}</TableHead>
                                 <TableHead>Betreff</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>{t('common.status')}</TableHead>
                                 <TableHead>Aktion</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -334,7 +337,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                     <DialogHeader>
                         <DialogTitle>E-Mail Details</DialogTitle>
                         <DialogDescription>
-                            Vollständige Informationen zur gesendeten E-Mail
+                            {t('settings.emailLogsDetails')}
                         </DialogDescription>
                     </DialogHeader>
                     {selectedLog && (
@@ -357,12 +360,12 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                                     <div>{getTypeBadge(selectedLog)}</div>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500">Empfänger</p>
+                                    <p className="text-sm font-medium text-gray-500">{t('settings.emailLogsRecipient')}</p>
                                     <p className="text-sm font-medium">{selectedLog.recipient_name || "—"}</p>
                                     <p className="text-sm text-gray-600">{selectedLog.recipient_email}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500">Status</p>
+                                    <p className="text-sm font-medium text-gray-500">{t('common.status')}</p>
                                     <div>{getStatusBadge(selectedLog.status)}</div>
                                 </div>
                             </div>
@@ -383,7 +386,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
 
                             {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
                                 <div className="border-t pt-4">
-                                    <p className="text-sm font-medium text-gray-500 mb-2">Zusätzliche Informationen</p>
+                                    <p className="text-sm font-medium text-gray-500 mb-2">{t('pages.invoices.notes')}</p>
                                     <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                                         {selectedLog.metadata.invoice_number && (
                                             <div className="flex justify-between text-sm">
@@ -399,7 +402,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                                         )}
                                         {selectedLog.metadata.reminder_fee > 0 && (
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-gray-600">Mahngebühr:</span>
+                                                <span className="text-gray-600">{t('settings.mahnungFee')}:</span>
                                                 <span className="font-medium text-orange-600">
                                                     {new Intl.NumberFormat("de-DE", {
                                                         style: "currency",
@@ -410,7 +413,7 @@ export default function EmailLogsTab({ emailLogs, emailLogsStats, emailLogsFilte
                                         )}
                                         {selectedLog.metadata.days_overdue && (
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-gray-600">Tage überfällig:</span>
+                                                <span className="text-gray-600">{t('settings.emailLogsDaysOverdue')}:</span>
                                                 <span className="font-medium text-red-600">
                                                     {selectedLog.metadata.days_overdue} Tage
                                                 </span>

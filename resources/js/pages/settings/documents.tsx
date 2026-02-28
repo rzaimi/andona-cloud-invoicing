@@ -1,6 +1,7 @@
 "use client"
 
 import { Head, useForm, usePage, Link, router } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -94,6 +95,7 @@ const LINK_TYPES = [
 ]
 
 export default function DocumentsSettings() {
+    const { t } = useTranslation()
     const { props } = usePage<DocumentsProps & { flash?: { success?: string; upload_errors?: string[] } }>()
     const user = props.auth?.user || props.user
     const { documents, customers, invoices, filters, flash } = props
@@ -166,7 +168,7 @@ export default function DocumentsSettings() {
     }
 
     const handleDelete = (document: Document) => {
-        if (confirm(`Möchten Sie das Dokument "${document.name}" wirklich löschen?`)) {
+        if (confirm(t('settings.confirmDeleteDocument', { name: document.name }))) {
             router.delete(route('documents.destroy', document.id))
         }
     }
@@ -273,7 +275,7 @@ export default function DocumentsSettings() {
                                 </Select>
                             </div>
                             <div>
-                                <Label htmlFor="link_type">Verknüpfungstyp</Label>
+                                <Label htmlFor="link_type">{t('settings.linkType')}</Label>
                                 <Select
                                     defaultValue={filters.link_type || 'all'}
                                     onValueChange={(value) => {
@@ -301,7 +303,7 @@ export default function DocumentsSettings() {
                                     onClick={() => router.get(route('documents.index'))}
                                 >
                                     <X className="mr-2 h-4 w-4" />
-                                    Zurücksetzen
+                                    {t('common.reset')}
                                 </Button>
                             </div>
                         </div>
@@ -326,13 +328,13 @@ export default function DocumentsSettings() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Name</TableHead>
+                                        <TableHead>{t('common.name')}</TableHead>
                                         <TableHead>Kategorie</TableHead>
-                                        <TableHead>Größe</TableHead>
-                                        <TableHead>Verknüpft mit</TableHead>
+                                        <TableHead>{t('common.size')}</TableHead>
+                                        <TableHead>{t('settings.linkedWith')}</TableHead>
                                         <TableHead>Tags</TableHead>
                                         <TableHead>Hochgeladen</TableHead>
-                                        <TableHead className="text-right">Aktionen</TableHead>
+                                        <TableHead className="text-right">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -435,12 +437,12 @@ export default function DocumentsSettings() {
                             <DialogHeader>
                                 <DialogTitle>Dokument(e) hochladen</DialogTitle>
                                 <DialogDescription>
-                                    Laden Sie ein oder mehrere Dokumente gleichzeitig hoch. Alle Dateien erhalten die gleichen Metadaten (Kategorie, Tags, Verknüpfung).
+                                    {t('settings.documentsUploadHint')}
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                                 <div>
-                                    <Label htmlFor="files">Dateien * (Mehrfachauswahl möglich)</Label>
+                                    <Label htmlFor="files">{t('settings.filesLabel')} *</Label>
                                     <Input
                                         id="files"
                                         type="file"
@@ -454,7 +456,7 @@ export default function DocumentsSettings() {
                                     {uploadForm.data.files.length > 0 && (
                                         <div className="mt-2 space-y-1">
                                             <p className="text-sm text-gray-600">
-                                                {uploadForm.data.files.length} Datei(en) ausgewählt:
+                                                {uploadForm.data.files.length} {t('settings.filesSelected')}:
                                             </p>
                                             <ul className="text-xs text-gray-500 space-y-1 max-h-32 overflow-y-auto">
                                                 {uploadForm.data.files.map((file, index) => (
@@ -488,7 +490,7 @@ export default function DocumentsSettings() {
                                     </Select>
                                 </div>
                                 <div>
-                                    <Label htmlFor="description">Beschreibung</Label>
+                                    <Label htmlFor="description">{t('common.description')}</Label>
                                     <Input
                                         id="description"
                                         value={uploadForm.data.description}
@@ -506,7 +508,7 @@ export default function DocumentsSettings() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <Label htmlFor="linkable_type">Verknüpfen mit</Label>
+                                        <Label htmlFor="linkable_type">{t('settings.linkWith')}</Label>
                                         <Select
                                             value={linkableType || 'none'}
                                             onValueChange={(value) => {
@@ -524,11 +526,11 @@ export default function DocumentsSettings() {
                                             }}
                                         >
                                             <SelectTrigger id="linkable_type">
-                                                <SelectValue placeholder="Auswählen..." />
+                                                <SelectValue placeholder={t('common.selectPlaceholder')} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="none">Keine Verknüpfung</SelectItem>
-                                                <SelectItem value="invoice">Rechnung</SelectItem>
+                                                <SelectItem value="none">{t('settings.noLink')}</SelectItem>
+                                                <SelectItem value="invoice">{t('nav.invoices')}</SelectItem>
                                                 <SelectItem value="customer">Kunde</SelectItem>
                                             </SelectContent>
                                         </Select>
@@ -543,7 +545,7 @@ export default function DocumentsSettings() {
                                                 onValueChange={(value) => uploadForm.setData('linkable_id', value)}
                                             >
                                                 <SelectTrigger id="linkable_id">
-                                                    <SelectValue placeholder="Auswählen..." />
+                                                    <SelectValue placeholder={t('common.selectPlaceholder')} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {linkableType === 'invoice'
@@ -564,13 +566,13 @@ export default function DocumentsSettings() {
                                 </div>
                                 {linkableType && (
                                     <div>
-                                        <Label htmlFor="link_type">Verknüpfungstyp</Label>
+                                        <Label htmlFor="link_type">{t('settings.linkType')}</Label>
                                         <Select
                                             value={uploadForm.data.link_type || undefined}
                                             onValueChange={(value) => uploadForm.setData('link_type', value)}
                                         >
                                             <SelectTrigger id="link_type">
-                                                <SelectValue placeholder="Auswählen..." />
+                                                <SelectValue placeholder={t('common.selectPlaceholder')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {LINK_TYPES.filter(t => t.value !== 'all').map((type) => (
@@ -589,7 +591,7 @@ export default function DocumentsSettings() {
                                     variant="outline"
                                     onClick={() => setUploadDialogOpen(false)}
                                 >
-                                    Abbrechen
+                                    {t('common.cancel')}
                                 </Button>
                                 <Button type="submit" disabled={uploadForm.processing}>
                                     {uploadForm.processing ? 'Wird hochgeladen...' : 'Hochladen'}
@@ -641,7 +643,7 @@ export default function DocumentsSettings() {
                                     </Select>
                                 </div>
                                 <div>
-                                    <Label htmlFor="edit-description">Beschreibung</Label>
+                                    <Label htmlFor="edit-description">{t('common.description')}</Label>
                                     <Input
                                         id="edit-description"
                                         value={editForm.data.description}
@@ -658,7 +660,7 @@ export default function DocumentsSettings() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <Label htmlFor="edit-linkable_type">Verknüpfen mit</Label>
+                                        <Label htmlFor="edit-linkable_type">{t('settings.linkWith')}</Label>
                                         <Select
                                             value={linkableType || 'none'}
                                             onValueChange={(value) => {
@@ -676,11 +678,11 @@ export default function DocumentsSettings() {
                                             }}
                                         >
                                             <SelectTrigger id="edit-linkable_type">
-                                                <SelectValue placeholder="Auswählen..." />
+                                                <SelectValue placeholder={t('common.selectPlaceholder')} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="none">Keine Verknüpfung</SelectItem>
-                                                <SelectItem value="invoice">Rechnung</SelectItem>
+                                                <SelectItem value="none">{t('settings.noLink')}</SelectItem>
+                                                <SelectItem value="invoice">{t('nav.invoices')}</SelectItem>
                                                 <SelectItem value="customer">Kunde</SelectItem>
                                             </SelectContent>
                                         </Select>
@@ -695,7 +697,7 @@ export default function DocumentsSettings() {
                                                 onValueChange={(value) => editForm.setData('linkable_id', value)}
                                             >
                                                 <SelectTrigger id="edit-linkable_id">
-                                                    <SelectValue placeholder="Auswählen..." />
+                                                    <SelectValue placeholder={t('common.selectPlaceholder')} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {linkableType === 'invoice'
@@ -716,13 +718,13 @@ export default function DocumentsSettings() {
                                 </div>
                                 {linkableType && (
                                     <div>
-                                        <Label htmlFor="edit-link_type">Verknüpfungstyp</Label>
+                                        <Label htmlFor="edit-link_type">{t('settings.linkType')}</Label>
                                         <Select
                                             value={editForm.data.link_type || undefined}
                                             onValueChange={(value) => editForm.setData('link_type', value)}
                                         >
                                             <SelectTrigger id="edit-link_type">
-                                                <SelectValue placeholder="Auswählen..." />
+                                                <SelectValue placeholder={t('common.selectPlaceholder')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {LINK_TYPES.filter(t => t.value !== 'all').map((type) => (
@@ -741,7 +743,7 @@ export default function DocumentsSettings() {
                                     variant="outline"
                                     onClick={() => setEditDialogOpen(false)}
                                 >
-                                    Abbrechen
+                                    {t('common.cancel')}
                                 </Button>
                                 <Button type="submit" disabled={editForm.processing}>
                                     {editForm.processing ? 'Wird gespeichert...' : 'Speichern'}

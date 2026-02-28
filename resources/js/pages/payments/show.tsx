@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -45,6 +46,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function PaymentsShow() {
+    const { t } = useTranslation()
     // @ts-ignore
     const { payment } = usePage<PaymentsShowProps>().props
 
@@ -85,14 +87,14 @@ export default function PaymentsShow() {
     }
 
     const handleDelete = () => {
-        if (confirm("Möchten Sie diese Zahlung wirklich löschen?")) {
+        if (confirm(t('pages.payments.deleteConfirm'))) {
             router.delete(`/payments/${payment.id}`)
         }
     }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Zahlungsdetails" />
+            <Head title={t('pages.payments.show')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 <div className="flex items-center justify-between">
@@ -100,12 +102,12 @@ export default function PaymentsShow() {
                         <Link href="/payments">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-1xl font-bold text-gray-900">Zahlungsdetails</h1>
-                            <p className="text-gray-600">Details zur Zahlung</p>
+                            <h1 className="text-1xl font-bold text-gray-900">{t('pages.payments.details')}</h1>
+                            <p className="text-gray-600">{t('pages.payments.detailsSubtitle')}</p>
                         </div>
                     </div>
 
@@ -113,12 +115,12 @@ export default function PaymentsShow() {
                         <Link href={`/payments/${payment.id}/edit`}>
                             <Button variant="outline">
                                 <Edit className="mr-2 h-4 w-4" />
-                                Bearbeiten
+                                {t('common.edit')}
                             </Button>
                         </Link>
                         <Button variant="destructive" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Löschen
+                            {t('common.delete')}
                         </Button>
                     </div>
                 </div>
@@ -128,28 +130,28 @@ export default function PaymentsShow() {
                     <div className="lg:col-span-2 space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Zahlungsinformationen</CardTitle>
+                                <CardTitle>{t('pages.payments.info')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <div className="text-sm text-gray-600">Betrag</div>
+                                        <div className="text-sm text-gray-600">{t('common.amount')}</div>
                                         <div className="text-2xl font-bold">{formatCurrency(payment.amount)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Status</div>
+                                        <div className="text-sm text-gray-600">{t('common.status')}</div>
                                         <div className="mt-1">{getStatusBadge(payment.status)}</div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                                     <div>
-                                        <div className="text-sm text-gray-600">Zahlungsdatum</div>
+                                        <div className="text-sm text-gray-600">{t('pages.payments.date')}</div>
                                         <div className="font-medium">{formatDate(payment.payment_date)}</div>
                                     </div>
                                     {payment.payment_method && (
                                         <div>
-                                            <div className="text-sm text-gray-600">Zahlungsmethode</div>
+                                            <div className="text-sm text-gray-600">{t('pages.payments.method')}</div>
                                             <div className="font-medium">{payment.payment_method}</div>
                                         </div>
                                     )}
@@ -157,14 +159,14 @@ export default function PaymentsShow() {
 
                                 {payment.reference && (
                                     <div className="pt-4 border-t">
-                                        <div className="text-sm text-gray-600">Referenz / Verwendungszweck</div>
+                                        <div className="text-sm text-gray-600">{t('pages.payments.referenceLabel')}</div>
                                         <div className="font-medium">{payment.reference}</div>
                                     </div>
                                 )}
 
                                 {payment.notes && (
                                     <div className="pt-4 border-t">
-                                        <div className="text-sm text-gray-600">Notizen</div>
+                                        <div className="text-sm text-gray-600">{t('common.notes')}</div>
                                         <div className="mt-1 whitespace-pre-wrap">{payment.notes}</div>
                                     </div>
                                 )}
@@ -174,12 +176,12 @@ export default function PaymentsShow() {
                         {payment.invoice && (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Zugehörige Rechnung</CardTitle>
+                                    <CardTitle>{t('pages.payments.relatedInvoice')}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <div className="text-sm text-gray-600">Rechnungsnummer</div>
+                                            <div className="text-sm text-gray-600">{t('pages.invoices.number')}</div>
                                             <div className="font-medium text-lg">{payment.invoice.number}</div>
                                             {payment.invoice.customer && (
                                                 <div className="text-sm text-gray-600 mt-1">

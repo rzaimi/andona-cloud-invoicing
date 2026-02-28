@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { Head, Link, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,11 +29,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const VAT_OPTIONS = [
     { value: "0.19", label: "19% (Regelsteuersatz)" },
-    { value: "0.07", label: "7% (ermäßigter Steuersatz)" },
+    { value: "0.07", label: `7% (${t('settings.reducedTaxRate')})` },
     { value: "0",    label: "0% (steuerfrei)" },
 ]
 
 export default function ExpensesCreate() {
+    const { t } = useTranslation()
     const { categories } = usePage<ExpenseCreateProps>().props
     const pageProps = usePage().props as any
     const settings = pageProps.auth?.user?.company?.settings ?? {}
@@ -51,7 +53,7 @@ export default function ExpensesCreate() {
     })
 
     const paymentMethods = settingsPaymentMethods.length > 0 ? settingsPaymentMethods : [
-        "Überweisung",
+        t('pages.payments.bankTransfer'),
         "SEPA-Lastschrift",
         "Bar",
         "Kreditkarte",
@@ -85,19 +87,19 @@ export default function ExpensesCreate() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Neue Ausgabe" />
+            <Head title={t('pages.expenses.new')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 <div className="flex items-center gap-4">
                     <Link href="/expenses">
                         <Button variant="ghost" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
+                            {t('common.back')}
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900">Neue Ausgabe</h1>
-                        <p className="text-gray-600">Erfassen Sie eine neue Geschäftsausgabe</p>
+                        <h1 className="text-1xl font-bold text-gray-900">{t('pages.expenses.new')}</h1>
+                        <p className="text-gray-600">{t('pages.expenses.createDesc')}</p>
                     </div>
                 </div>
 
@@ -107,8 +109,8 @@ export default function ExpensesCreate() {
                         <div className="lg:col-span-2 space-y-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Ausgabeninformationen</CardTitle>
-                                    <CardDescription>Grundlegende Informationen zur Ausgabe</CardDescription>
+                                    <CardTitle>{t('pages.expenses.infoTitle')}</CardTitle>
+                                    <CardDescription>{t('pages.expenses.infoDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
@@ -117,7 +119,7 @@ export default function ExpensesCreate() {
                                             id="title"
                                             value={data.title}
                                             onChange={(e) => setData("title", e.target.value)}
-                                            placeholder="z.B. Büromaterial, Reisekosten, etc."
+                                            placeholder={t('pages.expenses.titlePlaceholder')}
                                             required
                                         />
                                         {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
@@ -130,7 +132,7 @@ export default function ExpensesCreate() {
                                             onValueChange={(value) => setData("category_id", value === "none" ? "none" : value)}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Kategorie auswählen (optional)" />
+                                                <SelectValue placeholder={t('pages.expenses.selectCategory')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="none">Keine Kategorie</SelectItem>
@@ -147,12 +149,12 @@ export default function ExpensesCreate() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="description">Beschreibung</Label>
+                                        <Label htmlFor="description">{t('common.description')}</Label>
                                         <Textarea
                                             id="description"
                                             value={data.description}
                                             onChange={(e) => setData("description", e.target.value)}
-                                            placeholder="Zusätzliche Details zur Ausgabe..."
+                                            placeholder={t('pages.expenses.descriptionPlaceholder')}
                                             rows={4}
                                         />
                                         {errors.description && (
@@ -184,7 +186,7 @@ export default function ExpensesCreate() {
                                                 onValueChange={(value) => setData("vat_rate", value)}
                                             >
                                                 <SelectTrigger id="vat_rate">
-                                                    <SelectValue placeholder="MwSt.-Satz wählen" />
+                                                    <SelectValue placeholder={t('pages.expenses.selectTaxRate')} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {VAT_OPTIONS.map((opt) => (
@@ -234,13 +236,13 @@ export default function ExpensesCreate() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="payment_method">Zahlungsmethode</Label>
+                                            <Label htmlFor="payment_method">{t('pages.payments.method')}</Label>
                                             <Select
                                                 value={data.payment_method}
                                                 onValueChange={(value) => setData("payment_method", value)}
                                             >
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Zahlungsmethode auswählen" />
+                                                    <SelectValue placeholder={t('pages.payments.selectPaymentMethod')} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {paymentMethods.map((method) => (
@@ -262,7 +264,7 @@ export default function ExpensesCreate() {
                                             id="reference"
                                             value={data.reference}
                                             onChange={(e) => setData("reference", e.target.value)}
-                                            placeholder="z.B. Rechnungsnummer oder Überweisungsreferenz"
+                                            placeholder={t('pages.expenses.referencePlaceholder')}
                                         />
                                         {errors.reference && (
                                             <p className="text-sm text-red-600">{errors.reference}</p>
@@ -311,7 +313,7 @@ export default function ExpensesCreate() {
                                         <div className="text-xl font-bold">{formatCurrency(totalAmount)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-600">Ausgabedatum</div>
+                                        <div className="text-sm text-gray-600">{t('pages.expenses.expenseDate')}</div>
                                         <div className="font-medium">
                                             {new Date(data.expense_date).toLocaleDateString("de-DE")}
                                         </div>

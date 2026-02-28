@@ -94,7 +94,7 @@ export default function Edit({ auth, company }: EditProps) {
                         <Button variant="outline" size="sm" asChild>
                             <Link href={`/companies/${company.id}`}>
                                 <ArrowLeft className="h-4 w-4 mr-2" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
@@ -130,9 +130,9 @@ export default function Edit({ auth, company }: EditProps) {
                         <TabsContent value="basic" className="space-y-4">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Grundinformationen</CardTitle>
+                                    <CardTitle>{t('pages.products.basicInfo')}</CardTitle>
                                     <CardDescription>
-                                        Grundlegende Informationen über die Firma
+                                        {t('pages.companies.basicInfo')}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -162,8 +162,8 @@ export default function Edit({ auth, company }: EditProps) {
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="active">Aktiv</SelectItem>
-                                                    <SelectItem value="inactive">Inaktiv</SelectItem>
+                                                    <SelectItem value="active">{t('common.active')}</SelectItem>
+                                                    <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             {errors.status && (
@@ -229,7 +229,7 @@ export default function Edit({ auth, company }: EditProps) {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="managing_director">Geschäftsführer</Label>
+                                            <Label htmlFor="managing_director">{t('settings.ceo')}</Label>
                                             <Input
                                                 id="managing_director"
                                                 value={data.managing_director}
@@ -277,7 +277,7 @@ export default function Edit({ auth, company }: EditProps) {
                                         />
                                         {errors.logo && <p className="text-sm text-red-500 mt-1">{errors.logo}</p>}
                                         <p className="text-sm text-gray-500 mt-1">
-                                            Maximale Dateigröße: 2MB. Erlaubte Formate: JPEG, PNG, JPG, GIF
+                                            {t('settings.logoFormatHint')}
                                         </p>
                                     </div>
                                 </CardContent>
@@ -288,7 +288,7 @@ export default function Edit({ auth, company }: EditProps) {
                         <TabsContent value="contact" className="space-y-4">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Kontaktdaten</CardTitle>
+                                    <CardTitle>{t('pages.customers.contactInfo')}</CardTitle>
                                     <CardDescription>
                                         E-Mail, Telefon, Adresse und Website der Firma
                                     </CardDescription>
@@ -347,7 +347,7 @@ export default function Edit({ auth, company }: EditProps) {
                                             id="address"
                                             value={data.address}
                                             onChange={(e) => setData("address", e.target.value)}
-                                            placeholder="Musterstraße 123"
+                                            placeholder={t('settings.streetPlaceholder')}
                                             rows={3}
                                         />
                                         {errors.address && (
@@ -375,7 +375,7 @@ export default function Edit({ auth, company }: EditProps) {
                                                 id="city"
                                                 value={data.city}
                                                 onChange={(e) => setData("city", e.target.value)}
-                                                placeholder="München"
+                                                placeholder={t('settings.cityPlaceholder')}
                                             />
                                             {errors.city && (
                                                 <p className="text-sm text-red-500">{errors.city}</p>
@@ -408,7 +408,7 @@ export default function Edit({ auth, company }: EditProps) {
                                 <CardHeader>
                                     <CardTitle>Bankverbindung</CardTitle>
                                     <CardDescription>
-                                        Bankdaten für Rechnungen und Zahlungen
+                                        {t('settings.bankDataDesc')}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -418,7 +418,7 @@ export default function Edit({ auth, company }: EditProps) {
                                             id="bank_name"
                                             value={data.bank_name}
                                             onChange={(e) => setData("bank_name", e.target.value)}
-                                            placeholder="Sparkasse München"
+                                            placeholder={t('settings.bankNamePlaceholder')}
                                         />
                                         {errors.bank_name && (
                                             <p className="text-sm text-red-500">{errors.bank_name}</p>
@@ -460,15 +460,15 @@ export default function Edit({ auth, company }: EditProps) {
                         <TabsContent value="settings" className="space-y-4">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Einstellungen</CardTitle>
+                                    <CardTitle>{t('nav.settings')}</CardTitle>
                                     <CardDescription>
-                                        Weitere Einstellungen für diese Firma
+                                        {t('settings.additionalSettings')}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
                                         <p className="text-sm text-muted-foreground">
-                                            E-Mail- und Rechnungseinstellungen können in den jeweiligen Bereichen konfiguriert werden:
+                                            {t('pages.companies.emailInvoiceSettings')}
                                         </p>
                                         <div className="space-y-2">
                                             <Button variant="outline" asChild className="w-full justify-start">
@@ -493,7 +493,7 @@ export default function Edit({ auth, company }: EditProps) {
                     {/* Action Buttons */}
                     <div className="flex justify-end space-x-2 mt-6">
                         <Button type="button" variant="outline" asChild>
-                            <Link href={`/companies/${company.id}`}>Abbrechen</Link>
+                            <Link href={`/companies/${company.id}`}>{t('common.cancel')}</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
                             <Save className="h-4 w-4 mr-2" />

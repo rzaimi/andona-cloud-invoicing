@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,7 +42,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: "MwSt.-Bericht" },
 ]
 
-export default function VatReports({ vat, months, filters }: VatReportsProps) {
+export default function VatReports({
+    vat, months, filters }: VatReportsProps) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
 
@@ -71,7 +74,7 @@ export default function VatReports({ vat, months, filters }: VatReportsProps) {
                         <Link href={route("reports.index")}>
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
@@ -120,7 +123,7 @@ export default function VatReports({ vat, months, filters }: VatReportsProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-blue-600">{formatCurrency(vat.output_vat)}</div>
-                            <p className="text-xs text-gray-500 mt-1">MwSt. aus Rechnungen</p>
+                            <p className="text-xs text-gray-500 mt-1">{t('pages.reports.vatFromInvoices')}</p>
                         </CardContent>
                     </Card>
 
@@ -131,7 +134,7 @@ export default function VatReports({ vat, months, filters }: VatReportsProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-green-600">{formatCurrency(vat.input_vat)}</div>
-                            <p className="text-xs text-gray-500 mt-1">MwSt. aus Ausgaben</p>
+                            <p className="text-xs text-gray-500 mt-1">{t('pages.reports.vatFromExpenses')}</p>
                         </CardContent>
                     </Card>
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import AppLayout from "@/layouts/app-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -36,323 +37,65 @@ interface HelpProps {
     stats: any
 }
 
-export default function HelpIndex({ user, stats }: HelpProps) {
+export default function HelpIndex({
+    user, stats }: HelpProps) {
+    const { t } = useTranslation()
     const [searchQuery, setSearchQuery] = useState("")
 
     const helpCategories = [
-        {
-            id: "getting-started",
-            title: "Erste Schritte",
-            description: "Grundlagen für den Einstieg in das Rechnungssystem",
-            icon: BookOpen,
-            color: "bg-blue-500",
-            articles: 15,
-        },
-        {
-            id: "customers",
-            title: "Kundenverwaltung",
-            description: "Kunden anlegen, bearbeiten und verwalten",
-            icon: Users,
-            color: "bg-green-500",
-            articles: 12,
-        },
-        {
-            id: "invoices",
-            title: "Rechnungen",
-            description: "Rechnungen erstellen, versenden und verwalten",
-            icon: ReceiptEuro,
-            color: "bg-purple-500",
-            articles: 20,
-        },
-        {
-            id: "offers",
-            title: "Angebote",
-            description: "Angebote erstellen und in Rechnungen umwandeln",
-            icon: FileText,
-            color: "bg-orange-500",
-            articles: 12,
-        },
-        {
-            id: "products",
-            title: "Produktverwaltung",
-            description: "Produkte, Kategorien und Lagerbestand verwalten",
-            icon: Package,
-            color: "bg-indigo-500",
-            articles: 14,
-        },
-        {
-            id: "payments",
-            title: "Zahlungen",
-            description: "Zahlungen erfassen, verwalten und Rechnungen als bezahlt markieren",
-            icon: ReceiptEuro,
-            color: "bg-emerald-500",
-            articles: 10,
-        },
-        {
-            id: "expenses",
-            title: "Ausgaben",
-            description: "Ausgaben erfassen, kategorisieren und Belege verwalten",
-            icon: ReceiptEuro,
-            color: "bg-red-500",
-            articles: 11,
-        },
-        {
-            id: "reports",
-            title: "Berichte",
-            description: "Umsatzberichte, Gewinn & Verlust, MwSt-Berichte und mehr",
-            icon: FileText,
-            color: "bg-cyan-500",
-            articles: 9,
-        },
-        {
-            id: "calendar",
-            title: "Kalender",
-            description: "Termine verwalten, Fälligkeiten überwachen und Ereignisse planen",
-            icon: Clock,
-            color: "bg-pink-500",
-            articles: 7,
-        },
-        {
-            id: "erechnung",
-            title: "E-Rechnung",
-            description: "Elektronische Rechnungen im XRechnung und ZUGFeRD Format",
-            icon: FileText,
-            color: "bg-teal-500",
-            articles: 8,
-        },
-        {
-            id: "reminders",
-            title: "Mahnungen",
-            description: "Automatisierte Mahnverfahren nach deutschem Recht",
-            icon: AlertCircle,
-            color: "bg-amber-500",
-            articles: 10,
-        },
-        {
-            id: "settings",
-            title: "Einstellungen",
-            description: "System konfigurieren, Layouts anpassen und Einstellungen verwalten",
-            icon: Settings,
-            color: "bg-gray-500",
-            articles: 18,
-        },
+        { id: "getting-started", title: t('pages.help.catGettingStarted'), description: t('pages.help.catGettingStartedDesc'), icon: BookOpen, color: "bg-blue-500", articles: 15 },
+        { id: "customers", title: t('pages.help.catCustomers'), description: t('pages.help.catCustomersDesc'), icon: Users, color: "bg-green-500", articles: 12 },
+        { id: "invoices", title: t('pages.help.catInvoices'), description: t('pages.help.catInvoicesDesc'), icon: ReceiptEuro, color: "bg-purple-500", articles: 20 },
+        { id: "offers", title: t('pages.help.catOffers'), description: t('pages.help.catOffersDesc'), icon: FileText, color: "bg-orange-500", articles: 12 },
+        { id: "products", title: t('pages.help.catProducts'), description: t('pages.help.catProductsDesc'), icon: Package, color: "bg-indigo-500", articles: 14 },
+        { id: "payments", title: t('pages.help.catPayments'), description: t('pages.help.catPaymentsDesc'), icon: ReceiptEuro, color: "bg-emerald-500", articles: 10 },
+        { id: "expenses", title: t('pages.help.catExpenses'), description: t('pages.help.catExpensesDesc'), icon: ReceiptEuro, color: "bg-red-500", articles: 11 },
+        { id: "reports", title: t('pages.help.catReports'), description: t('pages.help.catReportsDesc'), icon: FileText, color: "bg-cyan-500", articles: 9 },
+        { id: "calendar", title: t('pages.help.catCalendar'), description: t('pages.help.catCalendarDesc'), icon: Clock, color: "bg-pink-500", articles: 7 },
+        { id: "erechnung", title: t('pages.help.catErechnung'), description: t('pages.help.catErechnungDesc'), icon: FileText, color: "bg-teal-500", articles: 8 },
+        { id: "reminders", title: t('pages.help.catReminders'), description: t('pages.help.catRemindersDesc'), icon: AlertCircle, color: "bg-amber-500", articles: 10 },
+        { id: "settings", title: t('pages.help.catSettings'), description: t('pages.help.catSettingsDesc'), icon: Settings, color: "bg-gray-500", articles: 18 },
     ]
 
     const popularArticles = [
-        {
-            id: 1,
-            title: "Wie erstelle ich meine erste Rechnung?",
-            category: "Rechnungen",
-            views: 1250,
-            rating: 4.8,
-            lastUpdated: "2024-01-15",
-        },
-        {
-            id: 2,
-            title: "Kunden anlegen und verwalten",
-            category: "Kundenverwaltung",
-            views: 1100,
-            rating: 4.7,
-            lastUpdated: "2024-01-16",
-        },
-        {
-            id: 3,
-            title: "Angebote in Rechnungen umwandeln",
-            category: "Angebote",
-            views: 950,
-            rating: 4.9,
-            lastUpdated: "2024-01-12",
-        },
-        {
-            id: 4,
-            title: "Rechnungslayouts anpassen",
-            category: "Einstellungen",
-            views: 890,
-            rating: 4.6,
-            lastUpdated: "2024-01-08",
-        },
-        {
-            id: 5,
-            title: "Zahlungen erfassen und Rechnungen als bezahlt markieren",
-            category: "Zahlungen",
-            views: 850,
-            rating: 4.8,
-            lastUpdated: "2024-01-14",
-        },
-        {
-            id: 6,
-            title: "Ausgaben erfassen und kategorisieren",
-            category: "Ausgaben",
-            views: 780,
-            rating: 4.7,
-            lastUpdated: "2024-01-13",
-        },
-        {
-            id: 7,
-            title: "Mahnungen automatisch versenden",
-            category: "Mahnungen",
-            views: 720,
-            rating: 4.9,
-            lastUpdated: "2024-01-11",
-        },
-        {
-            id: 8,
-            title: "E-Rechnung (XRechnung/ZUGFeRD) erstellen",
-            category: "E-Rechnung",
-            views: 680,
-            rating: 4.6,
-            lastUpdated: "2024-01-10",
-        },
-        {
-            id: 9,
-            title: "Rechnungskorrekturen und Stornierungen",
-            category: "Rechnungen",
-            views: 650,
-            rating: 4.8,
-            lastUpdated: "2024-01-09",
-        },
-        {
-            id: 10,
-            title: "Lagerbestand verwalten und Warnungen einrichten",
-            category: "Produktverwaltung",
-            views: 620,
-            rating: 4.7,
-            lastUpdated: "2024-01-14",
-        },
-        {
-            id: 11,
-            title: "Gewinn & Verlust Berichte erstellen",
-            category: "Berichte",
-            views: 580,
-            rating: 4.6,
-            lastUpdated: "2024-01-12",
-        },
-        {
-            id: 12,
-            title: "E-Mail-Einstellungen für Rechnungsversand konfigurieren",
-            category: "Einstellungen",
-            views: 550,
-            rating: 4.5,
-            lastUpdated: "2024-01-08",
-        },
+        { id: 1, title: t('pages.help.art1Title'), category: t('pages.help.catInvoices'), views: 1250, rating: 4.8, lastUpdated: "2024-01-15" },
+        { id: 2, title: t('pages.help.art2Title'), category: t('pages.help.catCustomers'), views: 1100, rating: 4.7, lastUpdated: "2024-01-16" },
+        { id: 3, title: t('pages.help.art3Title'), category: t('pages.help.catOffers'), views: 950, rating: 4.9, lastUpdated: "2024-01-12" },
+        { id: 4, title: t('pages.help.art4Title'), category: t('pages.help.catSettings'), views: 890, rating: 4.6, lastUpdated: "2024-01-08" },
+        { id: 5, title: t('pages.help.art5Title'), category: t('pages.help.catPayments'), views: 850, rating: 4.8, lastUpdated: "2024-01-14" },
+        { id: 6, title: t('pages.help.art6Title'), category: t('pages.help.catExpenses'), views: 780, rating: 4.7, lastUpdated: "2024-01-13" },
+        { id: 7, title: t('pages.help.art7Title'), category: t('pages.help.catReminders'), views: 720, rating: 4.9, lastUpdated: "2024-01-11" },
+        { id: 8, title: t('pages.help.art8Title'), category: t('pages.help.catErechnung'), views: 680, rating: 4.6, lastUpdated: "2024-01-10" },
+        { id: 9, title: t('pages.help.art9Title'), category: t('pages.help.catInvoices'), views: 650, rating: 4.8, lastUpdated: "2024-01-09" },
+        { id: 10, title: t('pages.help.art10Title'), category: t('pages.help.catProducts'), views: 620, rating: 4.7, lastUpdated: "2024-01-14" },
+        { id: 11, title: t('pages.help.art11Title'), category: t('pages.help.catReports'), views: 580, rating: 4.6, lastUpdated: "2024-01-12" },
+        { id: 12, title: t('pages.help.art12Title'), category: t('pages.help.catSettings'), views: 550, rating: 4.5, lastUpdated: "2024-01-08" },
     ]
 
     const faqItems = [
-        {
-            question: "Wie kann ich meine Rechnungsnummer anpassen?",
-            answer:
-                "Gehen Sie zu Einstellungen > Firmeneinstellungen und passen Sie das Rechnungsnummern-Format an. Sie können Präfixe (z.B. 'RE-'), Jahresangaben und die Startnummer konfigurieren. Das Format wird automatisch für alle neuen Rechnungen verwendet.",
-        },
-        {
-            question: "Kann ich mehrere Steuersätze verwenden?",
-            answer:
-                "Ja, das System unterstützt verschiedene Steuersätze. Sie können für jedes Produkt einen individuellen Steuersatz festlegen (19%, 7%, 0% etc.). Standardmäßig wird der in den Firmeneinstellungen hinterlegte Steuersatz verwendet.",
-        },
-        {
-            question: "Wie versende ich Rechnungen per E-Mail?",
-            answer:
-                'Öffnen Sie die Rechnung und klicken Sie auf "Versenden". Das System generiert automatisch eine PDF und versendet diese mit einer professionellen E-Mail-Vorlage. Stellen Sie sicher, dass Ihre E-Mail-Einstellungen (SMTP) in den Einstellungen konfiguriert sind.',
-        },
-        {
-            question: "Kann ich Angebote automatisch in Rechnungen umwandeln?",
-            answer:
-                "Ja, bei angenommenen Angeboten können Sie mit einem Klick eine Rechnung erstellen. Alle Daten (Kunde, Positionen, Beträge) werden automatisch übernommen. Sie können die Rechnung vor dem Speichern noch anpassen.",
-        },
-        {
-            question: "Wie funktioniert die Lagerverwaltung?",
-            answer:
-                "Das System verfolgt automatisch Ihren Lagerbestand, wenn Sie die Lagerverwaltung für ein Produkt aktivieren. Bei jeder Rechnung wird der Bestand reduziert. Sie erhalten Warnungen bei niedrigen Lagerständen (Mindestbestand) und können Lagerbestände manuell anpassen.",
-        },
-        {
-            question: "Wie erfasse ich Zahlungen auf Rechnungen?",
-            answer:
-                "Gehen Sie zu Zahlungen > Neue Zahlung und wählen Sie die entsprechende Rechnung aus. Geben Sie den Betrag, das Zahlungsdatum und die Zahlungsmethode ein. Wenn die Rechnung vollständig bezahlt ist, wird sie automatisch als 'Bezahlt' markiert.",
-        },
-        {
-            question: "Wie funktionieren Mahnungen?",
-            answer:
-                "Das System unterstützt ein 5-stufiges Mahnverfahren nach deutschem Recht. Konfigurieren Sie die Mahnintervalle und Gebühren in Einstellungen > Erinnerungen. Das System sendet automatisch Mahnungen basierend auf dem Fälligkeitsdatum der Rechnung.",
-        },
-        {
-            question: "Kann ich Rechnungen korrigieren oder stornieren?",
-            answer:
-                "Ja, Sie können Rechnungskorrekturen (Stornorechnungen) erstellen. Öffnen Sie die zu korrigierende Rechnung und wählen Sie 'Korrigieren'. Geben Sie den Korrekturgrund an. Das System erstellt automatisch eine Stornorechnung mit negativen Beträgen.",
-        },
-        {
-            question: "Wie erstelle ich E-Rechnungen (XRechnung/ZUGFeRD)?",
-            answer:
-                "Aktivieren Sie E-Rechnung in Einstellungen > E-Rechnung. Wählen Sie das Format (XRechnung oder ZUGFeRD) und geben Sie Ihre elektronische Adresse an. Beim Erstellen einer Rechnung können Sie dann die E-Rechnung generieren.",
-        },
-        {
-            question: "Wie erfasse ich Ausgaben?",
-            answer:
-                "Gehen Sie zu Ausgaben > Neue Ausgabe. Geben Sie Titel, Betrag, Datum, Kategorie und optional einen Beleg an. Das System berechnet automatisch MwSt. und Netto-Betrag basierend auf dem Steuersatz.",
-        },
-        {
-            question: "Wie erstelle ich Berichte?",
-            answer:
-                "Gehen Sie zu Berichte und wählen Sie den gewünschten Berichtstyp (Umsatz, Gewinn & Verlust, MwSt., Ausgaben, etc.). Sie können Zeiträume filtern und die Berichte als PDF exportieren.",
-        },
-        {
-            question: "Kann ich mehrere Firmen verwalten?",
-            answer:
-                "Ja, Super-Administratoren können mehrere Firmen verwalten und zwischen ihnen wechseln. Jede Firma hat ihre eigenen Daten, Einstellungen und Benutzer. Die Daten sind vollständig voneinander isoliert.",
-        },
-        {
-            question: "Wie funktioniert der Kalender?",
-            answer:
-                "Der Kalender zeigt automatisch fällige Rechnungen, ablaufende Angebote und Ihre eigenen Termine. Sie können neue Termine erstellen, bearbeiten und löschen. Der Kalender hilft Ihnen, wichtige Fristen im Blick zu behalten.",
-        },
-        {
-            question: "Kann ich meine Daten exportieren?",
-            answer:
-                "Ja, Sie können alle Ihre Daten (Kunden, Produkte, Rechnungen, Ausgaben) in verschiedenen Formaten exportieren. Gehen Sie zu den jeweiligen Listenansichten und nutzen Sie die Export-Funktion.",
-        },
-        {
-            question: "Wie ändere ich mein Passwort?",
-            answer:
-                "Gehen Sie zu Einstellungen > Passwort. Geben Sie Ihr aktuelles Passwort und das neue Passwort ein. Das neue Passwort muss mindestens 8 Zeichen lang sein.",
-        },
-        {
-            question: "Was sind Rollen und Berechtigungen?",
-            answer:
-                "Das System hat drei Hauptrollen: Super-Admin (voller Zugriff auf alle Firmen), Admin (voller Zugriff innerhalb einer Firma) und Benutzer (eingeschränkter Zugriff). Berechtigungen können individuell angepasst werden.",
-        },
+        { question: t('pages.help.faq1Q'), answer: t('pages.help.faq1A') },
+        { question: t('pages.help.faq2Q'), answer: t('pages.help.faq2A') },
+        { question: t('pages.help.faq3Q'), answer: t('pages.help.faq3A') },
+        { question: t('pages.help.faq4Q'), answer: t('pages.help.faq4A') },
+        { question: t('pages.help.faq5Q'), answer: t('pages.help.faq5A') },
+        { question: t('pages.help.faq6Q'), answer: t('pages.help.faq6A') },
+        { question: t('pages.help.faq7Q'), answer: t('pages.help.faq7A') },
+        { question: t('pages.help.faq8Q'), answer: t('pages.help.faq8A') },
+        { question: t('pages.help.faq9Q'), answer: t('pages.help.faq9A') },
+        { question: t('pages.help.faq10Q'), answer: t('pages.help.faq10A') },
+        { question: t('pages.help.faq11Q'), answer: t('pages.help.faq11A') },
+        { question: t('pages.help.faq12Q'), answer: t('pages.help.faq12A') },
+        { question: t('pages.help.faq13Q'), answer: t('pages.help.faq13A') },
+        { question: t('pages.help.faq14Q'), answer: t('pages.help.faq14A') },
+        { question: t('pages.help.faq15Q'), answer: t('pages.help.faq15A') },
+        { question: t('pages.help.faq16Q'), answer: t('pages.help.faq16A') },
     ]
 
     const supportOptions = [
-        {
-            title: "E-Mail Support",
-            description: "Senden Sie uns Ihre Frage per E-Mail",
-            icon: Mail,
-            action: "support@rechnungssystem.de",
-            responseTime: "Antwort innerhalb von 24 Stunden",
-            available: true,
-        },
-        {
-            title: "Telefon Support",
-            description: "Sprechen Sie direkt mit unserem Support-Team",
-            icon: Phone,
-            action: "+49 (0) 123 456 789",
-            responseTime: "Mo-Fr 9:00-17:00 Uhr",
-            available: true,
-        },
-        {
-            title: "Live Chat",
-            description: "Sofortige Hilfe über unseren Live Chat",
-            icon: MessageCircle,
-            action: "Chat starten",
-            responseTime: "Sofortige Antwort",
-            available: false,
-        },
-        {
-            title: "Video Call",
-            description: "Persönliche Beratung per Videoanruf",
-            icon: Video,
-            action: "Termin buchen",
-            responseTime: "Nach Vereinbarung",
-            available: true,
-        },
+        { title: t('pages.help.supportEmailTitle'), description: t('pages.help.supportEmailDesc'), icon: Mail, action: "support@rechnungssystem.de", responseTime: t('pages.help.supportEmailResponse'), available: true },
+        { title: t('pages.help.supportPhoneTitle'), description: t('pages.help.supportPhoneDesc'), icon: Phone, action: "+49 (0) 123 456 789", responseTime: t('pages.help.supportPhoneResponse'), available: true },
+        { title: t('pages.help.supportChatTitle'), description: t('pages.help.supportChatDesc'), icon: MessageCircle, action: t('pages.help.supportChatAction'), responseTime: t('pages.help.supportChatResponse'), available: false },
+        { title: t('pages.help.supportVideoTitle'), description: t('pages.help.supportVideoDesc'), icon: Video, action: t('pages.help.supportVideoAction'), responseTime: t('pages.help.supportVideoResponse'), available: true },
     ]
 
     const filteredCategories = helpCategories.filter(
@@ -369,21 +112,21 @@ export default function HelpIndex({ user, stats }: HelpProps) {
 
     return (
         <AppLayout user={user}>
-            <Head title="Hilfe & Support" />
+            <Head title={t('pages.help.title')} />
 
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">Hilfe & Support</h1>
+                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">{t('pages.help.title')}</h1>
                         <p className="text-muted-foreground">
-                            Finden Sie Antworten auf Ihre Fragen und lernen Sie das System kennen
+                            {t('pages.help.subtitle2')}
                         </p>
                     </div>
                     <Button asChild>
                         <Link href="/help/contact">
                             <HelpCircle className="mr-2 h-4 w-4" />
-                            Kontakt aufnehmen
+                            {t('pages.help.contact')}
                         </Link>
                     </Button>
                 </div>
@@ -394,7 +137,7 @@ export default function HelpIndex({ user, stats }: HelpProps) {
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
-                                placeholder="Durchsuchen Sie unsere Hilfe-Artikel..."
+                                placeholder={t('pages.help.searchArticles')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-10"
@@ -405,10 +148,10 @@ export default function HelpIndex({ user, stats }: HelpProps) {
 
                 <Tabs defaultValue="categories" className="space-y-6">
                     <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="categories">Kategorien</TabsTrigger>
-                        <TabsTrigger value="popular">Beliebte Artikel</TabsTrigger>
-                        <TabsTrigger value="faq">FAQ</TabsTrigger>
-                        <TabsTrigger value="support">Support</TabsTrigger>
+                        <TabsTrigger value="categories">{t('pages.help.categories')}</TabsTrigger>
+                        <TabsTrigger value="popular">{t('pages.help.popularArticles')}</TabsTrigger>
+                        <TabsTrigger value="faq">{t('pages.help.faq')}</TabsTrigger>
+                        <TabsTrigger value="support">{t('pages.help.support')}</TabsTrigger>
                     </TabsList>
 
                     {/* Categories Tab */}
@@ -425,7 +168,7 @@ export default function HelpIndex({ user, stats }: HelpProps) {
                                                 <div className="flex-1">
                                                     <CardTitle className="text-lg">{category.title}</CardTitle>
                                                     <Badge variant="secondary" className="mt-1">
-                                                        {category.articles} Artikel
+                                                        {category.articles} {t('pages.help.articles')}
                                                     </Badge>
                                                 </div>
                                             </div>
@@ -461,9 +204,9 @@ export default function HelpIndex({ user, stats }: HelpProps) {
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-sm text-muted-foreground">{article.views} Aufrufe</p>
+                                                <p className="text-sm text-muted-foreground">{article.views} {t('pages.help.views')}</p>
                                                 <Button variant="ghost" size="sm" className="mt-2">
-                                                    Lesen <ExternalLink className="ml-2 h-4 w-4" />
+                                                    {t('pages.help.read')} <ExternalLink className="ml-2 h-4 w-4" />
                                                 </Button>
                                             </div>
                                         </div>
@@ -477,8 +220,8 @@ export default function HelpIndex({ user, stats }: HelpProps) {
                     <TabsContent value="faq" className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Häufig gestellte Fragen</CardTitle>
-                                <CardDescription>Hier finden Sie Antworten auf die am häufigsten gestellten Fragen</CardDescription>
+                                <CardTitle>{t('pages.help.faq')}</CardTitle>
+                                <CardDescription>{t('pages.help.faqDesc')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Accordion type="single" collapsible className="w-full">
@@ -508,12 +251,12 @@ export default function HelpIndex({ user, stats }: HelpProps) {
                                                 {option.available ? (
                                                     <Badge variant="secondary" className="mt-1">
                                                         <CheckCircle className="h-3 w-3 mr-1" />
-                                                        Verfügbar
+                                                        {t('pages.help.available')}
                                                     </Badge>
                                                 ) : (
                                                     <Badge variant="outline" className="mt-1">
                                                         <AlertCircle className="h-3 w-3 mr-1" />
-                                                        Bald verfügbar
+                                                        {t('pages.help.comingSoon')}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -542,25 +285,25 @@ export default function HelpIndex({ user, stats }: HelpProps) {
                         {/* Additional Resources */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Weitere Ressourcen</CardTitle>
-                                <CardDescription>Zusätzliche Materialien und Downloads</CardDescription>
+                                <CardTitle>{t('pages.help.furtherResources')}</CardTitle>
+                                <CardDescription>{t('pages.help.additionalMaterials')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="grid gap-4 md:grid-cols-3">
                                     <Button variant="outline" className="h-auto p-4 flex-col bg-transparent">
                                         <Download className="h-8 w-8 mb-2" />
-                                        <span className="font-semibold">Benutzerhandbuch</span>
+                                        <span className="font-semibold">{t('pages.help.userGuide')}</span>
                                         <span className="text-xs text-muted-foreground">PDF Download</span>
                                     </Button>
                                     <Button variant="outline" className="h-auto p-4 flex-col bg-transparent">
                                         <Video className="h-8 w-8 mb-2" />
-                                        <span className="font-semibold">Video-Tutorials</span>
-                                        <span className="text-xs text-muted-foreground">YouTube Kanal</span>
+                                        <span className="font-semibold">{t('pages.help.videoTutorials')}</span>
+                                        <span className="text-xs text-muted-foreground">{t('pages.help.youtubeChannel')}</span>
                                     </Button>
                                     <Button variant="outline" className="h-auto p-4 flex-col bg-transparent">
                                         <BookOpen className="h-8 w-8 mb-2" />
                                         <span className="font-semibold">Changelog</span>
-                                        <span className="text-xs text-muted-foreground">Neue Features</span>
+                                        <span className="text-xs text-muted-foreground">{t('pages.help.newFeatures')}</span>
                                     </Button>
                                 </div>
                             </CardContent>

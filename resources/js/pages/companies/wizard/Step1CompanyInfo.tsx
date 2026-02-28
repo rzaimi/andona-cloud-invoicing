@@ -1,4 +1,5 @@
 import { type ChangeEvent } from "react"
+import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function Step1CompanyInfo({ data, setData, errors, logoPreview, onLogoFile }: Props) {
+    const { t } = useTranslation()
     const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] ?? null
         onLogoFile(file)
@@ -34,8 +36,7 @@ export default function Step1CompanyInfo({ data, setData, errors, logoPreview, o
             <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                    Bitte geben Sie die grundlegenden Informationen über Ihre Firma ein.
-                    Felder mit * sind Pflichtfelder.
+                    {t('settings.companyInfoDesc')}
                 </AlertDescription>
             </Alert>
 
@@ -133,7 +134,7 @@ export default function Step1CompanyInfo({ data, setData, errors, logoPreview, o
                         id="address"
                         value={ci.address || ""}
                         onChange={(e) => setData("company_info", { ...ci, address: e.target.value })}
-                        placeholder="Musterstraße 123"
+                        placeholder={t('settings.streetPlaceholder')}
                     />
                 </div>
 

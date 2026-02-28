@@ -36,7 +36,7 @@ export default function CompaniesIndex({ companies }: Props) {
     }
 
     const handleDelete = (company: CompanyWithStats) => {
-        if (confirm("Sind Sie sicher, dass Sie diese Firma löschen möchten?")) {
+        if (confirm(t('pages.companies.confirmDelete'))) {
             router.delete(route("companies.destroy", company.id))
         }
     }
@@ -78,7 +78,7 @@ export default function CompaniesIndex({ companies }: Props) {
                                     className="pl-10"
                                 />
                             </div>
-                            <Button type="submit">Suchen</Button>
+                            <Button type="submit">{t('common.search')}</Button>
                         </form>
                     </CardContent>
                 </Card>
@@ -99,11 +99,11 @@ export default function CompaniesIndex({ companies }: Props) {
                                     <TableRow>
                                         <TableHead>Firma</TableHead>
                                         <TableHead>Kontakt</TableHead>
-                                        <TableHead>Benutzer</TableHead>
+                                        <TableHead>{t('pages.users.role')}</TableHead>
                                         <TableHead>Statistiken</TableHead>
-                                        <TableHead>Status</TableHead>
+                                        <TableHead>{t('common.status')}</TableHead>
                                         <TableHead>Erstellt</TableHead>
-                                        <TableHead className="w-[120px]">Aktionen</TableHead>
+                                        <TableHead className="w-[120px]">{t('common.actions')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -218,7 +218,7 @@ export default function CompaniesIndex({ companies }: Props) {
                         {companies.last_page > 1 && (
                             <div className="flex items-center justify-between px-2 py-4">
                                 <div className="text-sm text-gray-500">
-                                    Zeige {companies.from} bis {companies.to} von {companies.total} Einträgen
+                                    {t('common.showing')} {companies.from} {t('common.to')} {companies.to} {t('common.of')} {companies.total} {t('common.entries')}
                                 </div>
                                 <div className="flex gap-2">
                                     {companies.links.map((link, index) => (

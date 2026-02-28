@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { route } from "ziggy-js"
 import AppLayout from "@/layouts/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -58,6 +59,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function CalendarIndex({ events: propEvents = [] }: CalendarProps) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
     const [currentDate, setCurrentDate] = useState(new Date())
@@ -90,13 +92,13 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
 
     const eventTypes = {
         invoice_due: {
-            label: "Rechnung fällig",
+            label: t('pages.calendar.invoiceDue'),
             color: "bg-red-500",
             icon: EuroIcon,
             textColor: "text-red-700",
         },
         offer_expiry: {
-            label: "Angebot läuft ab",
+            label: t('pages.calendar.offerExpiring'),
             color: "bg-orange-500",
             icon: FileText,
             textColor: "text-orange-700",
@@ -286,14 +288,14 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Kalender" />
+            <Head title={t('pages.calendar.title')} />
 
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">Kalender</h1>
-                        <p className="text-muted-foreground">Termine, Fristen und wichtige Ereignisse im Überblick</p>
+                        <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">{t('pages.calendar.title')}</h1>
+                        <p className="text-muted-foreground">{t('pages.calendar.subtitle')}</p>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Select value={selectedFilter} onValueChange={setSelectedFilter}>
@@ -303,16 +305,16 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Alle Ereignisse</SelectItem>
-                                <SelectItem value="invoice_due">Rechnungen</SelectItem>
-                                <SelectItem value="offer_expiry">Angebote</SelectItem>
+                                <SelectItem value="invoice_due">{t('nav.invoices')}</SelectItem>
+                                <SelectItem value="offer_expiry">{t('nav.offers')}</SelectItem>
                                 <SelectItem value="appointment">Termine</SelectItem>
                                 <SelectItem value="inventory">Lager</SelectItem>
-                                <SelectItem value="report">Berichte</SelectItem>
+                                <SelectItem value="report">{t('nav.reports')}</SelectItem>
                             </SelectContent>
                         </Select>
                         <Button onClick={() => setCreateDialogOpen(true)}>
                             <Plus className="mr-2 h-4 w-4" />
-                            Termin hinzufügen
+                            {t('pages.calendar.addAppointment')}
                         </Button>
                     </div>
                 </div>
@@ -325,12 +327,12 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                                 <CardHeader className="pb-3">
                                     <div className="flex items-center space-x-2">
                                         <AlertTriangle className="h-5 w-5 text-red-600" />
-                                        <CardTitle className="text-red-800">Überfällige Rechnungen</CardTitle>
+                                        <CardTitle className="text-red-800">{t('pages.dashboard.overdueInvoices')}</CardTitle>
                                     </div>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-red-700 mb-3">
-                                        {overdueInvoices.length} Rechnung{overdueInvoices.length !== 1 ? "en" : ""} überfällig
+                                        {overdueInvoices.length} {t('pages.calendar.overdueInvoiceCount', { count: overdueInvoices.length })}
                                     </p>
                                     <Button variant="destructive" size="sm" asChild>
                                         <Link href="/invoices?status=overdue">Jetzt bearbeiten</Link>
@@ -344,15 +346,15 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                                 <CardHeader className="pb-3">
                                     <div className="flex items-center space-x-2">
                                         <Clock className="h-5 w-5 text-orange-600" />
-                                        <CardTitle className="text-orange-800">Ablaufende Angebote</CardTitle>
+                                        <CardTitle className="text-orange-800">{t('pages.calendar.expiringOffers')}</CardTitle>
                                     </div>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-orange-700 mb-3">
-                                        {expiringOffers.length} Angebot{expiringOffers.length !== 1 ? "e" : ""} läuft bald ab
+                                        {expiringOffers.length} {t('pages.calendar.expiringOfferCount', { count: expiringOffers.length })}
                                     </p>
                                     <Button variant="outline" size="sm" asChild>
-                                        <Link href="/offers?status=expiring">Angebote prüfen</Link>
+                                        <Link href="/offers?status=expiring">{t('pages.calendar.checkOffers')}</Link>
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -661,18 +663,18 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                                     id="location"
                                     value={data.location}
                                     onChange={(e) => setData("location", e.target.value)}
-                                    placeholder="z.B. Büro, Kundenstandort, etc."
+                                    placeholder={t('pages.calendar.locationPlaceholder')}
                                 />
                                 {errors.location && <p className="text-sm text-red-600">{errors.location}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="description">Beschreibung</Label>
+                                <Label htmlFor="description">{t('common.description')}</Label>
                                 <Textarea
                                     id="description"
                                     value={data.description}
                                     onChange={(e) => setData("description", e.target.value)}
-                                    placeholder="Zusätzliche Informationen zum Termin..."
+                                    placeholder={t('pages.calendar.descriptionPlaceholder')}
                                     rows={3}
                                 />
                                 {errors.description && <p className="text-sm text-red-600">{errors.description}</p>}
@@ -687,7 +689,7 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                                         setCreateDialogOpen(false)
                                     }}
                                 >
-                                    Abbrechen
+                                    {t('common.cancel')}
                                 </Button>
                                 <Button type="submit" disabled={processing}>
                                     {processing ? "Wird erstellt..." : "Termin erstellen"}
@@ -779,18 +781,18 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                                         id="edit-location"
                                         value={editForm.data.location}
                                         onChange={(e) => editForm.setData("location", e.target.value)}
-                                        placeholder="z.B. Büro, Kundenstandort, etc."
+                                        placeholder={t('pages.calendar.locationPlaceholder')}
                                     />
                                     {editForm.errors.location && <p className="text-sm text-red-600">{editForm.errors.location}</p>}
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="edit-description">Beschreibung</Label>
+                                    <Label htmlFor="edit-description">{t('common.description')}</Label>
                                     <Textarea
                                         id="edit-description"
                                         value={editForm.data.description}
                                         onChange={(e) => editForm.setData("description", e.target.value)}
-                                        placeholder="Zusätzliche Informationen zum Termin..."
+                                        placeholder={t('pages.calendar.descriptionPlaceholder')}
                                         rows={3}
                                     />
                                     {editForm.errors.description && <p className="text-sm text-red-600">{editForm.errors.description}</p>}
@@ -805,7 +807,7 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                                             setSelectedEvent(null)
                                         }}
                                     >
-                                        Abbrechen
+                                        {t('common.cancel')}
                                     </Button>
                                     <Button type="submit" disabled={editForm.processing}>
                                         {editForm.processing ? "Wird gespeichert..." : "Speichern"}
@@ -820,9 +822,9 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                 <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                     <DialogContent className="sm:max-w-[400px]">
                         <DialogHeader>
-                            <DialogTitle>Termin löschen</DialogTitle>
+                            <DialogTitle>{t('pages.calendar.deleteAppointment')}</DialogTitle>
                             <DialogDescription>
-                                Möchten Sie diesen Termin wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                                {t('pages.calendar.deleteConfirmText')}
                             </DialogDescription>
                         </DialogHeader>
                         {selectedEvent && (
@@ -842,7 +844,7 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                                             setSelectedEvent(null)
                                         }}
                                     >
-                                        Abbrechen
+                                        {t('common.cancel')}
                                     </Button>
                                     <Button
                                         type="button"
@@ -857,7 +859,7 @@ export default function CalendarIndex({ events: propEvents = [] }: CalendarProps
                                             })
                                         }}
                                     >
-                                        Löschen
+                                        {t('common.delete')}
                                     </Button>
                                 </div>
                             </div>

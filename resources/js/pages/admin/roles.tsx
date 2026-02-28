@@ -69,7 +69,7 @@ export default function RolesIndex({ roles, permissions }: Props) {
                                     })}
                                 </div>
                             </div>
-                            <Button type="submit" disabled={createForm.processing}>Erstellen</Button>
+                            <Button type="submit" disabled={createForm.processing}>{t('common.create')}</Button>
                         </form>
                     </CardContent>
                 </Card>
@@ -118,10 +118,10 @@ export default function RolesIndex({ roles, permissions }: Props) {
                                         <div className="flex gap-2 justify-end">
                                             <Button variant="outline" asChild>
                                                 <Link href={route("roles.destroy", role.id)} method="delete" as="button">
-                                                    Löschen
+                                                    {t('common.delete')}
                                                 </Link>
                                             </Button>
-                                            <Button type="submit" disabled={form.processing}>Speichern</Button>
+                                            <Button type="submit" disabled={form.processing}>{t('common.save')}</Button>
                                         </div>
                                     </form>
                                 </CardContent>

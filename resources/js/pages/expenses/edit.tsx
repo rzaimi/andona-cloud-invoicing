@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { Head, Link, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,11 +37,12 @@ interface ExpensesEditProps {
 
 const VAT_OPTIONS = [
     { value: "0.19", label: "19% (Regelsteuersatz)" },
-    { value: "0.07", label: "7% (ermäßigter Steuersatz)" },
+    { value: "0.07", label: `7% (${t('settings.reducedTaxRate')})` },
     { value: "0",    label: "0% (steuerfrei)" },
 ]
 
 export default function ExpensesEdit() {
+    const { t } = useTranslation()
     // @ts-ignore
     const { expense, categories } = usePage<ExpensesEditProps>().props
     const pageProps = usePage().props as any
@@ -74,7 +76,7 @@ export default function ExpensesEdit() {
     })
 
     const paymentMethods = settingsPaymentMethods.length > 0 ? settingsPaymentMethods : [
-        "Überweisung",
+        t('pages.payments.bankTransfer'),
         "SEPA-Lastschrift",
         "Bar",
         "Kreditkarte",
@@ -117,12 +119,12 @@ export default function ExpensesEdit() {
                     <Link href="/expenses">
                         <Button variant="ghost" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
+                            {t('common.back')}
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900">Ausgabe bearbeiten</h1>
-                        <p className="text-gray-600">Bearbeiten Sie die Ausgabeninformationen</p>
+                        <h1 className="text-1xl font-bold text-gray-900">{t('pages.expenses.edit')}</h1>
+                        <p className="text-gray-600">{t('pages.expenses.editDesc')}</p>
                     </div>
                 </div>
 
@@ -132,8 +134,8 @@ export default function ExpensesEdit() {
                         <div className="lg:col-span-2 space-y-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Ausgabeninformationen</CardTitle>
-                                    <CardDescription>Grundlegende Informationen zur Ausgabe</CardDescription>
+                                    <CardTitle>{t('pages.expenses.infoTitle')}</CardTitle>
+                                    <CardDescription>{t('pages.expenses.infoDesc')}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
@@ -154,7 +156,7 @@ export default function ExpensesEdit() {
                                             onValueChange={(value) => setData("category_id", value === "none" ? "none" : value)}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Kategorie auswählen (optional)" />
+                                                <SelectValue placeholder={t('pages.expenses.selectCategory')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="none">Keine Kategorie</SelectItem>
@@ -171,7 +173,7 @@ export default function ExpensesEdit() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="description">Beschreibung</Label>
+                                        <Label htmlFor="description">{t('common.description')}</Label>
                                         <Textarea
                                             id="description"
                                             value={data.description}
@@ -207,7 +209,7 @@ export default function ExpensesEdit() {
                                                 onValueChange={(value) => setData("vat_rate", value)}
                                             >
                                                 <SelectTrigger id="vat_rate">
-                                                    <SelectValue placeholder="MwSt.-Satz wählen" />
+                                                    <SelectValue placeholder={t('pages.expenses.selectTaxRate')} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {VAT_OPTIONS.map((opt) => (
@@ -257,13 +259,13 @@ export default function ExpensesEdit() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="payment_method">Zahlungsmethode</Label>
+                                            <Label htmlFor="payment_method">{t('pages.payments.method')}</Label>
                                             <Select
                                                 value={data.payment_method}
                                                 onValueChange={(value) => setData("payment_method", value)}
                                             >
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Zahlungsmethode auswählen" />
+                                                    <SelectValue placeholder={t('pages.payments.selectPaymentMethod')} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {paymentMethods.map((method) => (
@@ -339,7 +341,7 @@ export default function ExpensesEdit() {
                                     </div>
                                     <div className="pt-4 border-t">
                                         <Button type="submit" className="w-full" disabled={processing}>
-                                            {processing ? "Wird gespeichert..." : "Änderungen speichern"}
+                                            {processing ? t('common.saving') : t('pages.invoices.saveChanges')}
                                         </Button>
                                     </div>
                                 </CardContent>

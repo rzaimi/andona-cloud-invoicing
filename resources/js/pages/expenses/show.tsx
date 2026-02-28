@@ -1,6 +1,7 @@
 "use client"
 
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -45,6 +46,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function ExpensesShow() {
+    const { t } = useTranslation()
     // @ts-ignore
     const { expense } = usePage<ExpensesShowProps>().props
     const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
@@ -70,14 +72,14 @@ export default function ExpensesShow() {
     }
 
     const handleDelete = () => {
-        if (confirm("Möchten Sie diese Ausgabe wirklich löschen?")) {
+        if (confirm(t('pages.expenses.deleteConfirm'))) {
             router.delete(`/expenses/${expense.id}`)
         }
     }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Ausgabedetails" />
+            <Head title={t('pages.expenses.show')} />
 
             <div className="flex flex-1 flex-col gap-6">
                 <div className="flex items-center justify-between">
@@ -85,12 +87,12 @@ export default function ExpensesShow() {
                         <Link href="/expenses">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-1xl font-bold text-gray-900">Ausgabedetails</h1>
-                            <p className="text-gray-600">Details zur Ausgabe</p>
+                            <h1 className="text-1xl font-bold text-gray-900">{t('pages.expenses.details')}</h1>
+                            <p className="text-gray-600">{t('pages.expenses.detailsSubtitle')}</p>
                         </div>
                     </div>
 
@@ -98,12 +100,12 @@ export default function ExpensesShow() {
                         <Link href={`/expenses/${expense.id}/edit`}>
                             <Button variant="outline">
                                 <Edit className="mr-2 h-4 w-4" />
-                                Bearbeiten
+                                {t('common.edit')}
                             </Button>
                         </Link>
                         <Button variant="destructive" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Löschen
+                            {t('common.delete')}
                         </Button>
                     </div>
                 </div>
@@ -113,7 +115,7 @@ export default function ExpensesShow() {
                     <div className="lg:col-span-2 space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Ausgabeninformationen</CardTitle>
+                                <CardTitle>{t('pages.expenses.infoTitle')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
@@ -123,7 +125,7 @@ export default function ExpensesShow() {
 
                                 {expense.description && (
                                     <div className="pt-4 border-t">
-                                        <div className="text-sm text-gray-600">Beschreibung</div>
+                                        <div className="text-sm text-gray-600">{t('common.description')}</div>
                                         <div className="mt-1 whitespace-pre-wrap">{expense.description}</div>
                                     </div>
                                 )}
@@ -147,7 +149,7 @@ export default function ExpensesShow() {
 
                                 <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                                     <div>
-                                        <div className="text-sm text-gray-600">Ausgabedatum</div>
+                                        <div className="text-sm text-gray-600">{t('pages.expenses.expenseDate')}</div>
                                         <div className="font-medium">{formatDate(expense.expense_date)}</div>
                                     </div>
                                     {expense.category && (
@@ -160,7 +162,7 @@ export default function ExpensesShow() {
 
                                 {expense.payment_method && (
                                     <div className="pt-4 border-t">
-                                        <div className="text-sm text-gray-600">Zahlungsmethode</div>
+                                        <div className="text-sm text-gray-600">{t('pages.payments.method')}</div>
                                         <div className="font-medium">{expense.payment_method}</div>
                                     </div>
                                 )}

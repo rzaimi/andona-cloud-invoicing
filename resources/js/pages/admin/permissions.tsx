@@ -35,7 +35,7 @@ export default function PermissionsIndex({ permissions }: Props) {
                                 <Label>Bezeichnung</Label>
                                 <Input value={form.data.name} onChange={(e) => form.setData("name", e.target.value)} />
                             </div>
-                            <Button type="submit" disabled={form.processing}>Erstellen</Button>
+                            <Button type="submit" disabled={form.processing}>{t('common.create')}</Button>
                         </form>
                     </CardContent>
                 </Card>
@@ -51,7 +51,7 @@ export default function PermissionsIndex({ permissions }: Props) {
                                     <span>{p}</span>
                                     <Button variant="outline" asChild>
                                         <Link href={route("permissions.destroy", p)} method="delete" as="button">
-                                            Löschen
+                                            {t('common.delete')}
                                         </Link>
                                     </Button>
                                 </div>

@@ -141,7 +141,7 @@ export default function WarehouseShow() {
                         <Button variant="ghost" asChild>
                             <Link href="/warehouses">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
@@ -154,7 +154,7 @@ export default function WarehouseShow() {
                     <Button variant="outline" asChild>
                         <Link href={`/warehouses/${warehouse.id}/edit`}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Bearbeiten
+                            {t('common.edit')}
                         </Link>
                     </Button>
                 </div>
@@ -163,7 +163,7 @@ export default function WarehouseShow() {
                 <div className="grid gap-4 md:grid-cols-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Produkte</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.products')}</CardTitle>
                             <Package className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -185,7 +185,7 @@ export default function WarehouseShow() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Niedrige Bestände</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.warehouse.lowStock')}</CardTitle>
                             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -214,7 +214,7 @@ export default function WarehouseShow() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <label className="text-sm font-medium text-muted-foreground">Status</label>
+                                <label className="text-sm font-medium text-muted-foreground">{t('common.status')}</label>
                                 <div className="mt-1">
                                     {warehouse.is_active ? (
                                         <Badge variant="default">
@@ -232,7 +232,7 @@ export default function WarehouseShow() {
 
                             {warehouse.description && (
                                 <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Beschreibung</label>
+                                    <label className="text-sm font-medium text-muted-foreground">{t('common.description')}</label>
                                     <p className="mt-1 text-sm">{warehouse.description}</p>
                                 </div>
                             )}
@@ -286,7 +286,7 @@ export default function WarehouseShow() {
                     {lowStockItems.length > 0 && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Niedrige Bestände</CardTitle>
+                                <CardTitle>{t('pages.warehouse.lowStock')}</CardTitle>
                                 <CardDescription>Artikel die nachbestellt werden sollten</CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -331,9 +331,9 @@ export default function WarehouseShow() {
                                     <TableRow>
                                         <TableHead>Typ</TableHead>
                                         <TableHead>Produkt</TableHead>
-                                        <TableHead>Menge</TableHead>
+                                        <TableHead>{t('common.quantity')}</TableHead>
                                         <TableHead>Grund</TableHead>
-                                        <TableHead>Benutzer</TableHead>
+                                        <TableHead>{t('pages.users.role')}</TableHead>
                                         <TableHead>Datum</TableHead>
                                     </TableRow>
                                 </TableHeader>

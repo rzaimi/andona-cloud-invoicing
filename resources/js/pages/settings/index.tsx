@@ -1,6 +1,7 @@
 "use client"
 
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -72,6 +73,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function SettingsIndex() {
+    const { t } = useTranslation()
     const page = usePage<SettingsPageProps>()
     const { 
         company, 
@@ -147,15 +149,15 @@ export default function SettingsIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Einstellungen" />
+            <Head title={t('pages.settings.title')} />
 
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-1xl font-bold tracking-tight">Einstellungen</h1>
+                        <h1 className="text-1xl font-bold tracking-tight">{t('pages.settings.title')}</h1>
                         <p className="text-muted-foreground">
-                            Verwalten Sie alle Einstellungen für Ihr Unternehmen und Ihr Profil
+                            {t('pages.settings.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -184,56 +186,56 @@ export default function SettingsIndex() {
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <Building2 className="h-4 w-4" />
-                                <span>Firmendaten</span>
+                                <span>{t('pages.settings.tabCompanyInfo')}</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="company" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <Settings className="h-4 w-4" />
-                                <span>Dokumenteneinstellungen</span>
+                                <span>{t('pages.settings.tabDocuments')}</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="email" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <Mail className="h-4 w-4" />
-                                <span>E-Mail</span>
+                                <span>{t('pages.settings.tabEmail')}</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="reminders" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <AlarmClock className="h-4 w-4" />
-                                <span>Mahnungen</span>
+                                <span>{t('pages.settings.tabReminders')}</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="erechnung" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <FileCheck className="h-4 w-4" />
-                                <span>E-Rechnung</span>
+                                <span>{t('pages.settings.tabErechnung')}</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="payment-methods" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <CreditCard className="h-4 w-4" />
-                                <span>Zahlungen</span>
+                                <span>{t('pages.settings.tabPayments')}</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="email-logs" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <FileText className="h-4 w-4" />
-                                <span>E-Mail-Verlauf</span>
+                                <span>{t('pages.settings.tabEmailLogs')}</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="datev" 
                                 className="w-full justify-start gap-2 data-[state=active]:bg-background"
                             >
                                 <Database className="h-4 w-4" />
-                                <span>DATEV</span>
+                                <span>{t('pages.settings.tabDatev')}</span>
                             </TabsTrigger>
                             {isSuperAdmin && (
                                 <TabsTrigger 
@@ -241,7 +243,7 @@ export default function SettingsIndex() {
                                     className="w-full justify-start gap-2 data-[state=active]:bg-background"
                                 >
                                     <Settings className="h-4 w-4" />
-                                    <span>Erweiterte Einstellungen</span>
+                                    <span>{t('settings.advancedSettings')}</span>
                                 </TabsTrigger>
                             )}
                             <TabsTrigger 

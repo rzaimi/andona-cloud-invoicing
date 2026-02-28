@@ -85,7 +85,7 @@ export default function WarehouseEdit() {
                         <Button variant="ghost" asChild>
                             <Link href={`/warehouses/${warehouse.id}`}>
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
@@ -110,8 +110,8 @@ export default function WarehouseEdit() {
                         {/* Basic Information */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Grundinformationen</CardTitle>
-                                <CardDescription>Grundlegende Informationen über das Lager</CardDescription>
+                                <CardTitle>{t('pages.products.basicInfo')}</CardTitle>
+                                <CardDescription>{t('pages.warehouse.infoDesc')}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
@@ -126,7 +126,7 @@ export default function WarehouseEdit() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="description">Beschreibung</Label>
+                                    <Label htmlFor="description">{t('common.description')}</Label>
                                     <Textarea
                                         id="description"
                                         value={data.description}
@@ -170,12 +170,12 @@ export default function WarehouseEdit() {
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="street">Straße</Label>
+                                        <Label htmlFor="street">{t('settings.street')}</Label>
                                         <Input
                                             id="street"
                                             value={data.street}
                                             onChange={(e) => setData("street", e.target.value)}
-                                            placeholder="Musterstraße"
+                                            placeholder={t('settings.streetPlaceholder')}
                                         />
                                         {errors.street && <p className="text-sm text-red-500">{errors.street}</p>}
                                     </div>
@@ -249,7 +249,7 @@ export default function WarehouseEdit() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Kontaktinformationen</CardTitle>
-                                <CardDescription>Ansprechpartner für dieses Lager</CardDescription>
+                                <CardDescription>{t('pages.warehouse.contactPerson')}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
@@ -293,7 +293,7 @@ export default function WarehouseEdit() {
                     {/* Actions */}
                     <div className="flex justify-end space-x-2">
                         <Button variant="outline" asChild>
-                            <Link href={`/warehouses/${warehouse.id}`}>Abbrechen</Link>
+                            <Link href={`/warehouses/${warehouse.id}`}>{t('common.cancel')}</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
                             <Save className="mr-2 h-4 w-4" />

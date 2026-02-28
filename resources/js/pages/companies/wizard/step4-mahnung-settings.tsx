@@ -37,8 +37,8 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
             <Alert>
                 <Bell className="h-4 w-4" />
                 <AlertDescription>
-                    Das Mahnungssystem sendet automatisch gestaffelte Erinnerungen an Kunden mit überfälligen Rechnungen.
-                    Die Kosten werden dabei schrittweise erhöht.
+                    {t('pages.companies.mahnungDesc1')}.
+                    {t('pages.companies.mahnungDesc2')}
                 </AlertDescription>
             </Alert>
 
@@ -51,7 +51,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                     </h4>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="reminder_friendly_days">Tage nach Fälligkeit</Label>
+                            <Label htmlFor="reminder_friendly_days">{t('settings.daysAfterDue')}</Label>
                             <Input
                                 id="reminder_friendly_days"
                                 type="number"
@@ -61,7 +61,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                             />
                         </div>
                         <div className="flex items-end pb-2">
-                            <span className="text-sm text-muted-foreground">Keine Gebühr</span>
+                            <span className="text-sm text-muted-foreground">{t('settings.noFee')}</span>
                         </div>
                     </div>
                 </div>
@@ -74,7 +74,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                     </h4>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="reminder_mahnung1_days">Tage nach Fälligkeit</Label>
+                            <Label htmlFor="reminder_mahnung1_days">{t('settings.daysAfterDue')}</Label>
                             <Input
                                 id="reminder_mahnung1_days"
                                 type="number"
@@ -86,7 +86,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                         <div className="space-y-2">
                             <Label htmlFor="reminder_mahnung1_fee" className="flex items-center gap-2">
                                 <Euro className="h-4 w-4" />
-                                Mahngebühr (€)
+                                {t('settings.mahnungFee')}
                             </Label>
                             <Input
                                 id="reminder_mahnung1_fee"
@@ -108,7 +108,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                     </h4>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="reminder_mahnung2_days">Tage nach Fälligkeit</Label>
+                            <Label htmlFor="reminder_mahnung2_days">{t('settings.daysAfterDue')}</Label>
                             <Input
                                 id="reminder_mahnung2_days"
                                 type="number"
@@ -120,7 +120,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                         <div className="space-y-2">
                             <Label htmlFor="reminder_mahnung2_fee" className="flex items-center gap-2">
                                 <Euro className="h-4 w-4" />
-                                Mahngebühr (€)
+                                {t('settings.mahnungFee')}
                             </Label>
                             <Input
                                 id="reminder_mahnung2_fee"
@@ -142,7 +142,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                     </h4>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="reminder_mahnung3_days">Tage nach Fälligkeit</Label>
+                            <Label htmlFor="reminder_mahnung3_days">{t('settings.daysAfterDue')}</Label>
                             <Input
                                 id="reminder_mahnung3_days"
                                 type="number"
@@ -154,7 +154,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                         <div className="space-y-2">
                             <Label htmlFor="reminder_mahnung3_fee" className="flex items-center gap-2">
                                 <Euro className="h-4 w-4" />
-                                Mahngebühr (€)
+                                {t('settings.mahnungFee')}
                             </Label>
                             <Input
                                 id="reminder_mahnung3_fee"
@@ -172,10 +172,10 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                 <div className="border rounded-lg p-4 space-y-3 bg-purple-50">
                     <h4 className="font-semibold flex items-center gap-2">
                         <Bell className="h-4 w-4 text-purple-600" />
-                        Inkasso-Ankündigung
+                        {t('settings.inkassoTitle')}
                     </h4>
                     <div className="space-y-2">
-                        <Label htmlFor="reminder_inkasso_days">Tage nach Fälligkeit</Label>
+                        <Label htmlFor="reminder_inkasso_days">{t('settings.daysAfterDue')}</Label>
                         <Input
                             id="reminder_inkasso_days"
                             type="number"
@@ -184,7 +184,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                             onChange={(e) => handleChange("reminder_inkasso_days", parseInt(e.target.value))}
                         />
                         <p className="text-xs text-muted-foreground">
-                            Warnung vor Übergabe an Inkasso-Unternehmen
+                            {t('settings.inkassoWarning')}
                         </p>
                     </div>
                 </div>
@@ -206,7 +206,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                             onChange={(e) => handleChange("reminder_interest_rate", parseFloat(e.target.value))}
                         />
                         <p className="text-xs text-muted-foreground">
-                            Gesetzlicher Zinssatz: 9% über Basiszinssatz
+                            {t('settings.legalInterestRate')}
                         </p>
                     </div>
                 </div>
@@ -219,7 +219,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                                 Automatischer Versand
                             </Label>
                             <p className="text-sm text-muted-foreground">
-                                Mahnungen werden automatisch täglich versendet
+                                {t('settings.remindersAutoDaily')}
                             </p>
                         </div>
                         <Switch
@@ -233,8 +233,8 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                    <strong>Empfehlung:</strong> Die Standardwerte entsprechen den üblichen Mahnfristen in Deutschland.
-                    Sie können diese jederzeit in den Firmeneinstellungen anpassen.
+                    <strong>{t('common.recommendation')}:</strong> {t('settings.mahnungRecommendation')}
+                    {t('settings.adjustAnytime')}
                 </p>
             </div>
         </div>

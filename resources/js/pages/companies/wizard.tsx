@@ -29,14 +29,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 const TOTAL_STEPS = 8
 
 const steps = [
-    { number: 1, title: "Firmeninformationen",    icon: Building2,   description: "Grundlegende Unternehmensdaten" },
-    { number: 2, title: "Branchenpaket",           icon: Briefcase,   description: "Passende Produkte & Layouts automatisch anlegen" },
-    { number: 3, title: "E-Mail Konfiguration",    icon: Mail,        description: "SMTP-Einstellungen für E-Mail-Versand" },
-    { number: 4, title: "Rechnungseinstellungen",  icon: FileText,    description: "Präfixe, Steuersätze und Formate" },
-    { number: 5, title: "Mahnungseinstellungen",   icon: Bell,        description: "Intervalle und Gebühren" },
-    { number: 6, title: "Bankinformationen",        icon: Landmark,    description: "IBAN und BIC für Zahlungen" },
-    { number: 7, title: "Erster Benutzer",          icon: User,        description: "Admin-Benutzer erstellen (optional)" },
-    { number: 8, title: "Überprüfen & Erstellen",  icon: CheckCircle, description: "Zusammenfassung aller Einstellungen" },
+    { number: 1, title: t('pages.companies.wizardCompanyInfo'),    icon: Building2,   description: t('pages.companies.wizardCompanyInfoDesc')},
+    { number: 2, title: t('pages.companies.wizardIndustry'),           icon: Briefcase,   description: t('pages.companies.wizardIndustryDesc')},
+    { number: 3, title: t('pages.companies.wizardEmailConfig'),    icon: Mail,        description: t('pages.companies.wizardEmailConfigDesc')},
+    { number: 4, title: t('pages.companies.wizardInvoiceSettings'),  icon: FileText,    description: t('pages.companies.wizardInvoiceSettingsDesc')},
+    { number: 5, title: t('pages.companies.wizardMahnungSettings'),   icon: Bell,        description: t('pages.companies.wizardMahnungSettingsDesc')},
+    { number: 6, title: t('pages.companies.wizardBankInfo'),        icon: Landmark,    description: t('pages.companies.wizardBankInfoDesc')},
+    { number: 7, title: t('pages.companies.wizardFirstUser'),          icon: User,        description: t('pages.companies.wizardFirstUserDesc')},
+    { number: 8, title: t('pages.companies.wizardReview'),  icon: CheckCircle, description: t('pages.companies.wizardReviewDesc')},
 ]
 
 // ─── Default form state ────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ function validateStep(step: number, data: WizardFormData): Record<string, string
         if (!ci.email?.trim())
             e["company_info.email"] = "Das Feld E-Mail ist erforderlich."
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ci.email))
-            e["company_info.email"] = "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+            e["company_info.email"] = t('common.invalidEmail')
         if (ci.website?.trim() && !/^https?:\/\//.test(ci.website))
             e["company_info.website"] = "Die Webseite muss mit https:// oder http:// beginnen."
     }
@@ -116,7 +116,7 @@ function validateStep(step: number, data: WizardFormData): Record<string, string
         if (!es.smtp_from_address?.trim())
             e["email_settings.smtp_from_address"] = "Das Feld Absender E-Mail ist erforderlich."
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(es.smtp_from_address))
-            e["email_settings.smtp_from_address"] = "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+            e["email_settings.smtp_from_address"] = t('common.invalidEmail')
         if (!es.smtp_from_name?.trim())
             e["email_settings.smtp_from_name"] = "Das Feld Absender Name ist erforderlich."
     }
@@ -127,7 +127,7 @@ function validateStep(step: number, data: WizardFormData): Record<string, string
         if (!fu.email?.trim())
             e["first_user.email"] = "Das Feld E-Mail ist erforderlich."
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fu.email))
-            e["first_user.email"] = "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+            e["first_user.email"] = t('common.invalidEmail')
         if (!fu.password?.trim())
             e["first_user.password"] = "Das Feld Passwort ist erforderlich."
         else if (fu.password.length < 8)
@@ -216,7 +216,7 @@ export default function CompanyWizard() {
     }
 
     const handleCancel = () => {
-        if (confirm("Möchten Sie den Wizard wirklich abbrechen? Alle Eingaben gehen verloren.")) {
+        if (confirm(t('pages.companies.confirmCancelWizard'))) {
             router.post(route("companies.wizard.cancel"), {})
         }
     }
@@ -362,17 +362,17 @@ export default function CompanyWizard() {
                                     disabled={currentStep === 1 || processing}
                                 >
                                     <ArrowLeft className="mr-2 h-4 w-4" />
-                                    Zurück
+                                    {t('common.back')}
                                 </Button>
                                 <Button variant="ghost" onClick={handleCancel} disabled={processing}>
                                     <X className="mr-2 h-4 w-4" />
-                                    Abbrechen
+                                    {t('common.cancel')}
                                 </Button>
                             </div>
                             <div>
                                 {currentStep < TOTAL_STEPS ? (
                                     <Button onClick={handleNext} disabled={processing}>
-                                        Weiter
+                                        {t('common.next')}
                                         <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
                                 ) : (

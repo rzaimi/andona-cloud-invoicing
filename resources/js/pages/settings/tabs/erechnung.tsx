@@ -1,6 +1,7 @@
 "use client"
 
 import { useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +14,9 @@ interface ERechnungSettingsTabProps {
     erechnungSettings: any
 }
 
-export default function ERechnungSettingsTab({ erechnungSettings }: ERechnungSettingsTabProps) {
+export default function ERechnungSettingsTab({
+    erechnungSettings }: ERechnungSettingsTabProps) {
+    const { t } = useTranslation()
     const { data, setData, post, processing, errors } = useForm({
         erechnung_enabled: erechnungSettings?.erechnung_enabled ?? false,
         xrechnung_enabled: erechnungSettings?.xrechnung_enabled ?? true,
@@ -33,15 +36,15 @@ export default function ERechnungSettingsTab({ erechnungSettings }: ERechnungSet
         <form onSubmit={handleSubmit} className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>E-Rechnung Einstellungen</CardTitle>
+                    <CardTitle>{t('settings.erechnungTitle')}</CardTitle>
                     <CardDescription>
-                        Konfigurieren Sie die Einstellungen für elektronische Rechnungen (XRechnung, ZUGFeRD)
+                        {t('settings.erechnungDesc')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="erechnung_enabled">E-Rechnung aktivieren</Label>
+                            <Label htmlFor="erechnung_enabled">{t('settings.erechnungEnable')}</Label>
                             <p className="text-sm text-muted-foreground">
                                 Aktivieren Sie die Generierung von elektronischen Rechnungen
                             </p>
@@ -55,7 +58,7 @@ export default function ERechnungSettingsTab({ erechnungSettings }: ERechnungSet
 
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="xrechnung_enabled">XRechnung aktivieren</Label>
+                            <Label htmlFor="xrechnung_enabled">{t('settings.xrechnungEnable')}</Label>
                             <p className="text-sm text-muted-foreground">
                                 Generieren Sie Rechnungen im XRechnung-Format
                             </p>
@@ -69,7 +72,7 @@ export default function ERechnungSettingsTab({ erechnungSettings }: ERechnungSet
 
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label htmlFor="zugferd_enabled">ZUGFeRD aktivieren</Label>
+                            <Label htmlFor="zugferd_enabled">{t('settings.zugferdEnable')}</Label>
                             <p className="text-sm text-muted-foreground">
                                 Generieren Sie Rechnungen im ZUGFeRD-Format
                             </p>
@@ -101,7 +104,7 @@ export default function ERechnungSettingsTab({ erechnungSettings }: ERechnungSet
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="business_process_id">Geschäftsprozess-ID</Label>
+                        <Label htmlFor="business_process_id">{t('settings.businessProcessId')}</Label>
                         <Input
                             id="business_process_id"
                             value={data.business_process_id}

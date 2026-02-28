@@ -1,6 +1,7 @@
 "use client"
 
 import { useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +12,9 @@ interface ProfileSettingsTabProps {
     user: any
 }
 
-export default function ProfileSettingsTab({ user }: ProfileSettingsTabProps) {
+export default function ProfileSettingsTab({
+    user }: ProfileSettingsTabProps) {
+    const { t } = useTranslation()
     const { data, setData, patch, processing, errors } = useForm({
         name: user?.name || '',
         email: user?.email || '',
@@ -33,7 +36,7 @@ export default function ProfileSettingsTab({ user }: ProfileSettingsTabProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
+                        <Label htmlFor="name">{t('common.name')}</Label>
                         <Input
                             id="name"
                             value={data.name}

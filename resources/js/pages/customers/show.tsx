@@ -1,6 +1,7 @@
 "use client"
 
 import { Head, Link, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import {
     ArrowLeft,
     Edit,
@@ -48,6 +49,7 @@ interface CustomerShowProps {
 }
 
 export default function CustomerShow() {
+    const { t } = useTranslation()
     const { customer, stats } = usePage<CustomerShowProps>().props
     const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
 
@@ -68,7 +70,7 @@ export default function CustomerShow() {
                     text: "Bezahlt",
                     className: "bg-green-500 hover:bg-green-600",
                 },
-                overdue: { variant: "destructive" as const, icon: AlertCircle, text: "Überfällig" },
+                overdue: { variant: "destructive" as const, icon: AlertCircle, text: t('common.overdue')},
                 cancelled: { variant: "secondary" as const, icon: XCircle, text: "Storniert" },
             },
             offer: {
@@ -120,7 +122,7 @@ export default function CustomerShow() {
                         <Button variant="ghost" size="sm" asChild>
                             <Link href="/customers">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
-                                Zurück zu Kunden
+                                {t('pages.customers.backToCustomers')}
                             </Link>
                         </Button>
                         <div>
@@ -132,7 +134,7 @@ export default function CustomerShow() {
                         <Button variant="outline" asChild>
                             <Link href={`/customers/${customer.id}/edit`}>
                                 <Edit className="w-4 h-4 mr-2" />
-                                Bearbeiten
+                                {t('common.edit')}
                             </Link>
                         </Button>
                         <Button variant="outline" asChild>
@@ -155,7 +157,7 @@ export default function CustomerShow() {
                     <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                            Dieser Kunde ist inaktiv. Neue Rechnungen und Angebote können nicht erstellt werden.
+                            {t('pages.customers.inactiveWarning')}
                         </AlertDescription>
                     </Alert>
                 )}
@@ -174,7 +176,7 @@ export default function CustomerShow() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Offene Beträge</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.customers.outstanding')}</CardTitle>
                             <AlertCircle className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -184,7 +186,7 @@ export default function CustomerShow() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Rechnungen</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.invoices')}</CardTitle>
                             <EuroIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -195,7 +197,7 @@ export default function CustomerShow() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Angebote</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('nav.offers')}</CardTitle>
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -289,7 +291,7 @@ export default function CustomerShow() {
                             <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium">Kundentyp:</span>
                                 <Badge variant="outline">
-                                    {customer.customer_type === "business" ? "Geschäftskunde" : "Privatkunde"}
+                                    {customer.customer_type === "business" ? t('pages.customers.typeBusiness') : t('pages.customers.typePrivate')}
                                 </Badge>
                             </div>
 
@@ -301,7 +303,7 @@ export default function CustomerShow() {
                     <Card className="lg:col-span-2">
                         <CardHeader>
                             <CardTitle>Rechnungen & Angebote</CardTitle>
-                            <CardDescription>Alle Rechnungen und Angebote für diesen Kunden</CardDescription>
+                            <CardDescription>{t('pages.customers.allDocuments')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Tabs defaultValue="invoices" className="w-full">
@@ -316,12 +318,12 @@ export default function CustomerShow() {
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead>Nummer</TableHead>
+                                                        <TableHead>{t('common.number')}</TableHead>
                                                         <TableHead>Datum</TableHead>
-                                                        <TableHead>Fällig</TableHead>
-                                                        <TableHead>Status</TableHead>
-                                                        <TableHead className="text-right">Betrag</TableHead>
-                                                        <TableHead className="w-[100px]">Aktionen</TableHead>
+                                                        <TableHead>{t('pages.invoices.dueDate')}</TableHead>
+                                                        <TableHead>{t('common.status')}</TableHead>
+                                                        <TableHead className="text-right">{t('common.amount')}</TableHead>
+                                                        <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -355,7 +357,7 @@ export default function CustomerShow() {
                                             <EuroIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                                             <h3 className="text-lg font-medium mb-2">Keine Rechnungen</h3>
                                             <p className="text-muted-foreground mb-4">
-                                                Für diesen Kunden wurden noch keine Rechnungen erstellt.
+                                                {t('pages.customers.noInvoices')}
                                             </p>
                                             <Button asChild>
                                                 <Link href={`/invoices/create?customer_id=${customer.id}`}>
@@ -373,12 +375,12 @@ export default function CustomerShow() {
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead>Nummer</TableHead>
+                                                        <TableHead>{t('common.number')}</TableHead>
                                                         <TableHead>Datum</TableHead>
-                                                        <TableHead>Gültig bis</TableHead>
-                                                        <TableHead>Status</TableHead>
-                                                        <TableHead className="text-right">Betrag</TableHead>
-                                                        <TableHead className="w-[100px]">Aktionen</TableHead>
+                                                        <TableHead>{t('pages.offers.validUntil')}</TableHead>
+                                                        <TableHead>{t('common.status')}</TableHead>
+                                                        <TableHead className="text-right">{t('common.amount')}</TableHead>
+                                                        <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -412,7 +414,7 @@ export default function CustomerShow() {
                                             <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                                             <h3 className="text-lg font-medium mb-2">Keine Angebote</h3>
                                             <p className="text-muted-foreground mb-4">
-                                                Für diesen Kunden wurden noch keine Angebote erstellt.
+                                                {t('pages.customers.noOffers')}
                                             </p>
                                             <Button asChild>
                                                 <Link href={`/offers/create?customer_id=${customer.id}`}>

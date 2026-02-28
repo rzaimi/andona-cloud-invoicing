@@ -78,7 +78,7 @@ export default function CompaniesCreate() {
                     <Button variant="outline" size="sm" asChild>
                         <Link href={route("companies.index")}>
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
+                            {t('common.back')}
                         </Link>
                     </Button>
                     <div>
@@ -100,7 +100,7 @@ export default function CompaniesCreate() {
                     {/* Basic Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Grundinformationen</CardTitle>
+                            <CardTitle>{t('pages.products.basicInfo')}</CardTitle>
                             <CardDescription>Grundlegende Informationen zur Firma</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -264,7 +264,7 @@ export default function CompaniesCreate() {
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="managing_director">Geschäftsführer</Label>
+                                    <Label htmlFor="managing_director">{t('settings.ceo')}</Label>
                                     <Input
                                         id="managing_director"
                                         value={data.managing_director}
@@ -283,7 +283,7 @@ export default function CompaniesCreate() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Bankverbindung</CardTitle>
-                            <CardDescription>Bankinformationen für Zahlungen</CardDescription>
+                            <CardDescription>{t('settings.bankInfoDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -343,7 +343,7 @@ export default function CompaniesCreate() {
                                 />
                                 {errors.logo && <p className="text-sm text-red-500 mt-1">{errors.logo}</p>}
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Maximale Dateigröße: 2MB. Erlaubte Formate: JPEG, PNG, JPG, GIF
+                                    {t('settings.logoFormatHint')}
                                 </p>
                             </div>
                         </CardContent>
@@ -352,7 +352,7 @@ export default function CompaniesCreate() {
                     {/* Actions */}
                     <div className="flex items-center justify-end gap-4">
                         <Button variant="outline" type="button" asChild>
-                            <Link href={route("companies.index")}>Abbrechen</Link>
+                            <Link href={route("companies.index")}>{t('common.cancel')}</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
                             <Save className="mr-2 h-4 w-4" />

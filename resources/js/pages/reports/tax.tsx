@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -33,7 +34,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const COLORS = ['oklch(0.646 0.222 41.116)', 'oklch(0.6 0.118 184.704)', 'oklch(0.398 0.07 227.392)']
 
-export default function TaxReports({ period, taxData }: TaxReportsProps) {
+export default function TaxReports({
+    period, taxData }: TaxReportsProps) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
 
@@ -75,7 +78,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
         const link = document.createElement("a")
         const url = URL.createObjectURL(blob)
         link.setAttribute("href", url)
-        link.setAttribute("download", `steuerbericht-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.csv`)
+        link.setAttribute("download", `steuerbericht-${selectedPeriod}-${new Date().toISOString().split('T')}.csv`)
         link.style.visibility = "hidden"
         document.body.appendChild(link)
         link.click()
@@ -92,12 +95,12 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                         <Link href={route("reports.index")}>
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
                             <h1 className="text-1xl font-bold text-gray-900">Steuerberichte</h1>
-                            <p className="text-gray-600">Steuerübersicht und MwSt-Berichte</p>
+                            <p className="text-gray-600">{t('pages.reports.taxSubtitle')}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -112,7 +115,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                         </Select>
                         <Button variant="outline" onClick={handleExport}>
                             <Download className="mr-2 h-4 w-4" />
-                            Exportieren
+                            {t('common.export')}
                         </Button>
                     </div>
                 </div>
@@ -169,10 +172,10 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                 <div className="grid gap-4 md:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Steuerübersicht</CardTitle>
+                            <CardTitle>{t('pages.reports.taxOverview')}</CardTitle>
                             <CardDescription>
-                                {selectedPeriod === "month" && "Monatliche Steuerübersicht der letzten 6 Monate"}
-                                {selectedPeriod === "year" && "Jährliche Steuerübersicht der letzten 12 Monate"}
+                                {selectedPeriod === "month" && t('pages.reports.taxMonthlyDesc')}
+                                {selectedPeriod === "year" && t('pages.reports.taxYearlyDesc')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -206,7 +209,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                     <Card>
                         <CardHeader>
                             <CardTitle>Verteilung</CardTitle>
-                            <CardDescription>Verhältnis von Nettobetrag zu Mehrwertsteuer</CardDescription>
+                            <CardDescription>{t('pages.reports.vatRatioDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
@@ -238,21 +241,21 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                 {/* Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Detaillierte Steuerübersicht</CardTitle>
+                        <CardTitle>{t('pages.reports.taxDetail')}</CardTitle>
                         <CardDescription>
-                            {selectedPeriod === "month" && "Monatliche Steuerübersicht der letzten 6 Monate"}
-                            {selectedPeriod === "year" && "Jährliche Steuerübersicht der letzten 12 Monate"}
+                            {selectedPeriod === "month" && t('pages.reports.taxMonthlyDesc')}
+                            {selectedPeriod === "year" && t('pages.reports.taxYearlyDesc')}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Zeitraum</TableHead>
-                                    <TableHead className="text-right">Nettobetrag</TableHead>
-                                    <TableHead className="text-right">MwSt.</TableHead>
-                                    <TableHead className="text-right">Bruttobetrag</TableHead>
-                                    <TableHead className="text-right">Steuersatz</TableHead>
+                                    <TableHead>{t('pages.reports.period')}</TableHead>
+                                    <TableHead className="text-right">{t('pages.reports.netAmount')}</TableHead>
+                                    <TableHead className="text-right">{t('pages.reports.vat')}</TableHead>
+                                    <TableHead className="text-right">{t('pages.reports.grossAmount')}</TableHead>
+                                    <TableHead className="text-right">{t('pages.reports.taxRate')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -271,7 +274,7 @@ export default function TaxReports({ period, taxData }: TaxReportsProps) {
                                     )
                                 })}
                                 <TableRow className="font-bold bg-gray-50 dark:bg-gray-800">
-                                    <TableCell>Gesamt</TableCell>
+                                    <TableCell>{t('common.total')}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(totalSubtotal)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(totalTax)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(totalAmount)}</TableCell>

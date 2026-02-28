@@ -1,6 +1,7 @@
 "use client"
 
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -89,7 +90,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: "Produktdetails" },
 ]
 
-export default function ProductShow({ product, warehouses = [], stock_movements = [] }: Omit<ProductShowProps, 'user'>) {
+export default function ProductShow({
+    product, warehouses = [], stock_movements = [] }: Omit<ProductShowProps, 'user'>) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
     const [adjustStockDialogOpen, setAdjustStockDialogOpen] = useState(false)
@@ -108,7 +111,7 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
     const deleteProduct = () => {
         if (
             confirm(
-                "Sind Sie sicher, dass Sie dieses Produkt löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+                t('pages.products.deleteConfirmFull'),
             )
         ) {
             router.delete(`/products/${product.id}`)
@@ -201,7 +204,7 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                         <Button variant="ghost" asChild>
                             <Link href="/products">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div>
@@ -215,12 +218,12 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                         <Button variant="outline" asChild>
                             <Link href={`/products/${product.id}/edit`}>
                                 <Edit className="mr-2 h-4 w-4" />
-                                Bearbeiten
+                                {t('common.edit')}
                             </Link>
                         </Button>
                         <Button variant="destructive" onClick={deleteProduct}>
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Löschen
+                            {t('common.delete')}
                         </Button>
                     </div>
                 </div>
@@ -239,23 +242,23 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                             <TabsContent value="details">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Produktdetails</CardTitle>
+                                        <CardTitle>{t('pages.products.show')}</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-6">
                                         <div className="grid gap-4 md:grid-cols-2">
                                             <div>
-                                                <label className="text-sm font-medium text-muted-foreground">Name</label>
+                                                <label className="text-sm font-medium text-muted-foreground">{t('common.name')}</label>
                                                 <p className="text-lg font-medium">{product.name}</p>
                                             </div>
                                             <div>
-                                                <label className="text-sm font-medium text-muted-foreground">Status</label>
+                                                <label className="text-sm font-medium text-muted-foreground">{t('common.status')}</label>
                                                 <div className="mt-1">{getStatusBadge()}</div>
                                             </div>
                                         </div>
 
                                         {product.description && (
                                             <div>
-                                                <label className="text-sm font-medium text-muted-foreground">Beschreibung</label>
+                                                <label className="text-sm font-medium text-muted-foreground">{t('common.description')}</label>
                                                 <p className="mt-1 text-sm">{product.description}</p>
                                             </div>
                                         )}
@@ -299,7 +302,7 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                             <TabsContent value="inventory">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Lagerbestand</CardTitle>
+                                        <CardTitle>{t('pages.products.tabInventory')}</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-6">
                                         <div className="grid gap-4 md:grid-cols-2">
@@ -312,7 +315,7 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                                                 </p>
                                             </div>
                                             <div>
-                                                <label className="text-sm font-medium text-muted-foreground">Status</label>
+                                                <label className="text-sm font-medium text-muted-foreground">{t('common.status')}</label>
                                                 <div className="mt-1">{getStockStatusBadge()}</div>
                                             </div>
                                         </div>
@@ -386,21 +389,21 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                                 <Dialog open={adjustStockDialogOpen} onOpenChange={setAdjustStockDialogOpen}>
                                     <DialogContent className="sm:max-w-[500px]">
                                         <DialogHeader>
-                                            <DialogTitle>Bestand anpassen</DialogTitle>
+                                            <DialogTitle>{t('pages.products.adjustStock')}</DialogTitle>
                                             <DialogDescription>
-                                                Passen Sie den Bestand für {product.name} an.
+                                                {t('pages.products.adjustStockDesc', { name: product.name })}
                                             </DialogDescription>
                                         </DialogHeader>
                                         <form onSubmit={handleAdjustStock}>
                                             <div className="space-y-4 py-4">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="warehouse_id">Lager *</Label>
+                                                    <Label htmlFor="warehouse_id">{t('pages.warehouse.title')} *</Label>
                                                     <Select
                                                         value={adjustStockData.warehouse_id}
                                                         onValueChange={(value) => setAdjustStockData("warehouse_id", value)}
                                                     >
                                                         <SelectTrigger id="warehouse_id">
-                                                            <SelectValue placeholder="Lager auswählen" />
+                                                            <SelectValue placeholder={t('pages.products.selectWarehouse')} />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {warehouses.map((warehouse) => (
@@ -426,7 +429,7 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="set">Bestand setzen</SelectItem>
-                                                            <SelectItem value="add">Bestand hinzufügen</SelectItem>
+                                                            <SelectItem value="add">{t('pages.products.addStock')}</SelectItem>
                                                             <SelectItem value="subtract">Bestand abziehen</SelectItem>
                                                         </SelectContent>
                                                     </Select>
@@ -465,12 +468,12 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="notes">Notizen (optional)</Label>
+                                                    <Label htmlFor="notes">{t('common.notes')} ({t('common.optional')})</Label>
                                                     <Textarea
                                                         id="notes"
                                                         value={adjustStockData.notes}
                                                         onChange={(e) => setAdjustStockData("notes", e.target.value)}
-                                                        placeholder="Zusätzliche Informationen..."
+                                                        placeholder={t('common.additionalInfo')}
                                                         rows={3}
                                                     />
                                                     {adjustStockErrors.notes && (
@@ -487,7 +490,7 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                                                         resetAdjustStock()
                                                     }}
                                                 >
-                                                    Abbrechen
+                                                    {t('common.cancel')}
                                                 </Button>
                                                 <Button type="submit" disabled={adjustingStock}>
                                                     {adjustingStock ? "Speichern..." : "Speichern"}
@@ -510,11 +513,11 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                                                 <div className="grid gap-4 md:grid-cols-3">
                                                     <div className="text-center">
                                                         <p className="text-2xl font-bold">{product.usage_stats.total_invoices}</p>
-                                                        <p className="text-sm text-muted-foreground">Rechnungen</p>
+                                                        <p className="text-sm text-muted-foreground">{t('nav.invoices')}</p>
                                                     </div>
                                                     <div className="text-center">
                                                         <p className="text-2xl font-bold">{product.usage_stats.total_offers}</p>
-                                                        <p className="text-sm text-muted-foreground">Angebote</p>
+                                                        <p className="text-sm text-muted-foreground">{t('nav.offers')}</p>
                                                     </div>
                                                     <div className="text-center">
                                                         <p className="text-2xl font-bold">{formatCurrency(product.usage_stats.total_revenue)}</p>
@@ -588,10 +591,10 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 <Button className="w-full" asChild>
-                                    <Link href={`/invoices/create?product=${product.id}`}>Rechnung erstellen</Link>
+                                    <Link href={`/invoices/create?product=${product.id}`}>{t('pages.invoices.new')}</Link>
                                 </Button>
                                 <Button variant="outline" className="w-full bg-transparent" asChild>
-                                    <Link href={`/offers/create?product=${product.id}`}>Angebot erstellen</Link>
+                                    <Link href={`/offers/create?product=${product.id}`}>{t('nav.newOffer')}</Link>
                                 </Button>
                             </CardContent>
                         </Card>
@@ -599,7 +602,7 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                         {/* Product Information */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Produktinformationen</CardTitle>
+                                <CardTitle>{t('pages.products.basicInfo')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3 text-sm">
                                 <div className="flex justify-between">

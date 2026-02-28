@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Head, Link, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,16 +20,16 @@ import { InvoiceCorrectionDialog } from "@/components/invoice-correction-dialog"
 import { InvoiceAuditLogDialog } from "@/components/invoice-audit-log-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-function buildTaxRates(taxRate: number, reducedTaxRate?: number) {
+function buildTaxRates(taxRate: number, reducedTaxRate: number | undefined, t: (key: string) => string) {
     const standard = Math.round(taxRate * 100)
     const reduced  = Math.round((reducedTaxRate ?? 0.07) * 100)
     const rates: { value: number; label: string }[] = [
-        { value: taxRate, label: `${standard}% (Regelsteuersatz)` },
+        { value: taxRate, label: `${standard}% (${t('pages.invoices.standardRate')})` },
     ]
     if (reduced !== standard) {
-        rates.push({ value: reducedTaxRate ?? 0.07, label: `${reduced}% (Ermäßigter Satz)` })
+        rates.push({ value: reducedTaxRate ?? 0.07, label: `${reduced}% (${t('pages.invoices.reducedRate')})` })
     }
-    rates.push({ value: 0.00, label: "0% (Steuerfrei)" })
+    rates.push({ value: 0.00, label: `0% (${t('pages.invoices.taxFree')})` })
     return rates
 }
 
@@ -71,9 +72,10 @@ interface InvoicesEditProps {
 }
 
 export default function InvoicesEdit() {
+    const { t } = useTranslation()
     // @ts-ignore
     const { invoice, customers, layouts, products, settings } = usePage().props as unknown as InvoicesEditProps
-    const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate)
+    const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate, t)
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -83,11 +85,11 @@ export default function InvoicesEdit() {
 
     const { data, setData, put, processing, errors } = useForm<Record<string, any>>({
         customer_id: invoice.customer_id.toString(),
-        issue_date: invoice.issue_date?.split('T')[0] || invoice.issue_date,
-        service_date: invoice.service_date?.split('T')[0] || invoice.service_date || "",
-        service_period_start: invoice.service_period_start?.split('T')[0] || invoice.service_period_start || "",
-        service_period_end: invoice.service_period_end?.split('T')[0] || invoice.service_period_end || "",
-        due_date: invoice.due_date?.split('T')[0] || invoice.due_date,
+        issue_date: invoice.issue_date?.split('T'),
+        service_date: invoice.service_date?.split('T'),
+        service_period_start: invoice.service_period_start?.split('T'),
+        service_period_end: invoice.service_period_end?.split('T'),
+        due_date: invoice.due_date?.split('T'),
         notes: invoice.notes || "",
         bauvorhaben: (invoice as any).bauvorhaben || "",
         layout_id: invoice.layout_id?.toString() || "",
@@ -253,7 +255,7 @@ export default function InvoicesEdit() {
             draft: { label: "Entwurf", variant: "outline" as const },
             sent: { label: "Versendet", variant: "secondary" as const },
             paid: { label: "Bezahlt", variant: "default" as const },
-            overdue: { label: "Überfällig", variant: "destructive" as const },
+            overdue: { label: t('common.overdue'), variant: "destructive" as const },
             cancelled: { label: "Storniert", variant: "outline" as const },
         }
 
@@ -264,9 +266,9 @@ export default function InvoicesEdit() {
     // Determine if invoice can be edited based on German accounting standards (GoBD)
     const canEdit = invoice.status === 'draft'
     const editWarning = !canEdit && invoice.status !== 'cancelled' 
-        ? "Gemäß GoBD-Richtlinien können versendete, bezahlte oder überfällige Rechnungen nicht mehr bearbeitet werden. Bitte erstellen Sie stattdessen eine Stornorechnung." 
+        ? t('pages.invoices.godbdWarning')
         : invoice.status === 'cancelled' 
-        ? "Stornierte Rechnungen können nicht bearbeitet werden." 
+        ? t('pages.invoices.cancelledWarning')
         : null
 
     return (
@@ -280,7 +282,7 @@ export default function InvoicesEdit() {
                         <Link href="/invoices">
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div className="flex-1">
@@ -379,7 +381,7 @@ export default function InvoicesEdit() {
                         <div className="flex gap-2 ml-4">
                             <Link href="/invoices">
                                 <Button type="button" variant="outline">
-                                    Abbrechen
+                                    {t('common.cancel')}
                                 </Button>
                             </Link>
                             <Button 
@@ -388,7 +390,7 @@ export default function InvoicesEdit() {
                                 onClick={handleSubmit}
                                 title={!canEdit ? "Rechnung kann im aktuellen Status nicht bearbeitet werden" : ""}
                             >
-                                {processing ? "Wird gespeichert..." : "Änderungen speichern"}
+                                {processing ? t('common.saving') : t('pages.invoices.saveChanges')}
                             </Button>
                         </div>
                     </div>
@@ -405,16 +407,16 @@ export default function InvoicesEdit() {
                     {/* Basic Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Rechnungsinformationen</CardTitle>
-                            <CardDescription>Grundlegende Informationen zur Rechnung</CardDescription>
+                            <CardTitle>{t('pages.invoices.infoTitle')}</CardTitle>
+                            <CardDescription>{t('pages.invoices.infoDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="customer_id">Kunde *</Label>
+                                    <Label htmlFor="customer_id">{t('pages.invoices.customer')} *</Label>
                                     <Select value={data.customer_id} onValueChange={(value) => setData("customer_id", value)} disabled={!canEdit}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Kunde auswählen" />
+                                            <SelectValue placeholder={t('pages.invoices.selectCustomer')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {customers.map((customer) => (
@@ -428,17 +430,17 @@ export default function InvoicesEdit() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="status">Status</Label>
+                                    <Label htmlFor="status">{t('common.status')}</Label>
                                     <Select value={data.status} onValueChange={(value) => setData("status", value)} disabled={!canEdit}>
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="draft">Entwurf</SelectItem>
-                                            <SelectItem value="sent">Versendet</SelectItem>
-                                            <SelectItem value="paid">Bezahlt</SelectItem>
-                                            <SelectItem value="overdue">Überfällig</SelectItem>
-                                            <SelectItem value="cancelled">Storniert</SelectItem>
+                                            <SelectItem value="draft">{t('common.draft')}</SelectItem>
+                                            <SelectItem value="sent">{t('common.sent')}</SelectItem>
+                                            <SelectItem value="paid">{t('common.paid')}</SelectItem>
+                                            <SelectItem value="overdue">{t('common.overdue')}</SelectItem>
+                                            <SelectItem value="cancelled">{t('common.cancelled')}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {errors.status && <p className="text-red-600 text-sm">{errors.status}</p>}
@@ -448,7 +450,7 @@ export default function InvoicesEdit() {
                                     <Label htmlFor="layout_id">Layout</Label>
                                     <Select value={data.layout_id} onValueChange={(value) => setData("layout_id", value)} disabled={!canEdit}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Layout auswählen" />
+                                            <SelectValue placeholder="Select layout" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {layouts.map((layout) => (
@@ -462,7 +464,7 @@ export default function InvoicesEdit() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="issue_date">Rechnungsdatum *</Label>
+                                    <Label htmlFor="issue_date">{t('pages.invoices.issueDate')} *</Label>
                                     <Input
                                         id="issue_date"
                                         type="date"
@@ -475,7 +477,7 @@ export default function InvoicesEdit() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="due_date">Fälligkeitsdatum *</Label>
+                                    <Label htmlFor="due_date">{t('pages.invoices.dueDate')} *</Label>
                                     <Input
                                         id="due_date"
                                         type="date"
@@ -494,23 +496,23 @@ export default function InvoicesEdit() {
                                         type="text"
                                         value={data.bauvorhaben}
                                         onChange={(e) => setData("bauvorhaben", e.target.value)}
-                                        placeholder="z.B. Neubau Musterstraße 12, Berlin"
+                                        placeholder={t('pages.invoices.projectPlaceholder')}
                                         disabled={!canEdit}
                                     />
                                     {errors.bauvorhaben && <p className="text-red-600 text-sm">{errors.bauvorhaben}</p>}
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="vat_regime">Umsatzsteuer-Regelung *</Label>
+                                    <Label htmlFor="vat_regime">{t('pages.invoices.vatRegime')} *</Label>
                                     <Select value={data.vat_regime} onValueChange={(value) => setData("vat_regime", value)} disabled={!canEdit}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Regelung auswählen" />
+                                            <SelectValue placeholder={t('pages.invoices.selectRegulation')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="standard">Regelbesteuerung (19% / 7%)</SelectItem>
                                             <SelectItem value="small_business">Kleinunternehmerregelung (§ 19 UStG)</SelectItem>
                                             <SelectItem value="reverse_charge">Reverse Charge – Ausland (§ 13b UStG)</SelectItem>
-                                            <SelectItem value="reverse_charge_domestic">§ 13b UStG – Inland (Steuerschuldnerschaft des Leistungsempfängers)</SelectItem>
+                                            <SelectItem value="reverse_charge_domestic">{t('pages.invoices.reverseChargeDomestic')}</SelectItem>
                                             <SelectItem value="intra_community">Innergemeinschaftliche Lieferung (§ 4 Nr. 1b UStG)</SelectItem>
                                             <SelectItem value="export">Ausfuhrlieferung (§ 4 Nr. 1a UStG)</SelectItem>
                                         </SelectContent>
@@ -519,7 +521,7 @@ export default function InvoicesEdit() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="service_date">Leistungsdatum (einzelner Tag)</Label>
+                                    <Label htmlFor="service_date">{t('pages.invoices.serviceDate')}</Label>
                                     <Input
                                         id="service_date"
                                         type="date"
@@ -539,7 +541,7 @@ export default function InvoicesEdit() {
 
                                 <div className="grid grid-cols-2 gap-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="service_period_start">Leistungszeitraum von</Label>
+                                        <Label htmlFor="service_period_start">{t('pages.invoices.servicePeriodFrom')}</Label>
                                         <Input
                                             id="service_period_start"
                                             type="date"
@@ -583,13 +585,13 @@ export default function InvoicesEdit() {
                     {/* Rechnungstyp & Skonto */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Rechnungstyp &amp; Zahlungsbedingungen</CardTitle>
-                            <CardDescription>Typ, Skonto und erweiterte Zahlungsoptionen</CardDescription>
+                            <CardTitle>{t('pages.invoices.invoiceType')}</CardTitle>
+                            <CardDescription>{t('pages.invoices.invoiceTypeDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="invoice_type">Rechnungstyp</Label>
+                                    <Label htmlFor="invoice_type">{t('pages.invoices.invoiceType')}</Label>
                                     <Select
                                         value={data.invoice_type || "standard"}
                                         onValueChange={(v) => {
@@ -605,7 +607,7 @@ export default function InvoicesEdit() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="standard">Rechnung</SelectItem>
+                                            <SelectItem value="standard">{t('nav.invoices')}</SelectItem>
                                             <SelectItem value="abschlagsrechnung">Abschlagsrechnung</SelectItem>
                                             <SelectItem value="schlussrechnung">Schlussrechnung</SelectItem>
                                             <SelectItem value="nachtragsrechnung">Nachtragsrechnung</SelectItem>
@@ -623,7 +625,7 @@ export default function InvoicesEdit() {
                                             disabled={!canEdit}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Abschlag wählen" />
+                                                <SelectValue placeholder={t('pages.invoices.selectDiscount')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
@@ -639,12 +641,12 @@ export default function InvoicesEdit() {
                             </div>
                             <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
                                 <div>
-                                    <p className="font-medium text-sm">Skonto (Zahlungsrabatt)</p>
-                                    <p className="text-xs text-muted-foreground">Optionaler Rabatt bei frühzeitiger Zahlung</p>
+                                    <p className="font-medium text-sm">{t('pages.invoices.skonto')}</p>
+                                    <p className="text-xs text-muted-foreground">{t('pages.invoices.skontoDesc')}</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Skonto-Prozentsatz</Label>
+                                        <Label>{t('pages.invoices.skontoPercent')}</Label>
                                         <Select
                                             value={data.skonto_percent?.toString() || "none"}
                                             onValueChange={(v) => setData("skonto_percent", v === "none" ? "" : v)}
@@ -662,13 +664,13 @@ export default function InvoicesEdit() {
                                         {formErrors.skonto_percent && <p className="text-red-600 text-sm">{formErrors.skonto_percent}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Skonto-Frist (Tage)</Label>
+                                        <Label>{t('pages.invoices.skontoDays')}</Label>
                                         <Select
                                             value={data.skonto_days?.toString() || "none"}
                                             onValueChange={(v) => setData("skonto_days", v === "none" ? "" : v)}
                                             disabled={!canEdit}
                                         >
-                                            <SelectTrigger><SelectValue placeholder="Frist wählen" /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder={t('pages.invoices.selectDeadline')} /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="none">Keine Frist</SelectItem>
                                                 <SelectItem value="7">7 Tage</SelectItem>
@@ -694,8 +696,8 @@ export default function InvoicesEdit() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Rechnungspositionen</CardTitle>
-                                <CardDescription>Bearbeiten Sie die Positionen Ihrer Rechnung</CardDescription>
+                                <CardTitle>{t('pages.invoices.items')}</CardTitle>
+                                <CardDescription>{t('pages.invoices.editPositions')}</CardDescription>
                             </div>
                             {canEdit && (
                                 <ProductSelectorDialog 
@@ -745,15 +747,15 @@ export default function InvoicesEdit() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead className="w-[12%]">Produkt-Nr.</TableHead>
-                                            <TableHead className="w-[26%]">Beschreibung</TableHead>
-                                            <TableHead className="w-[8%]">Menge</TableHead>
+                                            <TableHead className="w-[26%]">{t('common.description')}</TableHead>
+                                            <TableHead className="w-[8%]">{t('common.quantity')}</TableHead>
                                             <TableHead className="w-[8%]">Einheit</TableHead>
                                             <TableHead className="w-[6%]">USt.</TableHead>
                                             <TableHead className="w-[12%]">Einzelpreis</TableHead>
                                             <TableHead className="w-[10%]">Rabatt</TableHead>
                                             <TableHead className="w-[10%]">Rabatt-Wert</TableHead>
                                             <TableHead className="w-[12%]">Gesamtpreis</TableHead>
-                                            <TableHead className="w-[10%]">Aktionen</TableHead>
+                                            <TableHead className="w-[10%]">{t('common.actions')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -933,17 +935,17 @@ export default function InvoicesEdit() {
                     {/* Notes */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Zusätzliche Informationen</CardTitle>
-                            <CardDescription>Notizen und Bemerkungen zur Rechnung</CardDescription>
+                            <CardTitle>{t('pages.invoices.notes')}</CardTitle>
+                            <CardDescription>{t('pages.invoices.notesDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2">
-                                <Label htmlFor="notes">Notizen</Label>
+                                <Label htmlFor="notes">{t('common.notes')}</Label>
                             <Textarea
                                 id="notes"
                                 value={data.notes}
                                 onChange={(e) => setData("notes", e.target.value)}
-                                    placeholder="Zusätzliche Informationen, Zahlungsbedingungen, etc..."
+                                    placeholder={t('pages.invoices.notesPlaceholder')}
                                     rows={4}
                                     disabled={!canEdit}
                                 />
@@ -958,8 +960,8 @@ export default function InvoicesEdit() {
                             <CardHeader>
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <CardTitle>Verknüpfte Dokumente</CardTitle>
-                                        <CardDescription>Mit dieser Rechnung verknüpfte Dokumente</CardDescription>
+                                        <CardTitle>{t('pages.customers.linkedDocuments')}</CardTitle>
+                                        <CardDescription>{t('pages.invoices.linkedDocuments')}</CardDescription>
                                     </div>
                                     <Link href="/settings/documents">
                                         <Button variant="outline" size="sm">

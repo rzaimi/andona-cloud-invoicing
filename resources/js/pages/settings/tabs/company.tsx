@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,7 +40,9 @@ interface CompanySettingsTabProps {
     settings: any
 }
 
-export default function CompanySettingsTab({ company, settings }: CompanySettingsTabProps) {
+export default function CompanySettingsTab({
+    company, settings }: CompanySettingsTabProps) {
+    const { t } = useTranslation()
     const { data, setData, put, processing, errors } = useForm({
         currency: settings?.currency || "EUR",
         tax_rate: settings?.tax_rate || 0.19,
@@ -79,12 +82,12 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
         <form onSubmit={handleSubmit} className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Allgemeine Einstellungen</CardTitle>
-                    <CardDescription>Grundlegende Konfigurationen für Ihre Firma</CardDescription>
+                    <CardTitle>{t('settings.generalSettings')}</CardTitle>
+                    <CardDescription>{t('settings.companyBasicConfig')}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
-                        <Label htmlFor="currency">Währung *</Label>
+                        <Label htmlFor="currency">{t('settings.currency')} *</Label>
                         <Select value={data.currency} onValueChange={(value) => setData("currency", value)}>
                             <SelectTrigger>
                                 <SelectValue />
@@ -122,7 +125,7 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
             <Card>
                 <CardHeader>
                     <CardTitle>Steuereinstellungen</CardTitle>
-                    <CardDescription>Mehrwertsteuer und Steuersätze</CardDescription>
+                    <CardDescription>{t('settings.vatAndTaxRates')}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
@@ -137,12 +140,12 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                             onChange={(e) => setData("tax_rate", parseFloat(e.target.value) || 0)}
                             required
                         />
-                        <p className="text-xs text-gray-500">z.B. 0.19 für 19%</p>
+                        <p className="text-xs text-gray-500">{t('settings.taxRateExample')}</p>
                         {errors.tax_rate && <p className="text-red-600 text-sm">{errors.tax_rate}</p>}
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="reduced_tax_rate">Ermäßigter Steuersatz</Label>
+                        <Label htmlFor="reduced_tax_rate">{t('settings.reducedTaxRate')}</Label>
                         <Input
                             id="reduced_tax_rate"
                             type="number"
@@ -152,7 +155,7 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                             value={data.reduced_tax_rate}
                             onChange={(e) => setData("reduced_tax_rate", parseFloat(e.target.value) || 0)}
                         />
-                        <p className="text-xs text-gray-500">z.B. 0.07 für 7%</p>
+                        <p className="text-xs text-gray-500">{t('settings.reducedTaxRateExample')}</p>
                         {errors.reduced_tax_rate && <p className="text-red-600 text-sm">{errors.reduced_tax_rate}</p>}
                     </div>
                 </CardContent>
@@ -162,7 +165,7 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                 <CardHeader>
                     <CardTitle>Nummernformat</CardTitle>
                     <CardDescription>
-                        Dynamisches Format für automatisch generierte Nummern. Verfügbare Tokens:
+                        {t('settings.numberFormatHint')}
                     </CardDescription>
                     <div className="flex flex-wrap gap-2 pt-1">
                         {[
@@ -182,7 +185,7 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                     {/* Row headers */}
                     <div className="grid grid-cols-[1fr_120px] gap-3 text-xs font-medium text-muted-foreground px-1">
                         <span>Format</span>
-                        <span>Nächste Nr. *</span>
+                        <span>{t('settings.nextNumber')} *</span>
                     </div>
 
                     {/* Rechnung */}
@@ -319,15 +322,15 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                         </div>
                     </div>
                     <p className="text-xs text-muted-foreground pt-1">
-                        * Die nächste Nummer kann nur erhöht werden — sie wird nie kleiner als die höchste bereits vergebene Nummer.
+                        {t('settings.nextNumberHint')} Nummer.
                     </p>
                 </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Zahlungsbedingungen</CardTitle>
-                    <CardDescription>Standard-Zahlungsbedingungen und Gültigkeitsdauern</CardDescription>
+                    <CardTitle>{t('settings.paymentTerms')}</CardTitle>
+                    <CardDescription>{t('settings.paymentTermsDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
@@ -345,7 +348,7 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="offer_validity_days">Angebots-Gültigkeit (Tage) *</Label>
+                        <Label htmlFor="offer_validity_days">{t('settings.offerValidityDays')} *</Label>
                         <Input
                             id="offer_validity_days"
                             type="number"
@@ -363,7 +366,7 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
             <Card>
                 <CardHeader>
                     <CardTitle>Zahlenformatierung</CardTitle>
-                    <CardDescription>Einstellungen für Dezimal- und Tausendertrennzeichen</CardDescription>
+                    <CardDescription>{t('settings.separatorSettings')}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
@@ -398,17 +401,17 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Fußzeilentexte</CardTitle>
-                    <CardDescription>Standardtexte für Rechnungen und Angebote</CardDescription>
+                    <CardTitle>{t('settings.footerTexts')}</CardTitle>
+                    <CardDescription>{t('settings.defaultTexts')}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
-                        <Label htmlFor="invoice_footer">Rechnungs-Fußzeile</Label>
+                        <Label htmlFor="invoice_footer">{t('settings.invoiceFooter')}</Label>
                         <Textarea
                             id="invoice_footer"
                             value={data.invoice_footer}
                             onChange={(e) => setData("invoice_footer", e.target.value)}
-                            placeholder="Vielen Dank für Ihr Vertrauen!"
+                            placeholder={t('settings.invoiceFooterPlaceholder')}
                             rows={3}
                             maxLength={500}
                         />
@@ -421,7 +424,7 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                             id="invoice_tax_note"
                             value={data.invoice_tax_note}
                             onChange={(e) => setData("invoice_tax_note", e.target.value)}
-                            placeholder='Beispiel: "Steuerschuldnerschaft des Leistungsempfängers (§ 13b UStG)."'
+                            placeholder={t('settings.reverseChargePlaceholder')}
                             rows={3}
                             maxLength={500}
                         />
@@ -429,12 +432,12 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="offer_footer">Angebots-Fußzeile</Label>
+                        <Label htmlFor="offer_footer">{t('settings.offerFooter')}</Label>
                         <Textarea
                             id="offer_footer"
                             value={data.offer_footer}
                             onChange={(e) => setData("offer_footer", e.target.value)}
-                            placeholder="Wir freuen uns auf Ihre Rückmeldung!"
+                            placeholder={t('settings.offerFooterPlaceholder')}
                             rows={3}
                             maxLength={500}
                         />

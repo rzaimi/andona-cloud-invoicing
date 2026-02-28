@@ -11,14 +11,14 @@ interface Step2Props {
 const INDUSTRY_TYPES = [
     {
         slug: "gartenbau",
-        label: "Garten- und Außenanlagenbau",
-        description: "Bepflanzung, Pflasterarbeiten, Rasen, Zäune, Bewässerung",
+        label: t('pages.companies.industryGarden'),
+        description: t('pages.companies.industryGardenDesc'),
         icon: Sprout,
         color: "bg-green-50 border-green-200 hover:border-green-400",
         activeColor: "bg-green-100 border-green-500 ring-2 ring-green-500",
         iconColor: "text-green-600",
         badge: "bg-green-100 text-green-700",
-        examples: ["Pflanzarbeiten", "Rasenpflege", "Pflaster & Terrasse", "Gehölzschnitt"],
+        examples: [t('pages.companies.exGarden1'), t('pages.companies.exGarden2'), t('pages.companies.exGarden3'), t('pages.companies.exGarden4')],
     },
     {
         slug: "bauunternehmen",
@@ -44,14 +44,14 @@ const INDUSTRY_TYPES = [
     },
     {
         slug: "gebaudetechnik",
-        label: "Gebäudetechnik",
-        description: "Heizung, Sanitär, Elektro, Klima & Lüftung",
+        label: t('pages.companies.industryBuilding'),
+        description: t('pages.companies.industryBuildingDesc'),
         icon: Wrench,
         color: "bg-blue-50 border-blue-200 hover:border-blue-400",
         activeColor: "bg-blue-100 border-blue-500 ring-2 ring-blue-500",
         iconColor: "text-blue-600",
         badge: "bg-blue-100 text-blue-700",
-        examples: ["Heizungsinstallation", "Sanitärinstallation", "Elektrotechnik", "Klimatechnik"],
+        examples: [t('pages.companies.exBuilding1'), t('pages.companies.exBuilding2'), t('pages.companies.exBuilding3'), t('pages.companies.exBuilding4')],
     },
     {
         slug: "logistik",
@@ -67,7 +67,7 @@ const INDUSTRY_TYPES = [
     {
         slug: "handel",
         label: "Handelsunternehmen",
-        description: "Warenhandel, Groß- & Einzelhandel, Distribution",
+        description: t('pages.companies.industryTradeDesc'),
         icon: ShoppingBag,
         color: "bg-indigo-50 border-indigo-200 hover:border-indigo-400",
         activeColor: "bg-indigo-100 border-indigo-500 ring-2 ring-indigo-500",
@@ -100,9 +100,9 @@ export default function Step2IndustryType({ data, setData }: Step2Props) {
             {/* Intro */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                    <strong>Branchenpaket wählen:</strong> Wählen Sie Ihre Branche und wir legen automatisch
-                    passende Produkte, Kategorien, Lager und Layouts an — damit Sie sofort loslegen können.
-                    Sie können alles danach beliebig anpassen.
+                    <strong>{t('pages.companies.industryPackageTitle')}:</strong> {t('pages.companies.industryPackageDesc1')}
+                    {t('pages.companies.industryPackageDesc2')}
+                    {t('pages.companies.industryPackageDesc3')}
                 </p>
             </div>
 
@@ -173,7 +173,7 @@ export default function Step2IndustryType({ data, setData }: Step2Props) {
                 <div>
                     <p className="font-semibold text-sm text-gray-700">Kein Branchenpaket</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                        Ich möchte alles manuell einrichten — Produkte, Kategorien und Layouts selbst anlegen.
+                        {t('pages.companies.industryManual')}
                     </p>
                 </div>
                 {current.slug === null && (
@@ -188,7 +188,7 @@ export default function Step2IndustryType({ data, setData }: Step2Props) {
                         <strong>
                             {INDUSTRY_TYPES.find((t) => t.slug === current.slug)?.label}
                         </strong>{" "}
-                        ausgewählt — Branchenpaket wird nach der Erstellung automatisch eingerichtet.
+                        {t('pages.companies.industrySelected')}
                     </p>
                 </div>
             )}

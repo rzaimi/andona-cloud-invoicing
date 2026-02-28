@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -30,7 +31,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: "Umsatzberichte" },
 ]
 
-export default function RevenueReports({ period, revenueData }: RevenueReportsProps) {
+export default function RevenueReports({
+    period, revenueData }: RevenueReportsProps) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
 
@@ -71,7 +74,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
         const link = document.createElement("a")
         const url = URL.createObjectURL(blob)
         link.setAttribute("href", url)
-        link.setAttribute("download", `umsatzbericht-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.csv`)
+        link.setAttribute("download", `umsatzbericht-${selectedPeriod}-${new Date().toISOString().split('T')}.csv`)
         link.style.visibility = "hidden"
         document.body.appendChild(link)
         link.click()
@@ -88,7 +91,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                         <Link href={route("reports.index")}>
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
@@ -109,7 +112,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                         </Select>
                         <Button variant="outline" onClick={handleExport}>
                             <Download className="mr-2 h-4 w-4" />
-                            Exportieren
+                            {t('common.export')}
                         </Button>
                     </div>
                 </div>
@@ -140,7 +143,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Gesamt Rechnungen</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.reports.totalInvoices')}</CardTitle>
                             <Euro className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -169,9 +172,9 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                     <CardHeader>
                         <CardTitle>Umsatzentwicklung</CardTitle>
                         <CardDescription>
-                            {selectedPeriod === "month" && "Monatliche Umsätze der letzten 6 Monate"}
-                            {selectedPeriod === "quarter" && "Quartalsumsätze der letzten 4 Quartale"}
-                            {selectedPeriod === "year" && "Jährliche Umsätze der letzten 12 Monate"}
+                            {selectedPeriod === "month" && t('pages.reports.monthlyRevenue')}
+                            {selectedPeriod === "quarter" && t('pages.reports.quarterlyRevenue')}
+                            {selectedPeriod === "year" && t('pages.reports.yearlyRevenue')}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -204,7 +207,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                 <Card>
                     <CardHeader>
                         <CardTitle>Umsatztrend</CardTitle>
-                        <CardDescription>Verlauf der Umsätze über die Zeit</CardDescription>
+                        <CardDescription>{t('pages.reports.revenueHistory')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
@@ -243,11 +246,11 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                 {/* Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Detaillierte Übersicht</CardTitle>
+                        <CardTitle>{t('pages.reports.detailedOverview')}</CardTitle>
                         <CardDescription>
-                            {selectedPeriod === "month" && "Monatliche Umsätze der letzten 6 Monate"}
-                            {selectedPeriod === "quarter" && "Quartalsumsätze der letzten 4 Quartale"}
-                            {selectedPeriod === "year" && "Jährliche Umsätze der letzten 12 Monate"}
+                            {selectedPeriod === "month" && t('pages.reports.monthlyRevenue')}
+                            {selectedPeriod === "quarter" && t('pages.reports.quarterlyRevenue')}
+                            {selectedPeriod === "year" && t('pages.reports.yearlyRevenue')}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -255,7 +258,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Zeitraum</TableHead>
-                                    <TableHead className="text-right">Anzahl Rechnungen</TableHead>
+                                    <TableHead className="text-right">{t('pages.reports.invoiceCount')}</TableHead>
                                     <TableHead className="text-right">Umsatz</TableHead>
                                     <TableHead className="text-right">Ø pro Rechnung</TableHead>
                                 </TableRow>
@@ -274,7 +277,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                                     </TableRow>
                                 ))}
                                 <TableRow className="font-bold bg-gray-50 dark:bg-gray-800">
-                                    <TableCell>Gesamt</TableCell>
+                                    <TableCell>{t('common.total')}</TableCell>
                                     <TableCell className="text-right">{totalInvoices}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(totalRevenue)}</TableCell>
                                     <TableCell className="text-right">

@@ -38,7 +38,7 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
     const deleteCategory = () => {
         if (
             confirm(
-                "Sind Sie sicher, dass Sie diese Kategorie löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+                t('pages.categories.deleteConfirmFull'),
             )
         ) {
             router.delete(`/categories/${category.id}`)
@@ -82,7 +82,7 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                         <Button variant="ghost" asChild>
                             <Link href="/categories">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Link>
                         </Button>
                         <div className="flex items-center space-x-3">
@@ -101,12 +101,12 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                         <Button variant="outline" asChild>
                             <Link href={`/categories/${category.id}/edit`}>
                                 <Edit className="mr-2 h-4 w-4" />
-                                Bearbeiten
+                                {t('common.edit')}
                             </Link>
                         </Button>
                         <Button variant="destructive" onClick={deleteCategory}>
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Löschen
+                            {t('common.delete')}
                         </Button>
                     </div>
                 </div>
@@ -115,7 +115,7 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Gesamt Produkte</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.products.statsTotal')}</CardTitle>
                             <Package className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -125,7 +125,7 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Aktive Produkte</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t('pages.products.statsActive')}</CardTitle>
                             <TrendingUp className="h-4 w-4 text-green-600" />
                         </CardHeader>
                         <CardContent>
@@ -159,7 +159,7 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                     <div className="md:col-span-2 space-y-6">
                         <Tabs defaultValue="products" className="space-y-6">
                             <TabsList>
-                                <TabsTrigger value="products">Produkte</TabsTrigger>
+                                <TabsTrigger value="products">{t('nav.products')}</TabsTrigger>
                                 <TabsTrigger value="subcategories">Unterkategorien</TabsTrigger>
                             </TabsList>
 
@@ -167,7 +167,7 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                             <TabsContent value="products">
                                 <Card>
                                     <CardHeader className="flex flex-row items-center justify-between">
-                                        <CardTitle>Produkte in dieser Kategorie</CardTitle>
+                                        <CardTitle>{t('pages.categories.productInCategory')}</CardTitle>
                                         <Button size="sm" asChild>
                                             <Link href={`/products/create?category=${category.id}`}>
                                                 <Plus className="mr-2 h-4 w-4" />
@@ -181,11 +181,11 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow>
-                                                            <TableHead>Name</TableHead>
-                                                            <TableHead>Preis</TableHead>
+                                                            <TableHead>{t('common.name')}</TableHead>
+                                                            <TableHead>{t('common.price')}</TableHead>
                                                             <TableHead>Bestand</TableHead>
-                                                            <TableHead>Status</TableHead>
-                                                            <TableHead className="text-right">Aktionen</TableHead>
+                                                            <TableHead>{t('common.status')}</TableHead>
+                                                            <TableHead className="text-right">{t('common.actions')}</TableHead>
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
@@ -227,7 +227,7 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                                                 <Button className="mt-4" asChild>
                                                     <Link href={`/products/create?category=${category.id}`}>
                                                         <Plus className="mr-2 h-4 w-4" />
-                                                        Erstes Produkt hinzufügen
+                                                        {t('pages.categories.addFirstProduct')}
                                                     </Link>
                                                 </Button>
                                             </div>
@@ -285,7 +285,7 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                                                 <Button className="mt-4" asChild>
                                                     <Link href={`/categories/create?parent=${category.id}`}>
                                                         <Plus className="mr-2 h-4 w-4" />
-                                                        Erste Unterkategorie hinzufügen
+                                                        {t('pages.categories.addFirstSubcategory')}
                                                     </Link>
                                                 </Button>
                                             </div>
@@ -305,19 +305,19 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Name</label>
+                                    <label className="text-sm font-medium text-muted-foreground">{t('common.name')}</label>
                                     <p className="font-medium">{category.name}</p>
                                 </div>
 
                                 {category.description && (
                                     <div>
-                                        <label className="text-sm font-medium text-muted-foreground">Beschreibung</label>
+                                        <label className="text-sm font-medium text-muted-foreground">{t('common.description')}</label>
                                         <p className="text-sm">{category.description}</p>
                                     </div>
                                 )}
 
                                 <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                                    <label className="text-sm font-medium text-muted-foreground">{t('common.status')}</label>
                                     <div className="mt-1">
                                         <Badge variant={category.is_active ? "default" : "secondary"}>
                                             {category.is_active ? "Aktiv" : "Inaktiv"}
@@ -351,13 +351,13 @@ export default function CategoryShow({ category, stats }: CategoryShowProps) {
                                 <Button className="w-full" asChild>
                                     <Link href={`/products/create?category=${category.id}`}>
                                         <Plus className="mr-2 h-4 w-4" />
-                                        Produkt hinzufügen
+                                        {t('pages.categories.addProduct')}
                                     </Link>
                                 </Button>
                                 <Button variant="outline" className="w-full bg-transparent" asChild>
                                     <Link href={`/categories/create?parent=${category.id}`}>
                                         <Plus className="mr-2 h-4 w-4" />
-                                        Unterkategorie hinzufügen
+                                        {t('pages.categories.addSubcategory')}
                                     </Link>
                                 </Button>
                                 <Button variant="outline" className="w-full bg-transparent" asChild>

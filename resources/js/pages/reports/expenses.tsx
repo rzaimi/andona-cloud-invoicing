@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,7 +41,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: "Ausgabenberichte" },
 ]
 
-export default function ExpensesReports({ expenses, totals, filters }: ExpensesReportsProps) {
+export default function ExpensesReports({
+    expenses, totals, filters }: ExpensesReportsProps) {
+    const { t } = useTranslation()
     const { auth } = usePage<{ auth: { user: { company?: { settings?: Record<string, string> } } } }>().props
     const settings = auth?.user?.company?.settings
 
@@ -70,12 +73,12 @@ export default function ExpensesReports({ expenses, totals, filters }: ExpensesR
                         <Link href={route("reports.index")}>
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Zurück
+                                {t('common.back')}
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-1xl font-bold text-gray-900">Ausgabenberichte</h1>
-                            <p className="text-gray-600">Ausgaben nach Kategorien</p>
+                            <h1 className="text-1xl font-bold text-gray-900">{t('nav.reportsExpenses')}</h1>
+                            <p className="text-gray-600">{t('pages.reports.expensesByCategory')}</p>
                         </div>
                     </div>
                 </div>
@@ -147,7 +150,7 @@ export default function ExpensesReports({ expenses, totals, filters }: ExpensesR
                 {expenses.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Ausgaben nach Kategorien</CardTitle>
+                            <CardTitle>{t('pages.reports.expensesByCategory')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={400}>
@@ -185,7 +188,7 @@ export default function ExpensesReports({ expenses, totals, filters }: ExpensesR
                                 {expenses.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center text-gray-500 py-8">
-                                            Keine Ausgaben im ausgewählten Zeitraum
+                                            {t('pages.reports.noExpenses')}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -201,7 +204,7 @@ export default function ExpensesReports({ expenses, totals, filters }: ExpensesR
                                             </TableRow>
                                         ))}
                                         <TableRow className="font-bold">
-                                            <TableCell>Gesamt</TableCell>
+                                            <TableCell>{t('common.total')}</TableCell>
                                             <TableCell className="text-right">{formatCurrency(totals.net_amount)}</TableCell>
                                             <TableCell className="text-right">{formatCurrency(totals.vat_amount)}</TableCell>
                                             <TableCell className="text-right">{formatCurrency(totals.total_amount)}</TableCell>

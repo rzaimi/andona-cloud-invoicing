@@ -22,8 +22,8 @@ export default function Step2EmailSettings({ data, setData, errors }: any) {
                         E-Mail-Konfiguration aktivieren
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                        Ermöglicht den automatischen Versand von Rechnungen und Mahnungen.
-                        Kann auch später in den Einstellungen eingerichtet werden.
+                        {t('pages.companies.emailDesc1')}
+                        {t('pages.companies.emailDesc2')}
                     </p>
                 </div>
                 <Switch
@@ -36,8 +36,8 @@ export default function Step2EmailSettings({ data, setData, errors }: any) {
                 <Alert>
                     <Mail className="h-4 w-4" />
                     <AlertDescription>
-                        Der E-Mail-Versand ist deaktiviert. Sie können Rechnungen weiterhin manuell
-                        herunterladen und versenden. Die SMTP-Einstellungen können jederzeit unter
+                        {t('pages.companies.emailDisabledDesc1')}
+                        {t('pages.companies.emailDisabledDesc2')}
                         <strong> Einstellungen → E-Mail</strong> nachgetragen werden.
                     </AlertDescription>
                 </Alert>
@@ -49,7 +49,7 @@ export default function Step2EmailSettings({ data, setData, errors }: any) {
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
                             <strong>Wichtig:</strong> Korrekte SMTP-Einstellungen sind erforderlich, damit
-                            Rechnungen und Mahnungen automatisch versendet werden können.
+                            {t('pages.companies.emailDesc3')}
                         </AlertDescription>
                     </Alert>
 
@@ -108,7 +108,7 @@ export default function Step2EmailSettings({ data, setData, errors }: any) {
                         </div>
 
                         <div>
-                            <Label htmlFor="smtp_encryption">Verschlüsselung *</Label>
+                            <Label htmlFor="smtp_encryption">{t('settings.smtpEncryption')} *</Label>
                             <Select
                                 value={es.smtp_encryption || "tls"}
                                 onValueChange={(v) => set("smtp_encryption", v)}
@@ -157,7 +157,7 @@ export default function Step2EmailSettings({ data, setData, errors }: any) {
 
                     <Alert>
                         <AlertDescription>
-                            <strong>Häufige SMTP-Anbieter:</strong>
+                            <strong>{t('settings.commonSmtpProviders')}:</strong>
                             <ul className="mt-2 ml-4 list-disc space-y-1 text-sm">
                                 <li>Gmail: smtp.gmail.com (Port 587, TLS)</li>
                                 <li>Outlook: smtp-mail.outlook.com (Port 587, TLS)</li>

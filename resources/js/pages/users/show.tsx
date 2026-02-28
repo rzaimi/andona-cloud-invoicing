@@ -2,6 +2,7 @@
 
 import AppLayout from "@/layouts/app-layout"
 import { Head, Link } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,7 +40,9 @@ interface Props {
     permissions: string[]
 }
 
-export default function UserShow({ user, can_edit, roles, permissions }: Props) {
+export default function UserShow({
+    user, can_edit, roles, permissions }: Props) {
+    const { t } = useTranslation()
     return (
         <AppLayout
             breadcrumbs={[
@@ -56,14 +59,14 @@ export default function UserShow({ user, can_edit, roles, permissions }: Props) 
                     <Button variant="outline" asChild>
                         <Link href={route("users.index")}>
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Zurück
+                            {t('common.back')}
                         </Link>
                     </Button>
                     {can_edit && (
                         <Button asChild>
                             <Link href={route("users.edit", user.id)}>
                                 <Edit className="mr-2 h-4 w-4" />
-                                Bearbeiten
+                                {t('common.edit')}
                             </Link>
                         </Button>
                     )}
@@ -76,7 +79,7 @@ export default function UserShow({ user, can_edit, roles, permissions }: Props) 
                             <UserIcon className="h-5 w-5" />
                             {user.name}
                         </CardTitle>
-                        <CardDescription>Benutzerdetails</CardDescription>
+                        <CardDescription>{t('pages.users.show')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="grid gap-6 md:grid-cols-2">
@@ -97,7 +100,7 @@ export default function UserShow({ user, can_edit, roles, permissions }: Props) 
                             </div>
 
                             <div className="space-y-1">
-                                <div className="text-sm text-muted-foreground">Status</div>
+                                <div className="text-sm text-muted-foreground">{t('common.status')}</div>
                                 <Badge variant={user.status === "active" ? "default" : "secondary"}>
                                     {user.status === "active" ? "Aktiv" : "Inaktiv"}
                                 </Badge>
@@ -121,7 +124,7 @@ export default function UserShow({ user, can_edit, roles, permissions }: Props) 
                             <Shield className="h-5 w-5" />
                             Rollen &amp; Berechtigungen
                         </CardTitle>
-                        <CardDescription>Zugewiesene Rollen und aktive Berechtigungen dieses Benutzers</CardDescription>
+                        <CardDescription>{t('pages.users.rolesDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {/* Roles */}

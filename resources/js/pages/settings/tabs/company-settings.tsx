@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useForm } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -80,7 +81,9 @@ function ValueEditor({
     )
 }
 
-export default function CompanySettingsAdminTab({ companySettings }: CompanySettingsAdminTabProps) {
+export default function CompanySettingsAdminTab({
+    companySettings }: CompanySettingsAdminTabProps) {
+    const { t } = useTranslation()
     const [query, setQuery] = useState("")
     const [typeFilter, setTypeFilter] = useState<"all" | SettingType>("all")
 
@@ -163,7 +166,7 @@ export default function CompanySettingsAdminTab({ companySettings }: CompanySett
     }
 
     const deleteSetting = (s: CompanySettingRow) => {
-        if (!confirm(`Setting "${s.key}" wirklich löschen?`)) return
+        if (!confirm(t('settings.confirmDeleteSetting', { key: s.key }))) return
         editForm.delete(route("settings.company-settings.destroy", { companySetting: s.id }))
     }
 
@@ -171,9 +174,9 @@ export default function CompanySettingsAdminTab({ companySettings }: CompanySett
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Erweiterte Einstellungen (Admin)</CardTitle>
+                    <CardTitle>{t('settings.advancedSettings')}</CardTitle>
                     <CardDescription>
-                        Alle Einstellungen aus der Datenbank – mit Filter, CRUD und typabhängiger Bearbeitung. Nur für Administratoren.
+                        {t('settings.advancedSettingsDesc')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -262,7 +265,7 @@ export default function CompanySettingsAdminTab({ companySettings }: CompanySett
 
                                 <DialogFooter>
                                     <Button variant="outline" onClick={() => setCreateOpen(false)}>
-                                        Abbrechen
+                                        {t('common.cancel')}
                                     </Button>
                                     <Button onClick={submitCreate} disabled={createForm.processing}>
                                         {createForm.processing ? "Speichert..." : "Erstellen"}
@@ -280,7 +283,7 @@ export default function CompanySettingsAdminTab({ companySettings }: CompanySett
                                     <TableHead className="w-[110px]">Type</TableHead>
                                     <TableHead>Value</TableHead>
                                     <TableHead className="w-[240px]">Description</TableHead>
-                                    <TableHead className="w-[110px] text-right">Aktionen</TableHead>
+                                    <TableHead className="w-[110px] text-right">{t('common.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -304,7 +307,7 @@ export default function CompanySettingsAdminTab({ companySettings }: CompanySett
                                                     size="icon"
                                                     className="h-8 w-8 text-red-600 hover:text-red-700"
                                                     onClick={() => deleteSetting(s)}
-                                                    title="Löschen"
+                                                    title={t('common.delete')}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -371,7 +374,7 @@ export default function CompanySettingsAdminTab({ companySettings }: CompanySett
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setEditOpen(false)}>
-                            Abbrechen
+                            {t('common.cancel')}
                         </Button>
                         <Button onClick={submitEdit} disabled={editForm.processing}>
                             {editForm.processing ? "Speichert..." : "Speichern"}

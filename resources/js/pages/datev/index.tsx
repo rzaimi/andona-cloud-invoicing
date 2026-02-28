@@ -1,6 +1,7 @@
 "use client"
 
 import { Head, useForm, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import AppLayout from "@/layouts/app-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default function DatevIndex({ company_id }: Props) {
+    const { t } = useTranslation()
     const [loading, setLoading] = useState<string | null>(null)
     const page = usePage()
     
@@ -33,26 +35,26 @@ export default function DatevIndex({ company_id }: Props) {
                       ''
 
     const transactionsForm = useForm({
-        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        date_to: new Date().toISOString().split('T')[0],
+        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T'),
+        date_to: new Date().toISOString().split('T'),
         format: 'csv',
     })
 
     const paymentsForm = useForm({
-        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        date_to: new Date().toISOString().split('T')[0],
+        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T'),
+        date_to: new Date().toISOString().split('T'),
         format: 'csv',
     })
 
     const expensesForm = useForm({
-        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        date_to: new Date().toISOString().split('T')[0],
+        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T'),
+        date_to: new Date().toISOString().split('T'),
         format: 'csv',
     })
 
     const vatForm = useForm({
-        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        date_to: new Date().toISOString().split('T')[0],
+        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T'),
+        date_to: new Date().toISOString().split('T'),
         format: 'csv',
     })
 
@@ -117,7 +119,7 @@ export default function DatevIndex({ company_id }: Props) {
             // Get filename from Content-Disposition header
             const contentDisposition = response.headers.get('Content-Disposition')
             const filename = contentDisposition 
-                ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') 
+                ? contentDisposition.split('filename=')[1]?.replace(/['"]/g, '') || 'datev_export.csv' 
                 : `datev_export_${Date.now()}.csv`
             
             return response.blob().then(blob => {
@@ -146,7 +148,7 @@ export default function DatevIndex({ company_id }: Props) {
             
             // Display user-friendly error message
             const errorMessage = error.message || 'Unbekannter Fehler beim Exportieren'
-            alert(`Fehler beim Exportieren: ${errorMessage}\n\nBitte überprüfen Sie die Browser-Konsole (F12) für weitere Details.`)
+            alert(`${t('pages.datev.exportError')}: ${errorMessage}`)
         })
         .finally(() => {
             setLoading(null)
@@ -155,13 +157,13 @@ export default function DatevIndex({ company_id }: Props) {
 
     return (
         <AppLayout breadcrumbs={[{ title: "Dashboard", href: "/dashboard" }, { title: "DATEV Export" }]}>
-            <Head title="DATEV Export" />
+            <Head title={t('pages.datev.title')} />
 
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-1xl font-bold tracking-tight">DATEV Export</h1>
+                    <h1 className="text-1xl font-bold tracking-tight">{t('pages.datev.title')}</h1>
                     <p className="text-muted-foreground mt-2">
-                        Exportieren Sie Ihre Daten im DATEV-Format für die Buchhaltung
+                        {t('pages.datev.subtitle')}
                     </p>
                 </div>
 
@@ -173,7 +175,7 @@ export default function DatevIndex({ company_id }: Props) {
                         </div>
                         <CardDescription>
                             DATEV-Exporte werden im CSV-Format mit ISO-8859-1 Kodierung erstellt. 
-                            Die Dateien können direkt in DATEV importiert werden.
+                            {t('pages.datev.importDesc')}
                         </CardDescription>
                     </CardHeader>
                 </Card>
@@ -184,10 +186,10 @@ export default function DatevIndex({ company_id }: Props) {
                         <CardHeader>
                             <div className="flex items-center gap-2">
                                 <FileText className="h-5 w-5" />
-                                <CardTitle>Umsätze (Rechnungen)</CardTitle>
+                                <CardTitle>{t('pages.datev.revenueTitle')}</CardTitle>
                             </div>
                             <CardDescription>
-                                Exportieren Sie Rechnungen als DATEV-Umsätze
+                                {t('pages.datev.revenueDesc')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -222,7 +224,7 @@ export default function DatevIndex({ company_id }: Props) {
                                 ) : (
                                     <>
                                         <Download className="mr-2 h-4 w-4" />
-                                        Umsätze exportieren
+                                        {t('pages.datev.exportRevenue')}
                                     </>
                                 )}
                             </Button>
@@ -269,7 +271,7 @@ export default function DatevIndex({ company_id }: Props) {
                         <CardHeader>
                             <div className="flex items-center gap-2">
                                 <CreditCard className="h-5 w-5" />
-                                <CardTitle>Zahlungen</CardTitle>
+                                <CardTitle>{t('nav.payments')}</CardTitle>
                             </div>
                             <CardDescription>
                                 Exportieren Sie Zahlungen im DATEV-Format
@@ -319,7 +321,7 @@ export default function DatevIndex({ company_id }: Props) {
                         <CardHeader>
                             <div className="flex items-center gap-2">
                                 <ReceiptEuro className="h-5 w-5" />
-                                <CardTitle>Ausgaben</CardTitle>
+                                <CardTitle>{t('nav.expenses')}</CardTitle>
                             </div>
                             <CardDescription>
                                 Exportieren Sie Ausgaben im DATEV-Format
