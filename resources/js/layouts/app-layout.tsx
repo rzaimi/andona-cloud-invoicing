@@ -25,7 +25,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Settings, Users, Building2, HelpCircle, Calendar, LayoutTemplate, Activity } from "lucide-react"
 import { Link, usePage } from "@inertiajs/react"
+import { useTranslation } from "react-i18next"
 import AppearanceToggleDropdown from "@/components/appearance-dropdown"
+import LanguageSwitcher from "@/components/language-switcher"
 
 interface AppLayoutProps {
     children: React.ReactNode
@@ -35,6 +37,7 @@ interface AppLayoutProps {
 export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps) {
     const { props, url } = usePage() as any
     const user = props.auth?.user || props.user
+    const { t } = useTranslation()
 
     if (!user) {
         return <div>Loading...</div>
@@ -46,20 +49,20 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
 
     const adminNavigation = [
         {
-            title: "Benutzer verwalten",
+            title: t('nav.manageUsers'),
             url: "/users",
             icon: Users,
             isActive: isActive("/users"),
         },
         {
-            title: "Firmen verwalten",
+            title: t('nav.manageCompanies'),
             url: "/companies",
             icon: Building2,
             isActive: isActive("/companies"),
             adminOnly: true,
         },
         {
-            title: "System Gesundheit",
+            title: t('nav.systemHealth'),
             url: "/system-health",
             icon: Activity,
             isActive: isActive("/system-health"),
@@ -69,13 +72,13 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
 
     const supportNavigation = [
         {
-            title: "Hilfe & Support",
+            title: t('nav.helpSupport'),
             url: "/help",
             icon: HelpCircle,
             isActive: isActive("/help"),
         },
         {
-            title: "Kalender",
+            title: t('nav.calendar'),
             url: "/calendar",
             icon: Calendar,
             isActive: isActive("/calendar"),
@@ -110,43 +113,42 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
                         )}
                     </div>
                     <div className="flex items-center gap-2 px-4">
+                        <LanguageSwitcher />
                         <AppearanceToggleDropdown />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
                                     <Settings className="h-4 w-4" />
-                                    <span className="sr-only">Einstellungen</span>
+                                    <span className="sr-only">{t('nav.settings')}</span>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
-                                {/* Settings Section */}
-                                <DropdownMenuLabel>Einstellungen</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t('nav.settings')}</DropdownMenuLabel>
                                 <DropdownMenuGroup>
                                     <DropdownMenuItem asChild>
                                         <Link href="/settings">
                                             <Settings className="mr-2 h-4 w-4" />
-                                            Einstellungen
+                                            {t('nav.settings')}
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
                                         <Link href="/invoice-layouts">
                                             <LayoutTemplate className="mr-2 h-4 w-4" />
-                                            Rechnungslayouts
+                                            {t('nav.invoiceLayouts')}
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
                                         <Link href="/offer-layouts">
                                             <LayoutTemplate className="mr-2 h-4 w-4" />
-                                            Angebotslayouts
+                                            {t('nav.offerLayouts')}
                                         </Link>
                                     </DropdownMenuItem>
                                 </DropdownMenuGroup>
 
-                                {/* Administration Section - After settings, like in sidebar */}
                                 {((user.permissions?.includes("manage_users") || user.permissions?.includes("manage_companies")) || user.roles?.includes("super_admin")) && (
                                     <>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuLabel>Administration</DropdownMenuLabel>
+                                        <DropdownMenuLabel>{t('nav.administration')}</DropdownMenuLabel>
                                         <DropdownMenuGroup>
                                             {adminNavigation
                                                 .filter((item) => {
@@ -167,12 +169,11 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
                                     </>
                                 )}
 
-                                {/* Help & Support - Last, like in sidebar */}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                     <Link href="/help">
                                         <HelpCircle className="mr-2 h-4 w-4" />
-                                        Hilfe & Support
+                                        {t('nav.helpSupport')}
                                     </Link>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>

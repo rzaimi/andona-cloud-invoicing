@@ -62,6 +62,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { router, usePage } from "@inertiajs/react"
 import { useState, useEffect } from "react"
 import { route } from "ziggy-js"
+import { useTranslation } from "react-i18next"
 
 interface User {
     id: string
@@ -132,6 +133,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
     const availableCompanies = pageProps.auth?.available_companies || []
     const canSwitchCompany = availableCompanies.length > 0 && user.permissions?.includes("manage_companies")
     const [selectedCompanyId, setSelectedCompanyId] = useState<string>(user.company?.id || "")
+    const { t } = useTranslation()
 
     useEffect(() => {
         // Initialize selected company ID from user's company
@@ -150,149 +152,38 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
 
     const mainNavigation = [
         {
-            title: "Dashboard",
+            title: t('nav.dashboard'),
             url: "/dashboard",
             icon: Home,
             isActive: isActive("/dashboard"),
         },
     ]
 
-    // Compact: Main items only, rest in dropdowns
     const quickActions = [
-        {
-            title: "Neue Rechnung",
-            url: "/invoices/create",
-            icon: Plus,
-            isActive: isActive("/invoices/create"),
-        },
-        {
-            title: "Neues Angebot",
-            url: "/offers/create",
-            icon: Plus,
-            isActive: isActive("/offers/create"),
-        },
-        {
-            title: "Neuer Kunde",
-            url: "/customers/create",
-            icon: Plus,
-            isActive: isActive("/customers/create"),
-        },
-        {
-            title: "Neue Ausgabe",
-            url: "/expenses/create",
-            icon: Plus,
-            isActive: isActive("/expenses/create"),
-        },
-        {
-            title: "Neues Produkt",
-            url: "/products/create",
-            icon: Plus,
-            isActive: isActive("/products/create"),
-        },
-    ]
-
-    const invoiceManagement = [
-        {
-            title: "Alle Rechnungen",
-            url: "/invoices",
-            icon: ReceiptText,
-            isActive: isActive("/invoices"),
-            badge: stats?.invoices?.draft && stats.invoices.draft > 0 ? stats.invoices.draft : null,
-        },
-        {
-            title: "Neue Rechnung",
-            url: "/invoices/create",
-            icon: Plus,
-            isActive: isActive("/invoices/create"),
-        },
-        {
-            title: "Überfällig",
-            url: "/invoices?status=overdue",
-            icon: AlertTriangle,
-            isActive: url === "/invoices?status=overdue",
-            badge: stats?.invoices?.overdue && stats.invoices.overdue > 0 ? stats.invoices.overdue : null,
-            badgeVariant: "destructive" as const,
-        },
-    ]
-
-    const offerManagement = [
-        {
-            title: "Alle Angebote",
-            url: "/offers",
-            icon: FileText,
-            isActive: isActive("/offers"),
-            badge: stats?.offers?.draft && stats.offers.draft > 0 ? stats.offers.draft : null,
-        },
-        {
-            title: "Neues Angebot",
-            url: "/offers/create",
-            icon: Plus,
-            isActive: isActive("/offers/create"),
-        },
-    ]
-
-    const customerManagement = [
-        {
-            title: "Alle Kunden",
-            url: "/customers",
-            icon: Users,
-            isActive: isActive("/customers"),
-        },
-        {
-            title: "Neuer Kunde",
-            url: "/customers/create",
-            icon: Plus,
-            isActive: isActive("/customers/create"),
-        },
-    ]
-
-    const paymentManagement = [
-        {
-            title: "Alle Zahlungen",
-            url: "/payments",
-            icon: CreditCard,
-            isActive: isActive("/payments"),
-        },
-        {
-            title: "Neue Zahlung",
-            url: "/payments/create",
-            icon: Plus,
-            isActive: isActive("/payments/create"),
-        },
+        { title: t('nav.newInvoice'),  url: "/invoices/create",  icon: Plus, isActive: isActive("/invoices/create") },
+        { title: t('nav.newOffer'),    url: "/offers/create",    icon: Plus, isActive: isActive("/offers/create") },
+        { title: t('nav.newCustomer'), url: "/customers/create", icon: Plus, isActive: isActive("/customers/create") },
+        { title: t('nav.newExpense'),  url: "/expenses/create",  icon: Plus, isActive: isActive("/expenses/create") },
+        { title: t('nav.newProduct'),  url: "/products/create",  icon: Plus, isActive: isActive("/products/create") },
     ]
 
     const expenseManagement = [
-        {
-            title: "Alle Ausgaben",
-            url: "/expenses",
-            icon: ReceiptEuro,
-            isActive: isActive("/expenses"),
-        },
-        {
-            title: "Kategorien",
-            url: "/expenses/categories",
-            icon: Folder,
-            isActive: isActive("/expenses/categories"),
-        },
+        { title: t('nav.allExpenses'),       url: "/expenses",            icon: ReceiptEuro, isActive: isActive("/expenses") },
+        { title: t('nav.expenseCategories'), url: "/expenses/categories", icon: Folder,      isActive: isActive("/expenses/categories") },
     ]
 
     const productManagement = [
         {
-            title: "Alle Produkte",
+            title: t('nav.allProducts'),
             url: "/products",
             icon: Package,
             isActive: isActive("/products"),
             badge: stats?.products?.low_stock && stats.products.low_stock > 0 ? stats.products.low_stock : null,
             badgeVariant: "destructive" as const,
         },
+        { title: t('nav.categories'), url: "/categories",  icon: Tag,      isActive: isActive("/categories") },
         {
-            title: "Kategorien",
-            url: "/categories",
-            icon: Tag,
-            isActive: isActive("/categories"),
-        },
-        {
-            title: "Lagerbestand",
+            title: t('nav.warehouse'),
             url: "/warehouses",
             icon: Warehouse,
             isActive: isActive("/warehouses"),
@@ -301,104 +192,15 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
         },
     ]
 
-    const documentManagement = [
-        {
-            title: "Dokumente",
-            url: "/settings/documents",
-            icon: HelpCircle,
-            isActive: isActive("/settings/documents"),
-        },
-    ]
-
     const reportsAndAnalytics = [
-        {
-            title: "Übersicht",
-            url: "/reports",
-            icon: BarChart3,
-            isActive: isActive("/reports"),
-        },
-        {
-            title: "Umsatzberichte",
-            url: "/reports/revenue",
-            icon: Euro,
-            isActive: isActive("/reports/revenue"),
-        },
-        {
-            title: "Ausgabenberichte",
-            url: "/reports/expenses",
-            icon: ReceiptEuro,
-            isActive: isActive("/reports/expenses"),
-        },
-        {
-            title: "Gewinn & Verlust",
-            url: "/reports/profit",
-            icon: BarChart3,
-            isActive: isActive("/reports/profit"),
-        },
-        {
-            title: "MwSt.-Bericht",
-            url: "/reports/vat",
-            icon: FileText,
-            isActive: isActive("/reports/vat"),
-        },
-        {
-            title: "Kundenberichte",
-            url: "/reports/customers",
-            icon: Users,
-            isActive: isActive("/reports/customers"),
-        },
-        {
-            title: "Steuerberichte",
-            url: "/reports/tax",
-            icon: FileText,
-            isActive: isActive("/reports/tax"),
-        },
-        {
-            title: "DATEV Export",
-            url: "/datev",
-            icon: Download,
-            isActive: isActive("/datev"),
-        },
-    ]
-
-    // Moved to dropdown
-    const adminNavigation = [
-        {
-            title: "Benutzer verwalten",
-            url: "/users",
-            icon: Users,
-            isActive: isActive("/users"),
-        },
-        {
-            title: "Firmen verwalten",
-            url: "/companies",
-            icon: Building2,
-            isActive: isActive("/companies"),
-            adminOnly: true,
-        },
-        {
-            title: "System Gesundheit",
-            url: "/system-health",
-            icon: Activity,
-            isActive: isActive("/system-health"),
-            adminOnly: true,
-        },
-    ]
-
-    // Moved to dropdown
-    const supportNavigation = [
-        {
-            title: "Hilfe & Support",
-            url: "/help",
-            icon: HelpCircle,
-            isActive: isActive("/help"),
-        },
-        {
-            title: "Kalender",
-            url: "/calendar",
-            icon: Calendar,
-            isActive: isActive("/calendar"),
-        },
+        { title: t('nav.reportsOverview'),  url: "/reports",           icon: BarChart3,  isActive: isActive("/reports") },
+        { title: t('nav.reportsRevenue'),   url: "/reports/revenue",   icon: Euro,       isActive: isActive("/reports/revenue") },
+        { title: t('nav.reportsExpenses'),  url: "/reports/expenses",  icon: ReceiptEuro,isActive: isActive("/reports/expenses") },
+        { title: t('nav.reportsProfit'),    url: "/reports/profit",    icon: BarChart3,  isActive: isActive("/reports/profit") },
+        { title: t('nav.reportsVat'),       url: "/reports/vat",       icon: FileText,   isActive: isActive("/reports/vat") },
+        { title: t('nav.reportsCustomers'), url: "/reports/customers", icon: Users,      isActive: isActive("/reports/customers") },
+        { title: t('nav.reportsTax'),       url: "/reports/tax",       icon: FileText,   isActive: isActive("/reports/tax") },
+        { title: t('nav.datevExport'),      url: "/datev",             icon: Download,   isActive: isActive("/datev") },
     ]
 
     return (
@@ -451,8 +253,8 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                                 }}
                                             >
                                                 <SelectTrigger className="h-auto p-0 border-0 bg-transparent text-xs text-muted-foreground focus:ring-0 hover:text-foreground cursor-pointer">
-                                                    <SelectValue placeholder="Firma auswählen">
-                                                        {availableCompanies.find((c) => c.id === selectedCompanyId)?.name || user.company?.name || "Keine Firma"}
+                                                    <SelectValue placeholder={t('nav.selectCompany')}>
+                                                        {availableCompanies.find((c) => c.id === selectedCompanyId)?.name || user.company?.name || t('nav.noCompany')}
                                                     </SelectValue>
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -464,7 +266,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                                 </SelectContent>
                                             </Select>
                                         ) : (
-                                            <span className="truncate text-xs">{user.company?.name || "Keine Firma"}</span>
+                                            <span className="truncate text-xs">{user.company?.name || t('nav.noCompany')}</span>
                                         )}
                                     </div>
                                 </Link>
@@ -497,7 +299,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
 
                 {/* Quick Actions - Most Used */}
                 <SidebarGroup>
-                    <SidebarGroupLabel>Schnellzugriff</SidebarGroupLabel>
+                    <SidebarGroupLabel>{t('nav.quickAccess')}</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
@@ -505,12 +307,12 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                     <DropdownMenuTrigger asChild>
                                         <SidebarMenuButton>
                                             <Plus />
-                                            <span>Neu erstellen</span>
+                                            <span>{t('nav.createNew')}</span>
                                             <ChevronDown className="ml-auto" />
                                         </SidebarMenuButton>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent side="right" align="start" className="w-48">
-                                        <DropdownMenuLabel>Erstellen</DropdownMenuLabel>
+                                        <DropdownMenuLabel>{t('nav.create')}</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         {quickActions.map((item) => (
                                             <DropdownMenuItem key={item.title} asChild>
@@ -535,7 +337,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                 <SidebarMenuButton asChild isActive={isActive("/invoices")}>
                                     <Link href="/invoices" className="flex items-center min-w-0">
                                         <ReceiptText className="shrink-0" />
-                                        <span className="truncate">Rechnungen</span>
+                                        <span className="truncate">{t('nav.invoices')}</span>
                                         {stats?.invoices?.draft && stats.invoices.draft > 0 && (
                                             <Badge variant="secondary" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
                                                 {stats.invoices.draft}
@@ -548,7 +350,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                 <SidebarMenuButton asChild isActive={isActive("/offers")}>
                                     <Link href="/offers" className="flex items-center min-w-0">
                                         <FileText className="shrink-0" />
-                                        <span className="truncate">Angebote</span>
+                                        <span className="truncate">{t('nav.offers')}</span>
                                         {stats?.offers?.draft && stats.offers.draft > 0 && (
                                             <Badge variant="secondary" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
                                                 {stats.offers.draft}
@@ -561,7 +363,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                 <SidebarMenuButton asChild isActive={isActive("/customers")}>
                                     <Link href="/customers">
                                         <Users />
-                                        <span className="truncate">Kunden</span>
+                                        <span className="truncate">{t('nav.customers')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -569,7 +371,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                 <SidebarMenuButton asChild isActive={isActive("/payments")}>
                                     <Link href="/payments">
                                         <CreditCard />
-                                        <span className="truncate">Zahlungen</span>
+                                        <span className="truncate">{t('nav.payments')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -578,12 +380,12 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                     <DropdownMenuTrigger asChild>
                                         <SidebarMenuButton isActive={isActive("/expenses")}>
                                             <ReceiptEuro />
-                                            <span>Ausgaben</span>
+                                            <span>{t('nav.expenses')}</span>
                                             <ChevronDown className="ml-auto" />
                                         </SidebarMenuButton>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent side="right" align="start" className="w-56">
-                                        <DropdownMenuLabel>Ausgaben</DropdownMenuLabel>
+                                        <DropdownMenuLabel>{t('nav.expenses')}</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         {expenseManagement.map((item) => (
                                             <DropdownMenuItem key={item.title} asChild>
@@ -601,7 +403,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                     <DropdownMenuTrigger asChild>
                                         <SidebarMenuButton isActive={isActive("/products")} className="flex items-center min-w-0">
                                             <Package className="shrink-0" />
-                                            <span className="truncate">Produkte</span>
+                                            <span className="truncate">{t('nav.products')}</span>
                                             {stats?.products?.low_stock && stats.products.low_stock > 0 && (
                                                 <Badge variant="destructive" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
                                                     {stats.products.low_stock}
@@ -611,7 +413,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                         </SidebarMenuButton>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent side="right" align="start" className="w-56">
-                                        <DropdownMenuLabel>Produkte</DropdownMenuLabel>
+                                        <DropdownMenuLabel>{t('nav.products')}</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         {productManagement.map((item) => (
                                             <DropdownMenuItem key={item.title} asChild>
@@ -633,7 +435,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                 <SidebarMenuButton asChild isActive={isActive("/calendar")}>
                                     <Link href="/calendar">
                                         <Calendar />
-                                        <span className="truncate">Kalender</span>
+                                        <span className="truncate">{t('nav.calendar')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -641,7 +443,7 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                 <SidebarMenuButton asChild isActive={isActive("/settings/documents")}>
                                     <Link href="/settings/documents">
                                         <Folder />
-                                        <span className="truncate">Dokumente</span>
+                                        <span className="truncate">{t('nav.documents')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -658,12 +460,12 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                     <DropdownMenuTrigger asChild>
                                         <SidebarMenuButton>
                                             <BarChart3 />
-                                            <span>Berichte</span>
+                                            <span>{t('nav.reports')}</span>
                                             <ChevronDown className="ml-auto" />
                                         </SidebarMenuButton>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent side="right" align="start" className="w-56">
-                                        <DropdownMenuLabel>Berichte & Analysen</DropdownMenuLabel>
+                                        <DropdownMenuLabel>{t('nav.reportsAndAnalytics')}</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         {reportsAndAnalytics.map((item) => (
                                             <DropdownMenuItem key={item.title} asChild>
@@ -715,20 +517,20 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                 <DropdownMenuItem asChild>
                                     <Link href="/settings/profile">
                                         <Users className="mr-2 h-4 w-4" />
-                                        Profil bearbeiten
+                                        {t('nav.editProfile')}
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                     <Link href="/help">
                                         <HelpCircle className="mr-2 h-4 w-4" />
-                                        Hilfe
+                                        {t('nav.help')}
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                     <Link href="/logout" method="post" as="button" className="w-full">
                                         <LogOut className="mr-2 h-4 w-4" />
-                                        Abmelden
+                                        {t('nav.logout')}
                                     </Link>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
