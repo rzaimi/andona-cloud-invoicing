@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FileText, LoaderCircle, ArrowRight } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import InputError from '@/components/input-error';
@@ -22,12 +22,16 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { data, setData, post, processing, errors, reset } = useForm<Required<LoginForm>>({
         email: '',
         password: '',
         remember: false,
     });
+
+    useEffect(() => {
+        i18n.changeLanguage('de');
+    }, [i18n]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();

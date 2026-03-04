@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { route } from 'ziggy-js';
 import {
@@ -22,8 +22,12 @@ interface WelcomeProps {
 }
 
 export default function Welcome({ canLogin }: WelcomeProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [impressumOpen, setImpressumOpen] = useState(false);
+
+    useEffect(() => {
+        i18n.changeLanguage('de');
+    }, [i18n]);
     const [datenschutzOpen, setDatenschutzOpen] = useState(false);
     const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
@@ -397,18 +401,13 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                 <Dialog open={impressumOpen} onOpenChange={setImpressumOpen}>
                     <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Impressum</DialogTitle>
-                            <DialogDescription>Angaben gemäß § 5 TMG</DialogDescription>
+                            <DialogTitle>{t('welcome.impressumTitle')}</DialogTitle>
+                            <DialogDescription>{t('welcome.impressumDesc')}</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-6 text-sm text-gray-700">
                             <div>
-                                <h3 className="font-semibold text-gray-900 mb-2">Verantwortlich für den Inhalt nach § 10 Absatz 3 MDStV:</h3>
-                                <p className="mb-4">
-                                    <strong>Andona GmbH</strong><br />
-                                    Bahnhofstraße 16<br />
-                                    63571 Gelnhausen<br />
-                                    Deutschland
-                                </p>
+                                <h3 className="font-semibold text-gray-900 mb-2">{t('welcome.impressumResponsible')}</h3>
+                                <p className="mb-4 whitespace-pre-line">{t('welcome.impressumAddress')}</p>
                                 <p className="mb-2">
                                     E-Mail: <a href="mailto:info@andona.de" className="text-blue-600 hover:underline">info@andona.de</a><br />
                                     Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a><br />
@@ -416,24 +415,12 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                 </p>
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 mb-2">Rechtliche Angaben:</h3>
-                                <p className="mb-2">
-                                    USt-IdNr.: DE369264419<br />
-                                    St. Nr.: 019 228 35202<br />
-                                    Finanzamt: Gelnhausen<br />
-                                    Amtsgericht: Hanau, HRB 100017<br />
-                                    Geschäftsführer: Lirim Ziberi
-                                </p>
+                                <h3 className="font-semibold text-gray-900 mb-2">{t('welcome.impressumLegal')}</h3>
+                                <p className="mb-2 whitespace-pre-line">{t('welcome.impressumLegalDetails')}</p>
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 mb-2">Entwicklung & Implementierung:</h3>
-                                <p className="mb-2">
-                                    <strong>Andona Cloud</strong><br />
-                                    Digitale Webagentur<br />
-                                    Gohlstraße 1<br />
-                                    70597 Stuttgart<br />
-                                    Deutschland
-                                </p>
+                                <h3 className="font-semibold text-gray-900 mb-2">{t('welcome.impressumDev')}</h3>
+                                <p className="mb-2 whitespace-pre-line">{t('welcome.impressumDevAddress')}</p>
                                 <p className="mb-2">
                                     Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a><br />
                                     E-Mail: <a href="mailto:info@andona-cloud.de" className="text-blue-600 hover:underline">info@andona-cloud.de</a><br />
@@ -441,19 +428,19 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                 </p>
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 mb-2">Haftungsausschluss:</h3>
+                                <h3 className="font-semibold text-gray-900 mb-2">{t('welcome.impressumDisclaimer')}</h3>
                                 <div className="space-y-3">
                                     <div>
-                                        <h4 className="font-medium text-gray-900 mb-1">Haftung für Inhalte</h4>
-                                        <p>Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.</p>
+                                        <h4 className="font-medium text-gray-900 mb-1">{t('welcome.impressumContentLiability')}</h4>
+                                        <p>{t('welcome.impressumContentText')}</p>
                                     </div>
                                     <div>
-                                        <h4 className="font-medium text-gray-900 mb-1">Haftung für Links</h4>
-                                        <p>Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen Einfluss haben.</p>
+                                        <h4 className="font-medium text-gray-900 mb-1">{t('welcome.impressumLinkLiability')}</h4>
+                                        <p>{t('welcome.impressumLinkText')}</p>
                                     </div>
                                     <div>
-                                        <h4 className="font-medium text-gray-900 mb-1">Urheberrecht</h4>
-                                        <p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht.</p>
+                                        <h4 className="font-medium text-gray-900 mb-1">{t('welcome.impressumCopyright')}</h4>
+                                        <p>{t('welcome.impressumCopyrightText')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -465,47 +452,47 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                 <Dialog open={datenschutzOpen} onOpenChange={setDatenschutzOpen}>
                     <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Datenschutzerklärung</DialogTitle>
-                            <DialogDescription>Informationen gemäß Art. 13 DSGVO</DialogDescription>
+                            <DialogTitle>{t('welcome.datenschutzTitle')}</DialogTitle>
+                            <DialogDescription>{t('welcome.datenschutzDesc')}</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-6 text-sm text-gray-700">
                             <div>
-                                <h3 className="font-semibold text-gray-900 mb-2">1. Datenschutz auf einen Blick</h3>
-                                <h4 className="font-medium text-gray-900 mb-1">Allgemeine Hinweise</h4>
-                                <p>Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen.</p>
+                                <h3 className="font-semibold text-gray-900 mb-2">{t('welcome.datenschutzOverview')}</h3>
+                                <h4 className="font-medium text-gray-900 mb-1">{t('welcome.datenschutzGeneral')}</h4>
+                                <p>{t('welcome.datenschutzGeneralText')}</p>
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 mb-2">2. Verantwortliche Stelle</h3>
+                                <h3 className="font-semibold text-gray-900 mb-2">{t('welcome.datenschutzResponsible')}</h3>
                                 <p className="mb-2">
-                                    <strong>Andona GmbH</strong><br />
-                                    Bahnhofstraße 16, 63571 Gelnhausen<br />
-                                    Telefon: <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a><br />
-                                    E-Mail: <a href="mailto:info@andona.de" className="text-blue-600 hover:underline">info@andona.de</a>
+                                    <strong>{t('welcome.datenschutzContactCompany')}</strong><br />
+                                    {t('welcome.datenschutzContactAddress')}<br />
+                                    {t('welcome.datenschutzContactPhoneLabel')} <a href="tel:+4960515383658" className="text-blue-600 hover:underline">+49 (0) 6051 – 53 83 658</a><br />
+                                    {t('welcome.datenschutzContactEmailLabel')} <a href="mailto:info@andona.de" className="text-blue-600 hover:underline">info@andona.de</a>
                                 </p>
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 mb-2">3. Datenerfassung auf dieser Website</h3>
-                                <h4 className="font-medium text-gray-900 mb-1">Cookies</h4>
-                                <p>Die Internetseiten verwenden teilweise so genannte Cookies. Cookies dienen dazu, unser Angebot nutzerfreundlicher, effektiver und sicherer zu machen.</p>
-                                <h4 className="font-medium text-gray-900 mb-1 mt-2">Server-Log-Dateien</h4>
-                                <p>Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien.</p>
+                                <h3 className="font-semibold text-gray-900 mb-2">{t('welcome.datenschutzCollection')}</h3>
+                                <h4 className="font-medium text-gray-900 mb-1">{t('welcome.datenschutzCookies')}</h4>
+                                <p>{t('welcome.datenschutzCookiesText')}</p>
+                                <h4 className="font-medium text-gray-900 mb-1 mt-2">{t('welcome.datenschutzServerLogs')}</h4>
+                                <p>{t('welcome.datenschutzServerLogsText')}</p>
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 mb-2">4. Ihre Rechte</h3>
-                                <p className="mb-2">Sie haben jederzeit das Recht:</p>
+                                <h3 className="font-semibold text-gray-900 mb-2">{t('welcome.datenschutzRights')}</h3>
+                                <p className="mb-2">{t('welcome.datenschutzRightsIntro')}</p>
                                 <ul className="list-disc list-inside space-y-1 ml-2">
-                                    <li>Auskunft über Ihre bei uns gespeicherten personenbezogenen Daten zu erhalten</li>
-                                    <li>Berichtigung unrichtiger Daten zu verlangen</li>
-                                    <li>Löschung Ihrer bei uns gespeicherten Daten zu verlangen</li>
-                                    <li>Einschränkung der Datenverarbeitung zu verlangen</li>
-                                    <li>Widerspruch gegen die Verarbeitung Ihrer Daten einzulegen</li>
-                                    <li>Datenübertragbarkeit zu verlangen</li>
+                                    <li>{t('welcome.datenschutzRight1')}</li>
+                                    <li>{t('welcome.datenschutzRight2')}</li>
+                                    <li>{t('welcome.datenschutzRight3')}</li>
+                                    <li>{t('welcome.datenschutzRight4')}</li>
+                                    <li>{t('welcome.datenschutzRight5')}</li>
+                                    <li>{t('welcome.datenschutzRight6')}</li>
                                 </ul>
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900 mb-2">5. Technische Umsetzung</h3>
+                                <h3 className="font-semibold text-gray-900 mb-2">{t('welcome.datenschutzTech')}</h3>
                                 <p>
-                                    Diese Anwendung wurde entwickelt von <strong>Andona Cloud</strong>.{' '}
+                                    {t('welcome.datenschutzTechText')}{' '}
                                     <a href="https://andona-cloud.de" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://andona-cloud.de</a>
                                 </p>
                             </div>

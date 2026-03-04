@@ -6,8 +6,26 @@ import de from './locales/de'
 import en from './locales/en'
 import sq from './locales/sq'
 
+// Public pages (landing, login) always show German; only the backend app is translated
+export const APP_LANG_KEY = 'andobill_app_lang'
+
+const pathnameDetector = {
+    name: 'pathname',
+    lookup() {
+        if (typeof window === 'undefined') return undefined
+        const path = window.location.pathname
+        if (path === '/' || path === '/login' || path.startsWith('/verify-email') || path === '/confirm-password') {
+            return 'de'
+        }
+        return undefined
+    },
+}
+
+const languageDetector = new LanguageDetector()
+languageDetector.addDetector(pathnameDetector)
+
 i18n
-    .use(LanguageDetector)
+    .use(languageDetector)
     .use(initReactI18next)
     .init({
         resources: {
@@ -18,10 +36,9 @@ i18n
         fallbackLng: 'de',
         defaultNS: 'translation',
         detection: {
-            // Look for language in localStorage first, then browser preference
-            order: ['localStorage', 'navigator'],
-            lookupLocalStorage: 'andobill_lang',
-            caches: ['localStorage'],
+            order: ['pathname', 'localStorage', 'navigator'],
+            lookupLocalStorage: APP_LANG_KEY,
+            caches: [], // Only persist when user changes language in app (see LanguageSwitcher)
         },
         interpolation: {
             escapeValue: false,

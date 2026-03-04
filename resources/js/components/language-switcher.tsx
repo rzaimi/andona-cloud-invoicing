@@ -8,12 +8,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n'
+import { SUPPORTED_LANGUAGES, APP_LANG_KEY, type SupportedLanguage } from '@/i18n'
 
-const LANGUAGE_CONFIG: Record<SupportedLanguage, { label: string; flag: string }> = {
-    de: { label: 'Deutsch', flag: '🇩🇪' },
-    en: { label: 'English', flag: '🇬🇧' },
-    sq: { label: 'Shqip',   flag: '🇦🇱' },
+const LANGUAGE_CONFIG: Record<SupportedLanguage, { label: string; code: string }> = {
+    de: { label: 'Deutsch', code: 'DE' },
+    en: { label: 'English', code: 'EN' },
+    sq: { label: 'Shqip',   code: 'SQ' },
 }
 
 export default function LanguageSwitcher() {
@@ -23,6 +23,7 @@ export default function LanguageSwitcher() {
 
     const handleChange = (lang: SupportedLanguage) => {
         i18n.changeLanguage(lang)
+        localStorage.setItem(APP_LANG_KEY, lang)
     }
 
     return (
@@ -31,11 +32,10 @@ export default function LanguageSwitcher() {
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-2 text-sm font-medium gap-1"
+                    className="h-8 px-2 text-sm font-medium"
                     title={current.label}
                 >
-                    <span className="text-base leading-none">{current.flag}</span>
-                    <span className="hidden sm:inline text-xs">{currentLang.toUpperCase()}</span>
+                    {current.code}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-36">
@@ -47,7 +47,7 @@ export default function LanguageSwitcher() {
                             onClick={() => handleChange(lang)}
                             className={currentLang === lang ? 'bg-accent font-semibold' : ''}
                         >
-                            <span className="mr-2 text-base">{cfg.flag}</span>
+                            <span className="mr-2 font-mono text-sm">{cfg.code}</span>
                             {cfg.label}
                         </DropdownMenuItem>
                     )
