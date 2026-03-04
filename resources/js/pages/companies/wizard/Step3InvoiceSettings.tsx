@@ -177,6 +177,34 @@ export default function Step3InvoiceSettings({ data, setData, errors }: any) {
                     </div>
                 </div>
 
+                {/* Produkt */}
+                <div className="grid grid-cols-[1fr_120px] gap-3 items-start">
+                    <div className="space-y-1">
+                        <Label>Produkt</Label>
+                        <Input
+                            value={inv.product_number_format ?? "PR-{YYYY}-{####}"}
+                            onChange={(e) => set("product_number_format", e.target.value)}
+                            maxLength={60}
+                            placeholder="PR-{YYYY}-{####}"
+                        />
+                        {inv.product_number_format && (
+                            <p className="text-xs text-muted-foreground">
+                                Vorschau: <span className="font-mono font-medium">
+                                    {previewNumberFormat(inv.product_number_format, inv.product_next_counter ?? 1)}
+                                </span>
+                            </p>
+                        )}
+                    </div>
+                    <div className="space-y-1">
+                        <Label>&nbsp;</Label>
+                        <Input
+                            type="number" min="1" max="999999"
+                            value={inv.product_next_counter ?? 1}
+                            onChange={(e) => set("product_next_counter", parseInt(e.target.value) || 1)}
+                        />
+                    </div>
+                </div>
+
                 <p className="text-xs text-muted-foreground pt-1 flex items-start gap-1.5">
                     <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                     Die nächste Nummer kann nur erhöht werden — sie wird nie kleiner als die höchste bereits vergebene Nummer.

@@ -1,11 +1,23 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 import { Head, Link, router, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Invoice, InvoiceItem } from "@/types"
@@ -87,6 +99,34 @@ export default function InvoicesShow() {
         if (confirm(`Möchten Sie die Rechnung "${invoice.number}" wirklich löschen?`)) {
             router.delete(`/invoices/${invoice.id}`)
         }
+    }
+
+    const [isSendDialogOpen, setIsSendDialogOpen] = useState(false)
+    const [isSending, setIsSending] = useState(false)
+    const [sendForm, setSendForm] = useState({
+        to: invoice.customer?.email || "",
+        cc: "",
+        subject: `Rechnung ${invoice.number}`,
+        message: "",
+    })
+
+    const handleOpenSendDialog = () => {
+        setSendForm({
+            to: invoice.customer?.email || "",
+            cc: "",
+            subject: `Rechnung ${invoice.number}`,
+            message: "",
+        })
+        setIsSendDialogOpen(true)
+    }
+
+    const handleSendInvoice = (e: React.FormEvent) => {
+        e.preventDefault()
+        setIsSending(true)
+        router.post(route("invoices.send", invoice.id), sendForm, {
+            onFinish: () => setIsSending(false),
+            onSuccess: () => setIsSendDialogOpen(false),
+        })
     }
 
     const payments = invoice.payments || []
@@ -422,7 +462,7 @@ export default function InvoicesShow() {
                                     <Button
                                         variant="outline"
                                         className="w-full justify-start"
-                                        onClick={() => router.post(route("invoices.send", invoice.id))}
+                                        onClick={handleOpenSendDialog}
                                     >
                                         <Send className="mr-2 h-4 w-4" />
                                         Rechnung versenden
@@ -454,6 +494,79 @@ export default function InvoicesShow() {
                     </div>
                 </div>
             </div>
+            {/* Send Invoice Dialog */}
+            <Dialog open={isSendDialogOpen} onOpenChange={setIsSendDialogOpen}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Rechnung versenden</DialogTitle>
+                        <DialogDescription>
+                            Rechnung {invoice.number} per E-Mail an den Kunden senden. Die PDF wird automatisch angehängt.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleSendInvoice} className="space-y-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="send-to">Empfänger (An) *</Label>
+                            <Input
+                                id="send-to"
+                                type="email"
+                                value={sendForm.to}
+                                onChange={(e) => setSendForm({ ...sendForm, to: e.target.value })}
+                                placeholder="kunde@beispiel.de"
+                                required
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="send-cc">CC (optional)</Label>
+                            <Input
+                                id="send-cc"
+                                type="email"
+                                value={sendForm.cc}
+                                onChange={(e) => setSendForm({ ...sendForm, cc: e.target.value })}
+                                placeholder="kopie@beispiel.de"
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="send-subject">Betreff *</Label>
+                            <Input
+                                id="send-subject"
+                                value={sendForm.subject}
+                                onChange={(e) => setSendForm({ ...sendForm, subject: e.target.value })}
+                                placeholder="Rechnung ..."
+                                required
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="send-message">Nachricht (optional)</Label>
+                            <Textarea
+                                id="send-message"
+                                value={sendForm.message}
+                                onChange={(e) => setSendForm({ ...sendForm, message: e.target.value })}
+                                placeholder="Sehr geehrte Damen und Herren, ..."
+                                rows={4}
+                            />
+                        </div>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsSendDialogOpen(false)}
+                                disabled={isSending}
+                            >
+                                Abbrechen
+                            </Button>
+                            <Button type="submit" disabled={isSending}>
+                                <Send className="mr-2 h-4 w-4" />
+                                {isSending ? "Wird gesendet..." : "Rechnung senden"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     )
 }

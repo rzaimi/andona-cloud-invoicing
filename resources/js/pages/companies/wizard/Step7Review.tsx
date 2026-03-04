@@ -195,6 +195,7 @@ export default function Step7Review({ data, logoPreview }: any) {
                             ["Storno",    inv.storno_number_format   || "STORNO-{YYYY}-{####}"],
                             ["Angebot",   inv.offer_number_format    || "AN-{YYYY}-{####}"],
                             ["Kunde",     inv.customer_number_format || "KU-{YYYY}-{####}"],
+                            ["Produkt",   inv.product_number_format  || "PR-{YYYY}-{####}"],
                         ].map(([label, fmt]) => (
                             <div key={label} className="contents">
                                 <span className="font-medium">{label}:</span>

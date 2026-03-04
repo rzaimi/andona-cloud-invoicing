@@ -341,6 +341,9 @@ class CompanyController extends Controller
             }
             $validated['logo'] = $request->file('logo')
                 ->store("tenants/{$company->id}/logo", 'public');
+        } else {
+            // Preserve existing logo when no new file is uploaded
+            unset($validated['logo']);
         }
 
         $company->update($validated);

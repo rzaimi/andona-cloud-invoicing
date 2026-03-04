@@ -3,6 +3,7 @@
 namespace App\Modules\Product\Models;
 
 use App\Modules\Company\Models\Company;
+use App\Services\NumberFormatService;
 use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Offer\Models\OfferItem;
 use App\Modules\Product\Models\Category;
@@ -110,31 +111,15 @@ class Product extends Model
     public function generateProductNumber(): string
     {
         $company = $this->company ?? Company::find($this->company_id);
-        $prefix  = $company->getSetting('product_prefix', 'PR');
-        $year    = date('Y');
+        $svc     = new NumberFormatService();
+        $format  = $svc->normaliseToFormat(
+            $company->getSetting('product_number_format')
+                ?? $company->getSetting('product_prefix', 'PR')
+        );
+        $minCounter = (int) ($company->getSetting('product_next_counter') ?? 1);
+        $numbers    = static::where('company_id', $this->company_id)->pluck('number');
 
-        // Find the highest existing sequence number for this prefix+year
-        $lastProduct = static::where('company_id', $this->company_id)
-            ->where('number', 'like', "{$prefix}-{$year}-%")
-            ->orderBy('number', 'desc')
-            ->first();
-
-        $nextNumber = $lastProduct
-            ? (int) substr($lastProduct->number, -4) + 1
-            : 1;
-
-        // Ensure uniqueness — skip over any gaps left by imports/seeders
-        do {
-            $candidate = sprintf('%s-%s-%04d', $prefix, $year, $nextNumber);
-            $exists = static::where('company_id', $this->company_id)
-                ->where('number', $candidate)
-                ->exists();
-            if ($exists) {
-                $nextNumber++;
-            }
-        } while ($exists);
-
-        return $candidate;
+        return $svc->next($format, $numbers, null, $minCounter);
     }
 
     public function isLowStock(): bool

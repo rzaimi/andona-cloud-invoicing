@@ -143,6 +143,8 @@ class Company extends Model
             'offer_next_counter'     => 1,
             'customer_number_format' => 'KU-{YYYY}-{####}',
             'customer_next_counter'  => 1,
+            'product_number_format'  => 'PR-{YYYY}-{####}',
+            'product_next_counter'   => 1,
             // Legacy prefix keys kept for backward-compatibility read fallback
             'invoice_prefix'  => 'RE-',
             'offer_prefix'    => 'AN-',

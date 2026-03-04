@@ -103,6 +103,7 @@ interface OfferLayoutsPageProps {
     templates: Template[]
 }
 
+// Default settings to ensure all properties exist
 const getDefaultSettings = (): OfferLayoutSettings => ({
     colors: {
         primary: "#2563eb",
@@ -151,10 +152,12 @@ const getDefaultSettings = (): OfferLayoutSettings => ({
     },
 })
 
+// Apply template-specific defaults
 const getTemplateDefaults = (templateId: string, templates: Template[]): Partial<OfferLayoutSettings> => {
     const template = templates.find((t) => t.id === templateId)
     if (!template) return {}
 
+    // Base color and font settings
     const defaults: Partial<OfferLayoutSettings> = {
         colors: {
             primary: template.colors[0] || "#2563eb",
@@ -169,47 +172,252 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
         },
     }
 
+    // Template-specific layout configurations
     switch (templateId) {
         case 'modern':
-            defaults.layout = { header_height: 120, footer_height: 80, margin_top: 20, margin_bottom: 20, margin_left: 20, margin_right: 20 }
-            defaults.branding = { show_logo: true, logo_position: "top-left", company_info_position: "top-left", show_header_line: true, show_footer_line: false, show_footer: true }
-            defaults.content = { show_company_address: true, show_company_contact: true, show_customer_number: true, show_tax_number: true, show_unit_column: true, show_notes: true, show_bank_details: true, show_company_registration: true, show_payment_terms: true, show_validity_period: true, show_item_images: false, show_item_codes: true, show_row_number: false, show_bauvorhaben: true, show_tax_breakdown: true, custom_footer_text: "" }
+            // Modern: Contemporary design with balanced layout
+            defaults.layout = {
+                header_height: 120,
+                footer_height: 80,
+                margin_top: 20,
+                margin_bottom: 20,
+                margin_left: 20,
+                margin_right: 20,
+            }
+            defaults.branding = {
+                show_logo: true,
+                logo_position: "top-left",
+                company_info_position: "top-left",
+                show_header_line: true,
+                show_footer_line: false,
+                show_footer: true,
+            }
+            defaults.content = {
+                show_company_address: true,
+                show_company_contact: true,
+                show_customer_number: true,
+                show_tax_number: true,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: true,
+                show_company_registration: true,
+                show_payment_terms: true,
+                show_validity_period: true,
+                show_item_images: false,
+                show_item_codes: true,
+                show_row_number: false,
+                show_bauvorhaben: true,
+                show_tax_breakdown: true,
+                custom_footer_text: "",
+            }
             break
+
         case 'classic':
-            defaults.layout = { header_height: 100, footer_height: 60, margin_top: 15, margin_bottom: 15, margin_left: 15, margin_right: 15 }
-            defaults.branding = { show_logo: true, logo_position: "top-center", company_info_position: "top-center", show_header_line: true, show_footer_line: true, show_footer: true }
-            defaults.content = { show_company_address: true, show_company_contact: true, show_customer_number: true, show_tax_number: true, show_unit_column: true, show_notes: true, show_bank_details: true, show_company_registration: true, show_payment_terms: true, show_validity_period: true, show_item_images: false, show_item_codes: true, show_row_number: true, show_bauvorhaben: true, show_tax_breakdown: true, custom_footer_text: "" }
+            // Classic: Traditional layout, compact margins, centered logo
+            defaults.layout = {
+                header_height: 100,
+                footer_height: 60,
+                margin_top: 15,
+                margin_bottom: 15,
+                margin_left: 15,
+                margin_right: 15,
+            }
+            defaults.branding = {
+                show_logo: true,
+                logo_position: "top-center",
+                company_info_position: "top-center",
+            }
+            defaults.content = {
+                show_item_images: false,
+                show_item_codes: true,
+                show_row_number: true,
+                show_bauvorhaben: true,
+                show_tax_breakdown: true,
+                show_payment_terms: true,
+                show_validity_period: true,
+                custom_footer_text: "",
+            }
             break
+
         case 'minimal':
-            defaults.layout = { header_height: 80, footer_height: 50, margin_top: 10, margin_bottom: 10, margin_left: 20, margin_right: 20 }
-            defaults.branding = { show_logo: false, logo_position: "top-left", company_info_position: "top-left", show_header_line: false, show_footer_line: false, show_footer: true }
-            defaults.content = { show_company_address: true, show_company_contact: false, show_customer_number: false, show_tax_number: false, show_unit_column: true, show_notes: true, show_bank_details: false, show_company_registration: false, show_payment_terms: true, show_validity_period: true, show_item_images: false, show_item_codes: false, show_row_number: false, show_bauvorhaben: true, show_tax_breakdown: false, custom_footer_text: "" }
+            // Minimal: Focus on content, minimal margins, no logo
+            defaults.layout = {
+                header_height: 80,
+                footer_height: 50,
+                margin_top: 10,
+                margin_bottom: 10,
+                margin_left: 20,
+                margin_right: 20,
+            }
+            defaults.branding = {
+                show_logo: false,
+                logo_position: "top-left",
+                company_info_position: "top-left",
+                show_header_line: false,
+                show_footer_line: false,
+                show_footer: true,
+            }
+            defaults.content = {
+                show_company_address: true,
+                show_company_contact: false,
+                show_customer_number: false,
+                show_tax_number: false,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: false,
+                show_company_registration: false,
+                show_payment_terms: true,
+                show_validity_period: true,
+                show_item_images: false,
+                show_item_codes: false,
+                show_row_number: false,
+                show_bauvorhaben: true,
+                show_tax_breakdown: false,
+                custom_footer_text: "",
+            }
             break
+
         case 'professional':
-            defaults.layout = { header_height: 130, footer_height: 90, margin_top: 20, margin_bottom: 20, margin_left: 20, margin_right: 20 }
-            defaults.branding = { show_logo: true, logo_position: "top-left", company_info_position: "top-right", show_header_line: true, show_footer_line: true, show_footer: true }
-            defaults.content = { show_company_address: true, show_company_contact: true, show_customer_number: true, show_tax_number: true, show_unit_column: true, show_notes: true, show_bank_details: true, show_company_registration: true, show_payment_terms: true, show_validity_period: true, show_item_images: false, show_item_codes: true, show_row_number: false, show_bauvorhaben: true, show_tax_breakdown: true, custom_footer_text: "" }
+            // Professional: Structured, corporate layout with standard margins
+            defaults.layout = {
+                header_height: 130,
+                footer_height: 90,
+                margin_top: 20,
+                margin_bottom: 20,
+                margin_left: 20,
+                margin_right: 20,
+            }
+            defaults.branding = {
+                show_logo: true,
+                logo_position: "top-left",
+                company_info_position: "top-right",
+                show_header_line: true,
+                show_footer_line: true,
+                show_footer: true,
+            }
+            defaults.content = {
+                show_company_address: true,
+                show_company_contact: true,
+                show_customer_number: true,
+                show_tax_number: true,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: true,
+                show_company_registration: true,
+                show_payment_terms: true,
+                show_validity_period: true,
+                show_item_images: false,
+                show_item_codes: true,
+                show_row_number: false,
+                show_bauvorhaben: true,
+                show_tax_breakdown: true,
+                custom_footer_text: "",
+            }
             break
+
+        case 'creative':
+            // Creative: Modern with larger header, asymmetric layout
+            defaults.layout = {
+                header_height: 150,
+                footer_height: 70,
+                margin_top: 30,
+                margin_bottom: 20,
+                margin_left: 25,
+                margin_right: 15,
+            }
+            defaults.branding = {
+                show_logo: true,
+                logo_position: "top-right",
+                company_info_position: "top-left",
+                show_header_line: true,
+                show_footer_line: true,
+                show_footer: true,
+            }
+            defaults.content = {
+                show_company_address: true,
+                show_company_contact: true,
+                show_customer_number: true,
+                show_tax_number: true,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: true,
+                show_company_registration: true,
+                show_payment_terms: true,
+                show_validity_period: true,
+                show_item_images: false,
+                show_item_codes: true,
+                show_row_number: false,
+                show_bauvorhaben: true,
+                show_tax_breakdown: true,
+                custom_footer_text: "",
+            }
+            break
+
         case 'elegant':
-            defaults.layout = { header_height: 160, footer_height: 110, margin_top: 30, margin_bottom: 30, margin_left: 30, margin_right: 30 }
-            defaults.branding = { show_logo: true, logo_position: "top-center", company_info_position: "top-center", show_header_line: true, show_footer_line: true, show_footer: true }
-            defaults.content = { show_company_address: true, show_company_contact: true, show_customer_number: true, show_tax_number: true, show_unit_column: true, show_notes: true, show_bank_details: true, show_company_registration: true, show_payment_terms: true, show_validity_period: true, show_item_images: false, show_item_codes: true, show_row_number: false, show_bauvorhaben: true, show_tax_breakdown: true, custom_footer_text: "" }
+            // Elegant: Refined with generous spacing, centered alignment
+            defaults.layout = {
+                header_height: 160,
+                footer_height: 110,
+                margin_top: 30,
+                margin_bottom: 30,
+                margin_left: 30,
+                margin_right: 30,
+            }
+            defaults.branding = {
+                show_logo: true,
+                logo_position: "top-center",
+                company_info_position: "top-center",
+                show_header_line: true,
+                show_footer_line: true,
+                show_footer: true,
+            }
+            defaults.content = {
+                show_company_address: true,
+                show_company_contact: true,
+                show_customer_number: true,
+                show_tax_number: true,
+                show_unit_column: true,
+                show_notes: true,
+                show_bank_details: true,
+                show_company_registration: true,
+                show_payment_terms: true,
+                show_validity_period: true,
+                show_item_images: false,
+                show_item_codes: true,
+                show_row_number: false,
+                show_bauvorhaben: true,
+                show_tax_breakdown: true,
+                custom_footer_text: "",
+            }
             break
+
         default:
+            // Default settings if template not found
             break
     }
 
     return defaults
 }
 
+// Merge layout settings with defaults to ensure all properties exist
 const mergeWithDefaults = (settings: Partial<OfferLayoutSettings> | null): OfferLayoutSettings => {
     const defaults = getDefaultSettings()
+
     if (!settings) return defaults
 
     return {
-        colors: { ...defaults.colors, ...(settings.colors || {}) },
-        fonts: { ...defaults.fonts, ...(settings.fonts || {}) },
-        layout: { ...defaults.layout, ...(settings.layout || {}) },
+        colors: {
+            ...defaults.colors,
+            ...(settings.colors || {}),
+        },
+        fonts: {
+            ...defaults.fonts,
+            ...(settings.fonts || {}),
+        },
+        layout: {
+            ...defaults.layout,
+            ...(settings.layout || {}),
+        },
         branding: {
             ...defaults.branding,
             show_logo: settings.branding?.show_logo ?? defaults.branding.show_logo,
@@ -245,7 +453,6 @@ const mergeWithDefaults = (settings: Partial<OfferLayoutSettings> | null): Offer
 export default function OfferLayoutsPage({ layouts, templates, company }: OfferLayoutsPageProps) {
     const page = usePage<{ flash?: { success?: string; error?: string }; csrf_token?: string }>()
     const { flash, csrf_token } = page.props
-
     const [isLayoutDialogOpen, setIsLayoutDialogOpen] = useState(false)
     const [editingLayout, setEditingLayout] = useState<OfferLayout | null>(null)
     const [previewLayout, setPreviewLayout] = useState<OfferLayout | null>(null)
@@ -256,18 +463,11 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
     const [livePreviewLoading, setLivePreviewLoading] = useState(false)
     const [livePreviewError, setLivePreviewError] = useState<string>("")
     const [livePreviewPdfUrl, setLivePreviewPdfUrl] = useState<string>("")
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
 
     const form = useForm({
         name: "",
         template: "minimal",
         settings: getDefaultSettings(),
-    })
-
-    const logoForm = useForm({
-        _method: "put",
-        logo: null as any,
     })
 
     const [layoutFormData, setLayoutFormData] = useState({
@@ -276,10 +476,22 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
         settings: getDefaultSettings(),
     })
 
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
+    const logoForm = useForm({
+        _method: "put",
+        logo: null as any,
+    })
+
     const leftScrollRef = useRef<HTMLDivElement | null>(null)
 
     const resetFormData = () => {
-        setLayoutFormData({ name: "", template: "minimal", settings: getDefaultSettings() })
+        setLayoutFormData({
+            name: "",
+            template: "minimal",
+            settings: getDefaultSettings(),
+        })
     }
 
     const handleCreateLayout = () => {
@@ -303,7 +515,10 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
         setLayoutFormData({
             ...layoutFormData,
             template: templateId,
-            settings: { ...layoutFormData.settings, ...templateDefaults },
+            settings: {
+                ...layoutFormData.settings,
+                ...templateDefaults,
+            },
         })
     }
 
@@ -322,11 +537,13 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
     const handleSaveLayout = (e: React.FormEvent) => {
         e.preventDefault()
 
+        // Check if name is actually filled
         if (!layoutFormData.name || layoutFormData.name.trim() === "") {
             form.setError("name", "Das Name-Feld ist erforderlich.")
             return
         }
 
+        // Prepare submit data
         const submitData = {
             name: layoutFormData.name.trim(),
             template: layoutFormData.template,
@@ -336,7 +553,10 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
 
         setIsSubmitting(true)
 
-        const onSuccess = () => { setIsSubmitting(false); handleCloseDialog() }
+        const onSuccess = () => {
+            setIsSubmitting(false)
+            handleCloseDialog()
+        }
         const onError = (errors: Record<string, string>) => {
             setIsSubmitting(false)
             if (errors) {
@@ -357,12 +577,14 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
     const goToStep = (tab: "basic" | "design" | "layout" | "content", anchorId?: string) => {
         setBuilderTab(tab)
         if (!anchorId) return
+        // Scroll inside the left panel only (avoid scrolling the whole dialog)
         window.setTimeout(() => {
             const container = leftScrollRef.current
             if (!container) return
             const el = container.querySelector(`#${anchorId}`) as HTMLElement | null
             if (!el) return
-            container.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: "smooth" })
+            const top = Math.max(0, el.offsetTop - 12)
+            container.scrollTo({ top, behavior: "smooth" })
         }, 80)
     }
 
@@ -372,13 +594,18 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
         const url = new URL(window.location.href)
         const previewId = url.searchParams.get("preview")
         if (!previewId) return
+
         const found = layouts.find((l) => String(l.id) === String(previewId))
-        if (found) { setPreviewLayout(found); setIsPreviewOpen(true) }
+        if (found) {
+            setPreviewLayout(found)
+            setIsPreviewOpen(true)
+        }
+
         url.searchParams.delete("preview")
         window.history.replaceState({}, "", url.toString())
     }, [layouts])
 
-    // Live preview: debounce changes and render a real PDF into iframe
+    // Live preview: debounce changes and render a real PDF (DomPDF) into iframe
     useEffect(() => {
         if (!isLayoutDialogOpen) return
 
@@ -410,26 +637,40 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                     setLivePreviewError(`Preview error (${res.status})`)
                     const errText = await res.text()
                     setLivePreviewHtml(
-                        `<html><body style="font-family:system-ui;padding:16px;"><h3>Live preview failed</h3><pre style="white-space:pre-wrap;background:#f5f5f5;padding:12px;border-radius:8px;">${errText.replaceAll("<", "&lt;")}</pre></body></html>`
+                        `<html><body style="font-family: system-ui; padding:16px;">
+                          <h3 style="margin:0 0 8px;">Live preview failed</h3>
+                          <pre style="white-space:pre-wrap; background:#f5f5f5; padding:12px; border-radius:8px;">${errText.replaceAll(
+                              "<",
+                              "&lt;"
+                          )}</pre>
+                        </body></html>`
                     )
                     return
                 }
 
                 const blob = await res.blob()
                 const url = URL.createObjectURL(blob)
-                setLivePreviewPdfUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url })
-            } catch {
-                // ignore aborts
+                // swap URLs safely
+                setLivePreviewPdfUrl((prev) => {
+                    if (prev) URL.revokeObjectURL(prev)
+                    return url
+                })
+            } catch (e) {
+                // ignore aborts; keep last preview
             } finally {
                 setLivePreviewLoading(false)
             }
         }, 650)
 
-        return () => { controller.abort(); window.clearTimeout(t) }
+        return () => {
+            controller.abort()
+            window.clearTimeout(t)
+        }
+        // Intentionally depend on the full form state for live updates
     }, [isLayoutDialogOpen, layoutFormData])
 
     const handleDeleteLayout = (id: string) => {
-        if (confirm("Sind Sie sicher, dass Sie dieses Angebotslayout löschen möchten?")) {
+        if (confirm("Sind Sie sicher, dass Sie dieses Layout löschen möchten?")) {
             router.delete(route("offer-layouts.destroy", id))
         }
     }
@@ -443,28 +684,85 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
     }
 
     const handlePreviewLayout = (layout: OfferLayout) => {
-        setPreviewLayout({ ...layout, settings: mergeWithDefaults(layout.settings) })
+        const layoutWithDefaults = {
+            ...layout,
+            settings: mergeWithDefaults(layout.settings),
+        }
+        setPreviewLayout(layoutWithDefaults)
         setIsPreviewOpen(true)
     }
 
+    const handleClosePreview = () => {
+        setIsPreviewOpen(false)
+        setPreviewLayout(null)
+    }
+
     const updateColorSetting = (colorType: keyof typeof layoutFormData.settings.colors, value: string) => {
-        setLayoutFormData({ ...layoutFormData, settings: { ...layoutFormData.settings, colors: { ...layoutFormData.settings.colors, [colorType]: value } } })
+        setLayoutFormData({
+            ...layoutFormData,
+            settings: {
+                ...layoutFormData.settings,
+                colors: {
+                    ...layoutFormData.settings.colors,
+                    [colorType]: value,
+                },
+            },
+        })
     }
 
     const updateFontSetting = (fontType: keyof typeof layoutFormData.settings.fonts, value: string) => {
-        setLayoutFormData({ ...layoutFormData, settings: { ...layoutFormData.settings, fonts: { ...layoutFormData.settings.fonts, [fontType]: value } } })
+        setLayoutFormData({
+            ...layoutFormData,
+            settings: {
+                ...layoutFormData.settings,
+                fonts: {
+                    ...layoutFormData.settings.fonts,
+                    [fontType]: value,
+                },
+            },
+        })
     }
 
     const updateLayoutSetting = (layoutType: keyof typeof layoutFormData.settings.layout, value: number) => {
-        setLayoutFormData({ ...layoutFormData, settings: { ...layoutFormData.settings, layout: { ...layoutFormData.settings.layout, [layoutType]: value } } })
+        setLayoutFormData({
+            ...layoutFormData,
+            settings: {
+                ...layoutFormData.settings,
+                layout: {
+                    ...layoutFormData.settings.layout,
+                    [layoutType]: value,
+                },
+            },
+        })
     }
 
-    const updateBrandingSetting = (brandingType: keyof typeof layoutFormData.settings.branding, value: boolean | string) => {
-        setLayoutFormData({ ...layoutFormData, settings: { ...layoutFormData.settings, branding: { ...layoutFormData.settings.branding, [brandingType]: value } } })
+    const updateBrandingSetting = (
+        brandingType: keyof typeof layoutFormData.settings.branding,
+        value: boolean | string,
+    ) => {
+        setLayoutFormData({
+            ...layoutFormData,
+            settings: {
+                ...layoutFormData.settings,
+                branding: {
+                    ...layoutFormData.settings.branding,
+                    [brandingType]: value,
+                },
+            },
+        })
     }
 
     const updateContentSetting = (contentType: keyof typeof layoutFormData.settings.content, value: boolean | string) => {
-        setLayoutFormData({ ...layoutFormData, settings: { ...layoutFormData.settings, content: { ...layoutFormData.settings.content, [contentType]: value } } })
+        setLayoutFormData({
+            ...layoutFormData,
+            settings: {
+                ...layoutFormData.settings,
+                content: {
+                    ...layoutFormData.settings.content,
+                    [contentType]: value,
+                },
+            },
+        })
     }
 
     const hasErrors = Object.keys(form.errors).length > 0
@@ -474,6 +772,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
             <Head title="Angebotslayouts" />
 
             <div className="space-y-6">
+                {/* Success/Error Messages */}
                 {flash?.success && (
                     <Alert>
                         <AlertDescription className="text-green-700">{flash.success}</AlertDescription>
@@ -503,7 +802,9 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                             <DialogHeader>
                                 <DialogTitle>{editingLayout ? "Layout bearbeiten" : "Neues Layout erstellen"}</DialogTitle>
                                 <DialogDescription>
-                                    {editingLayout ? "Bearbeiten Sie die Layout-Einstellungen" : "Erstellen Sie ein neues Angebotslayout"}
+                                    {editingLayout
+                                        ? "Bearbeiten Sie die Layout-Einstellungen"
+                                        : "Erstellen Sie ein neues Angebotslayout"}
                                 </DialogDescription>
                             </DialogHeader>
 
@@ -514,7 +815,9 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                         <div className="font-medium mb-2">Bitte korrigieren Sie die folgenden Fehler:</div>
                                         <ul className="list-disc list-inside space-y-1">
                                             {Object.entries(form.errors).map(([field, message]) => (
-                                                <li key={field} className="text-sm"><strong>{field}:</strong> {message as string}</li>
+                                                <li key={field} className="text-sm">
+                                                    <strong>{field}:</strong> {message as string}
+                                                </li>
                                             ))}
                                         </ul>
                                     </AlertDescription>
@@ -555,391 +858,633 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                         <div ref={leftScrollRef} className="flex-1 overflow-y-auto pr-2 mt-4">
                                             <Tabs value={builderTab} onValueChange={(v) => setBuilderTab(v as any)} className="space-y-4">
 
-                                                <TabsContent value="basic" className="space-y-6">
-                                                    <div className="grid gap-6">
-                                                        <div className="grid gap-2">
-                                                            <Label htmlFor="layout-name">Layout Name</Label>
-                                                            <Input
-                                                                id="layout-name"
-                                                                value={layoutFormData.name}
-                                                                onChange={(e) => setLayoutFormData({ ...layoutFormData, name: e.target.value })}
-                                                                placeholder="z.B. Modernes Angebotslayout"
-                                                                required
-                                                            />
-                                                        </div>
+                                    <TabsContent value="basic" className="space-y-6">
+                                        <div className="grid gap-6">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="layout-name">Layout Name</Label>
+                                                <Input
+                                                    id="layout-name"
+                                                    value={layoutFormData.name}
+                                                    onChange={(e) => setLayoutFormData({ ...layoutFormData, name: e.target.value })}
+                                                    placeholder="z.B. Modernes Angebotslayout"
+                                                    required
+                                                />
+                                            </div>
 
-                                                        <div className="grid gap-4">
-                                                            <Label>Template auswählen</Label>
-                                                            <div className="grid grid-cols-2 gap-4">
-                                                                {templates.map((template) => (
+                                            <div className="grid gap-4">
+                                                <Label>Template auswählen</Label>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    {templates.map((template) => (
+                                                        <div
+                                                            key={template.id}
+                                                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                                                                layoutFormData.template === template.id
+                                                                    ? "border-blue-500 bg-blue-50"
+                                                                    : "border-gray-200 hover:border-gray-300"
+                                                            }`}
+                                                            onClick={() => handleTemplateChange(template.id)}
+                                                        >
+                                                            <div className="flex items-start justify-between mb-2">
+                                                                <h3 className="font-semibold">{template.name}</h3>
+                                                                {layoutFormData.template === template.id && <Badge variant="default">Ausgewählt</Badge>}
+                                                            </div>
+                                                            <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
+                                                            <div className="flex flex-wrap gap-1 mb-3">
+                                                                {template.features.map((feature) => (
+                                                                    <Badge key={feature} variant="outline" className="text-xs">
+                                                                        {feature}
+                                                                    </Badge>
+                                                                ))}
+                                                            </div>
+                                                            <div className="flex gap-1">
+                                                                {template.colors.map((color, index) => (
                                                                     <div
-                                                                        key={template.id}
-                                                                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                                                                            layoutFormData.template === template.id
-                                                                                ? "border-blue-500 bg-blue-50"
-                                                                                : "border-gray-200 hover:border-gray-300"
-                                                                        }`}
-                                                                        onClick={() => handleTemplateChange(template.id)}
-                                                                    >
-                                                                        <div className="flex items-start justify-between mb-2">
-                                                                            <h3 className="font-semibold">{template.name}</h3>
-                                                                            {layoutFormData.template === template.id && <Badge variant="default">Ausgewählt</Badge>}
-                                                                        </div>
-                                                                        <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
-                                                                        <div className="flex flex-wrap gap-1 mb-3">
-                                                                            {template.features.map((feature) => (
-                                                                                <Badge key={feature} variant="outline" className="text-xs">{feature}</Badge>
-                                                                            ))}
-                                                                        </div>
-                                                                        <div className="flex gap-1">
-                                                                            {template.colors.map((color, index) => (
-                                                                                <div key={index} className="w-4 h-4 rounded-full border border-gray-300" style={{ backgroundColor: color }} />
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </TabsContent>
-
-                                                <TabsContent value="design" className="space-y-4">
-                                                    <div className="grid gap-6">
-                                                        <div id="step-colors">
-                                                            <h3 className="text-lg font-semibold mb-3">Farben</h3>
-                                                            <div className="grid grid-cols-2 gap-4">
-                                                                {(["primary", "secondary", "accent", "text"] as const).map((colorKey) => (
-                                                                    <div key={colorKey} className="grid gap-2">
-                                                                        <Label htmlFor={`${colorKey}-color`}>
-                                                                            {colorKey === "primary" ? "Primärfarbe" : colorKey === "secondary" ? "Sekundärfarbe" : colorKey === "accent" ? "Akzentfarbe" : "Textfarbe"}
-                                                                        </Label>
-                                                                        <div className="flex gap-2">
-                                                                            <Input id={`${colorKey}-color`} type="color" value={layoutFormData.settings.colors[colorKey]} onChange={(e) => updateColorSetting(colorKey, e.target.value)} className="w-16 h-10" />
-                                                                            <Input value={layoutFormData.settings.colors[colorKey]} onChange={(e) => updateColorSetting(colorKey, e.target.value)} placeholder="#2563eb" />
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-
-                                                        <div id="step-fonts">
-                                                            <h3 className="text-lg font-semibold mb-3">Schriftarten</h3>
-                                                            <div className="grid grid-cols-3 gap-4">
-                                                                <div className="grid gap-2">
-                                                                    <Label>Überschrift</Label>
-                                                                    <Select value={layoutFormData.settings.fonts.heading} onValueChange={(v) => updateFontSetting("heading", v)}>
-                                                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                        <SelectContent>
-                                                                            {["Inter","Roboto","Open Sans","Lato","Montserrat","Poppins","Playfair Display"].map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label>Fließtext</Label>
-                                                                    <Select value={layoutFormData.settings.fonts.body} onValueChange={(v) => updateFontSetting("body", v)}>
-                                                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                        <SelectContent>
-                                                                            {["Inter","Roboto","Open Sans","Lato","Source Sans Pro","Nunito"].map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label>Schriftgröße</Label>
-                                                                    <Select value={layoutFormData.settings.fonts.size} onValueChange={(v) => updateFontSetting("size", v)}>
-                                                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                        <SelectContent>
-                                                                            <SelectItem value="small">Klein (14px)</SelectItem>
-                                                                            <SelectItem value="medium">Mittel (16px)</SelectItem>
-                                                                            <SelectItem value="large">Groß (18px)</SelectItem>
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </TabsContent>
-
-                                                <TabsContent value="layout" className="space-y-4">
-                                                    <div className="grid gap-6">
-                                                        <div id="step-margins">
-                                                            <h3 className="text-lg font-semibold mb-3">Seitenränder (mm)</h3>
-                                                            <div className="grid grid-cols-2 gap-4">
-                                                                {([["margin_top","Oben"],["margin_bottom","Unten"],["margin_left","Links"],["margin_right","Rechts"]] as const).map(([key, label]) => (
-                                                                    <div key={key} className="grid gap-2">
-                                                                        <Label>{label}</Label>
-                                                                        <Input type="number" value={layoutFormData.settings.layout[key]} onChange={(e) => updateLayoutSetting(key, parseInt(e.target.value) || 0)} min="0" max="100" />
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-
-                                                        <div id="step-header-footer">
-                                                            <h3 className="text-lg font-semibold mb-3">Bereiche (px)</h3>
-                                                            <div className="grid grid-cols-2 gap-4">
-                                                                <div className="grid gap-2">
-                                                                    <Label>Kopfzeile Höhe</Label>
-                                                                    <Input type="number" value={layoutFormData.settings.layout.header_height} onChange={(e) => updateLayoutSetting("header_height", parseInt(e.target.value) || 0)} min="50" max="300" />
-                                                                </div>
-                                                                <div className="grid gap-2">
-                                                                    <Label>Fußzeile Höhe</Label>
-                                                                    <Input type="number" value={layoutFormData.settings.layout.footer_height} onChange={(e) => updateLayoutSetting("footer_height", parseInt(e.target.value) || 0)} min="30" max="200" />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div id="step-logo">
-                                                            <h3 className="text-lg font-semibold mb-3">Branding</h3>
-                                                            <div className="rounded-lg border bg-muted/40 p-4 mb-4">
-                                                                <div className="flex items-start justify-between gap-4">
-                                                                    <div className="space-y-1">
-                                                                        <div className="text-sm font-medium">Logo (Firma)</div>
-                                                                        <p className="text-sm text-muted-foreground">Dieses Layout nutzt das Firmenlogo.</p>
-                                                                    </div>
-                                                                    {(logoPreviewUrl || company?.logo) ? (
-                                                                        <img
-                                                                            src={logoPreviewUrl || (company?.logo ? `/storage/${company.logo}` : "")}
-                                                                            alt="Company logo preview"
-                                                                            className="h-14 w-auto rounded border bg-white"
-                                                                        />
-                                                                    ) : null}
-                                                                </div>
-                                                                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                                    <Input
-                                                                        type="file"
-                                                                        accept="image/png,image/jpeg,image/jpg,image/gif"
-                                                                        onChange={(e) => {
-                                                                            const file = e.target.files?.[0]
-                                                                            if (!file) return
-                                                                            if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl)
-                                                                            setLogoPreviewUrl(URL.createObjectURL(file))
-                                                                            logoForm.setData("logo" as any, file)
-                                                                        }}
+                                                                        key={index}
+                                                                        className="w-4 h-4 rounded-full border border-gray-300"
+                                                                        style={{ backgroundColor: color }}
                                                                     />
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="outline"
-                                                                        disabled={!company?.id || logoForm.processing || !logoForm.data.logo}
-                                                                        onClick={() => {
-                                                                            if (!company?.id) return
-                                                                            logoForm.post(route("companies.update", company.id), {
-                                                                                forceFormData: true,
-                                                                                preserveScroll: true,
-                                                                                onSuccess: () => logoForm.reset("logo"),
-                                                                            })
-                                                                        }}
-                                                                    >
-                                                                        {logoForm.processing ? "Upload..." : "Logo hochladen"}
-                                                                    </Button>
-                                                                </div>
-                                                                {logoForm.errors.logo && <p className="mt-2 text-sm text-red-600">{logoForm.errors.logo}</p>}
+                                                                ))}
                                                             </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
 
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Logo anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Firmenlogo im Angebot anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.branding.show_logo} onCheckedChange={(v) => updateBrandingSetting("show_logo", v)} />
-                                                                </div>
-
-                                                                <div className="grid grid-cols-2 gap-4">
-                                                                    <div className="grid gap-2">
-                                                                        <Label>Logo Position</Label>
-                                                                        <Select value={layoutFormData.settings.branding.logo_position} onValueChange={(v) => updateBrandingSetting("logo_position", v)}>
-                                                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                            <SelectContent>
-                                                                                <SelectItem value="top-left">Oben Links</SelectItem>
-                                                                                <SelectItem value="top-center">Oben Mitte</SelectItem>
-                                                                                <SelectItem value="top-right">Oben Rechts</SelectItem>
-                                                                            </SelectContent>
-                                                                        </Select>
-                                                                    </div>
-                                                                    <div className="grid gap-2">
-                                                                        <Label>Firmeninfo Position</Label>
-                                                                        <Select value={layoutFormData.settings.branding.company_info_position} onValueChange={(v) => updateBrandingSetting("company_info_position", v)}>
-                                                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                            <SelectContent>
-                                                                                <SelectItem value="top-left">Oben Links</SelectItem>
-                                                                                <SelectItem value="top-center">Oben Mitte</SelectItem>
-                                                                                <SelectItem value="top-right">Oben Rechts</SelectItem>
-                                                                            </SelectContent>
-                                                                        </Select>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Kopfzeilen-Linie anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Linie unter dem Header anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.branding.show_header_line} onCheckedChange={(v) => updateBrandingSetting("show_header_line", v)} />
-                                                                </div>
-
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Fußzeile anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Fußzeile mit Firmeninformationen anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.branding.show_footer} onCheckedChange={(v) => updateBrandingSetting("show_footer", v)} />
-                                                                </div>
-
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Fußzeilen-Linie anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Linie über der Fußzeile anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.branding.show_footer_line} onCheckedChange={(v) => updateBrandingSetting("show_footer_line", v)} />
-                                                                </div>
-                                                            </div>
+                                    <TabsContent value="design" className="space-y-4">
+                                        <div className="grid gap-6">
+                                            <div id="step-colors">
+                                                <h3 className="text-lg font-semibold mb-3">Farben</h3>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="primary-color">Primärfarbe</Label>
+                                                        <div className="flex gap-2">
+                                                            <Input
+                                                                id="primary-color"
+                                                                type="color"
+                                                                value={layoutFormData.settings.colors.primary}
+                                                                onChange={(e) => updateColorSetting("primary", e.target.value)}
+                                                                className="w-16 h-10"
+                                                            />
+                                                            <Input
+                                                                value={layoutFormData.settings.colors.primary}
+                                                                onChange={(e) => updateColorSetting("primary", e.target.value)}
+                                                                placeholder="#2563eb"
+                                                            />
                                                         </div>
                                                     </div>
-                                                </TabsContent>
 
-                                                <TabsContent value="content" className="space-y-4">
-                                                    <div className="space-y-6" id="step-additional">
-                                                        <div>
-                                                            <h3 className="text-lg font-semibold mb-3">Firmeninformationen</h3>
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Firmenadresse anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Adresse der Firma im Header anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_company_address} onCheckedChange={(v) => updateContentSetting("show_company_address", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Firmenkontakt anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Telefon, E-Mail und Website anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_company_contact} onCheckedChange={(v) => updateContentSetting("show_company_contact", v)} />
-                                                                </div>
-                                                            </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="secondary-color">Sekundärfarbe</Label>
+                                                        <div className="flex gap-2">
+                                                            <Input
+                                                                id="secondary-color"
+                                                                type="color"
+                                                                value={layoutFormData.settings.colors.secondary}
+                                                                onChange={(e) => updateColorSetting("secondary", e.target.value)}
+                                                                className="w-16 h-10"
+                                                            />
+                                                            <Input
+                                                                value={layoutFormData.settings.colors.secondary}
+                                                                onChange={(e) => updateColorSetting("secondary", e.target.value)}
+                                                                placeholder="#64748b"
+                                                            />
                                                         </div>
+                                                    </div>
 
-                                                        <div>
-                                                            <h3 className="text-lg font-semibold mb-3">Angebotsinformationen</h3>
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Kundennummer anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Kundennummer im Dokument anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_customer_number} onCheckedChange={(v) => updateContentSetting("show_customer_number", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Steuernummer anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Steuernummer im Dokument anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_tax_number} onCheckedChange={(v) => updateContentSetting("show_tax_number", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>BV (Bauvorhaben) anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Bauvorhaben-Referenz im Dokumentkopf anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_bauvorhaben} onCheckedChange={(v) => updateContentSetting("show_bauvorhaben", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Einheitsspalte anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Einheit (Stk., kg, etc.) in Artikeltabelle anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_unit_column} onCheckedChange={(v) => updateContentSetting("show_unit_column", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Notizen anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Notizenfeld im Dokument anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_notes} onCheckedChange={(v) => updateContentSetting("show_notes", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Gültigkeitsdauer anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Gültigkeitsdauer des Angebots hervorheben</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_validity_period} onCheckedChange={(v) => updateContentSetting("show_validity_period", v)} />
-                                                                </div>
-                                                            </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="accent-color">Akzentfarbe</Label>
+                                                        <div className="flex gap-2">
+                                                            <Input
+                                                                id="accent-color"
+                                                                type="color"
+                                                                value={layoutFormData.settings.colors.accent}
+                                                                onChange={(e) => updateColorSetting("accent", e.target.value)}
+                                                                className="w-16 h-10"
+                                                            />
+                                                            <Input
+                                                                value={layoutFormData.settings.colors.accent}
+                                                                onChange={(e) => updateColorSetting("accent", e.target.value)}
+                                                                placeholder="#0ea5e9"
+                                                            />
                                                         </div>
+                                                    </div>
 
-                                                        <div>
-                                                            <h3 className="text-lg font-semibold mb-3">Fußzeilen-Informationen</h3>
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Bankverbindung anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">IBAN, BIC und Bankname anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_bank_details} onCheckedChange={(v) => updateContentSetting("show_bank_details", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Handelsregister anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Handelsregister und Steuernummer anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_company_registration} onCheckedChange={(v) => updateContentSetting("show_company_registration", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Zahlungsbedingungen anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Zahlungsbedingungen im Angebot anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_payment_terms} onCheckedChange={(v) => updateContentSetting("show_payment_terms", v)} />
-                                                                </div>
-                                                            </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="text-color">Textfarbe</Label>
+                                                        <div className="flex gap-2">
+                                                            <Input
+                                                                id="text-color"
+                                                                type="color"
+                                                                value={layoutFormData.settings.colors.text}
+                                                                onChange={(e) => updateColorSetting("text", e.target.value)}
+                                                                className="w-16 h-10"
+                                                            />
+                                                            <Input
+                                                                value={layoutFormData.settings.colors.text}
+                                                                onChange={(e) => updateColorSetting("text", e.target.value)}
+                                                                placeholder="#1e293b"
+                                                            />
                                                         </div>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                                        <div>
-                                                            <h3 className="text-lg font-semibold mb-3">Artikeloptionen</h3>
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Artikelbilder anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Produktbilder in der Artikeltabelle anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_item_images} onCheckedChange={(v) => updateContentSetting("show_item_images", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Artikelnummern anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Produktnummern in der Artikeltabelle anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_item_codes} onCheckedChange={(v) => updateContentSetting("show_item_codes", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Positionsnummern anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Fortlaufende Nr.-Spalte (Pos.) in der Artikeltabelle anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_row_number} onCheckedChange={(v) => updateContentSetting("show_row_number", v)} />
-                                                                </div>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="space-y-0.5">
-                                                                        <Label>Steueraufschlüsselung anzeigen</Label>
-                                                                        <p className="text-sm text-muted-foreground">Detaillierte Steuerberechnung anzeigen</p>
-                                                                    </div>
-                                                                    <Switch checked={layoutFormData.settings.content.show_tax_breakdown} onCheckedChange={(v) => updateContentSetting("show_tax_breakdown", v)} />
-                                                                </div>
-                                                            </div>
+                                            <div id="step-fonts">
+                                                <h3 className="text-lg font-semibold mb-3">Schriftarten</h3>
+                                                <div className="grid grid-cols-3 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="heading-font">Überschrift</Label>
+                                                        <Select
+                                                            value={layoutFormData.settings.fonts.heading}
+                                                            onValueChange={(value) => updateFontSetting("heading", value)}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="Inter">Inter</SelectItem>
+                                                                <SelectItem value="Roboto">Roboto</SelectItem>
+                                                                <SelectItem value="Open Sans">Open Sans</SelectItem>
+                                                                <SelectItem value="Lato">Lato</SelectItem>
+                                                                <SelectItem value="Montserrat">Montserrat</SelectItem>
+                                                                <SelectItem value="Poppins">Poppins</SelectItem>
+                                                                <SelectItem value="Playfair Display">Playfair Display</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="body-font">Fließtext</Label>
+                                                        <Select
+                                                            value={layoutFormData.settings.fonts.body}
+                                                            onValueChange={(value) => updateFontSetting("body", value)}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="Inter">Inter</SelectItem>
+                                                                <SelectItem value="Roboto">Roboto</SelectItem>
+                                                                <SelectItem value="Open Sans">Open Sans</SelectItem>
+                                                                <SelectItem value="Lato">Lato</SelectItem>
+                                                                <SelectItem value="Source Sans Pro">Source Sans Pro</SelectItem>
+                                                                <SelectItem value="Nunito">Nunito</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="font-size">Schriftgröße</Label>
+                                                        <Select
+                                                            value={layoutFormData.settings.fonts.size}
+                                                            onValueChange={(value) => updateFontSetting("size", value)}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="small">Klein (14px)</SelectItem>
+                                                                <SelectItem value="medium">Mittel (16px)</SelectItem>
+                                                                <SelectItem value="large">Groß (18px)</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent value="layout" className="space-y-4">
+                                        <div className="grid gap-6">
+                                            <div id="step-margins">
+                                                <h3 className="text-lg font-semibold mb-3">Seitenränder (mm)</h3>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="margin-top">Oben</Label>
+                                                        <Input
+                                                            id="margin-top"
+                                                            type="number"
+                                                            value={layoutFormData.settings.layout.margin_top}
+                                                            onChange={(e) => updateLayoutSetting("margin_top", Number.parseInt(e.target.value) || 0)}
+                                                            min="0"
+                                                            max="100"
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="margin-bottom">Unten</Label>
+                                                        <Input
+                                                            id="margin-bottom"
+                                                            type="number"
+                                                            value={layoutFormData.settings.layout.margin_bottom}
+                                                            onChange={(e) =>
+                                                                updateLayoutSetting("margin_bottom", Number.parseInt(e.target.value) || 0)
+                                                            }
+                                                            min="0"
+                                                            max="100"
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="margin-left">Links</Label>
+                                                        <Input
+                                                            id="margin-left"
+                                                            type="number"
+                                                            value={layoutFormData.settings.layout.margin_left}
+                                                            onChange={(e) => updateLayoutSetting("margin_left", Number.parseInt(e.target.value) || 0)}
+                                                            min="0"
+                                                            max="100"
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="margin-right">Rechts</Label>
+                                                        <Input
+                                                            id="margin-right"
+                                                            type="number"
+                                                            value={layoutFormData.settings.layout.margin_right}
+                                                            onChange={(e) =>
+                                                                updateLayoutSetting("margin_right", Number.parseInt(e.target.value) || 0)
+                                                            }
+                                                            min="0"
+                                                            max="100"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div id="step-header-footer">
+                                                <h3 className="text-lg font-semibold mb-3">Bereiche (px)</h3>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="header-height">Kopfzeile Höhe</Label>
+                                                        <Input
+                                                            id="header-height"
+                                                            type="number"
+                                                            value={layoutFormData.settings.layout.header_height}
+                                                            onChange={(e) =>
+                                                                updateLayoutSetting("header_height", Number.parseInt(e.target.value) || 0)
+                                                            }
+                                                            min="50"
+                                                            max="300"
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="footer-height">Fußzeile Höhe</Label>
+                                                        <Input
+                                                            id="footer-height"
+                                                            type="number"
+                                                            value={layoutFormData.settings.layout.footer_height}
+                                                            onChange={(e) =>
+                                                                updateLayoutSetting("footer_height", Number.parseInt(e.target.value) || 0)
+                                                            }
+                                                            min="30"
+                                                            max="200"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div id="step-logo">
+                                                <h3 className="text-lg font-semibold mb-3">Branding</h3>
+                                                <div className="rounded-lg border bg-muted/40 p-4 mb-4">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div className="space-y-1">
+                                                            <div className="text-sm font-medium">Logo (Firma)</div>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                Dieses Layout nutzt das Firmenlogo. Hier können Sie es hochladen/ersetzen.
+                                                            </p>
+                                                        </div>
+                                                        {(logoPreviewUrl || company?.logo) ? (
+                                                            <img
+                                                                src={logoPreviewUrl || (company?.logo ? `/storage/${company.logo}` : "")}
+                                                                alt="Company logo preview"
+                                                                className="h-14 w-auto rounded border bg-white"
+                                                            />
+                                                        ) : null}
+                                                    </div>
+
+                                                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                        <Input
+                                                            type="file"
+                                                            accept="image/png,image/jpeg,image/jpg,image/gif"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0]
+                                                                if (!file) return
+                                                                if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl)
+                                                                const url = URL.createObjectURL(file)
+                                                                setLogoPreviewUrl(url)
+                                                                logoForm.setData("logo" as any, file)
+                                                            }}
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            disabled={!company?.id || logoForm.processing || !logoForm.data.logo}
+                                                            onClick={() => {
+                                                                if (!company?.id) return
+                                                                logoForm.post(route("companies.update", company.id), {
+                                                                    forceFormData: true,
+                                                                    preserveScroll: true,
+                                                                    onSuccess: () => {
+                                                                        logoForm.reset("logo")
+                                                                    },
+                                                                })
+                                                            }}
+                                                        >
+                                                            {logoForm.processing ? "Upload..." : "Logo hochladen"}
+                                                        </Button>
+                                                    </div>
+                                                    {logoForm.errors.logo && <p className="mt-2 text-sm text-red-600">{logoForm.errors.logo}</p>}
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Logo anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Firmenlogo im Dokument anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.branding.show_logo}
+                                                            onCheckedChange={(checked) => updateBrandingSetting("show_logo", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="logo-position">Logo Position</Label>
+                                                            <Select
+                                                                value={layoutFormData.settings.branding.logo_position}
+                                                                onValueChange={(value) => updateBrandingSetting("logo_position", value)}
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="top-left">Oben Links</SelectItem>
+                                                                    <SelectItem value="top-center">Oben Mitte</SelectItem>
+                                                                    <SelectItem value="top-right">Oben Rechts</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
                                                         </div>
 
                                                         <div className="grid gap-2">
-                                                            <Label htmlFor="custom-footer">Benutzerdefinierter Fußzeilentext</Label>
-                                                            <Textarea
-                                                                id="custom-footer"
-                                                                value={layoutFormData.settings.content.custom_footer_text}
-                                                                onChange={(e) => updateContentSetting("custom_footer_text", e.target.value)}
-                                                                placeholder="z.B. Wir freuen uns auf Ihre Rückmeldung!"
-                                                                rows={3}
-                                                            />
-                                                            <p className="text-sm text-muted-foreground">Dieser Text wird am Ende jedes Angebots angezeigt.</p>
+                                                            <Label htmlFor="company-info-position">Firmeninfo Position</Label>
+                                                            <Select
+                                                                value={layoutFormData.settings.branding.company_info_position}
+                                                                onValueChange={(value) => updateBrandingSetting("company_info_position", value)}
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="top-left">Oben Links</SelectItem>
+                                                                    <SelectItem value="top-center">Oben Mitte</SelectItem>
+                                                                    <SelectItem value="top-right">Oben Rechts</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
                                                         </div>
                                                     </div>
-                                                </TabsContent>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Kopfzeilen-Linie anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Linie unter dem Header anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.branding.show_header_line}
+                                                            onCheckedChange={(checked) => updateBrandingSetting("show_header_line", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Fußzeile anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Fußzeile mit Firmeninformationen anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.branding.show_footer}
+                                                            onCheckedChange={(checked) => updateBrandingSetting("show_footer", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Fußzeilen-Linie anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Linie über der Fußzeile anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.branding.show_footer_line}
+                                                            onCheckedChange={(checked) => updateBrandingSetting("show_footer_line", checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent value="content" className="space-y-4">
+                                        <div className="space-y-6" id="step-additional">
+                                            <div>
+                                                <h3 className="text-lg font-semibold mb-3">Firmeninformationen</h3>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Firmenadresse anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Adresse der Firma im Header anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_company_address}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_company_address", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Firmenkontakt anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Telefon, E-Mail und Website anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_company_contact}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_company_contact", checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h3 className="text-lg font-semibold mb-3">Angebotsinformationen</h3>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Kundennummer anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Kundennummer im Dokument anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_customer_number}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_customer_number", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Steuernummer anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Steuernummer im Dokument anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_tax_number}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_tax_number", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>BV (Bauvorhaben) anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Bauvorhaben-Referenz im Dokumentkopf anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_bauvorhaben}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_bauvorhaben", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Einheitsspalte anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Einheit (Stk., kg, etc.) in Artikeltabelle anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_unit_column}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_unit_column", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Notizen anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Notizenfeld im Dokument anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_notes}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_notes", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Gültigkeitsdauer anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Gültigkeitsdauer des Angebots hervorheben</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_validity_period}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_validity_period", checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h3 className="text-lg font-semibold mb-3">Fußzeilen-Informationen</h3>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Bankverbindung anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">IBAN, BIC und Bankname anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_bank_details}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_bank_details", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Handelsregister anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Handelsregister und Steuernummer anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_company_registration}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_company_registration", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Zahlungsbedingungen anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Zahlungsbedingungen im Dokument anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_payment_terms}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_payment_terms", checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h3 className="text-lg font-semibold mb-3">Artikeloptionen</h3>
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Artikelbilder anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Produktbilder in der Artikeltabelle anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_item_images}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_item_images", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Artikelnummern anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Produktnummern in der Artikeltabelle anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_item_codes}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_item_codes", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Positionsnummern anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Fortlaufende Nr.-Spalte (Pos.) in der Artikeltabelle anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_row_number}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_row_number", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Steueraufschlüsselung anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Detaillierte Steuerberechnung anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_tax_breakdown}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_tax_breakdown", checked)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="custom-footer">Benutzerdefinierter Fußzeilentext</Label>
+                                                <Textarea
+                                                    id="custom-footer"
+                                                    value={layoutFormData.settings.content.custom_footer_text}
+                                                    onChange={(e) => updateContentSetting("custom_footer_text", e.target.value)}
+                                                    placeholder="z.B. Wir freuen uns auf Ihre Rückmeldung!"
+                                                    rows={3}
+                                                />
+                                                <p className="text-sm text-gray-500">Dieser Text wird am Ende jedes Angebots angezeigt.</p>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
                                             </Tabs>
                                         </div>
 
@@ -947,7 +1492,11 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                             <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isSubmitting}>
                                                 Abbrechen
                                             </Button>
-                                            <Button type="submit" disabled={isSubmitting} onClick={() => setSaveAndPreview(true)}>
+                                            <Button
+                                                type="submit"
+                                                disabled={isSubmitting}
+                                                onClick={() => setSaveAndPreview(true)}
+                                            >
                                                 {isSubmitting ? "Speichert..." : "Speichern & Vorschau"}
                                             </Button>
                                         </div>
@@ -961,9 +1510,17 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                             </div>
                                         )}
                                         {livePreviewPdfUrl ? (
-                                            <iframe src={livePreviewPdfUrl} className="w-full h-full border-0" title="Angebotslayout Live Vorschau (PDF)" />
+                                            <iframe
+                                                src={livePreviewPdfUrl}
+                                                className="w-full h-full border-0"
+                                                title="Angebotslayout Live Vorschau (PDF)"
+                                            />
                                         ) : (
-                                            <iframe srcDoc={livePreviewHtml || "<html><body></body></html>"} className="w-full h-full border-0" title="Angebotslayout Live Vorschau (lädt)" />
+                                            <iframe
+                                                srcDoc={livePreviewHtml || "<html><body></body></html>"}
+                                                className="w-full h-full border-0"
+                                                title="Angebotslayout Live Vorschau (lädt)"
+                                            />
                                         )}
                                     </div>
                                 </div>
@@ -975,7 +1532,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                 {layouts.length === 0 ? (
                     <Card>
                         <CardContent className="flex flex-col items-center justify-center py-12">
-                            <Layout className="h-12 w-12 text-muted-foreground mb-4" />
+                            <Layout className="h-12 w-12 text-gray-400 mb-4" />
                             <h3 className="text-lg font-semibold text-foreground mb-2">Keine Angebotslayouts vorhanden</h3>
                             <p className="text-muted-foreground text-center mb-4">
                                 Erstellen Sie Ihr erstes Angebotslayout, um professionelle Angebote zu generieren.
@@ -1025,13 +1582,28 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                             <TableCell>{new Date(layout.created_at).toLocaleDateString("de-DE")}</TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end space-x-2">
-                                                    <Button variant="outline" size="sm" onClick={() => handlePreviewLayout(layout)} title="Vorschau anzeigen">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handlePreviewLayout(layout)}
+                                                        title="Vorschau anzeigen"
+                                                    >
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => handleEditLayout(layout)} title="Layout bearbeiten">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleEditLayout(layout)}
+                                                        title="Layout bearbeiten"
+                                                    >
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => handleDuplicateLayout(layout)} title="Layout duplizieren">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDuplicateLayout(layout)}
+                                                        title="Layout duplizieren"
+                                                    >
                                                         <Copy className="h-4 w-4" />
                                                     </Button>
                                                     <Button
@@ -1059,7 +1631,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                     <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
                         <DialogHeader>
                             <DialogTitle>Layout Vorschau: {previewLayout?.name}</DialogTitle>
-                            <DialogDescription>Vorschau des Angebotslayouts mit Beispieldaten – identisch zur PDF-Ansicht</DialogDescription>
+                            <DialogDescription>Vorschau des Angebotslayouts mit Beispieldaten - identisch zur PDF-Ansicht</DialogDescription>
                         </DialogHeader>
 
                         {previewLayout ? (
@@ -1068,7 +1640,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                     src={route("offer-layouts.preview", previewLayout.id)}
                                     className="w-full h-full min-h-[600px] border-0"
                                     title="Angebotslayout Vorschau"
-                                    style={{ minHeight: "600px" }}
+                                    style={{ minHeight: '600px' }}
                                 />
                             </div>
                         ) : (
@@ -1078,7 +1650,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                         )}
 
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => { setIsPreviewOpen(false); setPreviewLayout(null) }}>
+                            <Button variant="outline" onClick={handleClosePreview}>
                                 Schließen
                             </Button>
                             {previewLayout && (

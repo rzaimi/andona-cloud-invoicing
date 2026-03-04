@@ -214,6 +214,8 @@ class SettingsController extends Controller
             'offer_next_counter'     => 'required|integer|min:1|max:999999',
             'customer_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
             'customer_next_counter'  => 'nullable|integer|min:1|max:999999',
+            'product_number_format'  => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'product_next_counter'   => 'nullable|integer|min:1|max:999999',
             'date_format' => 'required|string|in:Y-m-d,d.m.Y,d/m/Y,m/d/Y',
             'payment_terms' => 'required|integer|min:1|max:365',
             'decimal_separator'   => ['required', 'string', Rule::in(['.', ','])],

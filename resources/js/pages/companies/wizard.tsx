@@ -66,6 +66,8 @@ const defaultData = {
         offer_next_counter:     1,
         customer_number_format: "KU-{YYYY}-{####}",
         customer_next_counter:  1,
+        product_number_format:  "PR-{YYYY}-{####}",
+        product_next_counter:  1,
         currency: "EUR", tax_rate: 0.19, reduced_tax_rate: 0.07,
         payment_terms: 14, offer_validity_days: 30,
         date_format: "d.m.Y", decimal_separator: ",", thousands_separator: ".",

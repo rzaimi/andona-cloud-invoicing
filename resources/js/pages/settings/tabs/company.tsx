@@ -52,6 +52,8 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
         offer_next_counter:     settings?.offer_next_counter     ?? 1,
         customer_number_format: settings?.customer_number_format || "KU-{YYYY}-{####}",
         customer_next_counter:  settings?.customer_next_counter  ?? 1,
+        product_number_format: settings?.product_number_format || "PR-{YYYY}-{####}",
+        product_next_counter:   settings?.product_next_counter  ?? 1,
         date_format: settings?.date_format || "d.m.Y",
         payment_terms: settings?.payment_terms || 14,
         decimal_separator: settings?.decimal_separator || ",",
@@ -316,6 +318,38 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                                 onChange={(e) => setData("customer_next_counter", parseInt(e.target.value) || 1)}
                             />
                             {errors.customer_next_counter && <p className="text-red-600 text-sm">{errors.customer_next_counter}</p>}
+                        </div>
+                    </div>
+
+                    {/* Produkt */}
+                    <div className="grid grid-cols-[1fr_120px] gap-3 items-start">
+                        <div className="space-y-1">
+                            <Label htmlFor="product_number_format">Produkt</Label>
+                            <Input
+                                id="product_number_format"
+                                value={data.product_number_format}
+                                onChange={(e) => setData("product_number_format", e.target.value)}
+                                maxLength={60}
+                                placeholder="PR-{YYYY}-{####}"
+                            />
+                            {data.product_number_format && (
+                                <p className="text-xs text-muted-foreground">
+                                    Vorschau: <span className="font-mono font-medium">{previewNumberFormat(data.product_number_format, data.product_next_counter)}</span>
+                                </p>
+                            )}
+                            {errors.product_number_format && <p className="text-red-600 text-sm">{errors.product_number_format}</p>}
+                        </div>
+                        <div className="space-y-1">
+                            <Label htmlFor="product_next_counter">&nbsp;</Label>
+                            <Input
+                                id="product_next_counter"
+                                type="number"
+                                min="1"
+                                max="999999"
+                                value={data.product_next_counter}
+                                onChange={(e) => setData("product_next_counter", parseInt(e.target.value) || 1)}
+                            />
+                            {errors.product_next_counter && <p className="text-red-600 text-sm">{errors.product_next_counter}</p>}
                         </div>
                     </div>
                     <p className="text-xs text-muted-foreground pt-1">
