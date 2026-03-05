@@ -28,17 +28,6 @@
         <strong>Datum:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}
     </div>
 
-    @if(!empty($invoice->service_date))
-        <div style="margin-bottom: 1mm;">
-            <strong>Leistungsdatum:</strong> {{ formatInvoiceDate($invoice->service_date, $dateFormat ?? 'd.m.Y') }}
-        </div>
-    @elseif(!empty($invoice->service_period_start) && !empty($invoice->service_period_end))
-        <div style="margin-bottom: 1mm;">
-            <strong>Leistungszeitraum:</strong>
-            {{ formatInvoiceDate($invoice->service_period_start, $dateFormat ?? 'd.m.Y') }}–{{ formatInvoiceDate($invoice->service_period_end, $dateFormat ?? 'd.m.Y') }}
-        </div>
-    @endif
-
     <div style="margin-bottom: 1mm;">
         <strong>Fälligkeitsdatum:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}
     </div>
@@ -52,6 +41,17 @@
     @if(!empty($invoice->customer->number))
         <div style="margin-bottom: 1mm;">
             <strong>Kundennr.:</strong> {{ $invoice->customer->number }}
+        </div>
+    @endif
+
+    @if(!empty($invoice->service_date))
+        <div style="margin-bottom: 1mm;">
+            <strong>Leistungsdatum:</strong> {{ formatInvoiceDate($invoice->service_date, $dateFormat ?? 'd.m.Y') }}
+        </div>
+    @elseif(!empty($invoice->service_period_start) && !empty($invoice->service_period_end))
+        <div style="margin-bottom: 1mm;">
+            <strong>Leistungszeitraum:</strong>
+            {{ formatInvoiceDate($invoice->service_period_start, $dateFormat ?? 'd.m.Y') }}–{{ formatInvoiceDate($invoice->service_period_end, $dateFormat ?? 'd.m.Y') }}
         </div>
     @endif
 
