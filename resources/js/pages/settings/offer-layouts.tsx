@@ -478,11 +478,6 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
 
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
-    const logoForm = useForm({
-        logo: null as any,
-    })
-
     const leftScrollRef = useRef<HTMLDivElement | null>(null)
 
     const resetFormData = () => {
@@ -1150,53 +1145,26 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                             <div id="step-logo">
                                                 <h3 className="text-lg font-semibold mb-3">Branding</h3>
                                                 <div className="rounded-lg border bg-muted/40 p-4 mb-4">
-                                                    <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex items-center justify-between gap-4">
                                                         <div className="space-y-1">
                                                             <div className="text-sm font-medium">Logo (Firma)</div>
                                                             <p className="text-sm text-muted-foreground">
-                                                                Dieses Layout nutzt das Firmenlogo. Hier können Sie es hochladen/ersetzen.
+                                                                Das Logo wird aus den Firmeneinstellungen übernommen.{" "}
+                                                                <a href="/settings?tab=company-info" className="underline text-primary">
+                                                                    Logo ändern
+                                                                </a>
                                                             </p>
                                                         </div>
-                                                        {(logoPreviewUrl || company?.logo) ? (
+                                                        {company?.logo ? (
                                                             <img
-                                                                src={logoPreviewUrl || (company?.logo ? `/storage/${company.logo}` : "")}
-                                                                alt="Company logo preview"
-                                                                className="h-14 w-auto rounded border bg-white"
+                                                                src={`/storage/${company.logo}`}
+                                                                alt="Firmenlogo"
+                                                                className="h-14 w-auto rounded border bg-white object-contain"
                                                             />
-                                                        ) : null}
+                                                        ) : (
+                                                            <span className="text-sm text-muted-foreground italic">Kein Logo hinterlegt</span>
+                                                        )}
                                                     </div>
-
-                                                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                        <Input
-                                                            type="file"
-                                                            accept="image/png,image/jpeg,image/jpg,image/gif"
-                                                            onChange={(e) => {
-                                                                const file = e.target.files?.[0]
-                                                                if (!file) return
-                                                                if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl)
-                                                                const url = URL.createObjectURL(file)
-                                                                setLogoPreviewUrl(url)
-                                                                logoForm.setData("logo" as any, file)
-                                                            }}
-                                                        />
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            disabled={logoForm.processing || !logoForm.data.logo}
-                                                            onClick={() => {
-                                                                logoForm.post(route("settings.company-logo.update"), {
-                                                                    forceFormData: true,
-                                                                    preserveScroll: true,
-                                                                    onSuccess: () => {
-                                                                        logoForm.reset("logo")
-                                                                    },
-                                                                })
-                                                            }}
-                                                        >
-                                                            {logoForm.processing ? "Upload..." : "Logo hochladen"}
-                                                        </Button>
-                                                    </div>
-                                                    {logoForm.errors.logo && <p className="mt-2 text-sm text-red-600">{logoForm.errors.logo}</p>}
                                                 </div>
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between">
