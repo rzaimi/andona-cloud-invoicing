@@ -480,7 +480,6 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
 
     const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
     const logoForm = useForm({
-        _method: "put",
         logo: null as any,
     })
 
@@ -1183,10 +1182,9 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                         <Button
                                                             type="button"
                                                             variant="outline"
-                                                            disabled={!company?.id || logoForm.processing || !logoForm.data.logo}
+                                                            disabled={logoForm.processing || !logoForm.data.logo}
                                                             onClick={() => {
-                                                                if (!company?.id) return
-                                                                logoForm.post(route("companies.update", company.id), {
+                                                                logoForm.post(route("settings.company-logo.update"), {
                                                                     forceFormData: true,
                                                                     preserveScroll: true,
                                                                     onSuccess: () => {

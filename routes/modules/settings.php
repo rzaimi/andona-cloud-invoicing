@@ -54,6 +54,9 @@ Route::post('/settings/notifications', [SettingsController::class, 'updateNotifi
 // Company Information (for admins to edit their own company)
 Route::post('/settings/company-info', [SettingsController::class, 'updateCompanyInfo'])->name('settings.company-info.update');
 
+// Logo-only upload (used from invoice/offer layout settings dialog)
+Route::post('/settings/company-logo', [SettingsController::class, 'updateCompanyLogo'])->name('settings.company-logo.update');
+
 // Company settings CRUD (advanced)
 Route::post('/settings/company-settings', [SettingsController::class, 'storeCompanySetting'])->name('settings.company-settings.store');
 Route::put('/settings/company-settings/{companySetting}', [SettingsController::class, 'updateCompanySetting'])->name('settings.company-settings.update');

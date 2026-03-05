@@ -734,4 +734,23 @@ class SettingsController extends Controller
         return redirect()->route('settings.index', ['tab' => 'company-info'])
             ->with('success', 'Firmendaten wurden erfolgreich aktualisiert.');
     }
+
+    public function updateCompanyLogo(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        $company = \App\Modules\Company\Models\Company::findOrFail($companyId);
+
+        $request->validate([
+            'logo' => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
+        ]);
+
+        if ($company->logo && \Storage::disk('public')->exists($company->logo)) {
+            \Storage::disk('public')->delete($company->logo);
+        }
+
+        $path = $request->file('logo')->store("tenants/{$company->id}/logo", 'public');
+        $company->update(['logo' => $path]);
+
+        return back()->with('success', 'Logo wurde erfolgreich hochgeladen.');
+    }
 }
