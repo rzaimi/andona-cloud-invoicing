@@ -454,7 +454,6 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
     const [livePreviewHtml, setLivePreviewHtml] = useState<string>("")
     const [livePreviewLoading, setLivePreviewLoading] = useState(false)
     const [livePreviewError, setLivePreviewError] = useState<string>("")
-    const [livePreviewPdfUrl, setLivePreviewPdfUrl] = useState<string>("")
 
     const form = useForm({
         name: "",
@@ -520,8 +519,6 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
         setSaveAndPreview(false)
         setLivePreviewHtml("")
         setLivePreviewError("")
-        if (livePreviewPdfUrl) URL.revokeObjectURL(livePreviewPdfUrl)
-        setLivePreviewPdfUrl("")
     }
 
     const handleSaveLayout = (e: React.FormEvent) => {
@@ -596,7 +593,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
         window.history.replaceState({}, "", url.toString())
     }, [layouts])
 
-    // Live preview: debounce changes and render a real PDF (DomPDF) into iframe
+    // Live preview: debounce changes and render HTML into iframe via srcDoc (no blob URLs = no CSP issues)
     useEffect(() => {
         if (!isLayoutDialogOpen) return
 
@@ -610,7 +607,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                 setLivePreviewLoading(true)
                 setLivePreviewError("")
 
-                const res = await fetch("/invoice-layouts/preview-live-pdf", {
+                const res = await fetch("/invoice-layouts/preview-live", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -640,13 +637,8 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                     return
                 }
 
-                const blob = await res.blob()
-                const url = URL.createObjectURL(blob)
-                // swap URLs safely
-                setLivePreviewPdfUrl((prev) => {
-                    if (prev) URL.revokeObjectURL(prev)
-                    return url
-                })
+                const html = await res.text()
+                setLivePreviewHtml(html)
             } catch (e) {
                 // ignore aborts; keep last preview
             } finally {
@@ -1543,19 +1535,11 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                 Vorschau wird aktualisiert…
                                             </div>
                                         )}
-                                        {livePreviewPdfUrl ? (
-                                            <iframe
-                                                src={livePreviewPdfUrl}
-                                                className="w-full h-full border-0"
-                                                title="Invoice Layout Live Preview (PDF)"
-                                            />
-                                        ) : (
-                                            <iframe
-                                                srcDoc={livePreviewHtml || "<html><body></body></html>"}
-                                                className="w-full h-full border-0"
-                                                title="Invoice Layout Live Preview (loading)"
-                                            />
-                                        )}
+                                        <iframe
+                                            srcDoc={livePreviewHtml || "<html><body></body></html>"}
+                                            className="w-full h-full border-0"
+                                            title="Invoice Layout Live Preview"
+                                        />
                                     </div>
                                 </div>
                             </form>

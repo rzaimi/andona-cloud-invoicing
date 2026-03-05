@@ -250,6 +250,67 @@ class OfferLayoutController extends Controller
         ]);
     }
 
+    public function previewLive(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+
+        $request->validate([
+            'template'                                    => 'required|string',
+            'settings'                                    => 'required|array',
+            'settings.colors'                             => 'required|array',
+            'settings.colors.primary'                     => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.secondary'                   => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.accent'                      => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.text'                        => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.fonts'                              => 'required|array',
+            'settings.fonts.heading'                      => 'required|string|max:50',
+            'settings.fonts.body'                         => 'required|string|max:50',
+            'settings.fonts.size'                         => 'required|in:small,medium,large',
+            'settings.layout'                             => 'required|array',
+            'settings.layout.header_height'               => 'required|integer|min:50|max:300',
+            'settings.layout.footer_height'               => 'required|integer|min:30|max:200',
+            'settings.layout.margin_top'                  => 'required|integer|min:0|max:100',
+            'settings.layout.margin_bottom'               => 'required|integer|min:0|max:100',
+            'settings.layout.margin_left'                 => 'required|integer|min:0|max:100',
+            'settings.layout.margin_right'                => 'required|integer|min:0|max:100',
+            'settings.branding'                           => 'required|array',
+            'settings.branding.show_logo'                 => 'required|boolean',
+            'settings.branding.logo_position'             => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.branding.company_info_position'     => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.content'                            => 'required|array',
+            'settings.content.show_item_images'           => 'required|boolean',
+            'settings.content.show_item_codes'            => 'required|boolean',
+            'settings.content.show_row_number'            => 'required|boolean',
+            'settings.content.show_bauvorhaben'           => 'required|boolean',
+            'settings.content.show_tax_breakdown'         => 'required|boolean',
+            'settings.content.show_payment_terms'         => 'required|boolean',
+            'settings.content.show_validity_period'       => 'required|boolean',
+            'settings.content.custom_footer_text'         => 'nullable|string|max:2000',
+            'settings.template_specific'                  => 'sometimes|array',
+        ]);
+
+        $layout             = new OfferLayout();
+        $layout->company_id = $companyId;
+        $layout->name       = 'Live Preview';
+        $layout->template   = $request->template;
+        $layout->settings   = $request->input('settings');
+
+        [$sampleOffer, $sampleCustomer] = $this->buildSampleOffer();
+        $company = Company::find($companyId);
+
+        return response()->view('pdf.offer', [
+            'layout'   => $layout,
+            'offer'    => $sampleOffer,
+            'company'  => $company,
+            'customer' => $sampleCustomer,
+            'settings' => [],
+            'preview'  => true,
+        ], 200, [
+            'Content-Type'  => 'text/html; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
+    }
+
     public function previewLivePdf(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();

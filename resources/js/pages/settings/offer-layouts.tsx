@@ -462,7 +462,6 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
     const [livePreviewHtml, setLivePreviewHtml] = useState<string>("")
     const [livePreviewLoading, setLivePreviewLoading] = useState(false)
     const [livePreviewError, setLivePreviewError] = useState<string>("")
-    const [livePreviewPdfUrl, setLivePreviewPdfUrl] = useState<string>("")
 
     const form = useForm({
         name: "",
@@ -524,8 +523,6 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
         setSaveAndPreview(false)
         setLivePreviewHtml("")
         setLivePreviewError("")
-        if (livePreviewPdfUrl) URL.revokeObjectURL(livePreviewPdfUrl)
-        setLivePreviewPdfUrl("")
     }
 
     const handleSaveLayout = (e: React.FormEvent) => {
@@ -599,7 +596,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
         window.history.replaceState({}, "", url.toString())
     }, [layouts])
 
-    // Live preview: debounce changes and render a real PDF (DomPDF) into iframe
+    // Live preview: debounce changes and render HTML into iframe via srcDoc (no blob URLs = no CSP issues)
     useEffect(() => {
         if (!isLayoutDialogOpen) return
 
@@ -613,7 +610,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                 setLivePreviewLoading(true)
                 setLivePreviewError("")
 
-                const res = await fetch("/offer-layouts/preview-live-pdf", {
+                const res = await fetch("/offer-layouts/preview-live", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -642,13 +639,8 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                     return
                 }
 
-                const blob = await res.blob()
-                const url = URL.createObjectURL(blob)
-                // swap URLs safely
-                setLivePreviewPdfUrl((prev) => {
-                    if (prev) URL.revokeObjectURL(prev)
-                    return url
-                })
+                const html = await res.text()
+                setLivePreviewHtml(html)
             } catch (e) {
                 // ignore aborts; keep last preview
             } finally {
@@ -1475,19 +1467,11 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                 Vorschau wird aktualisiert…
                                             </div>
                                         )}
-                                        {livePreviewPdfUrl ? (
-                                            <iframe
-                                                src={livePreviewPdfUrl}
-                                                className="w-full h-full border-0"
-                                                title="Angebotslayout Live Vorschau (PDF)"
-                                            />
-                                        ) : (
-                                            <iframe
-                                                srcDoc={livePreviewHtml || "<html><body></body></html>"}
-                                                className="w-full h-full border-0"
-                                                title="Angebotslayout Live Vorschau (lädt)"
-                                            />
-                                        )}
+                                        <iframe
+                                            srcDoc={livePreviewHtml || "<html><body></body></html>"}
+                                            className="w-full h-full border-0"
+                                            title="Angebotslayout Live Vorschau"
+                                        />
                                     </div>
                                 </div>
                             </form>
