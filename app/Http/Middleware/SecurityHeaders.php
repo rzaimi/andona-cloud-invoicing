@@ -38,8 +38,9 @@ class SecurityHeaders
                    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " .
                    "style-src 'self' 'unsafe-inline'; " .
                    "font-src 'self' data:; " .
-                   "img-src 'self' data: https:; " .
+                   "img-src 'self' data: blob: https:; " .
                    "connect-src 'self' https:; " .
+                   "frame-src 'self' blob:; " .
                    "frame-ancestors 'self'; " .
                    "base-uri 'self'; " .
                    "form-action 'self';";
