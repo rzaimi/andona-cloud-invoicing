@@ -220,7 +220,7 @@ class ERechnungService
         if (count($vatBreakdown) > 0) {
             foreach ($vatBreakdown as $data) {
                 $document->addDocumentTax(
-                    $data['rate'] > 0.10 ? ZugferdDutyTaxFeeCategories::STANDARD_RATE : ZugferdDutyTaxFeeCategories::REDUCED_RATE,
+                    ZugferdDutyTaxFeeCategories::STANDARD_RATE,
                     'VAT',
                     $data['net_amount'],
                     $data['tax_amount'],
@@ -230,7 +230,7 @@ class ERechnungService
         } elseif (($invoice->vat_regime ?? 'standard') === 'standard') {
             $taxRate = ($invoice->tax_rate ?? 0.19) * 100;
             $document->addDocumentTax(
-                $taxRate > 10 ? ZugferdDutyTaxFeeCategories::STANDARD_RATE : ZugferdDutyTaxFeeCategories::REDUCED_RATE,
+                ZugferdDutyTaxFeeCategories::STANDARD_RATE,
                 'VAT',
                 $subtotal,
                 $taxAmount,
@@ -239,12 +239,12 @@ class ERechnungService
         } else {
             // Special regimes (tax exempt or reverse charge)
             $category = match($invoice->vat_regime) {
-                'reverse_charge'          => ZugferdDutyTaxFeeCategories::REVERSE_CHARGE,
-                'reverse_charge_domestic' => ZugferdDutyTaxFeeCategories::REVERSE_CHARGE,
-                'intra_community'         => ZugferdDutyTaxFeeCategories::INTRA_COMMUNITY_SUPPLY,
-                'export'                  => ZugferdDutyTaxFeeCategories::EXPORT_OUTSIDE_EU,
-                'small_business'          => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_GERMAN_USTG_19,
-                default                   => ZugferdDutyTaxFeeCategories::VAT_EXEMPT,
+                'reverse_charge'          => ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE,
+                'reverse_charge_domestic' => ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE,
+                'intra_community'         => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_FOR_EEA_INTRACOMMUNITY_SUPPLY_OF_GOODS_AND_SERVICES,
+                'export'                  => ZugferdDutyTaxFeeCategories::FREE_EXPORT_ITEM_TAX_NOT_CHARGED,
+                'small_business'          => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
+                default                   => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
             };
             
             $document->addDocumentTax(
