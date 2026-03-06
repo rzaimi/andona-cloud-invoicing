@@ -112,21 +112,38 @@ class InitializeCompanyData extends Command
     private function createWarehouse(string $companyId, bool $force): void
     {
         if ($force) {
-            Warehouse::where('company_id', $companyId)->where('code', 'HQ')->delete();
+            // withTrashed() ensures soft-deleted rows are also found and permanently
+            // removed, otherwise they still occupy the unique (company_id, code) index.
+            Warehouse::withTrashed()
+                ->where('company_id', $companyId)
+                ->where('code', 'HQ')
+                ->forceDelete();
         }
 
-        [$warehouse, $created] = [
-            Warehouse::firstOrCreate(
-                ['company_id' => $companyId, 'code' => 'HQ'],
-                [
-                    'name'        => 'Hauptlager',
-                    'description' => 'Zentrallager',
-                    'is_default'  => true,
-                    'is_active'   => true,
-                ]
-            ),
-            null,
-        ];
+        // Also restore + reuse any soft-deleted HQ warehouse when not forcing.
+        $existing = Warehouse::withTrashed()
+            ->where('company_id', $companyId)
+            ->where('code', 'HQ')
+            ->first();
+
+        if ($existing) {
+            $existing->restore();
+            $existing->update([
+                'name'        => 'Hauptlager',
+                'description' => 'Zentrallager',
+                'is_default'  => true,
+                'is_active'   => true,
+            ]);
+        } else {
+            Warehouse::create([
+                'company_id'  => $companyId,
+                'code'        => 'HQ',
+                'name'        => 'Hauptlager',
+                'description' => 'Zentrallager',
+                'is_default'  => true,
+                'is_active'   => true,
+            ]);
+        }
 
         $this->line('  ✓ Hauptlager (HQ)');
     }
@@ -136,18 +153,36 @@ class InitializeCompanyData extends Command
         $map = [];
         foreach ($categories as $cat) {
             if ($force) {
-                Category::where('company_id', $companyId)->where('name', $cat['name'])->delete();
+                Category::withTrashed()
+                    ->where('company_id', $companyId)
+                    ->where('name', $cat['name'])
+                    ->forceDelete();
             }
 
-            $model = Category::firstOrCreate(
-                ['company_id' => $companyId, 'name' => $cat['name']],
-                [
+            $existing = Category::withTrashed()
+                ->where('company_id', $companyId)
+                ->where('name', $cat['name'])
+                ->first();
+
+            if ($existing) {
+                $existing->restore();
+                $existing->update([
                     'description' => $cat['description'] ?? null,
                     'color'       => $cat['color'] ?? '#6366f1',
                     'sort_order'  => $cat['sort_order'] ?? 0,
                     'is_active'   => true,
-                ]
-            );
+                ]);
+                $model = $existing;
+            } else {
+                $model = Category::create([
+                    'company_id'  => $companyId,
+                    'name'        => $cat['name'],
+                    'description' => $cat['description'] ?? null,
+                    'color'       => $cat['color'] ?? '#6366f1',
+                    'sort_order'  => $cat['sort_order'] ?? 0,
+                    'is_active'   => true,
+                ]);
+            }
 
             $map[$cat['name']] = $model->id;
             $this->line("  ✓ {$cat['name']}");
