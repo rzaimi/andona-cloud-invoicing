@@ -275,7 +275,7 @@ export default function InvoicesEdit() {
 
             <div className="flex flex-1 flex-col gap-6">
                 {/* Header with Action Buttons */}
-                <div className="sticky top-0 z-10 bg-white border-b pb-4">
+                <div className="sticky top-0 z-10 border-b pb-4">
                     <div className="flex items-center gap-4 mb-4">
                         <Link href="/invoices">
                             <Button variant="outline" size="sm">
@@ -285,7 +285,7 @@ export default function InvoicesEdit() {
                         </Link>
                         <div className="flex-1">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-1xl font-bold text-gray-900">
+                                <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">
                                     {invoice.is_correction ? "Stornorechnung bearbeiten" : "Rechnung bearbeiten"}
                                 </h1>
                                 {getStatusBadge(invoice.status)}
@@ -297,7 +297,7 @@ export default function InvoicesEdit() {
                                 <p className="text-gray-600">{invoice.number}</p>
                                 {invoice.is_correction && invoice.correctsInvoice && (
                                     <>
-                                        <span className="text-gray-400">•</span>
+                                        <span className="text-gray-600">•</span>
                                         <Link href={`/invoices/${invoice.correctsInvoice.id}/edit`} className="text-blue-600 hover:underline">
                                             Original: {invoice.correctsInvoice.number}
                                         </Link>
@@ -305,7 +305,7 @@ export default function InvoicesEdit() {
                                 )}
                                 {invoice.correctedByInvoice && (
                                     <>
-                                        <span className="text-gray-400">•</span>
+                                        <span className="text-gray-600">•</span>
                                         <Link href={`/invoices/${invoice.correctedByInvoice.id}/edit`} className="text-red-600 hover:underline">
                                             Storniert durch: {invoice.correctedByInvoice.number}
                                         </Link>

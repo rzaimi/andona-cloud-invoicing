@@ -145,12 +145,12 @@ export default function OffersShow() {
                         </Link>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-bold text-foreground">
+                                <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">
                                     Angebot {offer.number}
                                 </h1>
                                 {getStatusBadge(offer.status)}
                             </div>
-                            <p className="text-muted-foreground mt-1">
+                            <p className="text-gray-600">
                                 {offer.customer?.name} • {formatDate(offer.issue_date)}
                             </p>
                         </div>
