@@ -15,7 +15,7 @@ class InitializeCompanyData extends Command
 {
     protected $signature = 'company:init
                             {company_id : The UUID of the company}
-                            {--type= : Company type slug (gartenbau, bauunternehmen, raumausstattung, gebaudetechnik, logistik, handel, dienstleistung)}
+                            {--type= : Company type slug (gartenbau, bauunternehmen, raumausstattung, gebaudetechnik, logistik, handel, dienstleistung, it-webagentur, buchhaltung)}
                             {--force : Overwrite existing data}';
 
     protected $description = 'Initialize a company with industry-specific products, categories, warehouse and layouts';
@@ -28,6 +28,8 @@ class InitializeCompanyData extends Command
         'logistik'        => 'Logistik & Palettenhandel',
         'handel'          => 'Handelsunternehmen',
         'dienstleistung'  => 'Sonstige Dienstleistungen',
+        'it-webagentur'   => 'IT & Webagentur',
+        'buchhaltung'     => 'Buchhaltung & Steuern',
     ];
 
     public function handle(): int
@@ -315,6 +317,8 @@ class InitializeCompanyData extends Command
             'gebaudetechnik'  => $this->getGebaudetechnikData(),
             'logistik'        => $this->getLogistikData(),
             'handel'          => $this->getHandelData(),
+            'it-webagentur'   => $this->getItWebAgenturData(),
+            'buchhaltung'     => $this->getBuchhaltungData(),
             default           => $this->getDienstleistungData(),
         };
     }
@@ -586,6 +590,115 @@ class InitializeCompanyData extends Command
                 'Fahrzeugkosten', 'Miete & Nebenkosten', 'Versicherungen',
                 'Marketing & Werbung', 'Verpackungsmaterial',
                 'Büromaterial', 'Telefon & Internet', 'Schulungen', 'Sonstige Ausgaben',
+            ],
+        ];
+    }
+
+    // ── 8. IT & Webagentur ──────────────────────────────────────────────────
+
+    private function getItWebAgenturData(): array
+    {
+        return [
+            'product_categories' => [
+                ['name' => 'Webentwicklung',          'description' => 'Websites, Landingpages, Webapplikationen',    'color' => '#1d4ed8', 'sort_order' => 1],
+                ['name' => 'App & Software',           'description' => 'Mobile Apps, Desktop-Software, SaaS',        'color' => '#7c3aed', 'sort_order' => 2],
+                ['name' => 'Design & UX',              'description' => 'UI/UX-Design, Grafikdesign, Branding',       'color' => '#db2777', 'sort_order' => 3],
+                ['name' => 'SEO & Online-Marketing',   'description' => 'Suchmaschinenoptimierung, Google Ads, Social', 'color' => '#d97706', 'sort_order' => 4],
+                ['name' => 'Hosting & Infrastruktur',  'description' => 'Webhosting, Server, Domains, SSL',           'color' => '#0369a1', 'sort_order' => 5],
+                ['name' => 'Beratung & Konzeption',    'description' => 'IT-Beratung, Projektplanung, Workshops',     'color' => '#059669', 'sort_order' => 6],
+                ['name' => 'Wartung & Support',        'description' => 'Laufende Betreuung, Updates, Bugfixes',      'color' => '#6b7280', 'sort_order' => 7],
+            ],
+            'products' => [
+                // Webentwicklung
+                ['sku' => 'IW-W-001', 'name' => 'Landingpage',                  'description' => 'Einseitige Landingpage inkl. Responsivdesign und CMS', 'unit' => 'Psch.', 'price' => 1200.00, 'category' => 'Webentwicklung',        'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-W-002', 'name' => 'Firmenwebsite (bis 10 Seiten)', 'description' => 'Professionelle Website mit CMS, bis 10 Unterseiten',  'unit' => 'Psch.', 'price' => 3500.00, 'category' => 'Webentwicklung',        'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-W-003', 'name' => 'Online-Shop',                  'description' => 'E-Commerce-Shop mit Produktverwaltung und Zahlungssystem', 'unit' => 'Psch.', 'price' => 6500.00, 'category' => 'Webentwicklung',  'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-W-004', 'name' => 'Webentwicklung Stunde',         'description' => 'Individuelle Webentwicklung je Stunde',               'unit' => 'Std.',  'price' => 95.00,   'category' => 'Webentwicklung',        'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-W-005', 'name' => 'WordPress-Anpassung',          'description' => 'Theme-Anpassung, Plugin-Integration, Inhaltspflege',  'unit' => 'Std.',  'price' => 85.00,   'category' => 'Webentwicklung',        'tax_rate' => 0.19, 'is_service' => true],
+                // App & Software
+                ['sku' => 'IW-A-001', 'name' => 'Mobile App (iOS/Android)',     'description' => 'Native oder Cross-Platform App (React Native / Flutter)', 'unit' => 'Psch.', 'price' => 12000.00, 'category' => 'App & Software',   'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-A-002', 'name' => 'Softwareentwicklung Stunde',   'description' => 'Backend- / Frontend-Entwicklung je Stunde',            'unit' => 'Std.',  'price' => 105.00,  'category' => 'App & Software',        'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-A-003', 'name' => 'API-Integration',              'description' => 'Anbindung von Drittsystemen über REST- oder SOAP-API', 'unit' => 'Psch.', 'price' => 1800.00, 'category' => 'App & Software',        'tax_rate' => 0.19, 'is_service' => true],
+                // Design & UX
+                ['sku' => 'IW-D-001', 'name' => 'Logo & Corporate Identity',    'description' => 'Logodesign, Farb- und Typo-Konzept, Styleguide',       'unit' => 'Psch.', 'price' => 950.00,  'category' => 'Design & UX',           'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-D-002', 'name' => 'UI/UX-Design Stunde',          'description' => 'Wireframes, Mockups, Prototypen',                     'unit' => 'Std.',  'price' => 90.00,   'category' => 'Design & UX',           'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-D-003', 'name' => 'Grafikdesign Stunde',          'description' => 'Flyer, Banner, Social-Media-Grafiken',                'unit' => 'Std.',  'price' => 80.00,   'category' => 'Design & UX',           'tax_rate' => 0.19, 'is_service' => true],
+                // SEO & Online-Marketing
+                ['sku' => 'IW-S-001', 'name' => 'SEO-Analyse & Strategie',      'description' => 'Technisches SEO-Audit und Optimierungsplan',          'unit' => 'Psch.', 'price' => 750.00,  'category' => 'SEO & Online-Marketing','tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-S-002', 'name' => 'SEO-Betreuung monatlich',      'description' => 'Laufende Suchmaschinenoptimierung je Monat',          'unit' => 'Mon.',  'price' => 450.00,  'category' => 'SEO & Online-Marketing','tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-S-003', 'name' => 'Google Ads Setup',             'description' => 'Kampagneneinrichtung inkl. Keyword-Recherche',        'unit' => 'Psch.', 'price' => 650.00,  'category' => 'SEO & Online-Marketing','tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-S-004', 'name' => 'Social-Media-Betreuung',       'description' => 'Content-Planung und Community-Management monatlich',  'unit' => 'Mon.',  'price' => 380.00,  'category' => 'SEO & Online-Marketing','tax_rate' => 0.19, 'is_service' => true],
+                // Hosting & Infrastruktur
+                ['sku' => 'IW-H-001', 'name' => 'Webhosting jährlich',          'description' => 'Managed Hosting inkl. SSL und täglichem Backup',      'unit' => 'Jahr',  'price' => 180.00,  'cost_price' => 60.00,  'category' => 'Hosting & Infrastruktur', 'tax_rate' => 0.19, 'track_stock' => false],
+                ['sku' => 'IW-H-002', 'name' => 'Domain-Registrierung jährl.', 'description' => '.de / .com Domainregistrierung oder -verlängerung',   'unit' => 'Jahr',  'price' => 18.00,   'cost_price' => 8.00,   'category' => 'Hosting & Infrastruktur', 'tax_rate' => 0.19, 'track_stock' => false],
+                ['sku' => 'IW-H-003', 'name' => 'SSL-Zertifikat jährlich',     'description' => 'Wildcard-SSL-Zertifikat für eine Domain',             'unit' => 'Jahr',  'price' => 65.00,   'cost_price' => 25.00,  'category' => 'Hosting & Infrastruktur', 'tax_rate' => 0.19, 'track_stock' => false],
+                ['sku' => 'IW-H-004', 'name' => 'Managed Server monatlich',    'description' => 'vServer inkl. Monitoring und Updates',                'unit' => 'Mon.',  'price' => 95.00,   'cost_price' => 35.00,  'category' => 'Hosting & Infrastruktur', 'tax_rate' => 0.19, 'track_stock' => false],
+                // Beratung & Konzeption
+                ['sku' => 'IW-B-001', 'name' => 'IT-Beratungsstunde',           'description' => 'Technische Beratung und Systemplanung',               'unit' => 'Std.',  'price' => 110.00,  'category' => 'Beratung & Konzeption', 'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-B-002', 'name' => 'Projektkonzept & Angebot',     'description' => 'Anforderungsanalyse, Konzept, Zeitplan',              'unit' => 'Psch.', 'price' => 350.00,  'category' => 'Beratung & Konzeption', 'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-B-003', 'name' => 'Workshop Digitalisierung',     'description' => 'Halbtagesworkshop zu digitalen Prozessen',            'unit' => 'Tag',   'price' => 990.00,  'category' => 'Beratung & Konzeption', 'tax_rate' => 0.19, 'is_service' => true],
+                // Wartung & Support
+                ['sku' => 'IW-WS-001', 'name' => 'Wartungspaket Basic monatl.','description' => 'Updates, Sicherheits-Patches, monatliches Backup',   'unit' => 'Mon.',  'price' => 79.00,   'category' => 'Wartung & Support',     'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-WS-002', 'name' => 'Wartungspaket Pro monatl.',  'description' => 'Erweiterter Support, Performance-Monitoring, SLA',   'unit' => 'Mon.',  'price' => 149.00,  'category' => 'Wartung & Support',     'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'IW-WS-003', 'name' => 'Support-Ticket Stunde',      'description' => 'Technischer Support, Bugfix, Inhaltspflege',         'unit' => 'Std.',  'price' => 85.00,   'category' => 'Wartung & Support',     'tax_rate' => 0.19, 'is_service' => true],
+            ],
+            'expense_categories' => [
+                'Software-Lizenzen', 'Server & Hosting-Kosten', 'Domain-Gebühren',
+                'Hardware & Equipment', 'Weiterbildung & Kurse', 'Freelancer & Subunternehmer',
+                'Marketing & Werbung', 'Büromiete & Nebenkosten',
+                'Büromaterial', 'Telefon & Internet', 'Steuer & Rechtsberatung', 'Sonstige Ausgaben',
+            ],
+        ];
+    }
+
+    // ── 9. Buchhaltung & Steuern ────────────────────────────────────────────
+
+    private function getBuchhaltungData(): array
+    {
+        return [
+            'product_categories' => [
+                ['name' => 'Buchführung laufend',  'description' => 'Monatliche / quartalsweise Buchführung',              'color' => '#1d4ed8', 'sort_order' => 1],
+                ['name' => 'Lohn & Gehalt',        'description' => 'Lohnabrechnung, Sozialabgaben, Meldewesen',           'color' => '#059669', 'sort_order' => 2],
+                ['name' => 'Jahresabschluss',      'description' => 'Bilanz, GuV, Gewinnermittlung, EÜR',                 'color' => '#7c3aed', 'sort_order' => 3],
+                ['name' => 'Steuererklärungen',    'description' => 'USt., ESt., KSt., GewSt., UStVA',                   'color' => '#dc2626', 'sort_order' => 4],
+                ['name' => 'Beratung & Prüfung',   'description' => 'Steuerberatung, Betriebsprüfung, Due Diligence',     'color' => '#d97706', 'sort_order' => 5],
+                ['name' => 'Software & Lizenzen',  'description' => 'Buchhaltungssoftware, DATEV, Lizenzen',              'color' => '#6b7280', 'sort_order' => 6],
+            ],
+            'products' => [
+                // Buchführung laufend
+                ['sku' => 'BUC-B-001', 'name' => 'Buchführung monatlich Kleinbetrieb', 'description' => 'Laufende Buchführung bis 50 Belege/Monat',           'unit' => 'Mon.', 'price' => 120.00,  'category' => 'Buchführung laufend', 'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-B-002', 'name' => 'Buchführung monatlich Mittelbetrieb','description' => 'Laufende Buchführung bis 200 Belege/Monat',           'unit' => 'Mon.', 'price' => 280.00,  'category' => 'Buchführung laufend', 'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-B-003', 'name' => 'Buchführung monatlich Großbetrieb', 'description' => 'Laufende Buchführung ab 201 Belege/Monat',            'unit' => 'Mon.', 'price' => 520.00,  'category' => 'Buchführung laufend', 'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-B-004', 'name' => 'Umsatzsteuervoranmeldung',          'description' => 'Monatliche / quartalsweise UStVA',                   'unit' => 'Stk.', 'price' => 55.00,   'category' => 'Buchführung laufend', 'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-B-005', 'name' => 'Buchführung Stunde',                'description' => 'Buchführung nach Aufwand je Stunde',                  'unit' => 'Std.', 'price' => 85.00,   'category' => 'Buchführung laufend', 'tax_rate' => 0.19, 'is_service' => true],
+                // Lohn & Gehalt
+                ['sku' => 'BUC-L-001', 'name' => 'Lohnabrechnung je Mitarbeiter',     'description' => 'Monatliche Lohnabrechnung je Mitarbeiter',            'unit' => 'Stk.', 'price' => 25.00,   'category' => 'Lohn & Gehalt',       'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-L-002', 'name' => 'Lohnabrechnung Pauschal bis 5 MA',  'description' => 'Lohnbuchhaltung für bis zu 5 Mitarbeiter/Monat',      'unit' => 'Mon.', 'price' => 95.00,   'category' => 'Lohn & Gehalt',       'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-L-003', 'name' => 'Lohnabrechnung Pauschal bis 20 MA', 'description' => 'Lohnbuchhaltung für bis zu 20 Mitarbeiter/Monat',     'unit' => 'Mon.', 'price' => 280.00,  'category' => 'Lohn & Gehalt',       'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-L-004', 'name' => 'Personalanmeldung / -abmeldung',   'description' => 'An- oder Abmeldung eines Mitarbeiters bei Behörden',  'unit' => 'Stk.', 'price' => 35.00,   'category' => 'Lohn & Gehalt',       'tax_rate' => 0.19, 'is_service' => true],
+                // Jahresabschluss
+                ['sku' => 'BUC-J-001', 'name' => 'EÜR (Einnahme-Überschussrechnung)', 'description' => 'Jahresgewinnermittlung für Freiberufler / Kleinunternehmer', 'unit' => 'Stk.', 'price' => 350.00, 'category' => 'Jahresabschluss',    'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-J-002', 'name' => 'Jahresabschluss GmbH / UG',        'description' => 'Bilanz und GuV nach HGB für Kapitalgesellschaften',   'unit' => 'Stk.', 'price' => 1500.00, 'category' => 'Jahresabschluss',     'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-J-003', 'name' => 'Jahresabschluss GbR / OHG',        'description' => 'Jahresabschluss für Personengesellschaften',           'unit' => 'Stk.', 'price' => 850.00,  'category' => 'Jahresabschluss',     'tax_rate' => 0.19, 'is_service' => true],
+                // Steuererklärungen
+                ['sku' => 'BUC-S-001', 'name' => 'Umsatzsteuererklärung jährl.',     'description' => 'Jährliche Umsatzsteuererklärung',                    'unit' => 'Stk.', 'price' => 180.00,  'category' => 'Steuererklärungen',   'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-S-002', 'name' => 'Einkommensteuererklärung',          'description' => 'ESt-Erklärung inkl. Anlage G, S oder V',             'unit' => 'Stk.', 'price' => 320.00,  'category' => 'Steuererklärungen',   'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-S-003', 'name' => 'Körperschaftsteuererklärung',       'description' => 'KSt-Erklärung für Kapitalgesellschaften',             'unit' => 'Stk.', 'price' => 650.00,  'category' => 'Steuererklärungen',   'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-S-004', 'name' => 'Gewerbesteuererklärung',            'description' => 'GewSt-Erklärung und Vorauszahlungsberechnung',       'unit' => 'Stk.', 'price' => 220.00,  'category' => 'Steuererklärungen',   'tax_rate' => 0.19, 'is_service' => true],
+                // Beratung & Prüfung
+                ['sku' => 'BUC-P-001', 'name' => 'Steuerberatungsstunde',             'description' => 'Laufende Steuerberatung je Stunde',                  'unit' => 'Std.', 'price' => 150.00,  'category' => 'Beratung & Prüfung',  'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-P-002', 'name' => 'Betriebsprüfungsbegleitung',        'description' => 'Vorbereitung und Begleitung einer Betriebsprüfung',  'unit' => 'Std.', 'price' => 165.00,  'category' => 'Beratung & Prüfung',  'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-P-003', 'name' => 'Existenzgründungsberatung',         'description' => 'Beratung bei Firmengründung und Rechtsformwahl',     'unit' => 'Psch.','price' => 490.00,  'category' => 'Beratung & Prüfung',  'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'BUC-P-004', 'name' => 'Liquiditätsplanung',               'description' => 'Erstellung eines Finanzplans / Liquiditätsplans',    'unit' => 'Psch.','price' => 350.00,  'category' => 'Beratung & Prüfung',  'tax_rate' => 0.19, 'is_service' => true],
+                // Software & Lizenzen
+                ['sku' => 'BUC-SW-001', 'name' => 'DATEV Unternehmen Online jährl.',  'description' => 'DATEV-Mandantenlizenz jährlich',                     'unit' => 'Jahr', 'price' => 180.00,  'cost_price' => 90.00,  'category' => 'Software & Lizenzen', 'tax_rate' => 0.19, 'track_stock' => false],
+                ['sku' => 'BUC-SW-002', 'name' => 'Einrichtung Buchhaltungssoftware', 'description' => 'Ersteinrichtung und Schulung Mandant',               'unit' => 'Psch.','price' => 250.00,  'category' => 'Software & Lizenzen', 'tax_rate' => 0.19, 'is_service' => true],
+            ],
+            'expense_categories' => [
+                'DATEV & Software-Lizenzen', 'Fortbildung & Fachzeitschriften', 'Kammer- & Verbandsbeiträge',
+                'Büromiete & Nebenkosten', 'Telefon & Internet', 'Büromaterial & Druckkosten',
+                'Fahrtkosten & Reisekosten', 'Versicherungen (Berufshaftpflicht)',
+                'Marketing & Akquise', 'Steuer & Rechtsberatung', 'Sonstige Ausgaben',
             ],
         ];
     }

@@ -4,6 +4,7 @@ use App\Modules\User\Controllers\UserController;
 use App\Modules\Company\Controllers\CompanyController;
 use App\Modules\User\Controllers\RoleController;
 use App\Modules\User\Controllers\PermissionController;
+use App\Http\Controllers\CompanyInitController;
 
 Route::middleware('can:manage_users')->group(function () {
     Route::get('users', [UserController::class, 'index'])->name('users.index');
@@ -50,4 +51,8 @@ Route::middleware('can:manage_companies')->group(function () {
     Route::get('system-health', [\App\Http\Controllers\SystemHealthController::class, 'index'])->name('system-health.index');
     Route::post('system-health/run-command', [\App\Http\Controllers\SystemHealthController::class, 'runCommand'])->name('system-health.run-command');
     Route::get('system-health/logs', [\App\Http\Controllers\SystemHealthController::class, 'getLogs'])->name('system-health.logs');
+
+    // Company Initialisation (super admin only)
+    Route::get('company-init', [CompanyInitController::class, 'index'])->name('company-init.index');
+    Route::post('company-init/run', [CompanyInitController::class, 'run'])->name('company-init.run');
 });

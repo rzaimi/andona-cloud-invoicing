@@ -19,8 +19,9 @@ class ExpenseReportService
         $startDate = $startDate ? Carbon::parse($startDate) : Carbon::now()->startOfMonth();
         $endDate = $endDate ? Carbon::parse($endDate) : Carbon::now()->endOfMonth();
 
-        $expenses = Expense::forCompany($companyId)
-            ->whereBetween('expense_date', [$startDate, $endDate])
+        $expenses = Expense::query()
+            ->where('expenses.company_id', $companyId)
+            ->whereBetween('expenses.expense_date', [$startDate, $endDate])
             ->leftJoin('expense_categories', 'expenses.category_id', '=', 'expense_categories.id')
             ->select(
                 'expenses.category_id',

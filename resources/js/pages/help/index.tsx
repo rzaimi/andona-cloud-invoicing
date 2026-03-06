@@ -23,8 +23,6 @@ import {
     Phone,
     MessageCircle,
     Video,
-    Download,
-    Star,
     Clock,
     CheckCircle,
     AlertCircle,
@@ -143,97 +141,85 @@ export default function HelpIndex({ user, stats }: HelpProps) {
             id: 1,
             title: "Wie erstelle ich meine erste Rechnung?",
             category: "Rechnungen",
-            views: 1250,
-            rating: 4.8,
-            lastUpdated: "2024-01-15",
+            categoryId: "invoices",
+            lastUpdated: "2025-01-15",
         },
         {
             id: 2,
             title: "Kunden anlegen und verwalten",
             category: "Kundenverwaltung",
-            views: 1100,
-            rating: 4.7,
-            lastUpdated: "2024-01-16",
+            categoryId: "customers",
+            lastUpdated: "2025-01-16",
         },
         {
             id: 3,
             title: "Angebote in Rechnungen umwandeln",
             category: "Angebote",
-            views: 950,
-            rating: 4.9,
-            lastUpdated: "2024-01-12",
+            categoryId: "offers",
+            lastUpdated: "2025-01-12",
         },
         {
             id: 4,
             title: "Rechnungslayouts anpassen",
             category: "Einstellungen",
-            views: 890,
-            rating: 4.6,
-            lastUpdated: "2024-01-08",
+            categoryId: "settings",
+            lastUpdated: "2025-01-08",
         },
         {
             id: 5,
             title: "Zahlungen erfassen und Rechnungen als bezahlt markieren",
             category: "Zahlungen",
-            views: 850,
-            rating: 4.8,
-            lastUpdated: "2024-01-14",
+            categoryId: "payments",
+            lastUpdated: "2025-01-14",
         },
         {
             id: 6,
             title: "Ausgaben erfassen und kategorisieren",
             category: "Ausgaben",
-            views: 780,
-            rating: 4.7,
-            lastUpdated: "2024-01-13",
+            categoryId: "expenses",
+            lastUpdated: "2025-01-13",
         },
         {
             id: 7,
             title: "Mahnungen automatisch versenden",
             category: "Mahnungen",
-            views: 720,
-            rating: 4.9,
-            lastUpdated: "2024-01-11",
+            categoryId: "reminders",
+            lastUpdated: "2025-01-11",
         },
         {
             id: 8,
             title: "E-Rechnung (XRechnung/ZUGFeRD) erstellen",
             category: "E-Rechnung",
-            views: 680,
-            rating: 4.6,
-            lastUpdated: "2024-01-10",
+            categoryId: "erechnung",
+            lastUpdated: "2025-01-10",
         },
         {
             id: 9,
             title: "Rechnungskorrekturen und Stornierungen",
             category: "Rechnungen",
-            views: 650,
-            rating: 4.8,
-            lastUpdated: "2024-01-09",
+            categoryId: "invoices",
+            lastUpdated: "2025-01-09",
         },
         {
             id: 10,
             title: "Lagerbestand verwalten und Warnungen einrichten",
             category: "Produktverwaltung",
-            views: 620,
-            rating: 4.7,
-            lastUpdated: "2024-01-14",
+            categoryId: "products",
+            lastUpdated: "2025-01-14",
         },
         {
             id: 11,
             title: "Gewinn & Verlust Berichte erstellen",
             category: "Berichte",
-            views: 580,
-            rating: 4.6,
-            lastUpdated: "2024-01-12",
+            categoryId: "reports",
+            lastUpdated: "2025-01-12",
         },
         {
             id: 12,
             title: "E-Mail-Einstellungen für Rechnungsversand konfigurieren",
             category: "Einstellungen",
-            views: 550,
-            rating: 4.5,
-            lastUpdated: "2024-01-08",
+            categoryId: "settings",
+            lastUpdated: "2025-01-08",
         },
     ]
 
@@ -325,7 +311,8 @@ export default function HelpIndex({ user, stats }: HelpProps) {
             title: "E-Mail Support",
             description: "Senden Sie uns Ihre Frage per E-Mail",
             icon: Mail,
-            action: "support@rechnungssystem.de",
+            action: "info@andona.de",
+            actionHref: "mailto:info@andona.de",
             responseTime: "Antwort innerhalb von 24 Stunden",
             available: true,
         },
@@ -333,7 +320,8 @@ export default function HelpIndex({ user, stats }: HelpProps) {
             title: "Telefon Support",
             description: "Sprechen Sie direkt mit unserem Support-Team",
             icon: Phone,
-            action: "+49 (0) 123 456 789",
+            action: "+49 (0) 6051 – 53 83 658",
+            actionHref: "tel:+4960515383658",
             responseTime: "Mo-Fr 9:00-17:00 Uhr",
             available: true,
         },
@@ -342,6 +330,7 @@ export default function HelpIndex({ user, stats }: HelpProps) {
             description: "Sofortige Hilfe über unseren Live Chat",
             icon: MessageCircle,
             action: "Chat starten",
+            actionHref: null,
             responseTime: "Sofortige Antwort",
             available: false,
         },
@@ -349,7 +338,8 @@ export default function HelpIndex({ user, stats }: HelpProps) {
             title: "Video Call",
             description: "Persönliche Beratung per Videoanruf",
             icon: Video,
-            action: "Termin buchen",
+            action: "Termin anfragen",
+            actionHref: "mailto:info@andona.de?subject=Termin%20Videoanruf%20AnfragAndoBill",
             responseTime: "Nach Vereinbarung",
             available: true,
         },
@@ -443,32 +433,27 @@ export default function HelpIndex({ user, stats }: HelpProps) {
                     <TabsContent value="popular" className="space-y-6">
                         <div className="space-y-4">
                             {filteredArticles.map((article) => (
-                                <Card key={article.id} className="hover:shadow-md transition-shadow">
-                                    <CardContent className="pt-6">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <h3 className="font-semibold text-lg mb-2">{article.title}</h3>
-                                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                                    <Badge variant="outline">{article.category}</Badge>
-                                                    <div className="flex items-center">
-                                                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                                                        {article.rating}
-                                                    </div>
-                                                    <div className="flex items-center">
-                                                        <Clock className="h-4 w-4 mr-1" />
-                                                        {new Date(article.lastUpdated).toLocaleDateString("de-DE")}
+                                <Link key={article.id} href={`/help/${article.categoryId}`}>
+                                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                                        <CardContent className="pt-6">
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                    <h3 className="font-semibold text-lg mb-2">{article.title}</h3>
+                                                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                                        <Badge variant="outline">{article.category}</Badge>
+                                                        <div className="flex items-center">
+                                                            <Clock className="h-4 w-4 mr-1" />
+                                                            {new Date(article.lastUpdated).toLocaleDateString("de-DE")}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-sm text-muted-foreground">{article.views} Aufrufe</p>
-                                                <Button variant="ghost" size="sm" className="mt-2">
+                                                <Button variant="ghost" size="sm" className="mt-1">
                                                     Lesen <ExternalLink className="ml-2 h-4 w-4" />
                                                 </Button>
                                             </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                </Link>
                             ))}
                         </div>
                     </TabsContent>
@@ -526,41 +511,46 @@ export default function HelpIndex({ user, stats }: HelpProps) {
                                                 <Info className="h-4 w-4 inline mr-1" />
                                                 {option.responseTime}
                                             </div>
-                                            <Button
-                                                variant={option.available ? "default" : "secondary"}
-                                                size="sm"
-                                                disabled={!option.available}
-                                            >
-                                                {option.action}
-                                            </Button>
+                                            {option.available && option.actionHref ? (
+                                                <Button variant="default" size="sm" asChild>
+                                                    <a href={option.actionHref}>{option.action}</a>
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    disabled={!option.available}
+                                                >
+                                                    {option.action}
+                                                </Button>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>
                             ))}
                         </div>
 
-                        {/* Additional Resources */}
+                        {/* Contact Info */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Weitere Ressourcen</CardTitle>
-                                <CardDescription>Zusätzliche Materialien und Downloads</CardDescription>
+                                <CardTitle>Kontaktinformationen</CardTitle>
+                                <CardDescription>Andona GmbH – Bahnhofstraße 16, 63571 Gelnhausen</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid gap-4 md:grid-cols-3">
-                                    <Button variant="outline" className="h-auto p-4 flex-col bg-transparent">
-                                        <Download className="h-8 w-8 mb-2" />
-                                        <span className="font-semibold">Benutzerhandbuch</span>
-                                        <span className="text-xs text-muted-foreground">PDF Download</span>
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <Button variant="outline" className="h-auto p-4 flex-col bg-transparent" asChild>
+                                        <a href="mailto:info@andona.de">
+                                            <Mail className="h-8 w-8 mb-2" />
+                                            <span className="font-semibold">E-Mail</span>
+                                            <span className="text-xs text-muted-foreground">info@andona.de</span>
+                                        </a>
                                     </Button>
-                                    <Button variant="outline" className="h-auto p-4 flex-col bg-transparent">
-                                        <Video className="h-8 w-8 mb-2" />
-                                        <span className="font-semibold">Video-Tutorials</span>
-                                        <span className="text-xs text-muted-foreground">YouTube Kanal</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-auto p-4 flex-col bg-transparent">
-                                        <BookOpen className="h-8 w-8 mb-2" />
-                                        <span className="font-semibold">Changelog</span>
-                                        <span className="text-xs text-muted-foreground">Neue Features</span>
+                                    <Button variant="outline" className="h-auto p-4 flex-col bg-transparent" asChild>
+                                        <a href="tel:+4960515383658">
+                                            <Phone className="h-8 w-8 mb-2" />
+                                            <span className="font-semibold">Telefon</span>
+                                            <span className="text-xs text-muted-foreground">+49 (0) 6051 – 53 83 658</span>
+                                        </a>
                                     </Button>
                                 </div>
                             </CardContent>

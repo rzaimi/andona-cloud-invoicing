@@ -37,7 +37,7 @@ export default function HelpShow({ user, category }: HelpShowProps) {
             {
                 id: "1",
                 title: "Willkommen bei AndoBill",
-                content: "AndoBill ist ein umfassendes Rechnungs- und Abrechnungssystem für deutsche Unternehmen. Dieses System hilft Ihnen dabei, Rechnungen zu erstellen, Kunden zu verwalten, Produkte zu katalogisieren und Ihre Finanzen zu überwachen. Beginnen Sie mit der Einrichtung Ihres Unternehmensprofils und den grundlegenden Einstellungen.",
+                content: "AndoBill ist eine professionelle Rechnungs- und Verwaltungssoftware der Andona GmbH. Das System unterstützt Sie dabei, Rechnungen und Angebote zu erstellen, Kunden zu verwalten, Zahlungen zu erfassen, Ausgaben zu verfolgen und Berichte zu erstellen – alles nach deutschem Recht und konform mit aktuellen E-Rechnung-Standards (XRechnung, ZUGFeRD).\n\nBei Fragen erreichen Sie uns unter info@andona.de oder telefonisch unter +49 (0) 6051 – 53 83 658 (Mo–Fr 9:00–17:00 Uhr).",
             },
             {
                 id: "2",
