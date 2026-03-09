@@ -1,63 +1,74 @@
 {{--
-    Invoice details panel — right-side metadata block.
-    Required scope vars: $invoice, $dateFormat, $bodyFontSize, $layoutSettings
-    Optional:           $detailsAlign  (default 'right')
-                        $detailsStyle  (extra inline CSS for the wrapper div)
+    Invoice details panel — structured key/value table.
+    Required scope: $invoice, $dateFormat, $bodyFontSize, $layoutSettings
+    Optional variables (set by the calling template):
+        $detailsBg          – background color for the table (default transparent)
+        $detailsPad         – cell padding (default '4px 8px')
+        $detailsLabelColor  – label text color (default #6b7280)
+        $detailsBorderColor – row divider color (default #e5e7eb)
+        $detailsTableStyle  – extra inline CSS on <table>
+        $detailsFontSize    – override font size
 --}}
 @php
-    $isCorrection  = isset($invoice->is_correction) && (bool)$invoice->is_correction;
-    $invoiceType   = $invoice->invoice_type ?? 'standard';
-    $showType      = !$isCorrection && $invoiceType !== 'standard';
-    $skontoAmount  = (float)($invoice->skonto_amount ?? 0);
-    $hasSkonto     = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
-    $detailsAlign  = $detailsAlign ?? 'right';
-    $detailsStyle  = $detailsStyle ?? '';
+    $isCorrection = isset($invoice->is_correction) && (bool)$invoice->is_correction;
+    $invoiceType  = $invoice->invoice_type ?? 'standard';
+    $showType     = !$isCorrection && $invoiceType !== 'standard';
+    $skontoAmount = (float)($invoice->skonto_amount ?? 0);
+    $hasSkonto    = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
+
+    $dtBg   = $detailsBg         ?? 'transparent';
+    $dtPad  = $detailsPad        ?? '4px 8px';
+    $dtLC   = $detailsLabelColor ?? '#6b7280';
+    $dtBC   = $detailsBorderColor ?? '#e5e7eb';
+    $dtFS   = $detailsFontSize   ?? $bodyFontSize;
+    $dtTSty = $detailsTableStyle  ?? '';
 @endphp
-<div style="font-size: {{ $bodyFontSize }}px; line-height: 1.8; text-align: {{ $detailsAlign }}; {{ $detailsStyle }}">
-    <div style="margin-bottom: 1mm;">
-        <strong>Rechnungsnummer:</strong> {{ $invoice->number }}
-    </div>
-
+<table style="width:100%; border-collapse:collapse; font-size:{{ $dtFS }}px; background:{{ $dtBg }}; {{ $dtTSty }}">
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }}; white-space:nowrap; width:46%;">Rechnungsnr.</td>
+        <td style="padding:{{ $dtPad }}; font-weight:700; border-bottom:1px solid {{ $dtBC }};">{{ $invoice->number }}</td>
+    </tr>
     @if($showType)
-        <div style="margin-bottom: 1mm; color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }}; font-weight: 600;">
-            {{ getReadableInvoiceType($invoiceType, $invoice->sequence_number ?? null) }}
-        </div>
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Art</td>
+        <td style="padding:{{ $dtPad }}; font-weight:600; color:{{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }}; border-bottom:1px solid {{ $dtBC }};">{{ getReadableInvoiceType($invoiceType, $invoice->sequence_number ?? null) }}</td>
+    </tr>
     @endif
-
-    <div style="margin-bottom: 1mm;">
-        <strong>Datum:</strong> {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}
-    </div>
-
-    <div style="margin-bottom: 1mm;">
-        <strong>Fälligkeitsdatum:</strong> {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}
-    </div>
-
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Datum</td>
+        <td style="padding:{{ $dtPad }}; font-weight:600; border-bottom:1px solid {{ $dtBC }};">{{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}</td>
+    </tr>
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Fälligkeit</td>
+        <td style="padding:{{ $dtPad }}; font-weight:600; border-bottom:1px solid {{ $dtBC }};">{{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}</td>
+    </tr>
     @if($hasSkonto)
-        <div style="margin-bottom: 1mm; color: #16a34a; font-weight: 600;">
-            <strong>Skonto bis:</strong> {{ formatInvoiceDate($invoice->skonto_due_date, $dateFormat ?? 'd.m.Y') }}
-        </div>
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:#16a34a; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Skonto bis</td>
+        <td style="padding:{{ $dtPad }}; font-weight:600; color:#16a34a; border-bottom:1px solid {{ $dtBC }};">{{ formatInvoiceDate($invoice->skonto_due_date, $dateFormat ?? 'd.m.Y') }}</td>
+    </tr>
     @endif
-
     @if(!empty($invoice->customer->number))
-        <div style="margin-bottom: 1mm;">
-            <strong>Kundennr.:</strong> {{ $invoice->customer->number }}
-        </div>
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Kundennr.</td>
+        <td style="padding:{{ $dtPad }}; font-weight:600; border-bottom:1px solid {{ $dtBC }};">{{ $invoice->customer->number }}</td>
+    </tr>
     @endif
-
     @if(!empty($invoice->service_date))
-        <div style="margin-bottom: 1mm;">
-            <strong>Leistungsdatum:</strong> {{ formatInvoiceDate($invoice->service_date, $dateFormat ?? 'd.m.Y') }}
-        </div>
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Leistungsdatum</td>
+        <td style="padding:{{ $dtPad }}; font-weight:600; border-bottom:1px solid {{ $dtBC }};">{{ formatInvoiceDate($invoice->service_date, $dateFormat ?? 'd.m.Y') }}</td>
+    </tr>
     @elseif(!empty($invoice->service_period_start) && !empty($invoice->service_period_end))
-        <div style="margin-bottom: 1mm;">
-            <strong>Leistungszeitraum:</strong>
-            {{ formatInvoiceDate($invoice->service_period_start, $dateFormat ?? 'd.m.Y') }}–{{ formatInvoiceDate($invoice->service_period_end, $dateFormat ?? 'd.m.Y') }}
-        </div>
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Leistungszeitraum</td>
+        <td style="padding:{{ $dtPad }}; font-weight:600; border-bottom:1px solid {{ $dtBC }};">{{ formatInvoiceDate($invoice->service_period_start, $dateFormat ?? 'd.m.Y') }}–{{ formatInvoiceDate($invoice->service_period_end, $dateFormat ?? 'd.m.Y') }}</td>
+    </tr>
     @endif
-
     @if(!empty($invoice->bauvorhaben) && ($layoutSettings['content']['show_bauvorhaben'] ?? true))
-        <div style="margin-bottom: 1mm; font-weight: 600; color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};">
-            <strong>BV:</strong> {{ $invoice->bauvorhaben }}
-        </div>
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px;">BV</td>
+        <td style="padding:{{ $dtPad }}; font-weight:700; color:{{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};">{{ $invoice->bauvorhaben }}</td>
+    </tr>
     @endif
-</div>
+</table>

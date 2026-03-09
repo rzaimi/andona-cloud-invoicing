@@ -1,126 +1,169 @@
-{{-- Professional Template: Corporate design with colored header band - DISTINCTIVE FEATURE --}}
-{{-- Template: professional --}}
+{{-- Professional: Split two-tone header — company brand left, document identity right --}}
+{{-- DISTINCTIVE: Primary-color left panel (logo + company) + light-accent right panel (title + meta) --}}
+@php
+    $ls      = $layoutSettings;
+    $primary = $ls['colors']['primary']   ?? '#1a3c5e';
+    $accent  = $ls['colors']['accent']    ?? '#eef2f7';
+    $textCol = $ls['colors']['text']      ?? '#1f2937';
+    $secCol  = $ls['colors']['secondary'] ?? '#6b7280';
+    $fs      = $bodyFontSize;
+    $fsH     = $headingFontSize;
+
+    // Logo
+    $logoRelPath = isset($snapshot['logo']) ? ltrim(preg_replace('#^storage/#', '', (string)$snapshot['logo']), '/') : null;
+    $logoSrc = null;
+    if ($logoRelPath && ($ls['branding']['show_logo'] ?? true)) {
+        if (isset($preview) && $preview) {
+            $logoSrc = asset('storage/' . $logoRelPath);
+        } elseif (\Storage::disk('public')->exists($logoRelPath)) {
+            $lp = \Storage::disk('public')->path($logoRelPath);
+            $logoSrc = 'data:' . mime_content_type($lp) . ';base64,' . base64_encode(file_get_contents($lp));
+        }
+    }
+    $showLogo = !empty($logoSrc);
+
+    $isCorrection     = isset($invoice->is_correction) && (bool)$invoice->is_correction;
+    $invoiceTypeLabel = $isCorrection
+        ? 'STORNORECHNUNG'
+        : strtoupper(getReadableInvoiceType($invoice->invoice_type ?? 'standard', $invoice->sequence_number ?? null));
+    $customer         = $invoice->customer ?? null;
+    $skontoAmount     = (float)($invoice->skonto_amount ?? 0);
+    $hasSkonto        = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
+@endphp
 <div class="container">
-    {{-- Header Band: Colored background with company info - DISTINCTIVE: Full-width colored header --}}
-    <div style="background: {{ $layoutSettings['colors']['primary'] ?? '#2563eb' }}; color: white; padding: 3mm; margin-bottom: 5mm; border-radius: 2mm;">
-        @php
-            $logoRelPath = isset($snapshot['logo']) ? ltrim(preg_replace('#^storage/#', '', (string)$snapshot['logo']), '/') : null;
-        @endphp
-        @if(($layoutSettings['branding']['show_logo'] ?? true) && $logoRelPath)
-            @if(isset($preview) && $preview)
-                <div style="margin-bottom: 3mm;">
-                    <img src="{{ asset('storage/' . $logoRelPath) }}" alt="Logo" style="max-height: 20mm; max-width: 70mm; filter: brightness(0) invert(1);">
-                </div>
-            @elseif(\Storage::disk('public')->exists($logoRelPath))
-                @php
-                    $logoPath = \Storage::disk('public')->path($logoRelPath);
-                    $logoData = base64_encode(file_get_contents($logoPath));
-                    $logoMime = mime_content_type($logoPath);
-                @endphp
-                <div style="margin-bottom: 3mm;">
-                    <img src="data:{{ $logoMime }};base64,{{ $logoData }}" alt="Logo" style="max-height: 20mm; max-width: 70mm; filter: brightness(0) invert(1);">
+
+{{-- ══ SPLIT HEADER ════════════════════════════════════════════════════════ --}}
+<table style="width:100%; border-collapse:collapse; margin-bottom:9mm;">
+    <tr>
+        {{-- Left cell: company branding on primary color --}}
+        <td style="width:60%; background-color:{{ $primary }}; padding:7mm 8mm; vertical-align:middle;">
+            @if($showLogo)
+                <div style="margin-bottom:3mm;">
+                    <img src="{{ $logoSrc }}" alt="Logo" style="max-height:18mm; max-width:58mm;">
                 </div>
             @endif
-        @endif
-        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 700; margin-bottom: 1mm;">{{ $snapshot['name'] ?? '' }}</div>
-        @if($layoutSettings['content']['show_company_address'] ?? true)
-            <div style="font-size: {{ $bodyFontSize }}px; color: rgba(255, 255, 255, 0.9); line-height: 1.5;">
-                {{ $snapshot['address'] ?? '' }}
-                @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)), {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
+            <div style="color:white; font-size:{{ $fsH + 5 }}px; font-weight:800; line-height:1.2; margin-bottom:2mm;">
+                {{ $snapshot['name'] ?? '' }}
+            </div>
+            @if($ls['content']['show_company_address'] ?? true)
+                <div style="color:rgba(255,255,255,0.72); font-size:{{ $fs - 1 }}px; line-height:1.45;">
+                    @if($snapshot['address'] ?? null){{ $snapshot['address'] }}@endif
+                    @if(($snapshot['postal_code'] ?? null) && ($snapshot['city'] ?? null)) · {{ $snapshot['postal_code'] }} {{ $snapshot['city'] }}@endif
+                    @if($snapshot['phone'] ?? null)<br>Tel. {{ $snapshot['phone'] }}@endif
+                    @if($snapshot['email'] ?? null)@if($snapshot['phone'] ?? null) &nbsp;·&nbsp; @else<br>@endif{{ $snapshot['email'] }}@endif
+                </div>
+            @endif
+        </td>
+        {{-- Right cell: document identity on light accent --}}
+        <td style="width:40%; background-color:{{ $accent }}; padding:7mm 8mm; vertical-align:middle; text-align:right; border-left:4px solid white;">
+            <div style="font-size:26px; font-weight:800; color:{{ $isCorrection ? '#dc2626' : $primary }}; letter-spacing:1px; margin-bottom:4mm; line-height:1;">
+                {{ $isCorrection ? 'STORNO' : $invoiceTypeLabel }}
+            </div>
+            <div style="font-size:{{ $fs }}px; color:{{ $textCol }}; line-height:1.8;">
+                <span style="color:{{ $secCol }}; font-size:{{ $fs - 1 }}px; display:inline-block; min-width:22mm; text-align:left;">Nr.</span>
+                <strong>{{ $invoice->number }}</strong><br>
+                <span style="color:{{ $secCol }}; font-size:{{ $fs - 1 }}px; display:inline-block; min-width:22mm; text-align:left;">Datum</span>
+                {{ formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') }}<br>
+                <span style="color:{{ $secCol }}; font-size:{{ $fs - 1 }}px; display:inline-block; min-width:22mm; text-align:left;">Fälligkeit</span>
+                {{ formatInvoiceDate($invoice->due_date, $dateFormat ?? 'd.m.Y') }}<br>
+                @if($hasSkonto)
+                    <span style="color:#16a34a; font-size:{{ $fs - 1 }}px; display:inline-block; min-width:22mm; text-align:left;">Skonto bis</span>
+                    <span style="color:#16a34a; font-weight:600;">{{ formatInvoiceDate($invoice->skonto_due_date, $dateFormat ?? 'd.m.Y') }}</span><br>
+                @endif
+                @if($customer && !empty($customer->number))
+                    <span style="color:{{ $secCol }}; font-size:{{ $fs - 1 }}px; display:inline-block; min-width:22mm; text-align:left;">Kunden-Nr.</span>
+                    {{ $customer->number }}<br>
+                @endif
+                @if(!empty($invoice->service_date))
+                    <span style="color:{{ $secCol }}; font-size:{{ $fs - 1 }}px; display:inline-block; min-width:22mm; text-align:left;">Leistung</span>
+                    {{ formatInvoiceDate($invoice->service_date, $dateFormat ?? 'd.m.Y') }}<br>
+                @elseif(!empty($invoice->service_period_start) && !empty($invoice->service_period_end))
+                    <span style="color:{{ $secCol }}; font-size:{{ $fs - 1 }}px; display:inline-block; min-width:22mm; text-align:left;">Zeitraum</span>
+                    {{ formatInvoiceDate($invoice->service_period_start, $dateFormat ?? 'd.m.Y') }}–{{ formatInvoiceDate($invoice->service_period_end, $dateFormat ?? 'd.m.Y') }}<br>
+                @endif
+                @if(!empty($invoice->bauvorhaben) && ($ls['content']['show_bauvorhaben'] ?? true))
+                    <span style="color:{{ $secCol }}; font-size:{{ $fs - 1 }}px; display:inline-block; min-width:22mm; text-align:left;">BV</span>
+                    <strong>{{ $invoice->bauvorhaben }}</strong>
+                @endif
+            </div>
+        </td>
+    </tr>
+</table>
+
+{{-- ══ DIN 5008 ADDRESS BLOCK ═════════════════════════════════════════════ --}}
+@if($customer)
+<div style="margin-bottom:9mm;">
+    <div class="din-5008-address">
+        @if($ls['content']['show_company_address'] ?? true)
+            <div class="sender-return-address">
+                {{ $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}
             </div>
         @endif
-    </div>
-
-    {{-- DIN 5008 compliant layout: Address and Invoice Details side by side --}}
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10mm;">
-        <tr>
-            <td style="width: 50%; vertical-align: top; padding-right: 10mm;">
-                @php $customer = $invoice->customer ?? null; @endphp
-                @if($customer)
-                    {{-- DIN 5008 Address Block --}}
-                    <div class="din-5008-address">
-                        {{-- Recipient address --}}
-                        <div style="font-weight: 600; margin-bottom: 1mm; font-size: {{ $bodyFontSize }}px; line-height: 1.3;">
-                            {{ $customer->name ?? 'Unbekannt' }}
-                        </div>
-                        @if(isset($customer->contact_person) && $customer->contact_person)
-                            <div style="margin-bottom: 1mm; font-size: {{ $bodyFontSize }}px; line-height: 1.3;">{{ $customer->contact_person }}</div>
-                        @endif
-                        <div style="font-size: {{ $bodyFontSize }}px; line-height: 1.3;">
-                            @if($customer->address)
-                                {{ $customer->address }}<br>
-                            @endif
-                            @if($customer->postal_code && $customer->city)
-                                {{ $customer->postal_code }} {{ $customer->city }}
-                                @if($customer->country && $customer->country !== 'Deutschland')
-                                    <br>{{ $customer->country }}
-                                @endif
-                            @endif
-                        </div>
-                    </div>
-                @endif
-            </td>
-            <td style="width: 50%; vertical-align: top;">
-                @include('pdf.invoice-partials.details')
-            </td>
-        </tr>
-    </table>
-
-    {{-- Invoice Title --}}
-    <div style="margin-bottom: 8px;">
-        @php
-            $isCorrection = isset($invoice->is_correction) ? (bool)$invoice->is_correction : false;
-        @endphp
-        @php
-            $invoiceTypeLabel = $isCorrection
-                ? 'STORNORECHNUNG'
-                : strtoupper(getReadableInvoiceType($invoice->invoice_type ?? 'standard', $invoice->sequence_number ?? null));
-        @endphp
-        <div style="font-size: {{ $headingFontSize + 4 }}px; font-weight: 700; color: {{ $isCorrection ? '#dc2626' : ($layoutSettings['colors']['primary'] ?? '#1f2937') }};">
-            {{ $invoiceTypeLabel }} {{ $invoice->number }}
+        <div style="font-weight:700; font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm;">{{ $customer->name ?? '' }}</div>
+        @if($customer->contact_person ?? null)
+            <div style="font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm;">{{ $customer->contact_person }}</div>
+        @endif
+        <div style="font-size:{{ $fs }}px; line-height:1.35;">
+            @if($customer->address){{ $customer->address }}<br>@endif
+            @if($customer->postal_code && $customer->city)
+                {{ $customer->postal_code }} {{ $customer->city }}
+                @if($customer->country && $customer->country !== 'Deutschland')<br>{{ $customer->country }}@endif
+            @endif
+            @if(isset($customer->vat_number) && $customer->vat_number)
+                <br>USt-IdNr.: {{ $customer->vat_number }}
+            @endif
         </div>
-        @if($isCorrection && isset($invoice->correctsInvoice) && $invoice->correctsInvoice)
-            <div style="margin-top: 10px; padding: 10px; background-color: #fee2e2; border-left: 4px solid #dc2626; font-size: {{ $bodyFontSize }}px;">
-                <div style="font-weight: 600; color: #991b1b; margin-bottom: 4px;">Storniert Rechnung:</div>
-                <div style="color: #7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ formatInvoiceDate($invoice->correctsInvoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
-                @if(isset($invoice->correction_reason) && $invoice->correction_reason)
-                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #dc2626;">
-                        <strong>Grund:</strong> {{ $invoice->correction_reason }}
-                    </div>
-                @endif
-            </div>
+    </div>
+</div>
+@endif
+
+{{-- Storno notice --}}
+@if($isCorrection && isset($invoice->correctsInvoice) && $invoice->correctsInvoice)
+    <div style="margin-bottom:6mm; padding:8px 12px; background:#fee2e2; border-left:4px solid #dc2626; font-size:{{ $fs }}px;">
+        <div style="font-weight:600; color:#991b1b; margin-bottom:3px;">Storniert Rechnung:</div>
+        <div style="color:#7f1d1d;">Nr. {{ $invoice->correctsInvoice->number }} vom {{ formatInvoiceDate($invoice->correctsInvoice->issue_date, $dateFormat ?? 'd.m.Y') }}</div>
+        @if(!empty($invoice->correction_reason))
+            <div style="margin-top:4px; padding-top:4px; border-top:1px solid #dc2626;"><strong>Grund:</strong> {{ $invoice->correction_reason }}</div>
         @endif
     </div>
+@endif
 
-    {{-- Salutation and Introduction --}}
-    <div style="margin-bottom: 10px; font-size: {{ $bodyFontSize }}px; line-height: 1.5;">
-        <div style="margin-bottom: 4px;">Sehr geehrte Damen und Herren,</div>
-        <div>vielen Dank für Ihren Auftrag und das damit verbundene Vertrauen! Hiermit stelle ich Ihnen die folgenden Leistungen in Rechnung:</div>
-    </div>
+{{-- ══ INTRO ═══════════════════════════════════════════════════════════════ --}}
+<div style="margin-bottom:6mm; font-size:{{ $fs }}px; line-height:1.6;">
+    <div style="margin-bottom:3px;">Sehr geehrte Damen und Herren,</div>
+    <div>vielen Dank für Ihren Auftrag. Hiermit stellen wir Ihnen folgende Leistungen in Rechnung:</div>
+</div>
 
-    {{-- Items Table with colored header - DISTINCTIVE: Blue header matching band --}}
-    @php
-        $tableHeaderBg = $layoutSettings['colors']['primary'] ?? '#2563eb';
-        $altRowBg      = $layoutSettings['colors']['accent'] ?? '#f9fafb';
-        $cellPadding   = '10px 8px';
-    @endphp
-    @include('pdf.invoice-partials.items-table')
+{{-- ══ ITEMS TABLE ═════════════════════════════════════════════════════════ --}}
+@php
+    $tableHeaderBg = $primary;
+    $altRowBg      = $accent;
+    $cellPadding   = '8px 8px';
+@endphp
+@include('pdf.invoice-partials.items-table')
 
-    {{-- Totals --}}
-    <div style="margin-top: 10px;">
-        @include('pdf.invoice-partials.totals')
-    </div>
+{{-- VAT note --}}
+@php $vatNote = getVatRegimeNote($invoice->vat_regime ?? 'standard'); @endphp
+@if($vatNote)
+    <div style="margin-top:6px; font-size:{{ $fs }}px; font-style:italic;">{{ $vatNote }}</div>
+@endif
 
-    {{-- Payment instructions --}}
-    @include('pdf.invoice-partials.payment-terms')
+{{-- ══ TOTALS ═══════════════════════════════════════════════════════════════ --}}
+<div style="margin-top:8px;">
+    @php $tableWidth = '300px'; $totalRowBg = $primary; @endphp
+    @include('pdf.invoice-partials.totals')
+</div>
 
-    {{-- Closing --}}
-    <div style="margin-top: 12px; font-size: {{ $bodyFontSize }}px;">
-        <div style="margin-bottom: 4px;">Mit freundlichen Grüßen</div>
-        <div style="font-weight: 600;">{{ $snapshot['name'] ?? '' }}</div>
-    </div>
+{{-- ══ PAYMENT ═════════════════════════════════════════════════════════════ --}}
+@include('pdf.invoice-partials.payment-terms')
 
-        @if($layoutSettings['branding']['show_footer'] ?? true)
+{{-- ══ CLOSING ═════════════════════════════════════════════════════════════ --}}
+<div style="margin-top:10mm; font-size:{{ $fs }}px;">
+    <div style="margin-bottom:3px;">Mit freundlichen Grüßen</div>
+    <div style="font-weight:600;">{{ $snapshot['name'] ?? '' }}</div>
+</div>
+
+@if($ls['branding']['show_footer'] ?? true)
     @include('pdf.invoice-partials.footer')
-    @endif
+@endif
 </div>
