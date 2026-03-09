@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Trash2, FileText, FileCheck, ChevronDown, XCircle, Download, ExternalLink } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
+import { useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer, Invoice, InvoiceItem } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { InvoiceCorrectionDialog } from "@/components/invoice-correction-dialog"
@@ -135,7 +136,7 @@ export default function InvoicesEdit() {
 
     const [correctionDialogOpen, setCorrectionDialogOpen] = useState(false)
 
-    const germanUnits = ["Stk.", "Std.", "Tag", "Monat", "Jahr", "m", "m²", "m³", "kg", "l", "Paket"]
+    const germanUnits = useUnits()
     const formErrors = errors as Record<string, string>
 
     // Calculate totals whenever items change

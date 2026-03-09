@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
+import { useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { route } from "ziggy-js"
@@ -128,7 +129,7 @@ export default function OffersEdit() {
         total: 0,
     })
 
-    const germanUnits = ["Stk.", "Std.", "Tag", "Monat", "Jahr", "m", "m²", "m³", "kg", "l", "Paket"]
+    const germanUnits = useUnits()
 
     // Calculate totals whenever items change
     useEffect(() => {

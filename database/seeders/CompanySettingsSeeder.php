@@ -117,7 +117,7 @@ class CompanySettingsSeeder extends Seeder
             ],
             [
                 'key' => 'default_units',
-                'value' => '["Stk.", "Std.", "Tag", "Monat", "Jahr", "m", "m²", "m³", "kg", "l"]',
+                'value' => json_encode(config('units.default'), JSON_UNESCAPED_UNICODE),
                 'type' => 'json',
                 'description' => 'Standard-Einheiten für Positionen',
             ],

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowLeft, Plus, Trash2, PackagePlus, Hash } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
+import { useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 
@@ -120,7 +121,7 @@ export default function InvoicesCreate() {
           })()
         : null
 
-    const germanUnits = ["Stk.", "Std.", "Tag", "Monat", "Jahr", "m", "m²", "m³", "kg", "l", "Paket"]
+    const germanUnits = useUnits()
     const formErrors = errors as Record<string, string>
 
     // Calculate totals whenever items change

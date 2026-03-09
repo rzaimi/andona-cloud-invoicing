@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useUnits } from "@/hooks/use-units"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -96,7 +97,7 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
         setCustomAdded(false)
     }
 
-    const germanUnits = ["Stk.", "Std.", "Tag", "Monat", "Jahr", "m", "m²", "m³", "kg", "l", "Paket"]
+    const germanUnits = useUnits()
 
     return (
         <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else setOpen(true) }}>

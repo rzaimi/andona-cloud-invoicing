@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft, Save, Package, AlertCircle } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
+import { useUnits } from "@/hooks/use-units"
 import type { User, Category } from "@/types"
 
 interface ProductCreateProps {
@@ -62,7 +63,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
         post("/products")
     }
 
-    const units = ["Stk.", "Std.", "Tag", "Woche", "Monat", "Jahr", "m", "m²", "m³", "kg", "g", "l", "ml", "Paket", "Set"]
+    const units = useUnits()
 
     const taxRates = [
         { value: 0, label: "0% (Steuerbefreit)" },

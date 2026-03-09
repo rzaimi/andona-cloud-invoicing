@@ -139,6 +139,7 @@ class HandleInertiaRequests extends Middleware
                         
                         // Only include frequently used settings to reduce payload
                         $rawPaymentMethods = $allSettings['payment_methods'] ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'];
+                        $rawDefaultUnits   = $allSettings['default_units'] ?? config('units.default');
                         $essentialSettings = [
                             'currency'               => $allSettings['currency'] ?? 'EUR',
                             'tax_rate'               => $allSettings['tax_rate'] ?? 0.19,
@@ -154,6 +155,7 @@ class HandleInertiaRequests extends Middleware
                             'payment_terms'          => $allSettings['payment_terms'] ?? 14,
                             'payment_methods'        => is_array($rawPaymentMethods) ? $rawPaymentMethods : json_decode($rawPaymentMethods, true) ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
                             'default_payment_method' => $allSettings['default_payment_method'] ?? 'Überweisung',
+                            'default_units'          => is_array($rawDefaultUnits) ? $rawDefaultUnits : json_decode($rawDefaultUnits, true) ?? config('units.default'),
                         ];
                         
                         $userData['company'] = [
