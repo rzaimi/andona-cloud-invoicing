@@ -493,10 +493,11 @@ class OfferController extends Controller
         $pdf = Pdf::loadHTML($html)
             ->setPaper('a4')
             ->setOptions([
-                'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => true,
+                'defaultFont'          => 'DejaVu Sans',
+                'isRemoteEnabled'      => true,
                 'isHtml5ParserEnabled' => true,
-                'isPhpEnabled' => true,
+                'isPhpEnabled'         => true,
+                'dpi'                  => 96,
             ]);
 
         return $pdf->download("Angebot-{$offer->number}.pdf");

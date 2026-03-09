@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\SettingsService;
 use App\Modules\Invoice\Models\InvoiceLayout;
 use App\Modules\Company\Models\CompanySetting;
+use App\Traits\ResizesCompanyLogo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -14,6 +15,7 @@ use Inertia\Inertia;
 
 class SettingsController extends Controller
 {
+    use ResizesCompanyLogo;
     protected $settingsService;
 
     public function __construct(SettingsService $settingsService)
@@ -721,11 +723,7 @@ class SettingsController extends Controller
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
-            if ($company->logo && \Storage::disk('public')->exists($company->logo)) {
-                \Storage::disk('public')->delete($company->logo);
-            }
-            $validated['logo'] = $request->file('logo')
-                ->store("tenants/{$company->id}/logo", 'public');
+            $validated['logo'] = $this->processAndStoreLogo($request->file('logo'), $company->id);
         }
 
         // Update company
@@ -744,11 +742,7 @@ class SettingsController extends Controller
             'logo' => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        if ($company->logo && \Storage::disk('public')->exists($company->logo)) {
-            \Storage::disk('public')->delete($company->logo);
-        }
-
-        $path = $request->file('logo')->store("tenants/{$company->id}/logo", 'public');
+        $path = $this->processAndStoreLogo($request->file('logo'), $company->id);
         $company->update(['logo' => $path]);
 
         return back()->with('success', 'Logo wurde erfolgreich hochgeladen.');

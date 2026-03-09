@@ -4,6 +4,7 @@ namespace App\Modules\Company\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Company\Models\Company;
+use App\Traits\ResizesCompanyLogo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,7 @@ use Inertia\Inertia;
 
 class CompanyController extends Controller
 {
+    use ResizesCompanyLogo;
     public function index()
     {
         $user = Auth::user();
@@ -255,8 +257,7 @@ class CompanyController extends Controller
         $company = Company::create($validated);
 
         if ($request->hasFile('logo')) {
-            $validated['logo'] = $request->file('logo')
-                ->store("tenants/{$company->id}/logo", 'public');
+            $validated['logo'] = $this->processAndStoreLogo($request->file('logo'), $company->id);
             $company->update(['logo' => $validated['logo']]);
         }
         
@@ -336,11 +337,7 @@ class CompanyController extends Controller
         unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic']);
 
         if ($request->hasFile('logo')) {
-            if ($company->logo) {
-                Storage::disk('public')->delete($company->logo);
-            }
-            $validated['logo'] = $request->file('logo')
-                ->store("tenants/{$company->id}/logo", 'public');
+            $validated['logo'] = $this->processAndStoreLogo($request->file('logo'), $company->id);
         } else {
             // Preserve existing logo when no new file is uploaded
             unset($validated['logo']);

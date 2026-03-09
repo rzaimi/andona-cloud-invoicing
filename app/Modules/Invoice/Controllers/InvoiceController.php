@@ -573,11 +573,12 @@ class InvoiceController extends Controller
         $pdf = Pdf::loadHTML($html)
             ->setPaper('a4')
             ->setOptions([
-                'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => true,
-                'isHtml5ParserEnabled' => true,
+                'defaultFont'            => 'DejaVu Sans',
+                'isRemoteEnabled'        => true,
+                'isHtml5ParserEnabled'   => true,
                 'enable-local-file-access' => true,
-                'isPhpEnabled' => true,
+                'isPhpEnabled'           => true,
+                'dpi'                    => 96,
             ]);
 
         return $pdf->download("Rechnung-{$invoice->number}.pdf");
@@ -854,12 +855,13 @@ class InvoiceController extends Controller
         ])
         ->setPaper('a4')
         ->setOptions([
-            'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => true,
-            'isHtml5ParserEnabled' => true,
+            'defaultFont'              => 'DejaVu Sans',
+            'isRemoteEnabled'          => true,
+            'isHtml5ParserEnabled'     => true,
             'enable-local-file-access' => true,
-            'enable-javascript' => false,
-            'isPhpEnabled' => true,
+            'enable-javascript'        => false,
+            'isPhpEnabled'             => true,
+            'dpi'                      => 96,
         ]);
     }
 

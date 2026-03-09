@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Modules\Company\Models\Company;
 use App\Modules\User\Models\User;
 use App\Services\SettingsService;
+use App\Traits\ResizesCompanyLogo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ use Inertia\Inertia;
 
 class CompanyWizardController extends Controller
 {
+    use ResizesCompanyLogo;
     protected SettingsService $settingsService;
 
     public function __construct(SettingsService $settingsService)
@@ -160,8 +162,7 @@ class CompanyWizardController extends Controller
 
             // ── Logo (needs company ID for tenant path) ───────────────────────
             if ($request->hasFile('company_info.logo')) {
-                $logoPath = $request->file('company_info.logo')
-                    ->store("tenants/{$company->id}/logo", 'public');
+                $logoPath = $this->processAndStoreLogo($request->file('company_info.logo'), $company->id);
                 $company->update(['logo' => $logoPath]);
             }
 
