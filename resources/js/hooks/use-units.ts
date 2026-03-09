@@ -9,7 +9,7 @@ import { usePage } from "@inertiajs/react"
 const FALLBACK_UNITS = [
     "Stk.", "Std.", "Tag", "Woche", "Monat", "Jahr",
     "m", "m²", "m³", "kg", "g", "t", "l", "ml",
-    "Paket", "Set", "Palette", "VE",
+    "Paket", "Set", "Palette", "Rolle", "VE",
 ]
 
 export function useUnits(): string[] {

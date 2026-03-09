@@ -12,6 +12,7 @@ class CompanyInitController extends Controller
     private const COMPANY_TYPES = [
         'gartenbau'       => 'Garten- und Außenanlagenbau',
         'bauunternehmen'  => 'Bauunternehmen',
+        'dachdecker'      => 'Dachdeckerei & Spenglerarbeiten',
         'raumausstattung' => 'Raumausstattung & Fliesenarbeiten',
         'gebaudetechnik'  => 'Gebäudetechnik',
         'logistik'        => 'Logistik & Palettenhandel',

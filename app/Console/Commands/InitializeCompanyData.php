@@ -15,7 +15,7 @@ class InitializeCompanyData extends Command
 {
     protected $signature = 'company:init
                             {company_id : The UUID of the company}
-                            {--type= : Company type slug (gartenbau, bauunternehmen, raumausstattung, gebaudetechnik, logistik, handel, dienstleistung, it-webagentur, buchhaltung)}
+                            {--type= : Company type slug (gartenbau, bauunternehmen, dachdecker, raumausstattung, gebaudetechnik, logistik, handel, dienstleistung, it-webagentur, buchhaltung)}
                             {--force : Overwrite existing data}';
 
     protected $description = 'Initialize a company with industry-specific products, categories, warehouse and layouts';
@@ -23,6 +23,7 @@ class InitializeCompanyData extends Command
     private const COMPANY_TYPES = [
         'gartenbau'       => 'Garten- und Außenanlagenbau',
         'bauunternehmen'  => 'Bauunternehmen',
+        'dachdecker'      => 'Dachdeckerei & Spenglerarbeiten',
         'raumausstattung' => 'Raumausstattung & Fliesenarbeiten',
         'gebaudetechnik'  => 'Gebäudetechnik',
         'logistik'        => 'Logistik & Palettenhandel',
@@ -348,6 +349,7 @@ class InitializeCompanyData extends Command
         return match ($type) {
             'gartenbau'       => $this->getGartenbauData(),
             'bauunternehmen'  => $this->getBauData(),
+            'dachdecker'      => $this->getDachdeckerData(),
             'raumausstattung' => $this->getRaumausstattungData(),
             'gebaudetechnik'  => $this->getGebaudetechnikData(),
             'logistik'        => $this->getLogistikData(),
@@ -738,7 +740,69 @@ class InitializeCompanyData extends Command
         ];
     }
 
-    // ── 7. Sonstige Dienstleistungen ────────────────────────────────────────
+    // ── 7. Dachdeckerei & Spenglerarbeiten ──────────────────────────────────
+
+    private function getDachdeckerData(): array
+    {
+        return [
+            'product_categories' => [
+                ['name' => 'Dacharbeiten',        'description' => 'Dachdeckung, Eindeckung und Verlegung',           'color' => '#b45309', 'sort_order' => 1],
+                ['name' => 'Abdichtung',          'description' => 'Flachdach- und Bitumenabdichtung, Dampfsperren',  'color' => '#0369a1', 'sort_order' => 2],
+                ['name' => 'Dämmung',             'description' => 'Wärme- und Trittschalldämmung',                   'color' => '#059669', 'sort_order' => 3],
+                ['name' => 'Dachfenster',         'description' => 'Einbau und Austausch von Dachfenstern',           'color' => '#7c3aed', 'sort_order' => 4],
+                ['name' => 'Spenglerarbeiten',    'description' => 'Dachrinnen, Fallrohre, Verblechungen',            'color' => '#0891b2', 'sort_order' => 5],
+                ['name' => 'Gerüst & Sicherheit', 'description' => 'Gerüstbau, Absturzsicherung',                    'color' => '#dc2626', 'sort_order' => 6],
+                ['name' => 'Wartung & Reparatur', 'description' => 'Dachinspektionen, Sturmschadenreparaturen',       'color' => '#6b7280', 'sort_order' => 7],
+                ['name' => 'Materialien',         'description' => 'Dachziegel, Bitumenbahnen, Dämmplatten',          'color' => '#a16207', 'sort_order' => 8],
+                ['name' => 'Entsorgung',          'description' => 'Abtransport und Entsorgung alter Dachmaterialien','color' => '#64748b', 'sort_order' => 9],
+                ['name' => 'Transport & Logistik','description' => 'Materialtransport, Fahrtkosten',                  'color' => '#475569', 'sort_order' => 10],
+            ],
+            'products' => [
+                // Dacharbeiten
+                ['sku' => 'DAC-001', 'name' => 'Dachdeckung Ziegel',             'description' => 'Lieferung und Verlegung von Dachziegeln inkl. Lattung',          'unit' => 'm²',    'price' => 85.00,  'category' => 'Dacharbeiten',        'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'DAC-002', 'name' => 'Dachdeckung Betondachstein',      'description' => 'Lieferung und Verlegung von Betondachsteinen inkl. Lattung',     'unit' => 'm²',    'price' => 72.00,  'category' => 'Dacharbeiten',        'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'DAC-003', 'name' => 'Arbeitsstunde Dachdecker',        'description' => 'Arbeitsleistung Dachdecker nach Aufwand',                        'unit' => 'Std.',  'price' => 65.00,  'category' => 'Dacharbeiten',        'tax_rate' => 0.19, 'is_service' => true],
+                // Abdichtung
+                ['sku' => 'ABD-001', 'name' => 'Dachabdichtung Bitumen',          'description' => 'Zweilagige Bitumenabdichtung für Flachdach',                     'unit' => 'm²',    'price' => 55.00,  'category' => 'Abdichtung',          'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'ABD-002', 'name' => 'Flachdachabdichtung Komplett',    'description' => 'Komplettabdichtung Flachdach inkl. Gefälle und Entwässerung',    'unit' => 'm²',    'price' => 95.00,  'category' => 'Abdichtung',          'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'ABD-003', 'name' => 'Dampfsperre Montage',             'description' => 'Lieferung und Montage einer Dampfsperre / -bremse',              'unit' => 'm²',    'price' => 18.00,  'category' => 'Abdichtung',          'tax_rate' => 0.19, 'is_service' => true],
+                // Dämmung
+                ['sku' => 'DAE-001', 'name' => 'Dachdämmung Mineralwolle',        'description' => 'Wärmedämmung mit Mineralwolle (WLG 035), einlagig',             'unit' => 'm²',    'price' => 45.00,  'category' => 'Dämmung',             'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'DAE-002', 'name' => 'Dachdämmung PIR',                 'description' => 'Wärmedämmung mit PIR-Dämmplatten (WLG 022)',                     'unit' => 'm²',    'price' => 65.00,  'category' => 'Dämmung',             'tax_rate' => 0.19, 'is_service' => true],
+                // Dachfenster
+                ['sku' => 'FEN-001', 'name' => 'Dachfenster Einbau',              'description' => 'Lieferung und Einbau eines Dachfensters inkl. Eindeckrahmen',   'unit' => 'Stk.',  'price' => 850.00, 'category' => 'Dachfenster',         'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'FEN-002', 'name' => 'Dachfenster Austausch',           'description' => 'Austausch eines bestehenden Dachfensters',                      'unit' => 'Stk.',  'price' => 650.00, 'category' => 'Dachfenster',         'tax_rate' => 0.19, 'is_service' => true],
+                // Spenglerarbeiten
+                ['sku' => 'SPG-001', 'name' => 'Dachrinne Montage',               'description' => 'Lieferung und Montage von Dachrinnen (Aluminium/Zink)',          'unit' => 'm',     'price' => 38.00,  'category' => 'Spenglerarbeiten',    'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'SPG-002', 'name' => 'Fallrohr Montage',                'description' => 'Lieferung und Montage von Regenfallrohren',                      'unit' => 'm',     'price' => 32.00,  'category' => 'Spenglerarbeiten',    'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'SPG-003', 'name' => 'Attika Verblechung',              'description' => 'Verblechung der Attika / Traufe in Aluminium oder Titanzink',    'unit' => 'm',     'price' => 55.00,  'category' => 'Spenglerarbeiten',    'tax_rate' => 0.19, 'is_service' => true],
+                // Gerüst & Sicherheit
+                ['sku' => 'GER-001', 'name' => 'Gerüst Aufbau',                   'description' => 'Aufbau, Vorhaltung und Abbau eines Baugerüstes',                 'unit' => 'm²',    'price' => 12.00,  'category' => 'Gerüst & Sicherheit', 'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'GER-002', 'name' => 'Gerüst Miete Woche',              'description' => 'Gerüstmiete pro Woche (nach Aufbau)',                            'unit' => 'Woche', 'price' => 3.50,   'category' => 'Gerüst & Sicherheit', 'tax_rate' => 0.19, 'is_service' => true],
+                // Wartung & Reparatur
+                ['sku' => 'WAR-001', 'name' => 'Dachreparatur',                   'description' => 'Reparatur beschädigter Dachflächen nach Aufwand',                'unit' => 'Std.',  'price' => 75.00,  'category' => 'Wartung & Reparatur', 'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'WAR-002', 'name' => 'Dachinspektion',                  'description' => 'Sichtprüfung und Protokoll des Dachzustandes',                   'unit' => 'Psch.', 'price' => 180.00, 'category' => 'Wartung & Reparatur', 'tax_rate' => 0.19, 'is_service' => true],
+                ['sku' => 'WAR-003', 'name' => 'Sturmschaden Reparatur',          'description' => 'Notinstandsetzung und Reparatur nach Sturmschäden',              'unit' => 'Std.',  'price' => 85.00,  'category' => 'Wartung & Reparatur', 'tax_rate' => 0.19, 'is_service' => true],
+                // Materialien (nicht als Dienstleistung)
+                ['sku' => 'MAT-001', 'name' => 'Dachziegel',                      'description' => 'Dachziegel Standardformat, inkl. Lieferung',                    'unit' => 'Palette','price' => 420.00, 'cost_price' => 280.00, 'category' => 'Materialien', 'tax_rate' => 0.19, 'track_stock' => true,  'is_service' => false],
+                ['sku' => 'MAT-002', 'name' => 'Bitumenbahn',                     'description' => 'Bitumen-Schweißbahn V60 S4 (8 m²/Rolle)',                       'unit' => 'Rolle', 'price' => 48.00,  'cost_price' => 28.00,  'category' => 'Materialien', 'tax_rate' => 0.19, 'track_stock' => true,  'is_service' => false],
+                ['sku' => 'MAT-003', 'name' => 'Dämmplatten PIR',                 'description' => 'PIR-Dämmplatte 120 mm, 1,2 × 0,6 m',                           'unit' => 'm²',    'price' => 28.00,  'cost_price' => 16.00,  'category' => 'Materialien', 'tax_rate' => 0.19, 'track_stock' => false, 'is_service' => false],
+                // Entsorgung
+                ['sku' => 'ENT-001', 'name' => 'Bauschutt Entsorgung',            'description' => 'Abtransport und Entsorgung alter Dachmaterialien',              'unit' => 't',     'price' => 95.00,  'category' => 'Entsorgung',          'tax_rate' => 0.19, 'is_service' => true],
+                // Transport & Logistik
+                ['sku' => 'LOG-001', 'name' => 'Transportpauschale',              'description' => 'Pauschalkosten für Materialtransport zur Baustelle',             'unit' => 'Psch.', 'price' => 120.00, 'category' => 'Transport & Logistik','tax_rate' => 0.19, 'is_service' => false],
+            ],
+            'expense_categories' => [
+                'Material & Einkauf', 'Werkzeug & Maschinen', 'Gerüstkosten (Fremd)',
+                'Fahrzeugkosten', 'Fahrtkosten & Maut', 'Entsorgungskosten',
+                'Personalkosten & Löhne', 'Arbeitskleidung & Schutzausrüstung',
+                'Versicherungen (Haftpflicht, Kaution)', 'Büromiete & Bürobedarf',
+                'Fortbildung & Zertifizierung', 'Sonstige Betriebskosten',
+            ],
+        ];
+    }
+
+    // ── 8. Sonstige Dienstleistungen ────────────────────────────────────────
 
     private function getDienstleistungData(): array
     {

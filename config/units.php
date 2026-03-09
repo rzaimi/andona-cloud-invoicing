@@ -27,6 +27,7 @@ return [
         'Paket',
         'Set',
         'Palette',
+        'Rolle',
         'VE',      // Verpackungseinheit
     ],
 ];
