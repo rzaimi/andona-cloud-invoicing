@@ -688,9 +688,11 @@ class SettingsController extends Controller
         $companyId = $this->getEffectiveCompanyId();
         $company = \App\Modules\Company\Models\Company::findOrFail($companyId);
         
-        // Admins can only edit their own company
+        // Super admins (manage_companies) can edit any company via session selection.
+        // Regular admins may only edit their own company.
         $user = $request->user();
-        if ($user->company_id !== $company->id) {
+        $canManageAll = method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('manage_companies');
+        if (!$canManageAll && $user->company_id !== $company->id) {
             abort(403, 'Sie können nur Ihre eigene Firma bearbeiten.');
         }
 
