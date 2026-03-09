@@ -56,11 +56,10 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        // Use POST + method spoofing for reliable file uploads
-        transform((data) => ({ ...data, _method: "put", remove_logo: removedLogo ? "1" : "0" }))
-        post(route("settings.company-info.update"), { 
-            forceFormData: true, 
-            preserveScroll: true 
+        transform((data) => ({ ...data, remove_logo: removedLogo ? "1" : "0" }))
+        post(route("settings.company-info.update"), {
+            forceFormData: true,
+            preserveScroll: true,
         })
     }
 
