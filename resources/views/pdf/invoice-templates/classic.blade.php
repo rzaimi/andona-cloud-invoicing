@@ -139,7 +139,7 @@
         </tr>
         <tr>
             <td style="padding:1.2mm 3mm; font-size:{{ $fs - 1 }}px; color:{{ $soft }}; border-bottom:0.15mm solid {{ $border }};">Kundennr.</td>
-            <td style="padding:1.2mm 3mm; font-size:{{ $fs - 1 }}px; font-weight:500; border-bottom:0.15mm solid {{ $border }};">{{ $customer?->customer_number ?? '–' }}</td>
+            <td style="padding:1.2mm 3mm; font-size:{{ $fs - 1 }}px; font-weight:500; border-bottom:0.15mm solid {{ $border }};">{{ isset($customer->customer_number) ? $customer->customer_number : '–' }}</td>
         </tr>
         @if($hasPeriod)
         <tr>

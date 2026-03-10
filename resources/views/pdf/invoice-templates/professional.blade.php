@@ -125,7 +125,7 @@
             </td>
             <td style="width:50%; padding:1.5mm 2.5mm; background:{{ $bg }}; border:1px solid {{ $border }}; border-left:none;">
                 <div style="font-size:6pt; text-transform:uppercase; letter-spacing:0.8px; color:{{ $soft }}; font-weight:500;">Kundennr.</div>
-                <div style="font-size:{{ $fs - 1 }}px; font-weight:600; color:{{ $ink }}; margin-top:0.3mm;">{{ $customer?->customer_number ?? '–' }}</div>
+                <div style="font-size:{{ $fs - 1 }}px; font-weight:600; color:{{ $ink }}; margin-top:0.3mm;">{{ isset($customer->customer_number) ? $customer->customer_number : '–' }}</div>
             </td>
         </tr>
         <tr>

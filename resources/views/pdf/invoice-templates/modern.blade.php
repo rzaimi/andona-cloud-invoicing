@@ -107,7 +107,7 @@
     </td>
     <td style="padding:3mm 4mm; vertical-align:top;">
         <div style="font-size:6pt; text-transform:uppercase; letter-spacing:1.2px; color:rgba(255,255,255,0.55); margin-bottom:0.5mm;">Kundennr.</div>
-        <div style="font-size:{{ $fs - 1 }}px; color:white; font-weight:700;">{{ $customer?->customer_number ?? '–' }}</div>
+        <div style="font-size:{{ $fs - 1 }}px; color:white; font-weight:700;">{{ isset($customer->customer_number) ? $customer->customer_number : '–' }}</div>
     </td>
     @if($hasPeriod)
     <td style="padding:3mm 16mm 3mm 4mm; vertical-align:top;">
@@ -155,10 +155,10 @@
                 <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $light }}; width:48%;">Rechnungsnr.</td>
                 <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:700; color:{{ $dark }};">{{ $invoice->number }}</td>
             </tr>
-            @if($customer?->customer_number)
+            @if(isset($customer->customer_number) && $customer->customer_number)
             <tr>
                 <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $light }};">Kundennr.</td>
-                <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:700; color:{{ $dark }};">{{ $customer->customer_number ?? '' }}</td>
+                <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:700; color:{{ $dark }};">{{ isset($customer->customer_number) ? $customer->customer_number : '' }}</td>
             </tr>
             @endif
             <tr>

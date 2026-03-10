@@ -149,10 +149,10 @@
             <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $soft }};">Rechnungsnr.</td>
             <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:600; color:{{ $dark }}; text-align:right;">{{ $invoice->number }}</td>
         </tr>
-        @if($customer?->customer_number)
+        @if(isset($customer->customer_number) && $customer->customer_number)
         <tr>
             <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $soft }};">Kundennr.</td>
-            <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:600; color:{{ $dark }}; text-align:right;">{{ $customer->customer_number ?? '' }}</td>
+            <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:600; color:{{ $dark }}; text-align:right;">{{ isset($customer->customer_number) ? $customer->customer_number : '' }}</td>
         </tr>
         @endif
         <tr>
