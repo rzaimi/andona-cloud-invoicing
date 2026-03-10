@@ -133,11 +133,11 @@
         @endif
         @if($customer)
         <div style="font-size:{{ $fs }}px; line-height:1.55;">
-            @if($customer->company)<strong>{{ $customer->company }}</strong><br>@endif
-            @if($customer->salutation || $customer->name)<strong>{{ trim(($customer->salutation ?? '').' '.($customer->name ?? '')) }}</strong><br>@endif
-            @if($customer->address){{ $customer->address }}<br>@endif
-            @if($customer->postal_code || $customer->city){{ $customer->postal_code ?? '' }} {{ $customer->city ?? '' }}
-            @if($customer->country && $customer->country !== 'DE')<br>{{ $customer->country }}@endif
+            @if($customer->company ?? null)<strong>{{ $customer->company }}</strong><br>@endif
+            @if(($customer->salutation ?? null) || ($customer->name ?? null))<strong>{{ trim(($customer->salutation ?? '').' '.($customer->name ?? '')) }}</strong><br>@endif
+            @if($customer->address ?? null){{ $customer->address }}<br>@endif
+            @if(($customer->postal_code ?? null) || ($customer->city ?? null)){{ $customer->postal_code ?? '' }} {{ $customer->city ?? '' }}
+            @if(($customer->country ?? null) && $customer->country !== 'DE')<br>{{ $customer->country }}@endif
             @endif
         </div>
         @endif
