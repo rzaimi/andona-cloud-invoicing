@@ -160,7 +160,7 @@
 @if($ls['content']['show_subject'] ?? true)
 <div style="margin-top:8mm;">
     <div style="font-size:{{ $fs + 2 }}px; font-weight:600; color:{{ $primary }};">
-        {{ $invoiceTypeLabel }} Nr. {{ $invoice->number }}{{ $invoice->title ? ' – '.$invoice->title : '' }}
+        {{ $invoiceTypeLabel }} Nr. {{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}
     </div>
     @if($hasPeriod)
     <div style="font-size:{{ $fs - 2 }}px; color:{{ $mid }}; margin-top:1mm;">Leistungszeitraum: {{ $periodStr }}</div>
@@ -171,7 +171,7 @@
 {{-- Salutation --}}
 @if($ls['content']['show_salutation'] ?? true)
 <div style="margin-top:5mm; font-size:{{ $fs }}px; line-height:1.7;">
-    @if($invoice->salutation)
+    @if($invoice->salutation ?? null)
         {!! nl2br(e($invoice->salutation)) !!}
     @else
         Sehr geehrte Damen und Herren,<br><br>
@@ -213,7 +213,7 @@
 {{-- Closing --}}
 @if($ls['content']['show_closing'] ?? true)
 <div style="margin-top:7mm; font-size:{{ $fs }}px; line-height:1.75;">
-    @if($invoice->closing)
+    @if($invoice->closing ?? null)
         {!! nl2br(e($invoice->closing)) !!}
     @else
         Wir danken Ihnen für das entgegengebrachte Vertrauen und stehen für Rückfragen jederzeit zur Verfügung.<br><br>

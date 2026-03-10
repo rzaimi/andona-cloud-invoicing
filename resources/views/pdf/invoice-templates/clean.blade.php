@@ -152,7 +152,7 @@
         @if($customer?->customer_number)
         <tr>
             <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $soft }};">Kundennr.</td>
-            <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:600; color:{{ $dark }}; text-align:right;">{{ $customer->customer_number }}</td>
+            <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:600; color:{{ $dark }}; text-align:right;">{{ $customer->customer_number ?? '' }}</td>
         </tr>
         @endif
         <tr>
@@ -171,7 +171,7 @@
     <td style="width:3mm; background-color:{{ $primary }}; vertical-align:top;"></td>
     <td style="padding:2mm 0 2mm 3mm; vertical-align:middle;">
         <div style="font-size:{{ $fs + 2 }}px; font-weight:700; color:{{ $dark }}; letter-spacing:-0.3px;">
-            {{ $invoiceTypeLabel }} {{ $invoice->number }}{{ $invoice->title ? ' – '.$invoice->title : '' }}
+            {{ $invoiceTypeLabel }} {{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}
         </div>
         @if($hasPeriod)
         <div style="font-size:{{ $fs - 2 }}px; color:{{ $soft }}; margin-top:0.5mm;">Leistungszeitraum: {{ $periodStr }}</div>
@@ -184,7 +184,7 @@
 {{-- Salutation --}}
 @if($ls['content']['show_salutation'] ?? true)
 <div style="margin-top:5mm; font-size:{{ $fs }}px; line-height:1.65; font-weight:300;">
-    @if($invoice->salutation)
+    @if($invoice->salutation ?? null)
         {!! nl2br(e($invoice->salutation)) !!}
     @else
         Sehr geehrte Damen und Herren,<br><br>
@@ -228,7 +228,7 @@
 {{-- Closing --}}
 @if($ls['content']['show_closing'] ?? true)
 <div style="margin-top:7mm; font-size:{{ $fs }}px; line-height:1.7; font-weight:300;">
-    @if($invoice->closing)
+    @if($invoice->closing ?? null)
         {!! nl2br(e($invoice->closing)) !!}
     @else
         Ich freue mich auf die weitere Zusammenarbeit.<br><br>

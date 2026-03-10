@@ -158,7 +158,7 @@
             @if($customer?->customer_number)
             <tr>
                 <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $light }};">Kundennr.</td>
-                <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:700; color:{{ $dark }};">{{ $customer->customer_number }}</td>
+                <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:700; color:{{ $dark }};">{{ $customer->customer_number ?? '' }}</td>
             </tr>
             @endif
             <tr>
@@ -175,7 +175,7 @@
 @if($ls['content']['show_subject'] ?? true)
 <div style="margin-top:8mm; padding-bottom:3mm; border-bottom:2px solid {{ $primary }};">
     <div style="font-size:{{ $fs + 2 }}px; font-weight:700; color:{{ $dark }}; letter-spacing:-0.3px;">
-        {{ $invoiceTypeLabel }} {{ $invoice->number }}{{ $invoice->title ? ' – '.$invoice->title : '' }}
+        {{ $invoiceTypeLabel }} {{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}
     </div>
     @if($hasPeriod)
     <div style="font-size:{{ $fs - 2 }}px; color:{{ $mid }}; margin-top:1mm;">Leistungszeitraum: {{ $periodStr }}</div>
@@ -186,7 +186,7 @@
 {{-- Salutation --}}
 @if($ls['content']['show_salutation'] ?? true)
 <div style="margin-top:4mm; font-size:{{ $fs }}px; line-height:1.65;">
-    @if($invoice->salutation)
+    @if($invoice->salutation ?? null)
         {!! nl2br(e($invoice->salutation)) !!}
     @else
         Sehr geehrte Damen und Herren,<br><br>
@@ -229,7 +229,7 @@
 {{-- Closing --}}
 @if($ls['content']['show_closing'] ?? true)
 <div style="margin-top:7mm; font-size:{{ $fs }}px; line-height:1.7;">
-    @if($invoice->closing)
+    @if($invoice->closing ?? null)
         {!! nl2br(e($invoice->closing)) !!}
     @else
         Wir bitten um Überweisung des Rechnungsbetrags bis zum genannten Zahlungsziel.<br><br>
