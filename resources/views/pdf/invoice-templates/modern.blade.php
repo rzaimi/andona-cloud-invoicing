@@ -65,28 +65,33 @@
 
 <div class="container" style="padding:0; font-family:{{ $ls['fonts']['body'] ?? 'DejaVu Sans' }},sans-serif; font-size:{{ $fs }}px; color:{{ $dark }}; margin-left:6mm;">
 
-{{-- HEADER: white bg, logo left / "Rechnung" right --}}
+{{-- HEADER: logo position-aware, large invoice type label --}}
+@php
+    $logoPos = $ls['branding']['logo_position'] ?? 'top-left';
+
+    $showCompInfo = !$showLogo || ($ls['content']['show_company_address'] ?? true);
+    $logoCell = ($showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:14mm; max-width:48mm; display:block;">' : '')
+        . ($showCompInfo
+            ? '<div style="font-size:'.($fs+4).'px; font-weight:700; color:'.$dark.'; letter-spacing:-0.5px; line-height:1; margin-top:'.($showLogo ? '2' : '0').'mm;">'.e($snapshot['name'] ?? '').'</div>'
+              . '<div style="font-size:'.($fs-2).'px; color:'.$light.'; margin-top:1.5mm; font-weight:400; letter-spacing:0.3px;">'.e($snapshot['address'] ?? '').($snapshot['postal_code'] ?? null ? ' &middot; '.e($snapshot['postal_code']).' '.e($snapshot['city'] ?? '') : '').'</div>'
+            : '');
+
+    $docCell = '<div style="text-align:right;">'
+        . '<div style="font-size:'.($fs+13).'px; font-weight:700; color:'.($isCorrection ? '#dc2626' : $primary).'; letter-spacing:-1.5px; line-height:1;">'.e($invoiceTypeLabel).'</div>'
+        . '<div style="font-size:'.($fs-2).'px; color:'.$light.'; margin-top:1mm; letter-spacing:0.5px;">'.e($invoice->number).'</div>'
+        . '</div>';
+
+    [$colL, $colC, $colR] = match($logoPos) {
+        'top-center' => ['',        $logoCell, $docCell],
+        'top-right'  => [$docCell,  '',        $logoCell],
+        default      => [$logoCell, '',        $docCell],
+    };
+@endphp
 <table style="width:100%; border-collapse:collapse; border-bottom:1px solid {{ $border }};">
 <tr>
-    <td style="padding:7mm 0 7mm 16mm; vertical-align:middle;">
-        @if($showLogo)
-            <img src="{{ $logoSrc }}" alt="Logo" style="max-height:14mm; max-width:48mm; display:block;">
-        @endif
-        @if(!$showLogo || ($ls['content']['show_company_address'] ?? true))
-        <div style="font-size:{{ $fs + 4 }}px; font-weight:700; color:{{ $dark }}; letter-spacing:-0.5px; line-height:1;">
-            {{ $snapshot['name'] ?? '' }}
-        </div>
-        <div style="font-size:{{ $fs - 2 }}px; color:{{ $light }}; margin-top:1.5mm; font-weight:400; letter-spacing:0.3px;">
-            {{ $snapshot['address'] ?? '' }}@if($snapshot['postal_code'] ?? null) &middot; {{ $snapshot['postal_code'] }} {{ $snapshot['city'] ?? '' }}@endif
-        </div>
-        @endif
-    </td>
-    <td style="padding:7mm 18mm 7mm 0; vertical-align:middle; text-align:right;">
-        <div style="font-size:{{ $fs + 13 }}px; font-weight:700; color:{{ $isCorrection ? '#dc2626' : $primary }}; letter-spacing:-1.5px; line-height:1;">
-            {{ $invoiceTypeLabel }}
-        </div>
-        <div style="font-size:{{ $fs - 2 }}px; color:{{ $light }}; margin-top:1mm; letter-spacing:0.5px;">{{ $invoice->number }}</div>
-    </td>
+    <td style="padding:7mm 0 7mm 16mm; vertical-align:middle; width:40%;">{!! $colL !!}</td>
+    <td style="padding:7mm 0; vertical-align:middle; text-align:center; width:20%;">{!! $colC !!}</td>
+    <td style="padding:7mm 18mm 7mm 0; vertical-align:middle; width:40%;">{!! $colR !!}</td>
 </tr>
 </table>
 
@@ -107,7 +112,7 @@
     </td>
     <td style="padding:3mm 4mm; vertical-align:top;">
         <div style="font-size:6pt; text-transform:uppercase; letter-spacing:1.2px; color:rgba(255,255,255,0.55); margin-bottom:0.5mm;">Kundennr.</div>
-        <div style="font-size:{{ $fs - 1 }}px; color:white; font-weight:700;">{{ isset($customer->customer_number) ? $customer->customer_number : '–' }}</div>
+        <div style="font-size:{{ $fs - 1 }}px; color:white; font-weight:700;">{{ isset($customer->number) ? $customer->number : '–' }}</div>
     </td>
     @if($hasPeriod)
     <td style="padding:3mm 16mm 3mm 4mm; vertical-align:top;">
@@ -138,8 +143,8 @@
         @endif
         @if($customer)
         <div style="font-size:{{ $fs }}px; line-height:1.55;">
-            @if($customer->company ?? null)<strong>{{ $customer->company }}</strong><br>@endif
-            @if(($customer->salutation ?? null) || ($customer->name ?? null))<strong>{{ trim(($customer->salutation ?? '').' '.($customer->name ?? '')) }}</strong><br>@endif
+            @if($customer->name ?? null)<strong>{{ $customer->name }}</strong><br>@endif
+            @if($customer->contact_person ?? null){{ $customer->contact_person }}<br>@endif
             @if($customer->address ?? null){{ $customer->address }}<br>@endif
             @if(($customer->postal_code ?? null) || ($customer->city ?? null)){{ $customer->postal_code ?? '' }} {{ $customer->city ?? '' }}
             @if(($customer->country ?? null) && $customer->country !== 'DE')<br>{{ $customer->country }}@endif
@@ -155,10 +160,10 @@
                 <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $light }}; width:48%;">Rechnungsnr.</td>
                 <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:700; color:{{ $dark }};">{{ $invoice->number }}</td>
             </tr>
-            @if(isset($customer->customer_number) && $customer->customer_number)
+            @if(isset($customer->number) && $customer->number)
             <tr>
                 <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $light }};">Kundennr.</td>
-                <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:700; color:{{ $dark }};">{{ isset($customer->customer_number) ? $customer->customer_number : '' }}</td>
+                <td style="padding:1mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:700; color:{{ $dark }};">{{ isset($customer->number) ? $customer->number : '' }}</td>
             </tr>
             @endif
             <tr>
