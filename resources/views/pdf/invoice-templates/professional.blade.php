@@ -105,7 +105,9 @@
             @if($customer->company)<strong>{{ $customer->company }}</strong><br>@endif
             @if($customer->salutation || $customer->name)<strong>{{ trim(($customer->salutation ?? '').' '.($customer->name ?? '')) }}</strong><br>@endif
             @if($customer->address){{ $customer->address }}<br>@endif
-            @if($customer->postal_code || $customer->city){{ $customer->postal_code ?? '' }} {{ $customer->city ?? '' }}@if($customer->country && $customer->country !== 'DE')<br>{{ $customer->country }}@endif@endif
+            @if($customer->postal_code || $customer->city){{ $customer->postal_code ?? '' }} {{ $customer->city ?? '' }}
+            @if($customer->country && $customer->country !== 'DE')<br>{{ $customer->country }}@endif
+            @endif
         </div>
         @endif
     </td>
