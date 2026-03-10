@@ -102,8 +102,12 @@
 <tr>
     <td style="width:88mm; vertical-align:top; padding-right:6mm;">
         @if($ls['content']['show_company_address'] ?? true)
+        @php
+            $retParts = array_filter([$snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
+            $retLine  = implode(' · ', $retParts);
+        @endphp
         <div style="font-size:7pt; color:{{ $soft }}; border-bottom:0.2mm solid {{ $border }}; padding-bottom:1.5mm; margin-bottom:2mm; line-height:1;">
-            {{ $snapshot['name'] ?? '' }}@if($snapshot['address'] ?? null) &middot; {{ $snapshot['address'] }}@endif@if($snapshot['postal_code'] ?? null) &middot; {{ $snapshot['postal_code'] }} {{ $snapshot['city'] ?? '' }}@endif
+            {{ $retLine }}
         </div>
         @endif
         @if($customer)
