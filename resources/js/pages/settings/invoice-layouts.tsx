@@ -41,20 +41,13 @@ interface InvoiceLayoutSettings {
         size: string
     }
     layout: {
-        header_height: number
-        footer_height: number
         margin_top: number
         margin_bottom: number
         margin_left: number
         margin_right: number
     }
     branding: {
-        show_logo: boolean
         logo_position: string
-        company_info_position: string
-        show_header_line: boolean
-        show_footer_line: boolean
-        show_footer: boolean
     }
     content: {
         show_company_address: boolean
@@ -66,7 +59,6 @@ interface InvoiceLayoutSettings {
         show_bank_details: boolean
         show_company_registration: boolean
         show_payment_terms: boolean
-        show_item_images: boolean
         show_item_codes: boolean
         show_row_number: boolean
         show_bauvorhaben: boolean
@@ -117,20 +109,13 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         size: "medium",
     },
     layout: {
-        header_height: 120,
-        footer_height: 80,
         margin_top: 20,
         margin_bottom: 20,
         margin_left: 20,
         margin_right: 20,
     },
     branding: {
-        show_logo: true,
         logo_position: "top-left",
-        company_info_position: "top-right",
-        show_header_line: true,
-        show_footer_line: true,
-        show_footer: true,
     },
     content: {
         show_company_address: true,
@@ -142,7 +127,6 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         show_bank_details: true,
         show_company_registration: true,
         show_payment_terms: true,
-        show_item_images: false,
         show_item_codes: true,
         show_row_number: false,
         show_bauvorhaben: true,
@@ -174,22 +158,14 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
     // Template-specific layout configurations
     switch (templateId) {
         case 'modern':
-            // Modern: Contemporary design with balanced layout
             defaults.layout = {
-                header_height: 120,
-                footer_height: 80,
                 margin_top: 20,
                 margin_bottom: 20,
                 margin_left: 20,
                 margin_right: 20,
             }
             defaults.branding = {
-                show_logo: true,
                 logo_position: "top-left",
-                company_info_position: "top-left",
-                show_header_line: true,
-                show_footer_line: false,
-                show_footer: true,
             }
             defaults.content = {
                 show_company_address: true,
@@ -201,7 +177,6 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bank_details: true,
                 show_company_registration: true,
                 show_payment_terms: true,
-                show_item_images: false,
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
@@ -211,22 +186,16 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             break
 
         case 'classic':
-            // Classic: Traditional layout, compact margins, centered logo
             defaults.layout = {
-                header_height: 100,
-                footer_height: 60,
                 margin_top: 15,
                 margin_bottom: 15,
                 margin_left: 15,
                 margin_right: 15,
             }
             defaults.branding = {
-                show_logo: true,
                 logo_position: "top-center",
-                company_info_position: "top-center",
             }
             defaults.content = {
-                show_item_images: false,
                 show_item_codes: true,
                 show_row_number: true,
                 show_bauvorhaben: true,
@@ -237,22 +206,14 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             break
 
         case 'minimal':
-            // Minimal: Focus on content, minimal margins, no logo
             defaults.layout = {
-                header_height: 80,
-                footer_height: 50,
                 margin_top: 10,
                 margin_bottom: 10,
                 margin_left: 20,
                 margin_right: 20,
             }
             defaults.branding = {
-                show_logo: false,
                 logo_position: "top-left",
-                company_info_position: "top-left",
-                show_header_line: false,
-                show_footer_line: false,
-                show_footer: true,
             }
             defaults.content = {
                 show_company_address: true,
@@ -264,7 +225,6 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bank_details: false,
                 show_company_registration: false,
                 show_payment_terms: true,
-                show_item_images: false,
                 show_item_codes: false,
                 show_row_number: false,
                 show_bauvorhaben: true,
@@ -274,22 +234,14 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             break
 
         case 'professional':
-            // Professional: Structured, corporate layout with standard margins
             defaults.layout = {
-                header_height: 130,
-                footer_height: 90,
                 margin_top: 20,
                 margin_bottom: 20,
                 margin_left: 20,
                 margin_right: 20,
             }
             defaults.branding = {
-                show_logo: true,
                 logo_position: "top-left",
-                company_info_position: "top-right",
-                show_header_line: true,
-                show_footer_line: true,
-                show_footer: true,
             }
             defaults.content = {
                 show_company_address: true,
@@ -301,7 +253,6 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bank_details: true,
                 show_company_registration: true,
                 show_payment_terms: true,
-                show_item_images: false,
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
@@ -311,22 +262,14 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             break
 
         case 'creative':
-            // Creative: Modern with larger header, asymmetric layout
             defaults.layout = {
-                header_height: 150,
-                footer_height: 70,
                 margin_top: 30,
                 margin_bottom: 20,
                 margin_left: 25,
                 margin_right: 15,
             }
             defaults.branding = {
-                show_logo: true,
                 logo_position: "top-right",
-                company_info_position: "top-left",
-                show_header_line: true,
-                show_footer_line: true,
-                show_footer: true,
             }
             defaults.content = {
                 show_company_address: true,
@@ -338,7 +281,6 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bank_details: true,
                 show_company_registration: true,
                 show_payment_terms: true,
-                show_item_images: false,
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
@@ -348,22 +290,14 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             break
 
         case 'elegant':
-            // Elegant: Refined with generous spacing, centered alignment
             defaults.layout = {
-                header_height: 160,
-                footer_height: 110,
                 margin_top: 30,
                 margin_bottom: 30,
                 margin_left: 30,
                 margin_right: 30,
             }
             defaults.branding = {
-                show_logo: true,
                 logo_position: "top-center",
-                company_info_position: "top-center",
-                show_header_line: true,
-                show_footer_line: true,
-                show_footer: true,
             }
             defaults.content = {
                 show_company_address: true,
@@ -375,7 +309,6 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bank_details: true,
                 show_company_registration: true,
                 show_payment_terms: true,
-                show_item_images: false,
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
@@ -412,13 +345,7 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
             ...(settings.layout || {}),
         },
         branding: {
-            ...defaults.branding,
-            show_logo: settings.branding?.show_logo ?? defaults.branding.show_logo,
             logo_position: settings.branding?.logo_position ?? defaults.branding.logo_position,
-            company_info_position: settings.branding?.company_info_position ?? defaults.branding.company_info_position,
-            show_header_line: settings.branding?.show_header_line ?? defaults.branding.show_header_line,
-            show_footer_line: settings.branding?.show_footer_line ?? defaults.branding.show_footer_line,
-            show_footer: settings.branding?.show_footer ?? defaults.branding.show_footer,
         },
         content: {
             ...defaults.content,
@@ -431,7 +358,6 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
             show_bank_details: settings.content?.show_bank_details ?? defaults.content.show_bank_details,
             show_company_registration: settings.content?.show_company_registration ?? defaults.content.show_company_registration,
             show_payment_terms: settings.content?.show_payment_terms ?? defaults.content.show_payment_terms,
-            show_item_images: settings.content?.show_item_images ?? defaults.content.show_item_images,
             show_item_codes: settings.content?.show_item_codes ?? defaults.content.show_item_codes,
             show_row_number: settings.content?.show_row_number ?? defaults.content.show_row_number,
             show_bauvorhaben: settings.content?.show_bauvorhaben ?? defaults.content.show_bauvorhaben,
@@ -799,15 +725,6 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
         }
     }
 
-    const getPreviewHeaderHeight = (layout: InvoiceLayout | null) => {
-        if (!layout?.settings?.layout?.header_height) return 120
-        return layout.settings.layout.header_height
-    }
-
-    const getPreviewFooterHeight = (layout: InvoiceLayout | null) => {
-        if (!layout?.settings?.layout?.footer_height) return 80
-        return layout.settings.layout.footer_height
-    }
 
     const hasErrors = Object.keys(form.errors).length > 0
 
@@ -1180,39 +1097,6 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                 </div>
                                             </div>
 
-                                            <div id="step-header-footer">
-                                                <h3 className="text-lg font-semibold mb-3">Bereiche (px)</h3>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="header-height">Kopfzeile Höhe</Label>
-                                                        <Input
-                                                            id="header-height"
-                                                            type="number"
-                                                            value={layoutFormData.settings.layout.header_height}
-                                                            onChange={(e) =>
-                                                                updateLayoutSetting("header_height", Number.parseInt(e.target.value) || 0)
-                                                            }
-                                                            min="50"
-                                                            max="300"
-                                                        />
-                                                    </div>
-
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="footer-height">Fußzeile Höhe</Label>
-                                                        <Input
-                                                            id="footer-height"
-                                                            type="number"
-                                                            value={layoutFormData.settings.layout.footer_height}
-                                                            onChange={(e) =>
-                                                                updateLayoutSetting("footer_height", Number.parseInt(e.target.value) || 0)
-                                                            }
-                                                            min="30"
-                                                            max="200"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-
                                             <div id="step-logo">
                                                 <h3 className="text-lg font-semibold mb-3">Branding</h3>
                                                 <div className="rounded-lg border bg-muted/40 p-4 mb-4">
@@ -1238,84 +1122,21 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     </div>
                                                 </div>
                                                 <div className="space-y-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="space-y-0.5">
-                                                            <Label>Logo anzeigen</Label>
-                                                            <p className="text-sm text-muted-foreground">Firmenlogo im Dokument anzeigen</p>
-                                                        </div>
-                                                        <Switch
-                                                            checked={layoutFormData.settings.branding.show_logo}
-                                                            onCheckedChange={(checked) => updateBrandingSetting("show_logo", checked)}
-                                                        />
-                                                    </div>
-
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="grid gap-2">
-                                                            <Label htmlFor="logo-position">Logo Position</Label>
-                                                            <Select
-                                                                value={layoutFormData.settings.branding.logo_position}
-                                                                onValueChange={(value) => updateBrandingSetting("logo_position", value)}
-                                                            >
-                                                                <SelectTrigger>
-                                                                    <SelectValue />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectItem value="top-left">Oben Links</SelectItem>
-                                                                    <SelectItem value="top-center">Oben Mitte</SelectItem>
-                                                                    <SelectItem value="top-right">Oben Rechts</SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </div>
-
-                                                        <div className="grid gap-2">
-                                                            <Label htmlFor="company-info-position">Firmeninfo Position</Label>
-                                                            <Select
-                                                                value={layoutFormData.settings.branding.company_info_position}
-                                                                onValueChange={(value) => updateBrandingSetting("company_info_position", value)}
-                                                            >
-                                                                <SelectTrigger>
-                                                                    <SelectValue />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectItem value="top-left">Oben Links</SelectItem>
-                                                                    <SelectItem value="top-center">Oben Mitte</SelectItem>
-                                                                    <SelectItem value="top-right">Oben Rechts</SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="space-y-0.5">
-                                                            <Label>Kopfzeilen-Linie anzeigen</Label>
-                                                            <p className="text-sm text-muted-foreground">Linie unter dem Header anzeigen</p>
-                                                        </div>
-                                                        <Switch
-                                                            checked={layoutFormData.settings.branding.show_header_line}
-                                                            onCheckedChange={(checked) => updateBrandingSetting("show_header_line", checked)}
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="space-y-0.5">
-                                                            <Label>Fußzeile anzeigen</Label>
-                                                            <p className="text-sm text-muted-foreground">Fußzeile mit Firmeninformationen anzeigen</p>
-                                                        </div>
-                                                        <Switch
-                                                            checked={layoutFormData.settings.branding.show_footer}
-                                                            onCheckedChange={(checked) => updateBrandingSetting("show_footer", checked)}
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="space-y-0.5">
-                                                            <Label>Fußzeilen-Linie anzeigen</Label>
-                                                            <p className="text-sm text-muted-foreground">Linie über der Fußzeile anzeigen</p>
-                                                        </div>
-                                                        <Switch
-                                                            checked={layoutFormData.settings.branding.show_footer_line}
-                                                            onCheckedChange={(checked) => updateBrandingSetting("show_footer_line", checked)}
-                                                        />
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="logo-position">Logo Position</Label>
+                                                        <Select
+                                                            value={layoutFormData.settings.branding.logo_position}
+                                                            onValueChange={(value) => updateBrandingSetting("logo_position", value)}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="top-left">Oben Links</SelectItem>
+                                                                <SelectItem value="top-center">Oben Mitte</SelectItem>
+                                                                <SelectItem value="top-right">Oben Rechts</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1452,17 +1273,6 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                             <div>
                                                 <h3 className="text-lg font-semibold mb-3">Artikeloptionen</h3>
                                                 <div className="space-y-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="space-y-0.5">
-                                                            <Label>Artikelbilder anzeigen</Label>
-                                                            <p className="text-sm text-muted-foreground">Produktbilder in der Artikeltabelle anzeigen</p>
-                                                        </div>
-                                                        <Switch
-                                                            checked={layoutFormData.settings.content.show_item_images}
-                                                            onCheckedChange={(checked) => updateContentSetting("show_item_images", checked)}
-                                                        />
-                                                    </div>
-
                                                     <div className="flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <Label>Artikelnummern anzeigen</Label>

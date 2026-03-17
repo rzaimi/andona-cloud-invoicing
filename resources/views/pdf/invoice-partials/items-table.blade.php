@@ -86,7 +86,7 @@
                     <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">{{ $productCode ?: '-' }}</td>
                 @endif
                 <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
-                    <div>{{ $item->description }}</div>
+                    <div style="white-space:pre-wrap;">{!! nl2br(e($item->description)) !!}</div>
                 </td>
                 <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
                     {{ number_format($item->quantity, 2, ',', '.') }}

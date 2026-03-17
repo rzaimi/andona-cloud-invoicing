@@ -1,21 +1,21 @@
 {{-- Clean/Kreativ: Purple badge header + date strip + accent subject (from invoice-kreativ.html) --}}
 @php
     $ls      = $layoutSettings;
-    $primary = $ls['colors']['primary'] ?? '#7c3aed';
+    $primary = $ls['colors']['primary']   ?? '#7c3aed';
     $p2      = '#a855f7';
-    $p4      = '#f5f3ff';
-    $ink     = '#1c1033';
-    $mid     = '#6b21a8';
-    $soft    = '#a78bfa';
+    $p4      = $ls['colors']['accent']    ?? '#f5f3ff';
+    $ink     = $ls['colors']['text']      ?? '#1c1033';
+    $mid     = $ls['colors']['secondary'] ?? '#6b21a8';
+    $soft    = $ls['colors']['secondary'] ?? '#a78bfa';
     $border  = '#e9d5ff';
-    $bg      = '#faf5ff';
-    $dark    = '#1c1033';
+    $bg      = $ls['colors']['accent']    ?? '#faf5ff';
+    $dark    = $ls['colors']['text']      ?? '#1c1033';
     $fs      = $bodyFontSize;
 
     // Logo
     $logoRelPath = isset($snapshot['logo']) ? ltrim(preg_replace('#^storage/#', '', (string)$snapshot['logo']), '/') : null;
     $logoSrc = null;
-    if ($logoRelPath && ($ls['branding']['show_logo'] ?? true)) {
+    if ($logoRelPath) {
         if (isset($preview) && $preview) {
             $logoSrc = asset('storage/' . $logoRelPath);
         } elseif (\Storage::disk('public')->exists($logoRelPath)) {
@@ -65,26 +65,14 @@
 
 <div class="container" style="padding:0; font-family:{{ $ls['fonts']['body'] ?? 'DejaVu Sans' }},sans-serif; font-size:{{ $fs }}px; color:{{ $ink }}; overflow:hidden;">
 
-{{-- HEADER: logo position-aware + pill badge --}}
+{{-- HEADER: logo --}}
 @php
-    $logoPos      = $ls['branding']['logo_position'] ?? 'top-left';
-    $showCompInfo = !$showLogo || ($ls['content']['show_company_address'] ?? true);
-
-    $logoCell = ($showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:14mm; max-width:48mm; display:block;">' : '')
-        . ($showCompInfo
-            ? '<div style="font-size:'.($fs+3).'px; font-weight:800; color:'.$dark.'; letter-spacing:-1px; line-height:1; margin-top:'.($showLogo ? '2' : '0').'mm;">'.e($snapshot['name'] ?? '').'</div>'
-              . '<div style="font-size:'.($fs-2).'px; color:'.$soft.'; margin-top:1.5mm; font-weight:400;">'.e($snapshot['address'] ?? '').($snapshot['postal_code'] ?? null ? ' &middot; '.e($snapshot['postal_code']).' '.e($snapshot['city'] ?? '') : '').'</div>'
-            : '');
-
-    $docCell = '<div style="text-align:right;">'
-        . '<div style="display:inline-block; background-color:'.($isCorrection ? '#dc2626' : $primary).'; color:white; padding:2mm 5mm; font-size:'.($fs-1).'px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">'.e($isCorrection ? 'STORNO' : strtoupper($invoiceTypeLabel)).'</div>'
-        . '<div style="font-size:'.($fs-2).'px; color:'.$soft.'; margin-top:1.5mm; font-weight:500;">'.e($invoice->number).'</div>'
-        . '</div>';
-
+    $logoPos  = $ls['branding']['logo_position'] ?? 'top-left';
+    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:14mm; max-width:48mm; display:block;">' : '';
     [$colL, $colC, $colR] = match($logoPos) {
-        'top-center' => ['',        $logoCell, $docCell],
-        'top-right'  => [$docCell,  '',        $logoCell],
-        default      => [$logoCell, '',        $docCell],
+        'top-center' => ['', $logoCell, ''],
+        'top-right'  => ['', '', $logoCell],
+        default      => [$logoCell, '', ''],
     };
 @endphp
 <table style="width:100%; border-collapse:collapse;">
@@ -148,22 +136,12 @@
     </td>
     {{-- Info rows right --}}
     <td style="width:54mm; vertical-align:top;">
-        <table style="width:100%; border-collapse:collapse; font-size:{{ $fs - 1 }}px;">
-        <tr>
-            <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $soft }};">Rechnungsnr.</td>
-            <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:600; color:{{ $dark }}; text-align:right;">{{ $invoice->number }}</td>
-        </tr>
-        @if(isset($customer->number) && $customer->number)
-        <tr>
-            <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; color:{{ $soft }};">Kundennr.</td>
-            <td style="padding:1.2mm 0; border-bottom:0.2mm solid {{ $border }}; font-weight:600; color:{{ $dark }}; text-align:right;">{{ isset($customer->number) ? $customer->number : '' }}</td>
-        </tr>
-        @endif
-        <tr>
-            <td style="padding:1.2mm 0; color:{{ $soft }};">Zahlungsziel</td>
-            <td style="padding:1.2mm 0; font-weight:600; color:{{ $dark }}; text-align:right;">{{ $dueDateFmt ?? '–' }}</td>
-        </tr>
-        </table>
+        @include('pdf.invoice-partials.details', [
+            'detailsLabelColor'  => $soft,
+            'detailsBorderColor' => $border,
+            'detailsPad'         => '1.2mm 0',
+            'detailsFontSize'    => $fs - 1,
+        ])
     </td>
 </tr>
 </table>
@@ -247,7 +225,5 @@
 @endif
 
 </div>{{-- /content --}}
-@if($ls['branding']['show_footer'] ?? true)
 @include('pdf.invoice-partials.footer')
-@endif
 </div>

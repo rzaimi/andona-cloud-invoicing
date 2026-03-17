@@ -206,6 +206,7 @@ export interface Invoice {
     tax_rate: number
     tax_amount: number
     total: number
+    vat_regime?: string
     notes?: string
     payment_method?: string
     payment_terms?: string

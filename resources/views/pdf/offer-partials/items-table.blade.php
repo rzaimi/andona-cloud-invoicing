@@ -91,9 +91,9 @@
                     <td style="padding:{{ $cp }}; color:#6b7280; {{ $cellBorder }}">{{ $sku ?: '–' }}</td>
                 @endif
                 <td style="padding:{{ $cp }}; {{ $cellBorder }}">
-                    <div style="font-weight:600;">{{ $itemDesc }}</div>
+                    <div style="font-weight:600; white-space:pre-wrap;">{!! nl2br(e($itemDesc)) !!}</div>
                     @if($itemLongDesc)
-                        <div style="font-size:{{ $fs - 1 }}px; color:#6b7280; margin-top:1px;">{{ $itemLongDesc }}</div>
+                        <div style="font-size:{{ $fs - 1 }}px; color:#6b7280; margin-top:1px; white-space:pre-wrap;">{!! nl2br(e($itemLongDesc)) !!}</div>
                     @endif
                 </td>
                 @if($showUnit)

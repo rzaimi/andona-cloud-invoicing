@@ -62,7 +62,7 @@
     </tr>
 
     {{-- VAT row(s) --}}
-    @if($isStandardVat)
+    @if($isStandardVat && ($layoutSettings['content']['show_tax_breakdown'] ?? true))
         @if($multipleRates)
             @foreach($vatBreakdown as $rateKey => $vat)
                 @if($vat['rate'] > 0.0001)

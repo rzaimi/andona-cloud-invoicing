@@ -18,15 +18,15 @@
                     }
                 }
             }
-            
+
             // Safely access layout settings - handle both object and array
             $layoutSettings = is_object($layout) && isset($layout->settings) ? $layout->settings : (is_array($layout) ? ($layout['settings'] ?? []) : []);
-            
+
             // Ensure layoutSettings is always an array
             if (!is_array($layoutSettings)) {
                 $layoutSettings = [];
             }
-            
+
             // Make layoutSettings available to all templates by ensuring layout->settings exists
             if (is_object($layout)) {
                 if (!isset($layout->settings) || !is_array($layout->settings)) {
@@ -35,10 +35,12 @@
                     $layoutSettings = $layout->settings;
                 }
             }
-            
-            $bodyFontSize = getFontSizePx($layoutSettings['fonts']['size'] ?? 'medium');
+
+            $bodyFontSize    = getFontSizePx($layoutSettings['fonts']['size'] ?? 'medium');
             $headingFontSize = $bodyFontSize + 4;
-            $titleFontSize = $bodyFontSize + 8;
+            $titleFontSize   = $bodyFontSize + 8;
+            $bodyFont        = $layoutSettings['fonts']['body']    ?? 'DejaVu Sans';
+            $headingFont     = $layoutSettings['fonts']['heading']  ?? $bodyFont;
 
             // Determine template early (so we can vary DIN-address rendering per template)
             $template = is_object($layout) ? ($layout->template ?? 'clean') : ($layout['template'] ?? 'clean');
@@ -73,7 +75,7 @@
             page-break-inside: avoid;
             margin-bottom: 10mm;
         }
-        
+
         /* Company return address (small text above recipient) - DIN 5008 */
         .sender-return-address {
             font-size: 7pt;
@@ -83,7 +85,7 @@
             padding-bottom: 1mm;
             margin-bottom: 2mm;
         }
-        
+
         /* Regular address block (for display in document, not envelope window) */
         .address-block {
             margin-bottom: 20px;
@@ -401,10 +403,10 @@
     if (empty($snapshot['logo'] ?? null) && isset($company) && !empty($company->logo ?? null)) {
         $snapshot['logo'] = $company->logo;
     }
-    
+
     // Get date format from settings or use default
     $dateFormat = $settings['date_format'] ?? 'd.m.Y';
-    
+
     // Helper function for date formatting
     if (!function_exists('formatInvoiceDate')) {
         function formatInvoiceDate($date, $format = 'd.m.Y') {
@@ -500,8 +502,8 @@ if (isset($pdf)) {
         $text = "Seite {$pageNumber} / {$pageCount}";
         $w = $fontMetrics->get_text_width($text, $font, $size);
         // Bottom-right corner, slightly above page bottom
-        $x = $canvas->get_width() - $w - 20;
-        $y = $canvas->get_height() - 12;
+        $x = $canvas->get_width() - $w - 5;
+        $y = $canvas->get_height() - 55;
         $canvas->text($x, $y, $text, $font, $size, [0, 0, 0]);
     });
 }

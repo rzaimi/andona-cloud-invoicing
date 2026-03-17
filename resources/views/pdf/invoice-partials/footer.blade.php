@@ -6,7 +6,6 @@
     $ls        = $layoutSettings ?? [];
     $lineColor = $ls['colors']['primary']   ?? '#1e40af';
     $fgColor   = $ls['colors']['secondary'] ?? '#374151';
-    $showLine  = $ls['branding']['show_footer_line'] ?? true;
     $showBank  = $ls['content']['show_bank_details'] ?? true;
     $showReg   = $ls['content']['show_company_registration'] ?? true;
 @endphp
@@ -16,7 +15,7 @@
     width: 100%;
     padding: 4px 8mm 3px 8mm;
     background-color: white;
-    border-top: {{ $showLine ? '1.5px solid ' . $lineColor : '1px solid #e5e7eb' }};
+    border-top: 1.5px solid {{ $lineColor }};
     z-index: 1000;
 ">
     <table style="width:100%; border-collapse:collapse; font-size:6.5pt; line-height:1.35; color:{{ $fgColor }};">

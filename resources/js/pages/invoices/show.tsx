@@ -258,11 +258,11 @@ export default function InvoicesShow() {
                                                     <TableCell>
                                                         {item.product?.number || item.product?.sku || <span className="text-gray-400">-</span>}
                                                     </TableCell>
-                                                    <TableCell>{item.description}</TableCell>
+                                                    <TableCell className="whitespace-pre-line">{item.description}</TableCell>
                                                     <TableCell>
                                                         {item.quantity} {item.unit}
                                                     </TableCell>
-                                                    <TableCell>{(Number(invoice.tax_rate || 0) * 100).toFixed(0)}%</TableCell>
+                                                    <TableCell>{(Number(item.tax_rate ?? invoice.tax_rate ?? 0) * 100).toFixed(0)}%</TableCell>
                                                     <TableCell>{formatCurrency(item.unit_price)}</TableCell>
                                                     <TableCell>
                                                         {hasDiscount ? (
@@ -328,12 +328,34 @@ export default function InvoicesShow() {
                                             <span className="text-gray-600">Zwischensumme (netto)</span>
                                             <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
                                         </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">
-                                                {Number(invoice.tax_rate || 0) * 100}% Umsatzsteuer
-                                            </span>
-                                            <span className="font-medium">{formatCurrency(invoice.tax_amount)}</span>
-                                        </div>
+                                        {(invoice.vat_regime ?? 'standard') === 'standard' ? (() => {
+                                            const breakdown: Record<string, { rate: number; amount: number }> = {}
+                                            invoice.items?.forEach(item => {
+                                                const rate = Number(item.tax_rate ?? invoice.tax_rate ?? 0)
+                                                const key = rate.toFixed(4)
+                                                if (!breakdown[key]) breakdown[key] = { rate, amount: 0 }
+                                                breakdown[key].amount += Number(item.total) * rate
+                                            })
+                                            const entries = Object.values(breakdown)
+                                                .filter(b => b.amount > 0.001)
+                                                .sort((a, b) => b.rate - a.rate)
+                                            return entries.length > 0 ? entries.map(b => (
+                                                <div key={b.rate} className="flex justify-between">
+                                                    <span className="text-gray-600">{(b.rate * 100).toFixed(0)}% Umsatzsteuer</span>
+                                                    <span className="font-medium">{formatCurrency(b.amount)}</span>
+                                                </div>
+                                            )) : (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">0% Umsatzsteuer</span>
+                                                    <span className="font-medium">{formatCurrency(0)}</span>
+                                                </div>
+                                            )
+                                        })() : (
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Umsatzsteuer</span>
+                                                <span className="font-medium">{formatCurrency(0)}</span>
+                                            </div>
+                                        )}
                                         {(Number(invoice.reminder_fee) || 0) > 0 && (
                                             <div className="flex justify-between text-orange-600">
                                                 <span>Mahngebühr</span>

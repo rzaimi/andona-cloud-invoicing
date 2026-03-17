@@ -772,7 +772,8 @@ export default function InvoicesEdit() {
                                                         value={item.description}
                                                         onChange={(e) => updateItem(item.id, "description", e.target.value)}
                                                         placeholder="Beschreibung der Leistung..."
-                                                        className="min-h-[60px]"
+                                                        className="min-h-[100px] resize-y"
+                                                        rows={4}
                                                         required
                                                         disabled={!canEdit}
                                                     />
@@ -918,10 +919,34 @@ export default function InvoicesEdit() {
                                             <span className="font-medium">-{formatCurrency(totals.total_discount)}</span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between">
-                                        <span>MwSt. ({data.vat_regime === 'standard' ? (settings.tax_rate * 100).toFixed(0) : 0}%):</span>
-                                        <span className="font-medium">{formatCurrency(totals.tax_amount)}</span>
-                                    </div>
+                                    {data.vat_regime === 'standard' ? (() => {
+                                        const breakdown: Record<string, { rate: number; amount: number }> = {}
+                                        ;(data.items as InvoiceItem[]).forEach(item => {
+                                            const rate = Number(item.tax_rate) || 0
+                                            const key = rate.toFixed(4)
+                                            if (!breakdown[key]) breakdown[key] = { rate, amount: 0 }
+                                            breakdown[key].amount += Number(item.total) * rate
+                                        })
+                                        const entries = Object.values(breakdown)
+                                            .filter(b => b.amount > 0.001)
+                                            .sort((a, b) => b.rate - a.rate)
+                                        return entries.length > 0 ? entries.map(b => (
+                                            <div key={b.rate} className="flex justify-between">
+                                                <span>MwSt. ({(b.rate * 100).toFixed(0)}%):</span>
+                                                <span className="font-medium">{formatCurrency(b.amount)}</span>
+                                            </div>
+                                        )) : (
+                                            <div className="flex justify-between">
+                                                <span>MwSt. (0%):</span>
+                                                <span className="font-medium">{formatCurrency(0)}</span>
+                                            </div>
+                                        )
+                                    })() : (
+                                        <div className="flex justify-between">
+                                            <span>MwSt.:</span>
+                                            <span className="font-medium">{formatCurrency(0)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-lg font-bold border-t pt-2">
                                         <span>Gesamtbetrag:</span>
                                         <span>{formatCurrency(totals.total)}</span>

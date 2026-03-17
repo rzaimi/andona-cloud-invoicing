@@ -220,9 +220,7 @@
 @endif
 
 {{-- ── FOOTER (fixed, direct child of body) ──────────────────────────────── --}}
-@if($layoutSettings['branding']['show_footer'] ?? true)
 @include('pdf.invoice-partials.footer')
-@endif
 
 {{-- ── PAGE NUMBER ─────────────────────────────────────────────────────────── --}}
 <script type="text/php">

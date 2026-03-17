@@ -1,18 +1,18 @@
 {{-- Minimal: Thin top rule, bare typography, plain meta rows (from invoice-minimal.html) --}}
 @php
     $ls      = $layoutSettings;
-    $primary = $ls['colors']['primary'] ?? '#111111';
-    $mid     = '#555555';
-    $soft    = '#999999';
+    $primary = $ls['colors']['primary']   ?? '#111111';
+    $mid     = $ls['colors']['secondary'] ?? '#555555';
+    $soft    = $ls['colors']['secondary'] ?? '#999999';
     $border  = '#e0e0e0';
-    $bg      = '#fafafa';
+    $bg      = $ls['colors']['accent']    ?? '#fafafa';
     $white   = '#ffffff';
     $fs      = $bodyFontSize;
 
     // Logo
     $logoRelPath = isset($snapshot['logo']) ? ltrim(preg_replace('#^storage/#', '', (string)$snapshot['logo']), '/') : null;
     $logoSrc = null;
-    if ($logoRelPath && ($ls['branding']['show_logo'] ?? true)) {
+    if ($logoRelPath) {
         if (isset($preview) && $preview) {
             $logoSrc = asset('storage/' . $logoRelPath);
         } elseif (\Storage::disk('public')->exists($logoRelPath)) {
@@ -66,24 +66,14 @@
 {{-- Thin top rule --}}
 <div style="height:0.5mm; background-color:{{ $primary }}; width:100%;"></div>
 
-{{-- HEADER: logo position-aware, minimal style --}}
+{{-- HEADER: logo --}}
 @php
-    $logoPos = $ls['branding']['logo_position'] ?? 'top-left';
-
-    $logoCell = $showLogo
-        ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:14mm; max-width:48mm; display:block;">'
-          . (($ls['content']['show_company_address'] ?? true) ? '<div style="font-size:'.($fs-2).'px; color:'.$soft.'; margin-top:1mm; font-weight:300;">'.e($snapshot['address'] ?? '').($snapshot['postal_code'] ?? null ? ' &middot; '.e($snapshot['postal_code']).' '.e($snapshot['city'] ?? '') : '').'</div>' : '')
-        : '<div style="font-size:'.($fs+8).'px; color:'.$primary.'; letter-spacing:-0.5px; line-height:1;">'.e($snapshot['name'] ?? '').'</div>';
-
-    $docCell = '<div style="text-align:right;">'
-        . '<div style="font-size:'.($fs-1).'px; font-weight:300; color:'.$soft.'; text-transform:uppercase; letter-spacing:3px;">'.e($isCorrection ? 'STORNORECHNUNG' : strtoupper($invoiceTypeLabel)).'</div>'
-        . '<div style="font-size:'.($fs+1).'px; font-weight:600; color:'.$primary.'; margin-top:1mm; letter-spacing:-0.3px;">'.e($invoice->number).'</div>'
-        . '</div>';
-
+    $logoPos  = $ls['branding']['logo_position'] ?? 'top-left';
+    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:14mm; max-width:48mm; display:block;">' : '';
     [$colL, $colC, $colR] = match($logoPos) {
-        'top-center' => ['',        $logoCell, $docCell],
-        'top-right'  => [$docCell,  '',        $logoCell],
-        default      => [$logoCell, '',        $docCell],
+        'top-center' => ['', $logoCell, ''],
+        'top-right'  => ['', '', $logoCell],
+        default      => [$logoCell, '', ''],
     };
 @endphp
 <table style="width:100%; border-collapse:collapse; border-bottom:0.2mm solid {{ $border }};">
@@ -123,30 +113,12 @@
     </td>
     {{-- Plain meta list --}}
     <td style="width:58mm; vertical-align:top;">
-        <table style="width:100%; border-collapse:collapse; font-size:{{ $fs - 1 }}px;">
-        <tr>
-            <td style="padding:1.2mm 0; border-bottom:0.15mm solid {{ $border }}; color:{{ $soft }}; font-weight:300;">Rechnungsdatum</td>
-            <td style="padding:1.2mm 0; border-bottom:0.15mm solid {{ $border }}; font-weight:500; text-align:right;">{{ $issueDateFmt ?? '–' }}</td>
-        </tr>
-        <tr>
-            <td style="padding:1.2mm 0; border-bottom:0.15mm solid {{ $border }}; color:{{ $soft }}; font-weight:300;">Lieferdatum</td>
-            <td style="padding:1.2mm 0; border-bottom:0.15mm solid {{ $border }}; font-weight:500; text-align:right;">{{ $issueDateFmt ?? '–' }}</td>
-        </tr>
-        <tr>
-            <td style="padding:1.2mm 0; border-bottom:0.15mm solid {{ $border }}; color:{{ $soft }}; font-weight:300;">Kundennr.</td>
-            <td style="padding:1.2mm 0; border-bottom:0.15mm solid {{ $border }}; font-weight:500; text-align:right;">{{ isset($customer->number) ? $customer->number : '–' }}</td>
-        </tr>
-        @if($hasPeriod)
-        <tr>
-            <td style="padding:1.2mm 0; border-bottom:0.15mm solid {{ $border }}; color:{{ $soft }}; font-weight:300;">Leistungszeitraum</td>
-            <td style="padding:1.2mm 0; border-bottom:0.15mm solid {{ $border }}; font-weight:500; text-align:right;">{{ $periodStr }}</td>
-        </tr>
-        @endif
-        <tr>
-            <td style="padding:1.2mm 0; color:{{ $soft }}; font-weight:300;">Zahlungsziel</td>
-            <td style="padding:1.2mm 0; font-weight:500; text-align:right;">{{ $dueDateFmt ?? '–' }}</td>
-        </tr>
-        </table>
+        @include('pdf.invoice-partials.details', [
+            'detailsLabelColor'  => $soft,
+            'detailsBorderColor' => $border,
+            'detailsPad'         => '1.2mm 0',
+            'detailsFontSize'    => $fs - 1,
+        ])
     </td>
 </tr>
 </table>
@@ -218,7 +190,5 @@
 @endif
 
 </div>{{-- /content --}}
-@if($ls['branding']['show_footer'] ?? true)
 @include('pdf.invoice-partials.footer')
-@endif
 </div>
