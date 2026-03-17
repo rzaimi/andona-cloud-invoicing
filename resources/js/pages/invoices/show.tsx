@@ -225,6 +225,27 @@ export default function InvoicesShow() {
                                             <div className="font-medium">{invoice.customer.email}</div>
                                         </div>
                                     )}
+                                    <div>
+                                        <div className="text-sm text-gray-600">
+                                            {invoice.service_period_start && invoice.service_period_end && !invoice.service_date
+                                                ? 'Leistungszeitraum'
+                                                : 'Leistungsdatum'}
+                                        </div>
+                                        <div className="font-medium">
+                                            {invoice.service_date
+                                                ? formatDate(invoice.service_date)
+                                                : invoice.service_period_start && invoice.service_period_end
+                                                    ? `${formatDate(invoice.service_period_start)} – ${formatDate(invoice.service_period_end)}`
+                                                    : <span className="text-gray-400">–</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    {invoice.bauvorhaben && (
+                                        <div>
+                                            <div className="text-sm text-gray-600">BV (Bauvorhaben)</div>
+                                            <div className="font-medium">{invoice.bauvorhaben}</div>
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

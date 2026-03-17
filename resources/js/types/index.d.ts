@@ -207,6 +207,10 @@ export interface Invoice {
     tax_amount: number
     total: number
     vat_regime?: string
+    service_date?: string
+    service_period_start?: string
+    service_period_end?: string
+    bauvorhaben?: string
     notes?: string
     payment_method?: string
     payment_terms?: string

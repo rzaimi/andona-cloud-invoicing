@@ -139,9 +139,6 @@
     <div style="font-size:{{ $fs + 3 }}px; font-weight:500; color:{{ $primary }}; letter-spacing:0.3px;">
         {{ $invoiceTypeLabel }} {{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}
     </div>
-    @if($hasPeriod)
-    <div style="font-size:{{ $fs - 1 }}px; color:{{ $soft }}; margin-top:1mm; font-weight:300; font-style:italic;">Leistungszeitraum: {{ $periodStr }}</div>
-    @endif
 </div>
 @endif
 
