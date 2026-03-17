@@ -16,6 +16,7 @@ import {
     LogOut,
     ChevronUp,
     ChevronDown,
+    ChevronsUpDown,
     Plus,
     Home,
     Euro,
@@ -30,6 +31,8 @@ import {
     ReceiptText,
     ReceiptEuro,
     Activity,
+    Search,
+    Check,
 } from "lucide-react"
 import {
     Sidebar,
@@ -54,11 +57,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { router, usePage } from "@inertiajs/react"
 import { useState, useEffect } from "react"
 import { route } from "ziggy-js"
@@ -132,17 +136,46 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
     const availableCompanies = pageProps.auth?.available_companies || []
     const canSwitchCompany = availableCompanies.length > 0 && user.permissions?.includes("manage_companies")
     const [selectedCompanyId, setSelectedCompanyId] = useState<string>(user.company?.id || "")
+    const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false)
+    const [companySearch, setCompanySearch] = useState("")
+
+    const filteredCompanies = availableCompanies.filter((c) =>
+        c.name.toLowerCase().includes(companySearch.toLowerCase())
+    )
+
+    const handleCompanySwitch = (companyId: string) => {
+        if (companyId === selectedCompanyId) {
+            setCompanySwitcherOpen(false)
+            return
+        }
+        setCompanySwitcherOpen(false)
+        setCompanySearch("")
+        setSelectedCompanyId(companyId)
+        router.post(
+            route("company-context.switch"),
+            { company_id: companyId },
+            {
+                preserveState: false,
+                preserveScroll: false,
+                onError: (errors) => {
+                    console.error("Company switch error:", errors)
+                },
+            }
+        )
+    }
 
     useEffect(() => {
-        // Initialize selected company ID from user's company
-        // Ensure we always have a valid company selected
         if (user.company?.id) {
             setSelectedCompanyId(user.company.id)
         } else if (availableCompanies.length > 0 && canSwitchCompany) {
-            // If no company from user, but we have available companies and can switch, select first one
             setSelectedCompanyId(availableCompanies[0].id)
         }
     }, [user.company?.id, availableCompanies, canSwitchCompany])
+
+    // Reset search when dialog closes
+    useEffect(() => {
+        if (!companySwitcherOpen) setCompanySearch("")
+    }, [companySwitcherOpen])
 
     const isActive = (path: string) => {
         return url.startsWith(path)
@@ -403,73 +436,89 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
 
     return (
         <Sidebar variant="inset" {...props}>
+            {/* Company Switcher Dialog */}
+            <Dialog open={companySwitcherOpen} onOpenChange={setCompanySwitcherOpen}>
+                <DialogContent className="p-0 gap-0 max-w-sm w-[calc(100vw-2rem)]">
+                    <DialogHeader className="px-4 pt-4 pb-3 border-b">
+                        <DialogTitle className="text-base">Firma wechseln</DialogTitle>
+                    </DialogHeader>
+                    <div className="px-3 py-3 border-b">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                            <Input
+                                placeholder="Firma suchen..."
+                                value={companySearch}
+                                onChange={(e) => setCompanySearch(e.target.value)}
+                                className="pl-8 h-9"
+                                autoFocus
+                            />
+                        </div>
+                    </div>
+                    <div className="max-h-72 overflow-y-auto py-1">
+                        {filteredCompanies.length === 0 ? (
+                            <div className="py-8 text-center text-sm text-muted-foreground">
+                                Keine Firma gefunden
+                            </div>
+                        ) : (
+                            filteredCompanies.map((company) => (
+                                <button
+                                    key={company.id}
+                                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-muted transition-colors text-left"
+                                    onClick={() => handleCompanySwitch(company.id)}
+                                >
+                                    <div className="flex size-7 items-center justify-center rounded-md bg-muted border shrink-0">
+                                        <Building2 className="size-3.5 text-muted-foreground" />
+                                    </div>
+                                    <span className="flex-1 truncate text-sm">{company.name}</span>
+                                    {company.id === selectedCompanyId && (
+                                        <Check className="size-4 text-primary shrink-0" />
+                                    )}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <div className="flex items-center justify-between w-full">
-                            <SidebarMenuButton size="lg" asChild className="flex-1">
-                                <Link href="/dashboard">
-                                    {user.company?.logo ? (
-                                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
-                                            <img 
-                                                src={`/storage/${user.company.logo}`} 
-                                                alt={user.company.name}
-                                                className="w-full h-full object-contain"
-                                                onError={(e) => {
-                                                    // Hide image if it fails to load (404/403)
-                                                    const target = e.target as HTMLImageElement
-                                                    target.style.display = 'none'
-                                                }}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                            <EuroIcon className="size-4" />
-                                        </div>
-                                    )}
-                                    <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
-                                        <span className="truncate font-semibold">AndoBill</span>
-                                        {canSwitchCompany ? (
-                                            <Select
-                                                value={selectedCompanyId}
-                                                onValueChange={(value) => {
-                                                    setSelectedCompanyId(value)
-                                                    router.post(
-                                                        route("company-context.switch"),
-                                                        { company_id: value },
-                                                        {
-                                                            preserveState: false,
-                                                            preserveScroll: false,
-                                                            onSuccess: () => {
-                                                                // Will redirect to dashboard and fully reload the application
-                                                            },
-                                                            onError: (errors) => {
-                                                                console.error('Company switch error:', errors)
-                                                            }
-                                                        }
-                                                    )
-                                                }}
-                                            >
-                                                <SelectTrigger className="h-auto p-0 border-0 bg-transparent text-xs text-muted-foreground focus:ring-0 hover:text-foreground cursor-pointer">
-                                                    <SelectValue placeholder="Firma auswählen">
-                                                        {availableCompanies.find((c) => c.id === selectedCompanyId)?.name || user.company?.name || "Keine Firma"}
-                                                    </SelectValue>
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {availableCompanies.map((company) => (
-                                                        <SelectItem key={company.id} value={company.id}>
-                                                            {company.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        ) : (
-                                            <span className="truncate text-xs">{user.company?.name || "Keine Firma"}</span>
-                                        )}
+                        <SidebarMenuButton size="lg" asChild>
+                            <Link href="/dashboard">
+                                {user.company?.logo ? (
+                                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
+                                        <img
+                                            src={`/storage/${user.company.logo}`}
+                                            alt={user.company.name}
+                                            className="w-full h-full object-contain"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement
+                                                target.style.display = "none"
+                                            }}
+                                        />
                                     </div>
-                                </Link>
-                            </SidebarMenuButton>
-                        </div>
+                                ) : (
+                                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                                        <EuroIcon className="size-4" />
+                                    </div>
+                                )}
+                                <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                                    <span className="truncate font-semibold">AndoBill</span>
+                                    <span className="truncate text-xs text-muted-foreground">
+                                        {availableCompanies.find((c) => c.id === selectedCompanyId)?.name || user.company?.name || "Keine Firma"}
+                                    </span>
+                                </div>
+                            </Link>
+                        </SidebarMenuButton>
+                        {canSwitchCompany && (
+                            <button
+                                onClick={() => setCompanySwitcherOpen(true)}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                                title="Firma wechseln"
+                            >
+                                <ChevronsUpDown className="size-3.5" />
+                            </button>
+                        )}
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
