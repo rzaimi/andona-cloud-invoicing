@@ -35,6 +35,7 @@
         uasort($vatBreakdown, fn($a, $b) => $b['rate'] <=> $a['rate']);
     }
     $multipleRates = count($vatBreakdown) > 1;
+    $singleRateVat = !$multipleRates && count($vatBreakdown) === 1 ? array_values($vatBreakdown)[0] : null;
 
     // Skonto
     $skontoAmount  = (float)($invoice->skonto_amount ?? 0);
@@ -83,8 +84,12 @@
             @endforeach
         @else
             <tr>
-                <td style="padding: 5px 10px; text-align: left; border-bottom: 1px solid {{ $borderColor }};">{{ number_format($invoice->tax_rate * 100, 0) }}% Umsatzsteuer</td>
-                <td style="padding: 5px 10px; text-align: right; border-bottom: 1px solid {{ $borderColor }}; white-space: nowrap;">{{ number_format($invoice->tax_amount, 2, ',', '.') }} €</td>
+                <td style="padding: 5px 10px; text-align: left; border-bottom: 1px solid {{ $borderColor }};">
+                    {{ number_format(($singleRateVat['rate'] ?? (float)$invoice->tax_rate) * 100, 0) }}% Umsatzsteuer
+                </td>
+                <td style="padding: 5px 10px; text-align: right; border-bottom: 1px solid {{ $borderColor }}; white-space: nowrap;">
+                    {{ number_format($singleRateVat['tax'] ?? (float)$invoice->tax_amount, 2, ',', '.') }} €
+                </td>
             </tr>
         @endif
     @endif
