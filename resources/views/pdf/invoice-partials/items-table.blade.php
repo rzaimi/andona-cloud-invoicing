@@ -44,10 +44,10 @@
     <thead>
         <tr style="{{ $headerBgStyle }}">
             @if($showRowNumber)
-                <th style="padding: {{ $cellPadding }}; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; border-right: 1px solid {{ $tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor }}; width: {{ $colPos }};">Nr.</th>
+                <th style="padding: {{ $cellPadding }}; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; border-right: 1px solid {{ $tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor }}; width: {{ $colPos }};">NR.</th>
             @endif
             @if($showItemCodes)
-                <th style="padding: {{ $cellPadding }}; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; {{ $showRowNumber ? 'border-right: 1px solid ' . ($tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor) . ';' : '' }} width: {{ $colItemNo }};">PRODUKT-NR.</th>
+                <th style="padding: {{ $cellPadding }}; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; white-space: nowrap; {{ $showRowNumber ? 'border-right: 1px solid ' . ($tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor) . ';' : '' }} width: {{ $colItemNo }};">PRODUKT-NR.</th>
             @endif
             <th style="padding: {{ $cellPadding }}; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; {{ $showRowNumber ? 'border-right: 1px solid ' . ($tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor) . ';' : '' }} width: {{ $colDesc }};">LEISTUNG</th>
             <th style="padding: {{ $cellPadding }}; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; {{ $showRowNumber ? 'border-right: 1px solid ' . ($tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor) . ';' : '' }} width: {{ $colQty }};">MENGE</th>

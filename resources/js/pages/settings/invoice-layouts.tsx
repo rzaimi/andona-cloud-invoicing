@@ -62,6 +62,7 @@ interface InvoiceLayoutSettings {
         show_item_codes: boolean
         show_row_number: boolean
         show_bauvorhaben: boolean
+        show_auftragsnummer: boolean
         show_tax_breakdown: boolean
         custom_footer_text: string
     }
@@ -130,6 +131,7 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         show_item_codes: true,
         show_row_number: false,
         show_bauvorhaben: true,
+        show_auftragsnummer: true,
         show_tax_breakdown: true,
         custom_footer_text: "",
     },
@@ -180,6 +182,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_auftragsnummer: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -199,6 +202,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: true,
                 show_row_number: true,
                 show_bauvorhaben: true,
+                show_auftragsnummer: true,
                 show_tax_breakdown: true,
                 show_payment_terms: true,
                 custom_footer_text: "",
@@ -228,6 +232,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: false,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_auftragsnummer: true,
                 show_tax_breakdown: false,
                 custom_footer_text: "",
             }
@@ -256,6 +261,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_auftragsnummer: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -284,6 +290,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_auftragsnummer: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -312,6 +319,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_auftragsnummer: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -361,6 +369,7 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
             show_item_codes: settings.content?.show_item_codes ?? defaults.content.show_item_codes,
             show_row_number: settings.content?.show_row_number ?? defaults.content.show_row_number,
             show_bauvorhaben: settings.content?.show_bauvorhaben ?? defaults.content.show_bauvorhaben,
+            show_auftragsnummer: settings.content?.show_auftragsnummer ?? defaults.content.show_auftragsnummer,
             show_tax_breakdown: settings.content?.show_tax_breakdown ?? defaults.content.show_tax_breakdown,
             custom_footer_text: settings.content?.custom_footer_text ?? defaults.content.custom_footer_text,
         },
@@ -1205,6 +1214,17 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                         <Switch
                                                             checked={layoutFormData.settings.content.show_bauvorhaben}
                                                             onCheckedChange={(checked) => updateContentSetting("show_bauvorhaben", checked)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="space-y-0.5">
+                                                            <Label>Auftragsnummer anzeigen</Label>
+                                                            <p className="text-sm text-muted-foreground">Auftragsnummer in den Rechnungsdetails anzeigen</p>
+                                                        </div>
+                                                        <Switch
+                                                            checked={layoutFormData.settings.content.show_auftragsnummer}
+                                                            onCheckedChange={(checked) => updateContentSetting("show_auftragsnummer", checked)}
                                                         />
                                                     </div>
 

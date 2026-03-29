@@ -11,10 +11,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowLeft, Plus, Trash2, PackagePlus, Hash } from "lucide-react"
+import axios from "axios"
 import AppLayout from "@/layouts/app-layout"
 import { useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
+import { AbschlagSelectionDialog } from "@/components/abschlag-selection-dialog"
+import type { AbschlagRef, SelectableAbschlag } from "@/components/abschlag-selection-dialog"
 
 interface InvoiceItem {
     id: number
@@ -49,7 +52,7 @@ interface InvoicesCreateProps {
     customers: Customer[]
     layouts: any[]
     products: Product[]
-    nextNumber: string
+    nextNumbers: Record<string, string>
     settings: {
         currency: string
         tax_rate: number
@@ -81,7 +84,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function InvoicesCreate() {
-    const { customers, layouts, products, settings, nextNumber } = usePage().props as unknown as InvoicesCreateProps
+    const { customers, layouts, products, settings, nextNumbers } = usePage().props as unknown as InvoicesCreateProps
     const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate)
 
     const { data, setData, post, processing, errors } = useForm<Record<string, any>>({
@@ -93,6 +96,8 @@ export default function InvoicesCreate() {
         due_date: new Date(Date.now() + settings.payment_terms * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         notes: "",
         bauvorhaben: "",
+        auftragsnummer: "",
+        abschlag_refs: [] as AbschlagRef[],
         layout_id: layouts.find((l) => l.is_default)?.id || "",
         vat_regime: "standard",
         invoice_type: "standard",
@@ -108,6 +113,34 @@ export default function InvoicesCreate() {
         tax_amount: 0,
         total: 0,
     })
+
+    const [selectableAbschlaege, setSelectableAbschlaege] = useState<SelectableAbschlag[]>([])
+    const [loadingAbschlaege, setLoadingAbschlaege] = useState(false)
+
+    // Fetch selectable Abschlagsrechnungen when Schlussrechnung type and customer are selected
+    useEffect(() => {
+        if (data.invoice_type !== "schlussrechnung" || !data.customer_id) {
+            setSelectableAbschlaege([])
+            return
+        }
+        setLoadingAbschlaege(true)
+        axios.get(`/invoices/selectable-abschlaege?customer_id=${data.customer_id}`)
+            .then((res) => setSelectableAbschlaege(res.data))
+            .catch(() => setSelectableAbschlaege([]))
+            .finally(() => setLoadingAbschlaege(false))
+    }, [data.invoice_type, data.customer_id])
+
+    const toggleAbschlag = (abschlag: SelectableAbschlag) => {
+        const existing = (data.abschlag_refs as AbschlagRef[]).find((r) => r.invoice_id === abschlag.id)
+        if (existing) {
+            setData("abschlag_refs", (data.abschlag_refs as AbschlagRef[]).filter((r) => r.invoice_id !== abschlag.id))
+        } else {
+            setData("abschlag_refs", [
+                ...(data.abschlag_refs as AbschlagRef[]),
+                { invoice_id: abschlag.id, number: abschlag.number, amount: abschlag.amount, date: abschlag.date },
+            ])
+        }
+    }
 
     // Skonto live preview (client-side calculation — backend is source of truth on save)
     const skontoAmount = data.skonto_percent && totals.total
@@ -255,10 +288,10 @@ export default function InvoicesCreate() {
                         <div className="flex-1">
                             <div className="flex items-center gap-3">
                                 <h1 className="text-1xl font-bold text-gray-900">Neue Rechnung erstellen</h1>
-                                {nextNumber && (
+                                {nextNumbers[data.invoice_type] && (
                                     <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-blue-300 bg-blue-50 px-2.5 py-0.5 text-xs font-mono font-medium text-blue-700" title="Voraussichtliche Rechnungsnummer">
                                         <Hash className="h-3 w-3" />
-                                        {nextNumber}
+                                        {nextNumbers[data.invoice_type]}
                                     </span>
                                 )}
                             </div>
@@ -360,6 +393,18 @@ export default function InvoicesCreate() {
                                         placeholder="z.B. Neubau Musterstraße 12, Berlin"
                                     />
                                     {errors.bauvorhaben && <p className="text-red-600 text-sm">{errors.bauvorhaben}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="auftragsnummer">Auftragsnummer</Label>
+                                    <Input
+                                        id="auftragsnummer"
+                                        type="text"
+                                        value={data.auftragsnummer}
+                                        onChange={(e) => setData("auftragsnummer", e.target.value)}
+                                        placeholder="z.B. AUF-2026-0042"
+                                    />
+                                    {errors.auftragsnummer && <p className="text-red-600 text-sm">{errors.auftragsnummer}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -497,6 +542,24 @@ export default function InvoicesCreate() {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Abschlagsrechnungen selector – only for Schlussrechnung */}
+                            {data.invoice_type === "schlussrechnung" && (
+                                <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+                                    <p className="font-medium text-sm">Verknüpfte Abschlagsrechnungen</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Wähle die Abschlagsrechnungen aus, die in dieser Schlussrechnung abgezogen werden sollen.
+                                    </p>
+                                    <AbschlagSelectionDialog
+                                        abschlaege={selectableAbschlaege}
+                                        selected={data.abschlag_refs as AbschlagRef[]}
+                                        onToggle={toggleAbschlag}
+                                        loading={loadingAbschlaege}
+                                        noCustomer={!data.customer_id}
+                                        totalAmount={totals.total}
+                                    />
+                                </div>
+                            )}
 
                             {/* Skonto */}
                             <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
@@ -675,9 +738,9 @@ export default function InvoicesCreate() {
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Select value={item.unit} onValueChange={(value) => updateItem(item.id, "unit", value)}>
-                                                        <SelectTrigger>
-                                                            <SelectValue />
+                                                    <Select value={item.unit || ""} onValueChange={(value) => updateItem(item.id, "unit", value)}>
+                                                        <SelectTrigger className={formErrors[`items.${index}.unit`] ? "border-red-500 focus:ring-red-500" : ""}>
+                                                            <SelectValue placeholder="Einheit wählen…" />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {germanUnits.map((unit) => (
@@ -685,8 +748,14 @@ export default function InvoicesCreate() {
                                                                     {unit}
                                                                 </SelectItem>
                                                             ))}
+                                                            {item.unit && !germanUnits.includes(item.unit) && (
+                                                                <SelectItem value={item.unit}>{item.unit}</SelectItem>
+                                                            )}
                                                         </SelectContent>
                                                     </Select>
+                                                    {formErrors[`items.${index}.unit`] && (
+                                                        <p className="text-red-600 text-xs mt-1">Einheit wählen</p>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Select 

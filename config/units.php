@@ -29,5 +29,7 @@ return [
         'Palette',
         'Rolle',
         'VE',      // Verpackungseinheit
+        'Pauschal',
+        'RP',      // Rechenposten
     ],
 ];

@@ -46,7 +46,7 @@
                 <th style="padding:{{ $cp }}; text-align:center; width:6%; font-weight:600; font-size:{{ $fs }}px; border-right:1px solid {{ $thBordCol }};">Pos.</th>
             @endif
             @if($showItemCodes)
-                <th style="padding:{{ $cp }}; text-align:left; width:12%; font-weight:600; font-size:{{ $fs }}px; border-right:1px solid {{ $thBordCol }};">Produkt-Nr.</th>
+                <th style="padding:{{ $cp }}; text-align:left; width:12%; font-weight:600; font-size:{{ $fs }}px; white-space:nowrap; border-right:1px solid {{ $thBordCol }};">Produkt-Nr.</th>
             @endif
             <th style="padding:{{ $cp }}; text-align:left; font-weight:600; font-size:{{ $fs }}px; border-right:1px solid {{ $thBordCol }};">Beschreibung</th>
             @if($showUnit)

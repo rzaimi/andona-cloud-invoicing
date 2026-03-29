@@ -59,6 +59,8 @@ class Invoice extends Model
         'total',
         'notes',
         'bauvorhaben',
+        'auftragsnummer',
+        'abschlag_refs',
         'payment_method',
         'payment_terms',
         'layout_id',
@@ -91,6 +93,7 @@ class Invoice extends Model
         'last_reminder_sent_at' => 'datetime',
         'reminder_history'     => 'array',
         'company_snapshot'     => 'array',
+        'abschlag_refs'        => 'array',
         'is_correction'        => 'boolean',
         'corrected_at'         => 'datetime',
     ];
@@ -239,6 +242,23 @@ class Invoice extends Model
         }
         
         return $invoice;
+    }
+
+    /**
+     * Sum of all linked Abschlagsrechnung amounts (brutto).
+     */
+    public function getAbschlagTotalAttribute(): float
+    {
+        return collect($this->abschlag_refs ?? [])->sum('amount');
+    }
+
+    /**
+     * Amount still owed after deducting all Abschlagsrechnungen.
+     * Only meaningful for Schlussrechnung.
+     */
+    public function getRemainingAmountAttribute(): float
+    {
+        return max(0.0, (float) $this->total - $this->abschlag_total);
     }
 
     /**

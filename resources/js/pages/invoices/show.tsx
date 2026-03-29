@@ -246,6 +246,12 @@ export default function InvoicesShow() {
                                             <div className="font-medium">{invoice.bauvorhaben}</div>
                                         </div>
                                     )}
+                                    {invoice.auftragsnummer && (
+                                        <div>
+                                            <div className="text-sm text-gray-600">Auftragsnummer</div>
+                                            <div className="font-medium">{invoice.auftragsnummer}</div>
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -387,6 +393,33 @@ export default function InvoicesShow() {
                                             <span>Rechnungsbetrag</span>
                                             <span>{formatCurrency((Number(invoice.total) || 0) + (Number(invoice.reminder_fee) || 0))}</span>
                                         </div>
+
+                                        {/* Abschlag deductions for Schlussrechnung */}
+                                        {(invoice as any).invoice_type === "schlussrechnung" &&
+                                            Array.isArray((invoice as any).abschlag_refs) &&
+                                            (invoice as any).abschlag_refs.length > 0 && (() => {
+                                                const refs = (invoice as any).abschlag_refs as Array<{ invoice_id: string; number: string; amount: number; date: string }>
+                                                const abschlagTotal = refs.reduce((s, r) => s + r.amount, 0)
+                                                const remaining = Math.max(0, Number(invoice.total) - abschlagTotal)
+                                                return (
+                                                    <div className="mt-4 pt-3 border-t space-y-2">
+                                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                                            Abzügl. Abschlagsrechnungen
+                                                        </p>
+                                                        {refs.map((r) => (
+                                                            <div key={r.invoice_id} className="flex justify-between text-sm text-muted-foreground">
+                                                                <span>./. {r.number}{r.date ? ` (${new Date(r.date).toLocaleDateString("de-DE")})` : ""}</span>
+                                                                <span className="tabular-nums text-red-600">−{formatCurrency(r.amount)}</span>
+                                                            </div>
+                                                        ))}
+                                                        <div className="flex justify-between pt-2 border-t font-bold text-base">
+                                                            <span>Verbleibender Betrag</span>
+                                                            <span className="tabular-nums">{formatCurrency(remaining)}</span>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })()
+                                        }
                                     </div>
                                 </div>
                             </CardContent>

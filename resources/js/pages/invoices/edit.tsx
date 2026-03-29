@@ -12,7 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Trash2, FileText, FileCheck, ChevronDown, XCircle, Download, ExternalLink } from "lucide-react"
+import axios from "axios"
 import AppLayout from "@/layouts/app-layout"
+import { AbschlagSelectionDialog } from "@/components/abschlag-selection-dialog"
+import type { AbschlagRef, SelectableAbschlag } from "@/components/abschlag-selection-dialog"
 import { useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer, Invoice, InvoiceItem } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
@@ -91,6 +94,8 @@ export default function InvoicesEdit() {
         due_date: invoice.due_date?.split('T')[0] || invoice.due_date,
         notes: invoice.notes || "",
         bauvorhaben: (invoice as any).bauvorhaben || "",
+        auftragsnummer: invoice.auftragsnummer || "",
+        abschlag_refs: (invoice as any).abschlag_refs || [],
         layout_id: invoice.layout_id?.toString() || "",
         status: invoice.status,
         vat_regime: invoice.vat_regime || "standard",
@@ -121,6 +126,33 @@ export default function InvoicesEdit() {
         tax_amount: 0,
         total: 0,
     })
+
+    const [selectableAbschlaege, setSelectableAbschlaege] = useState<SelectableAbschlag[]>([])
+    const [loadingAbschlaege, setLoadingAbschlaege] = useState(false)
+
+    useEffect(() => {
+        if (data.invoice_type !== "schlussrechnung" || !data.customer_id) {
+            setSelectableAbschlaege([])
+            return
+        }
+        setLoadingAbschlaege(true)
+        axios.get(`/invoices/selectable-abschlaege?customer_id=${data.customer_id}&exclude_invoice_id=${invoice.id}`)
+            .then((res) => setSelectableAbschlaege(res.data))
+            .catch(() => setSelectableAbschlaege([]))
+            .finally(() => setLoadingAbschlaege(false))
+    }, [data.invoice_type, data.customer_id])
+
+    const toggleAbschlag = (abschlag: SelectableAbschlag) => {
+        const existing = (data.abschlag_refs as AbschlagRef[]).find((r) => r.invoice_id === abschlag.id)
+        if (existing) {
+            setData("abschlag_refs", (data.abschlag_refs as AbschlagRef[]).filter((r) => r.invoice_id !== abschlag.id))
+        } else {
+            setData("abschlag_refs", [
+                ...(data.abschlag_refs as AbschlagRef[]),
+                { invoice_id: abschlag.id, number: abschlag.number, amount: abschlag.amount, date: abschlag.date },
+            ])
+        }
+    }
 
     // Skonto live preview
     const skontoAmount = data.skonto_percent && totals.total
@@ -502,6 +534,19 @@ export default function InvoicesEdit() {
                                 </div>
 
                                 <div className="space-y-2">
+                                    <Label htmlFor="auftragsnummer">Auftragsnummer</Label>
+                                    <Input
+                                        id="auftragsnummer"
+                                        type="text"
+                                        value={data.auftragsnummer}
+                                        onChange={(e) => setData("auftragsnummer", e.target.value)}
+                                        placeholder="z.B. AUF-2026-0042"
+                                        disabled={!canEdit}
+                                    />
+                                    {errors.auftragsnummer && <p className="text-red-600 text-sm">{errors.auftragsnummer}</p>}
+                                </div>
+
+                                <div className="space-y-2">
                                     <Label htmlFor="vat_regime">Umsatzsteuer-Regelung *</Label>
                                     <Select value={data.vat_regime} onValueChange={(value) => setData("vat_regime", value)} disabled={!canEdit}>
                                         <SelectTrigger>
@@ -638,6 +683,26 @@ export default function InvoicesEdit() {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Abschlagsrechnungen selector – only for Schlussrechnung */}
+                            {data.invoice_type === "schlussrechnung" && (
+                                <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+                                    <p className="font-medium text-sm">Verknüpfte Abschlagsrechnungen</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Wähle die Abschlagsrechnungen aus, die in dieser Schlussrechnung abgezogen werden sollen.
+                                    </p>
+                                    <AbschlagSelectionDialog
+                                        abschlaege={selectableAbschlaege}
+                                        selected={data.abschlag_refs as AbschlagRef[]}
+                                        onToggle={toggleAbschlag}
+                                        loading={loadingAbschlaege}
+                                        disabled={!canEdit}
+                                        noCustomer={!data.customer_id}
+                                        totalAmount={totals.total}
+                                    />
+                                </div>
+                            )}
+
                             <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
                                 <div>
                                     <p className="font-medium text-sm">Skonto (Zahlungsrabatt)</p>
@@ -796,9 +861,9 @@ export default function InvoicesEdit() {
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Select value={item.unit} onValueChange={(value) => updateItem(item.id, "unit", value)} disabled={!canEdit}>
-                                                        <SelectTrigger>
-                                                            <SelectValue />
+                                                    <Select value={item.unit || ""} onValueChange={(value) => updateItem(item.id, "unit", value)} disabled={!canEdit}>
+                                                        <SelectTrigger className={formErrors[`items.${index}.unit`] ? "border-red-500 focus:ring-red-500" : ""}>
+                                                            <SelectValue placeholder="Einheit wählen…" />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {germanUnits.map((unit) => (
@@ -806,8 +871,14 @@ export default function InvoicesEdit() {
                                                                     {unit}
                                                                 </SelectItem>
                                                             ))}
+                                                            {item.unit && !germanUnits.includes(item.unit) && (
+                                                                <SelectItem value={item.unit}>{item.unit}</SelectItem>
+                                                            )}
                                                         </SelectContent>
                                                     </Select>
+                                                    {formErrors[`items.${index}.unit`] && (
+                                                        <p className="text-red-600 text-xs mt-1">Einheit wählen</p>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Select 

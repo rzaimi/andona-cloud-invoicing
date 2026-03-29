@@ -211,6 +211,15 @@ export interface Invoice {
     service_period_start?: string
     service_period_end?: string
     bauvorhaben?: string
+    auftragsnummer?: string
+    abschlag_refs?: Array<{
+        invoice_id: string
+        number: string
+        amount: number
+        date: string
+    }>
+    invoice_type?: string
+    sequence_number?: number
     notes?: string
     payment_method?: string
     payment_terms?: string

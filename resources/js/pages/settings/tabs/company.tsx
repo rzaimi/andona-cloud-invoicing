@@ -52,8 +52,12 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
         offer_next_counter:     settings?.offer_next_counter     ?? 1,
         customer_number_format: settings?.customer_number_format || "KU-{YYYY}-{####}",
         customer_next_counter:  settings?.customer_next_counter  ?? 1,
-        product_number_format: settings?.product_number_format || "PR-{YYYY}-{####}",
-        product_next_counter:   settings?.product_next_counter  ?? 1,
+        product_number_format:   settings?.product_number_format   || "PR-{YYYY}-{####}",
+        product_next_counter:    settings?.product_next_counter   ?? 1,
+        abschlag_number_format:  settings?.abschlag_number_format || "AR-{YYYY}-{####}",
+        abschlag_next_counter:   settings?.abschlag_next_counter  ?? 1,
+        schluss_number_format:   settings?.schluss_number_format  || "SR-{YYYY}-{####}",
+        schluss_next_counter:    settings?.schluss_next_counter   ?? 1,
         date_format: settings?.date_format || "d.m.Y",
         payment_terms: settings?.payment_terms || 14,
         decimal_separator: settings?.decimal_separator || ",",
@@ -352,6 +356,70 @@ export default function CompanySettingsTab({ company, settings }: CompanySetting
                             {errors.product_next_counter && <p className="text-red-600 text-sm">{errors.product_next_counter}</p>}
                         </div>
                     </div>
+                    {/* Abschlagsrechnung */}
+                    <div className="grid grid-cols-[1fr_120px] gap-3 items-start">
+                        <div className="space-y-1">
+                            <Label htmlFor="abschlag_number_format">Abschlagsrechnung</Label>
+                            <Input
+                                id="abschlag_number_format"
+                                value={data.abschlag_number_format}
+                                onChange={(e) => setData("abschlag_number_format", e.target.value)}
+                                maxLength={60}
+                                placeholder="AR-{YYYY}-{####}"
+                            />
+                            {data.abschlag_number_format && (
+                                <p className="text-xs text-muted-foreground">
+                                    Vorschau: <span className="font-mono font-medium">{previewNumberFormat(data.abschlag_number_format, data.abschlag_next_counter)}</span>
+                                </p>
+                            )}
+                            {errors.abschlag_number_format && <p className="text-red-600 text-sm">{errors.abschlag_number_format}</p>}
+                        </div>
+                        <div className="space-y-1">
+                            <Label htmlFor="abschlag_next_counter">&nbsp;</Label>
+                            <Input
+                                id="abschlag_next_counter"
+                                type="number"
+                                min="1"
+                                max="999999"
+                                value={data.abschlag_next_counter}
+                                onChange={(e) => setData("abschlag_next_counter", parseInt(e.target.value) || 1)}
+                            />
+                            {errors.abschlag_next_counter && <p className="text-red-600 text-sm">{errors.abschlag_next_counter}</p>}
+                        </div>
+                    </div>
+
+                    {/* Schlussrechnung */}
+                    <div className="grid grid-cols-[1fr_120px] gap-3 items-start">
+                        <div className="space-y-1">
+                            <Label htmlFor="schluss_number_format">Schlussrechnung</Label>
+                            <Input
+                                id="schluss_number_format"
+                                value={data.schluss_number_format}
+                                onChange={(e) => setData("schluss_number_format", e.target.value)}
+                                maxLength={60}
+                                placeholder="SR-{YYYY}-{####}"
+                            />
+                            {data.schluss_number_format && (
+                                <p className="text-xs text-muted-foreground">
+                                    Vorschau: <span className="font-mono font-medium">{previewNumberFormat(data.schluss_number_format, data.schluss_next_counter)}</span>
+                                </p>
+                            )}
+                            {errors.schluss_number_format && <p className="text-red-600 text-sm">{errors.schluss_number_format}</p>}
+                        </div>
+                        <div className="space-y-1">
+                            <Label htmlFor="schluss_next_counter">&nbsp;</Label>
+                            <Input
+                                id="schluss_next_counter"
+                                type="number"
+                                min="1"
+                                max="999999"
+                                value={data.schluss_next_counter}
+                                onChange={(e) => setData("schluss_next_counter", parseInt(e.target.value) || 1)}
+                            />
+                            {errors.schluss_next_counter && <p className="text-red-600 text-sm">{errors.schluss_next_counter}</p>}
+                        </div>
+                    </div>
+
                     <p className="text-xs text-muted-foreground pt-1">
                         * Die nächste Nummer kann nur erhöht werden — sie wird nie kleiner als die höchste bereits vergebene Nummer.
                     </p>

@@ -1,12 +1,9 @@
-{{-- Minimal: Thin top rule, bare typography, plain meta rows (from invoice-minimal.html) --}}
+{{-- Minimal: Ultra-clean, whitespace-focused, bare typography --}}
 @php
     $ls      = $layoutSettings;
     $primary = $ls['colors']['primary']   ?? '#111111';
-    $mid     = $ls['colors']['secondary'] ?? '#555555';
-    $soft    = $ls['colors']['secondary'] ?? '#999999';
-    $border  = '#e0e0e0';
-    $bg      = $ls['colors']['accent']    ?? '#fafafa';
-    $white   = '#ffffff';
+    $soft    = $ls['colors']['secondary'] ?? '#888888';
+    $border  = '#dedede';
     $fs      = $bodyFontSize;
 
     // Logo
@@ -26,163 +23,126 @@
     $invoiceTypeLabel = $isCorrection
         ? 'Stornorechnung'
         : getReadableInvoiceType($invoice->invoice_type ?? 'standard', $invoice->sequence_number ?? null);
-    $customer         = $invoice->customer ?? null;
-    $skontoAmount     = (float)($invoice->skonto_amount ?? 0);
-    $hasSkonto        = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
+    $customer     = $invoice->customer ?? null;
+    $bankIban     = $snapshot['bank_iban'] ?? null;
+    $bankBic      = $snapshot['bank_bic']  ?? null;
+    $bankName     = $snapshot['bank_name'] ?? null;
 
-    $issueDateFmt = $invoice->issue_date ? formatInvoiceDate($invoice->issue_date, $dateFormat ?? 'd.m.Y') : null;
-    $dueDateFmt   = $invoice->due_date   ? formatInvoiceDate($invoice->due_date,   $dateFormat ?? 'd.m.Y') : null;
-
-    $servicePeriodStart = $invoice->service_period_start ?? null;
-    $servicePeriodEnd   = $invoice->service_period_end   ?? null;
-    $hasPeriod = $servicePeriodStart || $servicePeriodEnd;
-    $periodStr = '';
-    if ($hasPeriod) {
-        $periodStr = trim(
-            ($servicePeriodStart ? formatInvoiceDate($servicePeriodStart, $dateFormat ?? 'd.m.Y') : '') .
-            ($servicePeriodStart && $servicePeriodEnd ? ' – ' : '') .
-            ($servicePeriodEnd   ? formatInvoiceDate($servicePeriodEnd,   $dateFormat ?? 'd.m.Y') : '')
-        );
-    }
-
-    $bankIban = $snapshot['bank_iban'] ?? null;
-    $bankBic  = $snapshot['bank_bic']  ?? null;
-    $bankName = $snapshot['bank_name'] ?? null;
-
-    // Items table: no header bg, only rules
-    $tableHeaderBg        = null;
-    $tableHeaderTextColor = $mid;
-    $tableHeaderStyle     = "border-top:0.5mm solid {$primary}; border-bottom:0.2mm solid {$primary};";
-    $altRowBg             = null;
-    $cellPadding          = '6px 5px';
-    $showRowNumber        = $ls['content']['show_row_number'] ?? false;
-    $totalRowBg           = $primary;
-    $totalRowTextColor    = '#ffffff';
-    $tableWidth           = '280px';
-@endphp
-
-<div class="container" style="padding:0; font-family:{{ $ls['fonts']['body'] ?? 'DejaVu Sans' }},sans-serif; font-size:{{ $fs }}px; color:{{ $primary }};">
-
-{{-- Thin top rule --}}
-<div style="height:0.5mm; background-color:{{ $primary }}; width:100%;"></div>
-
-{{-- HEADER: logo --}}
-@php
+    // Logo position
     $logoPos  = $ls['branding']['logo_position'] ?? 'top-left';
-    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:14mm; max-width:48mm; display:block;">' : '';
+    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:12mm; max-width:45mm; display:block;">' : '';
     [$colL, $colC, $colR] = match($logoPos) {
         'top-center' => ['', $logoCell, ''],
         'top-right'  => ['', '', $logoCell],
         default      => [$logoCell, '', ''],
     };
+
+    // Table style vars for items-table partial
+    $tableHeaderBg        = null;
+    $tableHeaderTextColor = $soft;
+    $tableHeaderStyle     = "border-top:0.4mm solid {$primary}; border-bottom:0.2mm solid {$border};";
+    $altRowBg             = null;
+    $cellPadding          = '5px 4px';
+    $showRowNumber        = $ls['content']['show_row_number'] ?? false;
+    $totalRowBg           = $primary;
+    $totalRowTextColor    = '#ffffff';
+    $tableWidth           = '270px';
 @endphp
-<table style="width:100%; border-collapse:collapse; border-bottom:0.2mm solid {{ $border }};">
-<tr>
-    <td style="padding:8mm 0 8mm 22mm; vertical-align:bottom; width:40%;">{!! $colL !!}</td>
-    <td style="padding:8mm 0; vertical-align:bottom; text-align:center; width:20%;">{!! $colC !!}</td>
-    <td style="padding:8mm 22mm 8mm 0; vertical-align:bottom; width:40%;">{!! $colR !!}</td>
-</tr>
-</table>
 
-{{-- CONTENT --}}
-<div style="padding:0 22mm;">
+<div class="container" style="padding:0; font-family:{{ $ls['fonts']['body'] ?? 'DejaVu Sans' }},sans-serif; font-size:{{ $fs }}px; color:{{ $primary }};">
 
-{{-- Address zone + meta list --}}
-<table style="width:100%; border-collapse:collapse; margin-top:6mm;">
+{{-- Thin accent top bar --}}
+<div style="height:0.4mm; background:{{ $primary }}; width:100%;"></div>
+
+{{-- HEADER --}}
+<div style="padding:6mm 20mm 5mm 20mm;">
+    <table style="width:100%; border-collapse:collapse;">
+    <tr>
+        <td style="width:40%; vertical-align:bottom;">{!! $colL !!}</td>
+        <td style="width:20%; vertical-align:bottom; text-align:center;">{!! $colC !!}</td>
+        <td style="width:40%; vertical-align:bottom; text-align:right;">{!! $colR !!}</td>
+    </tr>
+    </table>
+</div>
+
+{{-- ADDRESS + META --}}
+<div style="padding:0 20mm;">
+<table style="width:100%; border-collapse:collapse; margin-top:3mm;">
 <tr>
-    <td style="width:88mm; vertical-align:top; padding-right:6mm;">
+    {{-- Customer address --}}
+    <td style="width:90mm; vertical-align:top; padding-right:6mm;">
         @if($ls['content']['show_company_address'] ?? true)
         @php
             $retParts = array_filter([$snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
-            $retLine  = implode(' · ', $retParts);
         @endphp
-        <div style="font-size:7pt; color:{{ $soft }}; border-bottom:0.2mm solid {{ $border }}; padding-bottom:1.5mm; margin-bottom:2mm; line-height:1;">
-            {{ $retLine }}
+        <div style="font-size:6.5pt; color:{{ $soft }}; padding-bottom:1.5mm; margin-bottom:2.5mm; border-bottom:0.2mm solid {{ $border }}; line-height:1;">
+            {{ implode(' · ', $retParts) }}
         </div>
         @endif
         @if($customer)
-        <div style="font-size:{{ $fs }}px; line-height:1.6;">
-            @if($customer->name ?? null)<strong style="font-weight:500;">{{ $customer->name }}</strong><br>@endif
-            @if($customer->contact_person ?? null){{ $customer->contact_person }}<br>@endif
+        <div style="font-size:{{ $fs }}px; line-height:1.7;">
+            @if($customer->name ?? null)<span style="font-weight:600;">{{ $customer->name }}</span><br>@endif
+            @if($customer->contact_person ?? null)<span style="color:{{ $soft }};">{{ $customer->contact_person }}</span><br>@endif
             @if($customer->address ?? null){{ $customer->address }}<br>@endif
-            @if(($customer->postal_code ?? null) || ($customer->city ?? null)){{ $customer->postal_code ?? '' }} {{ $customer->city ?? '' }}
+            @if(($customer->postal_code ?? null) || ($customer->city ?? null)){{ trim(($customer->postal_code ?? '').' '.($customer->city ?? '')) }}@endif
             @if(($customer->country ?? null) && $customer->country !== 'DE')<br>{{ $customer->country }}@endif
-            @endif
         </div>
         @endif
     </td>
-    {{-- Plain meta list --}}
-    <td style="width:58mm; vertical-align:top;">
+    {{-- Invoice meta --}}
+    <td style="width:55mm; vertical-align:top;">
         @include('pdf.invoice-partials.details', [
             'detailsLabelColor'  => $soft,
             'detailsBorderColor' => $border,
-            'detailsPad'         => '1.2mm 0',
+            'detailsPad'         => '1.5mm 0',
             'detailsFontSize'    => $fs - 1,
         ])
     </td>
 </tr>
 </table>
 
-{{-- Subject --}}
-@if($ls['content']['show_subject'] ?? true)
-<div style="margin-top:9mm;">
-    <div style="font-size:{{ $fs + 2 }}px; color:{{ $primary }}; font-style:italic;">
-        {{ $invoiceTypeLabel }} {{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}
-    </div>
+{{-- Title --}}
+<div style="margin-top:8mm; padding-bottom:2mm; border-bottom:0.2mm solid {{ $border }};">
+    <span style="font-size:{{ $fs + 3 }}px; font-weight:600; letter-spacing:-0.3px;">{{ $invoiceTypeLabel }}</span>
+    <span style="font-size:{{ $fs + 1 }}px; color:{{ $soft }}; margin-left:3mm;">{{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}</span>
 </div>
-@endif
 
 {{-- Salutation --}}
 @if($ls['content']['show_salutation'] ?? true)
-<div style="margin-top:5mm; font-size:{{ $fs }}px; line-height:1.7; font-weight:300;">
-    @if($invoice->salutation ?? null)
-        {!! nl2br(e($invoice->salutation)) !!}
-    @else
-        Sehr geehrte Damen und Herren,<br><br>
-        für die erbrachten Leistungen erlauben wir uns, folgende Rechnung zu stellen.
-    @endif
-</div>
+@if($invoice->salutation ?? null)
+<div style="margin-top:5mm; font-size:{{ $fs }}px; line-height:1.7;">{!! nl2br(e($invoice->salutation)) !!}</div>
+@endif
 @endif
 
 {{-- Items --}}
+<div style="margin-top:5mm;">
 @include('pdf.invoice-partials.items-table')
+</div>
 
 {{-- Totals --}}
+<div style="margin-top:4mm;">
 @include('pdf.invoice-partials.totals')
+</div>
 
-{{-- Payment: two sections side by side --}}
-<table style="width:100%; border-collapse:collapse; margin-top:8mm;">
-<tr>
-    <td style="width:50%; padding-right:3mm; vertical-align:top; border-top:0.5mm solid {{ $primary }}; padding-top:3mm;">
-        <div style="font-size:{{ $fs - 2 }}px; text-transform:uppercase; letter-spacing:1.2px; color:{{ $soft }}; margin-bottom:2mm; font-weight:500;">Bankverbindung</div>
-        @if($bankIban)<div style="font-size:{{ $fs - 1 }}px; line-height:1.6;"><span style="color:{{ $soft }}; font-weight:300;">IBAN </span><strong style="font-weight:500;">{{ $bankIban }}</strong></div>@endif
-        @if($bankBic)<div style="font-size:{{ $fs - 1 }}px; line-height:1.6;"><span style="color:{{ $soft }}; font-weight:300;">BIC </span><strong style="font-weight:500;">{{ $bankBic }}</strong></div>@endif
-        @if($bankName)<div style="font-size:{{ $fs - 1 }}px; line-height:1.6;"><span style="color:{{ $soft }}; font-weight:300;">Bank </span><strong style="font-weight:500;">{{ $bankName }}</strong></div>@endif
-        <div style="font-size:{{ $fs - 1 }}px; line-height:1.6; margin-top:1mm;"><span style="color:{{ $soft }}; font-weight:300;">Verwendungszweck </span><strong style="font-weight:500;">{{ $invoice->number }}</strong></div>
-    </td>
-    <td style="width:50%; padding-left:3mm; vertical-align:top; border-top:0.2mm solid {{ $border }}; padding-top:3mm;">
-        <div style="font-size:{{ $fs - 2 }}px; text-transform:uppercase; letter-spacing:1.2px; color:{{ $soft }}; margin-bottom:2mm; font-weight:500;">Zahlungsbedingungen</div>
-        <div style="font-size:{{ $fs - 1 }}px; font-weight:300; line-height:1.6;">
-            @include('pdf.invoice-partials.payment-terms')
-        </div>
-    </td>
-</tr>
-</table>
+{{-- Bank info (single compact row) --}}
+@if(($ls['content']['show_bank_details'] ?? true) && ($bankIban || $bankBic))
+<div style="margin-top:7mm; padding-top:3mm; border-top:0.2mm solid {{ $border }}; font-size:{{ $fs - 1 }}px; color:{{ $soft }}; line-height:1.8;">
+    @if($bankIban)<span style="margin-right:5mm;"><strong style="color:{{ $primary }}; font-weight:500;">IBAN</strong> {{ $bankIban }}</span>@endif
+    @if($bankBic)<span style="margin-right:5mm;"><strong style="color:{{ $primary }}; font-weight:500;">BIC</strong> {{ $bankBic }}</span>@endif
+    @if($bankName)<span><strong style="color:{{ $primary }}; font-weight:500;">Bank</strong> {{ $bankName }}</span>@endif
+    <span style="margin-left:5mm;"><strong style="color:{{ $primary }}; font-weight:500;">VWZ</strong> {{ $invoice->number }}</span>
+</div>
+@endif
 
-{{-- Closing --}}
-@if($ls['content']['show_closing'] ?? true)
-<div style="margin-top:8mm; font-size:{{ $fs }}px; line-height:1.7; font-weight:300;">
-    @if($invoice->closing ?? null)
-        {!! nl2br(e($invoice->closing)) !!}
-    @else
-        Für Rückfragen stehe ich Ihnen jederzeit gerne zur Verfügung.<br><br>
-        Mit freundlichen Grüßen
-    @endif
-    @if($ls['content']['show_signature'] ?? true)
-    <div style="margin-top:4mm; font-weight:500; font-size:{{ $fs }}px;">
-        {{ $snapshot['name'] ?? '' }}
-    </div>
-    @endif
+{{-- Notes --}}
+@if(($ls['content']['show_notes'] ?? true) && !empty($invoice->notes))
+<div style="margin-top:5mm; font-size:{{ $fs - 1 }}px; color:{{ $soft }}; line-height:1.6; white-space:pre-wrap;">{{ $invoice->notes }}</div>
+@endif
+
+{{-- Payment terms (single line) --}}
+@if($ls['content']['show_payment_terms'] ?? true)
+<div style="margin-top:4mm; font-size:{{ $fs - 1 }}px; color:{{ $soft }};">
+    @include('pdf.invoice-partials.payment-terms')
 </div>
 @endif
 

@@ -104,20 +104,25 @@ class InvoiceController extends Controller
             ->orderBy('name')
             ->get();
 
-        $svc        = new NumberFormatService();
-        $format     = $svc->normaliseToFormat(
-            $company->getSetting('invoice_number_format')
-                ?? $company->getSetting('invoice_prefix', 'RE-')
-        );
-        $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
-        $nextNumber = $svc->next($format, Invoice::where('company_id', $companyId)->pluck('number'), null, $minCounter);
+        $svc         = new NumberFormatService();
+        $allNumbers  = Invoice::where('company_id', $companyId)->pluck('number');
+
+        $stdFormat   = $svc->normaliseToFormat($company->getSetting('invoice_number_format') ?? $company->getSetting('invoice_prefix', 'RE-'));
+        $arFormat    = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
+        $srFormat    = $svc->normaliseToFormat($company->getSetting('schluss_number_format')  ?? 'SR-{YYYY}-{####}');
+
+        $nextNumbers = [
+            'standard'        => $svc->next($stdFormat, $allNumbers, null, (int) ($company->getSetting('invoice_next_counter') ?? 1)),
+            'abschlagsrechnung' => $svc->next($arFormat, $allNumbers, null, (int) ($company->getSetting('abschlag_next_counter') ?? 1)),
+            'schlussrechnung' => $svc->next($srFormat, $allNumbers, null, (int) ($company->getSetting('schluss_next_counter') ?? 1)),
+        ];
 
         return Inertia::render('invoices/create', [
-            'customers'  => $customers,
-            'layouts'    => $layouts,
-            'products'   => $products,
-            'nextNumber' => $nextNumber,
-            'settings'   => $company->getDefaultSettings(),
+            'customers'   => $customers,
+            'layouts'     => $layouts,
+            'products'    => $products,
+            'nextNumbers' => $nextNumbers,
+            'settings'    => $company->getDefaultSettings(),
         ]);
     }
 
@@ -134,11 +139,18 @@ class InvoiceController extends Controller
             'due_date'             => 'required|date|after_or_equal:issue_date',
             'notes'                => 'nullable|string',
             'bauvorhaben'          => 'nullable|string|max:255',
+            'auftragsnummer'       => 'nullable|string|max:100',
             'layout_id'            => 'nullable|exists:invoice_layouts,id',
             'vat_regime'           => 'required|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
             // Rechnungstyp
             'invoice_type'     => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
             'sequence_number'  => 'nullable|integer|between:1,20',
+            // Abschlagsrechnungen linked to a Schlussrechnung
+            'abschlag_refs'                  => 'nullable|array',
+            'abschlag_refs.*.invoice_id'     => 'required_with:abschlag_refs|string',
+            'abschlag_refs.*.number'         => 'required_with:abschlag_refs|string',
+            'abschlag_refs.*.amount'         => 'required_with:abschlag_refs|numeric|min:0',
+            'abschlag_refs.*.date'           => 'required_with:abschlag_refs|date',
             // Skonto
             'skonto_percent'   => 'nullable|numeric|in:2,3,4,5',
             'skonto_days'      => 'nullable|integer|in:7,10,14',
@@ -148,10 +160,13 @@ class InvoiceController extends Controller
             'items.*.description'      => 'required|string',
             'items.*.quantity'         => 'required|numeric|min:0.01',
             'items.*.unit_price'       => 'required|numeric|min:0',
-            'items.*.unit'             => 'nullable|string|max:10',
+            'items.*.unit'             => 'required|string|max:50',
             'items.*.tax_rate'         => 'nullable|numeric|min:0|max:1',
             'items.*.discount_type'    => 'nullable|in:percentage,fixed',
             'items.*.discount_value'   => 'nullable|numeric|min:0',
+        ], [
+            'items.*.unit.required' => 'Bitte wählen Sie für jede Position eine Einheit aus.',
+            'items.*.unit.max'      => 'Die Einheit darf maximal 50 Zeichen lang sein.',
         ]);
 
         // Business rule: Abschlagsrechnung requires sequence_number; others must not have one
@@ -180,13 +195,21 @@ class InvoiceController extends Controller
                 }
             }
 
-            // Generate invoice number using dynamic format setting
-            $svc    = new NumberFormatService();
-            $format = $svc->normaliseToFormat(
-                $company->getSetting('invoice_number_format')
-                    ?? $company->getSetting('invoice_prefix', 'RE-')
-            );
-            $invoiceNumber = $svc->next($format, Invoice::where('company_id', $effectiveCompanyId)->pluck('number'));
+            // Generate invoice number using the format for the selected invoice type
+            $svc       = new NumberFormatService();
+            $allNums   = Invoice::where('company_id', $effectiveCompanyId)->pluck('number');
+            $invType   = $validated['invoice_type'] ?? 'standard';
+            if ($invType === 'abschlagsrechnung') {
+                $format     = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
+                $minCounter = (int) ($company->getSetting('abschlag_next_counter') ?? 1);
+            } elseif ($invType === 'schlussrechnung') {
+                $format     = $svc->normaliseToFormat($company->getSetting('schluss_number_format') ?? 'SR-{YYYY}-{####}');
+                $minCounter = (int) ($company->getSetting('schluss_next_counter') ?? 1);
+            } else {
+                $format     = $svc->normaliseToFormat($company->getSetting('invoice_number_format') ?? $company->getSetting('invoice_prefix', 'RE-'));
+                $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
+            }
+            $invoiceNumber = $svc->next($format, $allNums, null, $minCounter);
 
             // Create invoice
             $invoice = Invoice::create([
@@ -201,6 +224,10 @@ class InvoiceController extends Controller
                 'due_date'             => $validated['due_date'],
                 'notes'                => $validated['notes'],
                 'bauvorhaben'          => $validated['bauvorhaben'] ?? null,
+                'auftragsnummer'       => $validated['auftragsnummer'] ?? null,
+                'abschlag_refs'        => ($validated['invoice_type'] ?? 'standard') === 'schlussrechnung'
+                                             ? ($validated['abschlag_refs'] ?? null)
+                                             : null,
                 'layout_id'            => $validated['layout_id'],
                 'vat_regime'           => $validated['vat_regime'] ?? 'standard',
                 'tax_rate'             => ($validated['vat_regime'] ?? 'standard') === 'standard' ? $company->getSetting('tax_rate', 0.19) : 0,
@@ -338,12 +365,19 @@ class InvoiceController extends Controller
             'due_date'             => 'required|date|after_or_equal:issue_date',
             'notes'                => 'nullable|string',
             'bauvorhaben'          => 'nullable|string|max:255',
+            'auftragsnummer'       => 'nullable|string|max:100',
             'layout_id'            => 'nullable|exists:invoice_layouts,id',
             'status'               => 'required|in:draft,sent,paid,overdue,cancelled',
             'vat_regime'           => 'required|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
             // Rechnungstyp
             'invoice_type'    => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
             'sequence_number' => 'nullable|integer|between:1,20',
+            // Abschlagsrechnungen linked to a Schlussrechnung
+            'abschlag_refs'                  => 'nullable|array',
+            'abschlag_refs.*.invoice_id'     => 'required_with:abschlag_refs|string',
+            'abschlag_refs.*.number'         => 'required_with:abschlag_refs|string',
+            'abschlag_refs.*.amount'         => 'required_with:abschlag_refs|numeric|min:0',
+            'abschlag_refs.*.date'           => 'required_with:abschlag_refs|date',
             // Skonto
             'skonto_percent'  => 'nullable|numeric|in:2,3,4,5',
             'skonto_days'     => 'nullable|integer|in:7,10,14',
@@ -353,10 +387,13 @@ class InvoiceController extends Controller
             'items.*.description'    => 'required|string',
             'items.*.quantity'       => 'required|numeric|min:0.01',
             'items.*.unit_price'     => 'required|numeric|min:0',
-            'items.*.unit'           => 'nullable|string|max:10',
+            'items.*.unit'           => 'required|string|max:50',
             'items.*.tax_rate'       => 'nullable|numeric|min:0|max:1',
             'items.*.discount_type'  => 'nullable|in:percentage,fixed',
             'items.*.discount_value' => 'nullable|numeric|min:0',
+        ], [
+            'items.*.unit.required' => 'Bitte wählen Sie für jede Position eine Einheit aus.',
+            'items.*.unit.max'      => 'Die Einheit darf maximal 50 Zeichen lang sein.',
         ]);
 
         if (($validated['invoice_type'] ?? 'standard') === 'abschlagsrechnung') {
@@ -407,6 +444,10 @@ class InvoiceController extends Controller
                 'due_date'             => $validated['due_date'],
                 'notes'                => $validated['notes'],
                 'bauvorhaben'          => $validated['bauvorhaben'] ?? null,
+                'auftragsnummer'       => $validated['auftragsnummer'] ?? null,
+                'abschlag_refs'        => ($validated['invoice_type'] ?? 'standard') === 'schlussrechnung'
+                                             ? ($validated['abschlag_refs'] ?? null)
+                                             : null,
                 'layout_id'            => $validated['layout_id'],
                 'status'               => $validated['status'],
                 'vat_regime'           => $validated['vat_regime'] ?? 'standard',
@@ -1253,5 +1294,57 @@ class InvoiceController extends Controller
             Log::error('Invoice correction failed: ' . $e->getMessage());
             return back()->with('error', 'Fehler beim Erstellen der Stornorechnung: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Return Abschlagsrechnungen for a given customer that can be linked to a Schlussrechnung.
+     * Excludes invoices that are already referenced by another Schlussrechnung.
+     */
+    public function selectableAbschlaege(Request $request)
+    {
+        $companyId  = $this->getEffectiveCompanyId();
+        $customerId = $request->query('customer_id');
+        $excludeId  = $request->query('exclude_invoice_id'); // current Schlussrechnung being edited
+
+        $query = Invoice::forCompany($companyId)
+            ->where('invoice_type', 'abschlagsrechnung')
+            ->whereNotNull('customer_id');
+
+        if ($customerId) {
+            $query->where('customer_id', $customerId);
+        }
+
+        $abschlaege = $query
+            ->select('id', 'number', 'total', 'issue_date', 'sequence_number', 'status', 'bauvorhaben')
+            ->orderBy('sequence_number')
+            ->orderBy('issue_date')
+            ->get();
+
+        // Find IDs already claimed by any other Schlussrechnung
+        $allSchluss = Invoice::forCompany($companyId)
+            ->where('invoice_type', 'schlussrechnung')
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->whereNotNull('abschlag_refs')
+            ->pluck('abschlag_refs');
+
+        $claimedIds = collect($allSchluss)
+            ->flatten(1)
+            ->pluck('invoice_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        return response()->json(
+            $abschlaege->map(fn ($inv) => [
+                'id'              => $inv->id,
+                'number'          => $inv->number,
+                'amount'          => (float) $inv->total,
+                'date'            => $inv->issue_date?->format('Y-m-d'),
+                'sequence_number' => $inv->sequence_number,
+                'status'          => $inv->status,
+                'bauvorhaben'     => $inv->bauvorhaben,
+                'already_claimed' => $claimedIds->contains($inv->id),
+            ])
+        );
     }
 }

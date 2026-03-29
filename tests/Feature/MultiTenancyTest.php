@@ -591,11 +591,13 @@ class MultiTenancyTest extends TestCase
             'due_date' => now()->addDays(14)->format('Y-m-d'),
             'notes' => null,
             'layout_id' => null,
+            'vat_regime' => 'standard',
             'items' => [
                 [
                     'description' => 'Test Item',
                     'quantity' => 1,
                     'unit_price' => 100.00,
+                    'unit' => 'Stk.',
                     'tax_rate' => 0.19,
                 ],
             ],
@@ -605,6 +607,7 @@ class MultiTenancyTest extends TestCase
         
         $invoice = Invoice::where('customer_id', $this->customer1->id)
             ->where('number', 'like', 'RE-%')
+            ->where('status', 'draft')
             ->latest()
             ->first();
 
@@ -699,6 +702,7 @@ class MultiTenancyTest extends TestCase
                     'description' => 'Updated Item',
                     'quantity' => 1,
                     'unit_price' => 100.00,
+                    'unit' => 'Stk.',
                     'tax_rate' => 0.19,
                 ],
             ],
@@ -774,6 +778,7 @@ class MultiTenancyTest extends TestCase
                     'description' => 'Test Item',
                     'quantity' => 1,
                     'unit_price' => 100.00,
+                    'unit' => 'Stk.',
                     'tax_rate' => 0.19,
                 ],
             ],

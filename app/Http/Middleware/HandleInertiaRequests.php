@@ -148,6 +148,8 @@ class HandleInertiaRequests extends Middleware
                             'storno_number_format'   => $allSettings['storno_number_format']   ?? 'STORNO-{YYYY}-{####}',
                             'offer_number_format'    => $allSettings['offer_number_format']    ?? 'AN-{YYYY}-{####}',
                             'customer_number_format' => $allSettings['customer_number_format'] ?? 'KU-{YYYY}-{####}',
+                            'abschlag_number_format' => $allSettings['abschlag_number_format'] ?? 'AR-{YYYY}-{####}',
+                            'schluss_number_format'  => $allSettings['schluss_number_format']  ?? 'SR-{YYYY}-{####}',
                             // Legacy prefix keys kept for backward compat
                             'invoice_prefix'         => $allSettings['invoice_prefix'] ?? 'RE-',
                             'offer_prefix'           => $allSettings['offer_prefix']   ?? 'AN-',

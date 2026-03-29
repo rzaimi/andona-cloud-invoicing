@@ -39,6 +39,16 @@ trait ResizesCompanyLogo
         $newW  = (int) round($origW * $ratio);
         $newH  = (int) round($origH * $ratio);
 
+        // If already within limits and PNG, store directly without GD processing
+        if ($ratio >= 1.0 && str_contains($mime, 'png')) {
+            return $this->storeLogoFile($file->getRealPath(), $companyId);
+        }
+
+        // GD loads images fully uncompressed: width × height × 4 bytes per pixel.
+        // We need memory for both the source and destination canvas plus 20 % headroom.
+        $requiredBytes = (int) (($origW * $origH + $newW * $newH) * 4 * 1.2);
+        $previousLimit = $this->raiseMemoryIfNeeded($requiredBytes);
+
         // Load source with GD depending on MIME
         $src = match (true) {
             str_contains($mime, 'png')  => @imagecreatefrompng($srcPath),
@@ -46,6 +56,10 @@ trait ResizesCompanyLogo
             str_contains($mime, 'webp') => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($srcPath) : false,
             default                     => @imagecreatefromjpeg($srcPath),
         };
+
+        if ($previousLimit !== null) {
+            ini_set('memory_limit', $previousLimit);
+        }
 
         // GD failed to load the image — store the original as-is
         if (!$src) {
@@ -63,26 +77,85 @@ trait ResizesCompanyLogo
 
         // Write to a temporary PNG file
         $tmpPath = tempnam(sys_get_temp_dir(), 'logo_') . '.png';
-        imagepng($dst, $tmpPath, 6); // level 6 = good compression/speed balance
+        imagepng($dst, $tmpPath, 6);
 
         imagedestroy($src);
         imagedestroy($dst);
 
-        // Delete the existing logo file to avoid stale files
-        $existingFiles = Storage::disk('public')->files("tenants/{$companyId}/logo");
-        foreach ($existingFiles as $existing) {
-            Storage::disk('public')->delete($existing);
-        }
-
-        // Store from the temp file
-        $stored = Storage::disk('public')->putFileAs(
-            "tenants/{$companyId}/logo",
-            new File($tmpPath),
-            'logo.png'
-        );
+        $stored = $this->storeLogoFile($tmpPath, $companyId);
 
         @unlink($tmpPath);
 
         return $stored;
+    }
+
+    /**
+     * Delete existing logo files and store a new one from a local path.
+     */
+    private function storeLogoFile(string $localPath, string $companyId): string
+    {
+        $existing = Storage::disk('public')->files("tenants/{$companyId}/logo");
+        foreach ($existing as $f) {
+            Storage::disk('public')->delete($f);
+        }
+
+        return Storage::disk('public')->putFileAs(
+            "tenants/{$companyId}/logo",
+            new File($localPath),
+            'logo.png'
+        );
+    }
+
+    /**
+     * Temporarily raise the PHP memory limit if the current free memory is
+     * insufficient for the GD operation. Returns the previous limit string so
+     * the caller can restore it, or null if no change was needed.
+     */
+    private function raiseMemoryIfNeeded(int $requiredBytes): ?string
+    {
+        $currentLimitStr = ini_get('memory_limit');
+        $currentLimit    = $this->parseMemoryBytes($currentLimitStr);
+
+        // -1 means unlimited
+        if ($currentLimit === -1) {
+            return null;
+        }
+
+        $freeMemory = $currentLimit - memory_get_usage(true);
+
+        if ($freeMemory >= $requiredBytes) {
+            return null;
+        }
+
+        // Round up to the next 64 MB boundary above what we need
+        $needed      = memory_get_usage(true) + $requiredBytes;
+        $newLimit    = (int) (ceil($needed / (64 * 1024 * 1024)) * 64 * 1024 * 1024);
+        $newLimitStr = ($newLimit / (1024 * 1024)) . 'M';
+
+        ini_set('memory_limit', $newLimitStr);
+
+        return $currentLimitStr;
+    }
+
+    /**
+     * Parse a PHP memory_limit string (e.g. "128M", "1G") into bytes.
+     */
+    private function parseMemoryBytes(string $limit): int
+    {
+        $limit = trim($limit);
+
+        if ($limit === '-1') {
+            return -1;
+        }
+
+        $unit  = strtolower(substr($limit, -1));
+        $value = (int) $limit;
+
+        return match ($unit) {
+            'g'     => $value * 1024 * 1024 * 1024,
+            'm'     => $value * 1024 * 1024,
+            'k'     => $value * 1024,
+            default => $value,
+        };
     }
 }

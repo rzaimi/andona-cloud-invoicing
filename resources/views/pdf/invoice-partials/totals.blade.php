@@ -100,6 +100,9 @@
         <td style="padding: 8px 10px; text-align: right; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px; white-space: nowrap;">{{ number_format($invoice->total, 2, ',', '.') }} €</td>
     </tr>
 
+    {{-- Abschlag deductions (Schlussrechnung only) --}}
+    @include('pdf.invoice-partials.abschlag-deductions')
+
     {{-- Skonto rows --}}
     @if($hasSkonto)
         <tr style="color: #16a34a;">

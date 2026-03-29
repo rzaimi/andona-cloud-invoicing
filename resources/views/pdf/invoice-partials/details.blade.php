@@ -67,8 +67,14 @@
     @endif
     @if(!empty($invoice->bauvorhaben) && ($layoutSettings['content']['show_bauvorhaben'] ?? true))
     <tr>
-        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px;">BV</td>
-        <td style="padding:{{ $dtPad }}; font-weight:700; color:{{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};">{{ $invoice->bauvorhaben }}</td>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">BV</td>
+        <td style="padding:{{ $dtPad }}; font-weight:700; color:{{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }}; border-bottom:1px solid {{ $dtBC }};">{{ $invoice->bauvorhaben }}</td>
+    </tr>
+    @endif
+    @if(!empty($invoice->auftragsnummer) && ($layoutSettings['content']['show_auftragsnummer'] ?? true))
+    <tr>
+        <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px;">Auftragsnr.</td>
+        <td style="padding:{{ $dtPad }}; font-weight:600;">{{ $invoice->auftragsnummer }}</td>
     </tr>
     @endif
 </table>

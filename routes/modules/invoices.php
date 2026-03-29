@@ -4,6 +4,7 @@ use App\Modules\Invoice\Controllers\InvoiceLayoutController;
 
 Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
 Route::get('invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+Route::get('invoices/selectable-abschlaege', [InvoiceController::class, 'selectableAbschlaege'])->name('invoices.selectable-abschlaege');
 Route::post('invoices', [InvoiceController::class, 'store'])->name('invoices.store');
 Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
 Route::get('invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');

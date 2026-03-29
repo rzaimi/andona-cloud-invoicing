@@ -145,7 +145,7 @@ class OfferController extends Controller
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.unit' => 'nullable|string|max:10',
+            'items.*.unit' => 'nullable|string|max:50',
             'items.*.tax_rate' => 'nullable|numeric|min:0|max:1', // German tax rates: 0.00, 0.07, 0.19
             'items.*.discount_type' => 'nullable|in:percentage,fixed',
             'items.*.discount_value' => 'nullable|numeric|min:0',
@@ -290,7 +290,7 @@ class OfferController extends Controller
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.unit' => 'nullable|string|max:10',
+            'items.*.unit' => 'nullable|string|max:50',
             'items.*.tax_rate' => 'nullable|numeric|min:0|max:1', // German tax rates: 0.00, 0.07, 0.19
             'items.*.discount_type' => 'nullable|in:percentage,fixed',
             'items.*.discount_value' => 'nullable|numeric|min:0',
