@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Upload, Download, FileText, Edit, Trash2, Search, Filter, X, Tag, Link2, CheckCircle, AlertCircle } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
+import { Pagination } from "@/components/pagination"
 import type { User } from "@/types"
 import { route } from "ziggy-js"
 import { useState } from "react"
@@ -59,6 +60,7 @@ interface DocumentsProps {
         links: any[]
         current_page: number
         last_page: number
+        total?: number
     }
     customers: Array<{ id: string; name: string; number: string }>
     invoices: Array<{ id: string; number: string }>
@@ -311,7 +313,10 @@ export default function DocumentsSettings() {
                 {/* Documents Table */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Dokumente ({documents.data.length})</CardTitle>
+                        <CardTitle>
+                            Dokumente (
+                            {typeof documents.total === "number" ? documents.total : documents.data.length})
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         {documents.data.length === 0 ? (
@@ -425,6 +430,8 @@ export default function DocumentsSettings() {
                                 </TableBody>
                             </Table>
                         )}
+
+                        <Pagination links={documents.links || []} className="mt-6" />
                     </CardContent>
                 </Card>
 
