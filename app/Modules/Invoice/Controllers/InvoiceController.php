@@ -122,7 +122,9 @@ class InvoiceController extends Controller
             'layouts'     => $layouts,
             'products'    => $products,
             'nextNumbers' => $nextNumbers,
-            'settings'    => $company->getDefaultSettings(),
+            'settings'    => array_merge($company->getDefaultSettings(), [
+                'is_small_business' => (bool) ($company->is_small_business ?? false),
+            ]),
         ]);
     }
 

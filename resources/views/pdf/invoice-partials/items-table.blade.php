@@ -15,18 +15,23 @@
     $tableHeaderStyle     = $tableHeaderStyle      ?? '';
     $tableOuterBorder     = $tableOuterBorder      ?? 'none';
     $altRowBg             = $altRowBg             ?? null;
-    $cellPadding          = $cellPadding           ?? '8px 6px';
+    $cellPadding          = $cellPadding           ?? '7px 8px';
     $showRowNumber        = $layoutSettings['content']['show_row_number'] ?? ($showRowNumber ?? false);
     $showItemCodes        = $layoutSettings['content']['show_item_codes'] ?? false;
     $showBorderColor      = $layoutSettings['colors']['text'] ?? '#1f2937';
+    // §19 UStG (Kleinunternehmer): hide USt. column — line items still carry product tax_rate (e.g. 19%) but no VAT is charged
+    $showUstColumn        = ($invoice->vat_regime ?? 'standard') !== 'small_business';
 
     $hasAnyDiscount = $invoice->items->contains(
         fn($item) => (float)($item->discount_amount ?? 0) > 0.0001
     );
 
     // Column widths depend on which optional columns appear
-    // Base: Description | Qty | Unit | USt | Price | Total
+    // Base: Description | Qty | Unit | [USt] | Price | Total
     $colDesc    = $hasAnyDiscount ? '40%' : '50%';
+    if (!$showUstColumn) {
+        $colDesc = $hasAnyDiscount ? '46%' : '56%';
+    }
     $colItemNo  = '12%';
     $colPos     = '5%';
     $colQty     = '9%';
@@ -51,7 +56,9 @@
             @endif
             <th style="padding: {{ $cellPadding }}; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; {{ $showRowNumber ? 'border-right: 1px solid ' . ($tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor) . ';' : '' }} width: {{ $colDesc }};">LEISTUNG</th>
             <th style="padding: {{ $cellPadding }}; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; {{ $showRowNumber ? 'border-right: 1px solid ' . ($tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor) . ';' : '' }} width: {{ $colQty }};">MENGE</th>
+            @if($showUstColumn)
             <th style="padding: {{ $cellPadding }}; text-align: right; font-weight: 600; font-size: {{ $bodyFontSize }}px; {{ $showRowNumber ? 'border-right: 1px solid ' . ($tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor) . ';' : '' }} width: {{ $colUst }};">UST.</th>
+            @endif
             <th style="padding: {{ $cellPadding }}; text-align: right; font-weight: 600; font-size: {{ $bodyFontSize }}px; {{ $showRowNumber ? 'border-right: 1px solid ' . ($tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor) . ';' : '' }} width: {{ $colPrice }};">PREIS</th>
             @if($hasAnyDiscount)
                 <th style="padding: {{ $cellPadding }}; text-align: right; font-weight: 600; font-size: {{ $bodyFontSize }}px; {{ $showRowNumber ? 'border-right: 1px solid ' . ($tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor) . ';' : '' }} width: {{ $colDisc }}; color: {{ $tableHeaderBg ? 'rgba(255,255,255,0.9)' : '#dc2626' }};">RABATT</th>
@@ -96,9 +103,11 @@
                         Std.
                     @endif
                 </td>
+                @if($showUstColumn)
                 <td style="padding: {{ $cellPadding }}; text-align: right; {{ $cellBorder }}">
                     {{ number_format(($item->tax_rate ?? $invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}%
                 </td>
+                @endif
                 <td style="padding: {{ $cellPadding }}; text-align: right; {{ $cellBorder }}">
                     {{ number_format($item->unit_price, 2, ',', '.') }} €
                 </td>
@@ -106,10 +115,10 @@
                     <td style="padding: {{ $cellPadding }}; text-align: right; {{ $cellBorder }} color: {{ $hasDiscount ? '#dc2626' : '#9ca3af' }};">
                         @if($hasDiscount)
                             @if($discountType === 'percentage')
-                                −{{ number_format($discountValue, 0) }}%<br>
-                                <span style="font-size: {{ $bodyFontSize - 1 }}px;">(−{{ number_format($discountAmount, 2, ',', '.') }} €)</span>
+                                -{{ number_format($discountValue, 0) }}%<br>
+                                <span style="font-size: {{ $bodyFontSize - 1 }}px;">(-{{ number_format($discountAmount, 2, ',', '.') }} €)</span>
                             @elseif($discountType === 'fixed')
-                                −{{ number_format($discountAmount, 2, ',', '.') }} €
+                                -{{ number_format($discountAmount, 2, ',', '.') }} €
                             @endif
                         @else
                             <span style="color: #d1d5db;">—</span>

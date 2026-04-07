@@ -16,12 +16,13 @@
     $skontoAmount = (float)($invoice->skonto_amount ?? 0);
     $hasSkonto    = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
 
-    $dtBg   = $detailsBg         ?? 'transparent';
-    $dtPad  = $detailsPad        ?? '4px 8px';
-    $dtLC   = $detailsLabelColor ?? '#6b7280';
-    $dtBC   = $detailsBorderColor ?? '#e5e7eb';
-    $dtFS   = $detailsFontSize   ?? $bodyFontSize;
-    $dtTSty = $detailsTableStyle  ?? '';
+    $dtBg         = $detailsBg         ?? 'transparent';
+    $dtPad        = $detailsPad        ?? '4px 8px';
+    $dtLC         = $detailsLabelColor ?? '#6b7280';
+    $dtBC         = $detailsBorderColor ?? '#e5e7eb';
+    $dtFS         = $detailsFontSize   ?? $bodyFontSize;
+    $dtTSty       = $detailsTableStyle  ?? '';
+    $skontoColor  = $layoutSettings['colors']['skonto'] ?? '#16a34a';
 @endphp
 <table style="width:100%; border-collapse:collapse; font-size:{{ $dtFS }}px; background:{{ $dtBg }}; {{ $dtTSty }}">
     <tr>
@@ -44,8 +45,8 @@
     </tr>
     @if($hasSkonto)
     <tr>
-        <td style="padding:{{ $dtPad }}; color:#16a34a; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Skonto bis</td>
-        <td style="padding:{{ $dtPad }}; font-weight:600; color:#16a34a; border-bottom:1px solid {{ $dtBC }};">{{ formatInvoiceDate($invoice->skonto_due_date, $dateFormat ?? 'd.m.Y') }}</td>
+        <td style="padding:{{ $dtPad }}; color:{{ $skontoColor }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Skonto bis</td>
+        <td style="padding:{{ $dtPad }}; font-weight:600; color:{{ $skontoColor }}; border-bottom:1px solid {{ $dtBC }};">{{ formatInvoiceDate($invoice->skonto_due_date, $dateFormat ?? 'd.m.Y') }}</td>
     </tr>
     @endif
     @if(!empty($invoice->customer->number))

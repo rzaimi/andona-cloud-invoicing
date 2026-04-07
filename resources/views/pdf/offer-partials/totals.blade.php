@@ -51,7 +51,7 @@
     </tr>
     <tr>
         <td style="padding:5px 10px; color:#dc2626; border-bottom:1px solid {{ $bc }};">Rabatt</td>
-        <td style="padding:5px 10px; text-align:right; color:#dc2626; border-bottom:1px solid {{ $bc }}; white-space:nowrap;">−{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
+        <td style="padding:5px 10px; text-align:right; color:#dc2626; border-bottom:1px solid {{ $bc }}; white-space:nowrap;">-{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
     </tr>
     @endif
 
@@ -89,3 +89,9 @@
     </tr>
 
 </table>
+@include('pdf.partials.vat-regime-legal-notice', [
+    'vat_regime' => $offer->vat_regime ?? 'standard',
+    'fontSizePx' => $fs,
+    'mutedColor' => $ls['colors']['secondary'] ?? '#64748b',
+    'tableWidth' => $tWidth,
+])

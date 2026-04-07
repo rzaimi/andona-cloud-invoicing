@@ -104,10 +104,10 @@
                     <td style="padding:{{ $cp }}; text-align:right; {{ $cellBorder }} color:{{ $discAmount > 0 ? '#dc2626' : '#9ca3af' }};">
                         @if($discAmount > 0.0001)
                             @if($discount > 0)
-                                −{{ number_format((float)$discount, 0) }}%<br>
-                                <span style="font-size:{{ $fs - 1 }}px;">(−{{ number_format((float)$discAmount, 2, ',', '.') }} €)</span>
+                                -{{ number_format((float)$discount, 0) }}%<br>
+                                <span style="font-size:{{ $fs - 1 }}px;">(-{{ number_format((float)$discAmount, 2, ',', '.') }} €)</span>
                             @else
-                                −{{ number_format((float)$discAmount, 2, ',', '.') }} €
+                                -{{ number_format((float)$discAmount, 2, ',', '.') }} €
                             @endif
                         @else
                             <span style="color:#d1d5db;">—</span>

@@ -30,7 +30,9 @@
 
     // Logo position
     $logoPos  = $ls['branding']['logo_position'] ?? 'top-left';
-    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:12mm; max-width:45mm; display:block;">' : '';
+    $logoH    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '10mm', 'large' => '24mm', default => '16mm' };
+    $logoW    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '38mm', 'large' => '72mm', default => '54mm' };
+    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:'.$logoH.'; max-width:'.$logoW.'; display:block;">' : '';
     [$colL, $colC, $colR] = match($logoPos) {
         'top-center' => ['', $logoCell, ''],
         'top-right'  => ['', '', $logoCell],
@@ -42,7 +44,7 @@
     $tableHeaderTextColor = $soft;
     $tableHeaderStyle     = "border-top:0.4mm solid {$primary}; border-bottom:0.2mm solid {$border};";
     $altRowBg             = null;
-    $cellPadding          = '5px 4px';
+    $cellPadding          = '6px 5px';
     $showRowNumber        = $ls['content']['show_row_number'] ?? false;
     $totalRowBg           = $primary;
     $totalRowTextColor    = '#ffffff';
@@ -103,8 +105,8 @@
 
 {{-- Title --}}
 <div style="margin-top:8mm; padding-bottom:2mm; border-bottom:0.2mm solid {{ $border }};">
-    <span style="font-size:{{ $fs + 3 }}px; font-weight:600; letter-spacing:-0.3px;">{{ $invoiceTypeLabel }}</span>
-    <span style="font-size:{{ $fs + 1 }}px; color:{{ $soft }}; margin-left:3mm;">{{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}</span>
+    <span style="font-size:{{ $fs + 5 }}px; font-weight:600; letter-spacing:-0.3px;">{{ $invoiceTypeLabel }}</span>
+    <span style="font-size:{{ $fs + 3 }}px; color:{{ $soft }}; margin-left:3mm;">{{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}</span>
 </div>
 
 {{-- Salutation --}}

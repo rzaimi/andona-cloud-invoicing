@@ -8,11 +8,12 @@
         // ── Font size helper ──────────────────────────────────────────────────
         if (!function_exists('getOfferFontSizePx')) {
             function getOfferFontSizePx($size) {
+                // Target: body 10–12pt, matching invoice sizing convention.
                 switch ($size) {
-                    case 'small':  return 10;
-                    case 'large':  return 13;
+                    case 'small':  return 11;   //  ~8 pt
+                    case 'large':  return 14;   // ~10.5 pt
                     case 'medium':
-                    default:       return 11;
+                    default:       return 12;   //  ~9 pt — offer default
                 }
             }
         }

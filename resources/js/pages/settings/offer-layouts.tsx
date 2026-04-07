@@ -51,6 +51,7 @@ interface OfferLayoutSettings {
     branding: {
         show_logo: boolean
         logo_position: string
+        logo_size: string
         company_info_position: string
         show_header_line: boolean
         show_footer_line: boolean
@@ -127,6 +128,7 @@ const getDefaultSettings = (): OfferLayoutSettings => ({
     branding: {
         show_logo: true,
         logo_position: "top-left",
+        logo_size: "medium",
         company_info_position: "top-right",
         show_header_line: true,
         show_footer_line: true,
@@ -1031,9 +1033,9 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                                 <SelectValue />
                                                             </SelectTrigger>
                                                             <SelectContent>
-                                                                <SelectItem value="small">Klein (14px)</SelectItem>
-                                                                <SelectItem value="medium">Mittel (16px)</SelectItem>
-                                                                <SelectItem value="large">Groß (18px)</SelectItem>
+                                                                <SelectItem value="small">Klein (12px)</SelectItem>
+                                                                <SelectItem value="medium">Mittel (14px)</SelectItem>
+                                                                <SelectItem value="large">Groß (16px)</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                     </div>
@@ -1188,6 +1190,25 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                             </Select>
                                                         </div>
 
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="logo-size-offer">Logo Größe</Label>
+                                                            <Select
+                                                                value={layoutFormData.settings.branding.logo_size ?? "medium"}
+                                                                onValueChange={(value) => updateBrandingSetting("logo_size", value)}
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="small">Klein (14mm)</SelectItem>
+                                                                    <SelectItem value="medium">Mittel (22mm)</SelectItem>
+                                                                    <SelectItem value="large">Groß (30mm)</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4">
                                                         <div className="grid gap-2">
                                                             <Label htmlFor="company-info-position">Firmeninfo Position</Label>
                                                             <Select

@@ -68,7 +68,9 @@
 {{-- HEADER: logo --}}
 @php
     $logoPos  = $ls['branding']['logo_position'] ?? 'top-left';
-    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:14mm; max-width:48mm; display:block;">' : '';
+    $logoH    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '12mm', 'large' => '28mm', default => '20mm' };
+    $logoW    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '42mm', 'large' => '84mm', default => '64mm' };
+    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:'.$logoH.'; max-width:'.$logoW.'; display:block;">' : '';
     [$colL, $colC, $colR] = match($logoPos) {
         'top-center' => ['', $logoCell, ''],
         'top-right'  => ['', '', $logoCell],
@@ -128,7 +130,7 @@
 {{-- Subject --}}
 @if($ls['content']['show_subject'] ?? true)
 <div style="margin-top:8mm;">
-    <div style="font-size:{{ $fs + 2 }}px; font-weight:600; color:{{ $primary }};">
+    <div style="font-size:{{ $fs + 5 }}px; font-weight:600; color:{{ $primary }};">
         {{ $invoiceTypeLabel }} Nr. {{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}
     </div>
 </div>

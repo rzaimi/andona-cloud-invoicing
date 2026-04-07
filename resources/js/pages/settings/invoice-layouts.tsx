@@ -34,6 +34,7 @@ interface InvoiceLayoutSettings {
         secondary: string
         accent: string
         text: string
+        skonto: string
     }
     fonts: {
         heading: string
@@ -48,6 +49,7 @@ interface InvoiceLayoutSettings {
     }
     branding: {
         logo_position: string
+        logo_size: string
     }
     content: {
         show_company_address: boolean
@@ -103,6 +105,7 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         secondary: "#64748b",
         accent: "#0ea5e9",
         text: "#1e293b",
+        skonto: "#16a34a",
     },
     fonts: {
         heading: "Inter",
@@ -117,6 +120,7 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
     },
     branding: {
         logo_position: "top-left",
+        logo_size: "medium",
     },
     content: {
         show_company_address: true,
@@ -168,6 +172,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             }
             defaults.branding = {
                 logo_position: "top-left",
+                logo_size: "medium",
             }
             defaults.content = {
                 show_company_address: true,
@@ -197,6 +202,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             }
             defaults.branding = {
                 logo_position: "top-center",
+                logo_size: "medium",
             }
             defaults.content = {
                 show_item_codes: true,
@@ -218,6 +224,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             }
             defaults.branding = {
                 logo_position: "top-left",
+                logo_size: "medium",
             }
             defaults.content = {
                 show_company_address: true,
@@ -247,6 +254,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             }
             defaults.branding = {
                 logo_position: "top-left",
+                logo_size: "medium",
             }
             defaults.content = {
                 show_company_address: true,
@@ -276,6 +284,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             }
             defaults.branding = {
                 logo_position: "top-right",
+                logo_size: "medium",
             }
             defaults.content = {
                 show_company_address: true,
@@ -305,6 +314,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             }
             defaults.branding = {
                 logo_position: "top-center",
+                logo_size: "medium",
             }
             defaults.content = {
                 show_company_address: true,
@@ -354,6 +364,7 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
         },
         branding: {
             logo_position: settings.branding?.logo_position ?? defaults.branding.logo_position,
+            logo_size: settings.branding?.logo_size ?? defaults.branding.logo_size,
         },
         content: {
             ...defaults.content,
@@ -722,15 +733,15 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
     }
 
     const getPreviewFontSize = (layout: InvoiceLayout | null) => {
-        if (!layout?.settings?.fonts?.size) return "16px"
+        if (!layout?.settings?.fonts?.size) return "14px"
         const size = layout.settings.fonts.size
         switch (size) {
             case "small":
-                return "14px"
+                return "12px"
             case "large":
-                return "18px"
-            default:
                 return "16px"
+            default:
+                return "14px"
         }
     }
 
@@ -978,6 +989,25 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                             />
                                                         </div>
                                                     </div>
+
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="skonto-color">Skontofarbe</Label>
+                                                        <p className="text-xs text-muted-foreground -mt-1">Farbe für Skonto-Zeilen (z.B. grün)</p>
+                                                        <div className="flex gap-2">
+                                                            <Input
+                                                                id="skonto-color"
+                                                                type="color"
+                                                                value={layoutFormData.settings.colors.skonto ?? "#16a34a"}
+                                                                onChange={(e) => updateColorSetting("skonto", e.target.value)}
+                                                                className="w-16 h-10"
+                                                            />
+                                                            <Input
+                                                                value={layoutFormData.settings.colors.skonto ?? "#16a34a"}
+                                                                onChange={(e) => updateColorSetting("skonto", e.target.value)}
+                                                                placeholder="#16a34a"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1035,9 +1065,9 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                                 <SelectValue />
                                                             </SelectTrigger>
                                                             <SelectContent>
-                                                                <SelectItem value="small">Klein (14px)</SelectItem>
-                                                                <SelectItem value="medium">Mittel (16px)</SelectItem>
-                                                                <SelectItem value="large">Groß (18px)</SelectItem>
+                                                                <SelectItem value="small">Klein (12px)</SelectItem>
+                                                                <SelectItem value="medium">Mittel (14px)</SelectItem>
+                                                                <SelectItem value="large">Groß (16px)</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                     </div>
@@ -1131,21 +1161,39 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                     </div>
                                                 </div>
                                                 <div className="space-y-4">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="logo-position">Logo Position</Label>
-                                                        <Select
-                                                            value={layoutFormData.settings.branding.logo_position}
-                                                            onValueChange={(value) => updateBrandingSetting("logo_position", value)}
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="top-left">Oben Links</SelectItem>
-                                                                <SelectItem value="top-center">Oben Mitte</SelectItem>
-                                                                <SelectItem value="top-right">Oben Rechts</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="logo-position">Logo Position</Label>
+                                                            <Select
+                                                                value={layoutFormData.settings.branding.logo_position}
+                                                                onValueChange={(value) => updateBrandingSetting("logo_position", value)}
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="top-left">Oben Links</SelectItem>
+                                                                    <SelectItem value="top-center">Oben Mitte</SelectItem>
+                                                                    <SelectItem value="top-right">Oben Rechts</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label htmlFor="logo-size">Logo Größe</Label>
+                                                            <Select
+                                                                value={layoutFormData.settings.branding.logo_size ?? "medium"}
+                                                                onValueChange={(value) => updateBrandingSetting("logo_size", value)}
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="small">Klein (12mm)</SelectItem>
+                                                                    <SelectItem value="medium">Mittel (20mm)</SelectItem>
+                                                                    <SelectItem value="large">Groß (28mm)</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

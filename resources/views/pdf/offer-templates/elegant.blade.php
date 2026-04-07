@@ -20,13 +20,15 @@
     }
     $showLogo = !empty($logoSrc);
     $customer = $offer->customer ?? null;
+    $logoH    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '14mm', 'large' => '30mm', default => '22mm' };
+    $logoW    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '48mm', 'large' => '90mm', default => '68mm' };
 @endphp
 <div class="container">
 
 {{-- ══ CENTERED HEADER ════════════════════════════════════════════════════ --}}
 <div style="text-align:center; margin-bottom:7mm; padding-bottom:4mm; border-bottom:0.5px solid {{ $secCol }};">
     @if($showLogo)
-        <div style="margin-bottom:3mm;"><img src="{{ $logoSrc }}" alt="Logo" style="max-height:22mm; max-width:70mm;"></div>
+        <div style="margin-bottom:3mm;"><img src="{{ $logoSrc }}" alt="Logo" style="max-height:{{ $logoH }}; max-width:{{ $logoW }};"></div>
     @endif
     <table style="width:100%; border-collapse:collapse; margin-bottom:2mm;">
         <tr>

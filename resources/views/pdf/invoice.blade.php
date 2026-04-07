@@ -10,11 +10,13 @@
             // Check if function exists to avoid redeclaration errors when multiple PDFs are generated
             if (!function_exists('getFontSizePx')) {
                 function getFontSizePx($size) {
+                    // Target: body 10–12pt, title 14–18pt, footer 8–10pt (DIN/ISO best practice).
+                    // At 96 dpi: 1pt ≈ 1.333px  →  10pt ≈ 13px, 11pt ≈ 14.7px, 12pt ≈ 16px
                     switch($size) {
-                        case 'small': return 11;
-                        case 'large': return 14;
+                        case 'small': return 11;   //  ~8 pt  — compact layouts
+                        case 'large': return 16;   // ~12 pt  — generous readability
                         case 'medium':
-                        default: return 12;
+                        default: return 14;        // ~10.5 pt — DIN-compliant default
                     }
                 }
             }
@@ -430,41 +432,7 @@
         }
     }
 
-    // Helper function for VAT regime legal text
-    if (!function_exists('getVatRegimeNote')) {
-        function getVatRegimeNote($regime) {
-            switch ($regime) {
-                case 'small_business':
-                    return 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.';
-                case 'reverse_charge':
-                    return 'Steuerschuldnerschaft des Leistungsempfängers (Reverse Charge).';
-                case 'reverse_charge_domestic':
-                    return 'Die Umsatzsteuer für diese umsatzsteuerpflichtige Leistung schuldet der Auftraggeber gemäß §13b UStG.';
-                case 'intra_community':
-                    return 'Innergemeinschaftliche Lieferung. Steuerfrei gem. § 4 Nr. 1b UStG.';
-                case 'export':
-                    return 'Steuerfreie Ausfuhrlieferung gem. § 4 Nr. 1a UStG.';
-                default:
-                    return null;
-            }
-        }
-    }
 @endphp
-    @php
-        // Helper function to get VAT regime text
-        if (!function_exists('getVatRegimeText')) {
-            function getVatRegimeText($regime) {
-                return match($regime) {
-                    'small_business' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
-                    'reverse_charge' => 'Steuerschuldnerschaft des Leistungsempfängers (Reverse Charge) gemäß § 13b UStG.',
-                    'reverse_charge_domestic' => 'Die Umsatzsteuer für diese umsatzsteuerpflichtige Leistung schuldet der Auftraggeber gemäß §13b UStG.',
-                    'intra_community' => 'Steuerfreie innergemeinschaftliche Lieferung gemäß § 4 Nr. 1b UStG.',
-                    'export' => 'Steuerfreie Ausfuhrlieferung gemäß § 4 Nr. 1a UStG.',
-                    default => null,
-                };
-            }
-        }
-    @endphp
 
     {{-- Footer moved to individual templates for variety --}}
 

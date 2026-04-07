@@ -40,7 +40,7 @@
         @endif
     </td>
     <td style="padding: 3px 10px; text-align: right; border-bottom: 1px solid {{ $borderColor }}; white-space: nowrap; font-size: {{ $fs - 1 }}px; color: #374151;">
-        −{{ number_format((float)$ref['amount'], 2, ',', '.') }} €
+        -{{ number_format((float)$ref['amount'], 2, ',', '.') }} €
     </td>
 </tr>
 @endforeach

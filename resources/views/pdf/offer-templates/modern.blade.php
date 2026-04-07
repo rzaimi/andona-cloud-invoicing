@@ -20,13 +20,15 @@
     }
     $showLogo = !empty($logoSrc);
     $customer = $offer->customer ?? null;
+    $logoH    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '14mm', 'large' => '30mm', default => '22mm' };
+    $logoW    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '48mm', 'large' => '90mm', default => '68mm' };
 @endphp
 <div class="container">
 
 {{-- ══ HEADER with bold left accent border ════════════════════════════════ --}}
 <div style="border-left:7px solid {{ $primary }}; padding-left:6mm; margin-bottom:7mm; padding-bottom:3mm; border-bottom:1px solid #e5e7eb;">
     @if($showLogo)
-        <div style="margin-bottom:3mm;"><img src="{{ $logoSrc }}" alt="Logo" style="max-height:22mm; max-width:65mm;"></div>
+        <div style="margin-bottom:3mm;"><img src="{{ $logoSrc }}" alt="Logo" style="max-height:{{ $logoH }}; max-width:{{ $logoW }};"></div>
     @endif
     <div style="font-size:{{ $fsH + 6 }}px; font-weight:800; color:{{ $primary }}; line-height:1.1; margin-bottom:2mm;">{{ $snapshot['name'] ?? '' }}</div>
     @if($ls['content']['show_company_address'] ?? true)

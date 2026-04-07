@@ -22,6 +22,8 @@
     }
     $showLogo = !empty($logoSrc);
     $customer = $offer->customer ?? null;
+    $logoH    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '14mm', 'large' => '30mm', default => '22mm' };
+    $logoW    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '48mm', 'large' => '90mm', default => '68mm' };
 @endphp
 <div class="container">
 
@@ -30,7 +32,7 @@
     <tr>
         @if($showLogo)
         <td style="padding:5mm 6mm; vertical-align:middle; width:38%;">
-            <img src="{{ $logoSrc }}" alt="Logo" style="max-height:20mm; max-width:62mm;">
+            <img src="{{ $logoSrc }}" alt="Logo" style="max-height:{{ $logoH }}; max-width:{{ $logoW }};">
         </td>
         @endif
         <td style="padding:5mm 6mm; vertical-align:middle; {{ $showLogo ? 'text-align:right;' : '' }}">

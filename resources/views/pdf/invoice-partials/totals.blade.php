@@ -38,9 +38,10 @@
     $singleRateVat = !$multipleRates && count($vatBreakdown) === 1 ? array_values($vatBreakdown)[0] : null;
 
     // Skonto
-    $skontoAmount  = (float)($invoice->skonto_amount ?? 0);
-    $hasSkonto     = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
+    $skontoAmount   = (float)($invoice->skonto_amount ?? 0);
+    $hasSkonto      = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
     $netAfterSkonto = $invoice->total - $skontoAmount;
+    $skontoColor    = $layoutSettings['colors']['skonto'] ?? '#16a34a';
 @endphp
 <table style="width: {{ $tableWidth }}; margin-left: auto; border-collapse: collapse; font-size: {{ $bodyFontSize }}px;">
 
@@ -52,7 +53,7 @@
         </tr>
         <tr>
             <td style="padding: 5px 10px; text-align: left; border-bottom: 1px solid {{ $borderColor }}; color: #dc2626;">Rabatt</td>
-            <td style="padding: 5px 10px; text-align: right; border-bottom: 1px solid {{ $borderColor }}; color: #dc2626; white-space: nowrap;">−{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
+            <td style="padding: 5px 10px; text-align: right; border-bottom: 1px solid {{ $borderColor }}; color: #dc2626; white-space: nowrap;">-{{ number_format($totalDiscount, 2, ',', '.') }} €</td>
         </tr>
     @endif
 
@@ -105,18 +106,24 @@
 
     {{-- Skonto rows --}}
     @if($hasSkonto)
-        <tr style="color: #16a34a;">
-            <td style="padding: 5px 10px; text-align: left; font-style: italic; border-top: 2px solid #dcfce7;">
+        <tr style="color: {{ $skontoColor }};">
+            <td style="padding: 5px 10px; text-align: left; font-style: italic; border-top: 2px solid {{ $skontoColor }}33;">
                 Skonto {{ number_format($invoice->skonto_percent, 0) }}% bei Zahlung bis {{ formatInvoiceDate($invoice->skonto_due_date, $dateFormat ?? 'd.m.Y') }}
             </td>
-            <td style="padding: 5px 10px; text-align: right; font-style: italic; border-top: 2px solid #dcfce7; white-space: nowrap;">
-                −{{ number_format($skontoAmount, 2, ',', '.') }} €
+            <td style="padding: 5px 10px; text-align: right; font-style: italic; border-top: 2px solid {{ $skontoColor }}33; white-space: nowrap;">
+                -{{ number_format($skontoAmount, 2, ',', '.') }} €
             </td>
         </tr>
-        <tr style="color: #16a34a; font-weight: 700;">
-            <td style="padding: 5px 10px; text-align: left; border-bottom: 2px solid #16a34a;">Bei Skonto zahlen Sie</td>
-            <td style="padding: 5px 10px; text-align: right; border-bottom: 2px solid #16a34a; white-space: nowrap;">{{ number_format($netAfterSkonto, 2, ',', '.') }} €</td>
+        <tr style="color: {{ $skontoColor }}; font-weight: 700;">
+            <td style="padding: 5px 10px; text-align: left; border-bottom: 2px solid {{ $skontoColor }};">Bei Skonto zahlen Sie</td>
+            <td style="padding: 5px 10px; text-align: right; border-bottom: 2px solid {{ $skontoColor }}; white-space: nowrap;">{{ number_format($netAfterSkonto, 2, ',', '.') }} €</td>
         </tr>
     @endif
 
 </table>
+@include('pdf.partials.vat-regime-legal-notice', [
+    'vat_regime' => $invoice->vat_regime ?? 'standard',
+    'fontSizePx' => $bodyFontSize,
+    'mutedColor' => $layoutSettings['colors']['secondary'] ?? '#64748b',
+    'tableWidth' => $tableWidth,
+])

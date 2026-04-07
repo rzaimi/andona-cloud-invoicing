@@ -126,7 +126,9 @@ class OfferController extends Controller
             'layouts'    => $layouts,
             'products'   => $products,
             'nextNumber' => $nextNumber,
-            'settings'   => $company->getDefaultSettings(),
+            'settings'   => array_merge($company->getDefaultSettings(), [
+                'is_small_business' => (bool) ($company->is_small_business ?? false),
+            ]),
         ]);
     }
 
@@ -139,6 +141,8 @@ class OfferController extends Controller
             'notes' => 'nullable|string',
             'bauvorhaben' => 'nullable|string|max:255',
             'terms' => 'nullable|string',
+            'terms_conditions' => 'nullable|string',
+            'vat_regime' => 'required|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
             'layout_id' => 'nullable|exists:offer_layouts,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'nullable|uuid|exists:products,id',
@@ -164,6 +168,8 @@ class OfferController extends Controller
             );
             $offerNumber = $svc->next($format, Offer::where('company_id', $effectiveCompanyId)->pluck('number'));
 
+            $vatRegime = $validated['vat_regime'] ?? 'standard';
+
             // Create offer
             $offer = Offer::create([
                 'number' => $offerNumber,
@@ -174,9 +180,10 @@ class OfferController extends Controller
                 'valid_until' => $validated['valid_until'],
                 'notes' => $validated['notes'] ?? null,
                 'bauvorhaben' => $validated['bauvorhaben'] ?? null,
-                'terms_conditions' => $validated['terms'] ?? null,
+                'terms_conditions' => $validated['terms_conditions'] ?? $validated['terms'] ?? null,
                 'layout_id' => $validated['layout_id'] ?? null,
-                'tax_rate' => $company->getSetting('tax_rate', 0.19),
+                'vat_regime' => $vatRegime,
+                'tax_rate' => $vatRegime === 'standard' ? $company->getSetting('tax_rate', 0.19) : 0,
             ]);
 
             // Save company snapshot
@@ -236,9 +243,13 @@ class OfferController extends Controller
         $offer->load(['customer', 'items.product', 'layout', 'user', 'convertedToInvoice:id,number']);
 
         $companyId = $this->getEffectiveCompanyId();
+        $company   = \App\Modules\Company\Models\Company::find($companyId) ?? $offer->company;
+
         return Inertia::render('offers/show', [
             'offer' => $offer,
-            'settings' => \App\Modules\Company\Models\Company::find($companyId)->getDefaultSettings(),
+            'settings' => array_merge($company->getDefaultSettings(), [
+                'is_small_business' => (bool) ($company->is_small_business ?? false),
+            ]),
         ]);
     }
 
@@ -263,12 +274,16 @@ class OfferController extends Controller
 
         $offer->load('items');
 
+        $company = \App\Modules\Company\Models\Company::find($companyId);
+
         return Inertia::render('offers/edit', [
             'offer' => $offer,
             'customers' => $customers,
             'layouts' => $layouts,
             'products' => $products,
-            'settings' => \App\Modules\Company\Models\Company::find($companyId)->getDefaultSettings(),
+            'settings' => array_merge($company->getDefaultSettings(), [
+                'is_small_business' => (bool) ($company->is_small_business ?? false),
+            ]),
         ]);
     }
 
@@ -283,6 +298,8 @@ class OfferController extends Controller
             'notes' => 'nullable|string',
             'bauvorhaben' => 'nullable|string|max:255',
             'terms' => 'nullable|string',
+            'terms_conditions' => 'nullable|string',
+            'vat_regime' => 'required|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
             'layout_id' => 'nullable|exists:offer_layouts,id',
             'status' => 'required|in:draft,sent,accepted,rejected',
             'items' => 'required|array|min:1',
@@ -299,6 +316,9 @@ class OfferController extends Controller
         DB::transaction(function () use ($validated, $offer) {
             $effectiveCompanyId = $this->getEffectiveCompanyId();
 
+            $vatRegime = $validated['vat_regime'] ?? 'standard';
+            $company   = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
+
             // Update offer
             $offer->update([
                 'customer_id' => $validated['customer_id'],
@@ -306,9 +326,11 @@ class OfferController extends Controller
                 'valid_until' => $validated['valid_until'],
                 'notes' => $validated['notes'] ?? null,
                 'bauvorhaben' => $validated['bauvorhaben'] ?? null,
-                'terms_conditions' => $validated['terms'] ?? null,
+                'terms_conditions' => $validated['terms_conditions'] ?? $validated['terms'] ?? null,
                 'layout_id' => $validated['layout_id'] ?? null,
                 'status' => $validated['status'],
+                'vat_regime' => $vatRegime,
+                'tax_rate' => $vatRegime === 'standard' ? ($company?->getSetting('tax_rate', 0.19) ?? 0.19) : 0,
             ]);
 
             // Delete existing items and create new ones
@@ -393,6 +415,9 @@ class OfferController extends Controller
             );
             $invoiceNumber = $svc->next($format, Invoice::where('company_id', $offer->company_id)->pluck('number'));
 
+            $vatRegime = $offer->vat_regime ?? 'standard';
+            $isStandardVat = $vatRegime === 'standard';
+
             // Create invoice from offer
             $invoice = Invoice::create([
                 'number' => $invoiceNumber,
@@ -402,9 +427,10 @@ class OfferController extends Controller
                 'issue_date' => now()->toDateString(),
                 'due_date' => now()->addDays($company->getSetting('payment_terms', 14))->toDateString(),
                 'subtotal' => $offer->subtotal,
-                'tax_rate' => $offer->tax_rate,
-                'tax_amount' => $offer->tax_amount,
-                'total' => $offer->total,
+                'tax_rate' => $isStandardVat ? $offer->tax_rate : 0,
+                'tax_amount' => $isStandardVat ? $offer->tax_amount : 0,
+                'total' => $isStandardVat ? $offer->total : $offer->subtotal,
+                'vat_regime' => $vatRegime,
                 'notes' => $offer->notes,
                 'layout_id' => $offer->layout_id,
             ]);

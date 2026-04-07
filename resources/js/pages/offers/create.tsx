@@ -69,6 +69,7 @@ interface OffersCreateProps {
         offer_validity_days: number
         decimal_separator: string
         thousands_separator: string
+        is_small_business?: boolean
     }
 }
 
@@ -90,6 +91,7 @@ export default function OffersCreate() {
         bauvorhaben: "",
         terms_conditions: "",
         layout_id: layouts.find((l) => l.is_default)?.id || "",
+        vat_regime: settings.is_small_business ? "small_business" : "standard",
         items: [] as OfferItem[],
     })
 
@@ -124,22 +126,24 @@ export default function OffersCreate() {
         
         const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.total, 0)
         const totalDiscount = itemsWithTotals.reduce((sum, item) => sum + item.discount_amount, 0)
-        
-        // Calculate tax amount per item (supports mixed tax rates)
-        const tax_amount = itemsWithTotals.reduce((sum, item) => {
-            const taxRate = typeof item.tax_rate === 'number' ? item.tax_rate : 0
-            return sum + (item.total * taxRate)
-        }, 0)
-        
+
+        let tax_amount = 0
+        if (data.vat_regime === "standard") {
+            tax_amount = itemsWithTotals.reduce((sum, item) => {
+                const taxRate = typeof item.tax_rate === "number" ? item.tax_rate : 0
+                return sum + item.total * taxRate
+            }, 0)
+        }
+
         const total = subtotal + tax_amount
 
-        setTotals({ 
-            subtotal, 
+        setTotals({
+            subtotal,
             total_discount: totalDiscount,
-            tax_amount, 
-            total 
+            tax_amount,
+            total,
         })
-    }, [data.items])
+    }, [data.items, data.vat_regime])
 
     const addItem = () => {
         const newItem: OfferItem = {
@@ -316,6 +320,26 @@ export default function OffersCreate() {
                                     {errors.valid_until && <p className="text-red-600 text-sm">{errors.valid_until}</p>}
                                 </div>
 
+                                <div className="space-y-2 md:col-span-2">
+                                    <Label htmlFor="vat_regime">Umsatzsteuer-Regelung *</Label>
+                                    <Select value={data.vat_regime} onValueChange={(value) => setData("vat_regime", value)}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Regelung auswählen" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="standard">Regelbesteuerung (19% / 7%)</SelectItem>
+                                            <SelectItem value="small_business">Kleinunternehmerregelung (§ 19 UStG)</SelectItem>
+                                            <SelectItem value="reverse_charge">Reverse Charge – Ausland (§ 13b UStG)</SelectItem>
+                                            <SelectItem value="reverse_charge_domestic">
+                                                § 13b UStG – Inland (Steuerschuldnerschaft des Leistungsempfängers)
+                                            </SelectItem>
+                                            <SelectItem value="intra_community">Innergemeinschaftliche Lieferung (§ 4 Nr. 1b UStG)</SelectItem>
+                                            <SelectItem value="export">Ausfuhrlieferung (§ 4 Nr. 1a UStG)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.vat_regime && <p className="text-red-600 text-sm">{errors.vat_regime}</p>}
+                                </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="bauvorhaben">BV (Bauvorhaben)</Label>
                                     <Input
@@ -455,9 +479,10 @@ export default function OffersCreate() {
                                                     </Select>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Select 
-                                                        value={(item.tax_rate ?? settings.tax_rate ?? 0.19).toString()} 
+                                                    <Select
+                                                        value={(item.tax_rate ?? settings.tax_rate ?? 0.19).toString()}
                                                         onValueChange={(value) => updateItem(item.id, "tax_rate", Number.parseFloat(value))}
+                                                        disabled={data.vat_regime !== "standard"}
                                                     >
                                                         <SelectTrigger>
                                                             <SelectValue />
@@ -559,10 +584,38 @@ export default function OffersCreate() {
                                         <span>Zwischensumme:</span>
                                         <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span>MwSt. ({(settings.tax_rate * 100).toFixed(0)}%):</span>
-                                        <span className="font-medium">{formatCurrency(totals.tax_amount)}</span>
-                                    </div>
+                                    {data.vat_regime === "standard"
+                                        ? (() => {
+                                              const breakdown: Record<string, { rate: number; amount: number }> = {}
+                                              data.items.forEach((item) => {
+                                                  const rate = Number(item.tax_rate) || 0
+                                                  const key = rate.toFixed(4)
+                                                  if (!breakdown[key]) breakdown[key] = { rate, amount: 0 }
+                                                  breakdown[key].amount += Number(item.total) * rate
+                                              })
+                                              const entries = Object.values(breakdown)
+                                                  .filter((b) => b.amount > 0.001)
+                                                  .sort((a, b) => b.rate - a.rate)
+                                              return entries.length > 0 ? (
+                                                  entries.map((b) => (
+                                                      <div key={b.rate} className="flex justify-between">
+                                                          <span>MwSt. ({(b.rate * 100).toFixed(0)}%):</span>
+                                                          <span className="font-medium">{formatCurrency(b.amount)}</span>
+                                                      </div>
+                                                  ))
+                                              ) : (
+                                                  <div className="flex justify-between">
+                                                      <span>MwSt. (0%):</span>
+                                                      <span className="font-medium">{formatCurrency(0)}</span>
+                                                  </div>
+                                              )
+                                          })()
+                                        : (
+                                              <div className="flex justify-between">
+                                                  <span>MwSt.:</span>
+                                                  <span className="font-medium">{formatCurrency(0)}</span>
+                                              </div>
+                                          )}
                                     <div className="flex justify-between text-lg font-bold border-t pt-2">
                                         <span>Gesamtbetrag:</span>
                                         <span>{formatCurrency(totals.total)}</span>

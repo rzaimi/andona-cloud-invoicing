@@ -68,7 +68,9 @@
 {{-- HEADER: logo --}}
 @php
     $logoPos  = $ls['branding']['logo_position'] ?? 'top-left';
-    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:14mm; max-width:48mm; display:block;">' : '';
+    $logoH    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '12mm', 'large' => '28mm', default => '20mm' };
+    $logoW    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '42mm', 'large' => '84mm', default => '64mm' };
+    $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:'.$logoH.'; max-width:'.$logoW.'; display:block;">' : '';
     [$colL, $colC, $colR] = match($logoPos) {
         'top-center' => ['', $logoCell, ''],
         'top-right'  => ['', '', $logoCell],
@@ -136,7 +138,7 @@
 {{-- Subject --}}
 @if($ls['content']['show_subject'] ?? true)
 <div style="margin-top:8mm; padding-bottom:3mm; border-bottom:0.3mm solid {{ $primary }};">
-    <div style="font-size:{{ $fs + 3 }}px; font-weight:500; color:{{ $primary }}; letter-spacing:0.3px;">
+    <div style="font-size:{{ $fs + 5 }}px; font-weight:500; color:{{ $primary }}; letter-spacing:0.3px;">
         {{ $invoiceTypeLabel }} {{ $invoice->number }}{{ ($invoice->title ?? null) ? ' – '.$invoice->title : '' }}
     </div>
 </div>

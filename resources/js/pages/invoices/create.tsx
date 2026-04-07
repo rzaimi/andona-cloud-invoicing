@@ -61,6 +61,8 @@ interface InvoicesCreateProps {
         decimal_separator: string
         thousands_separator: string
         payment_terms: number
+        /** When true, default new invoices to Kleinunternehmerregelung (§ 19 UStG) */
+        is_small_business?: boolean
     }
 }
 
@@ -99,7 +101,7 @@ export default function InvoicesCreate() {
         auftragsnummer: "",
         abschlag_refs: [] as AbschlagRef[],
         layout_id: layouts.find((l) => l.is_default)?.id || "",
-        vat_regime: "standard",
+        vat_regime: settings.is_small_business ? "small_business" : "standard",
         invoice_type: "standard",
         sequence_number: "",
         skonto_percent: "",

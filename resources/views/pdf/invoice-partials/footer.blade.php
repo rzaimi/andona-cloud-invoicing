@@ -18,13 +18,13 @@
     border-top: 1.5px solid {{ $lineColor }};
     z-index: 1000;
 ">
-    <table style="width:100%; border-collapse:collapse; font-size:6.5pt; line-height:1.35; color:{{ $fgColor }};">
+    <table style="width:100%; border-collapse:collapse; font-size:8pt; line-height:1.4; color:{{ $fgColor }};">
         <tr>
 
             {{-- ── Col 1: Company name + address ───────────────────────── --}}
             <td style="width:19%; vertical-align:top; padding-right:3px;">
                 @if($snapshot['name'] ?? null)
-                    <div style="font-weight:bold; color:#111827;">{{ $snapshot['name'] }}</div>
+                    <div style="font-weight:bold; color:#111827; font-size:8.5pt;">{{ $snapshot['name'] }}</div>
                 @endif
                 @if($snapshot['address'] ?? null)
                     <div>{{ $snapshot['address'] }}</div>

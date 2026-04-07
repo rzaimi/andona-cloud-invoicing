@@ -405,6 +405,7 @@ class OfferLayoutController extends Controller
             'subtotal'        => 16029.00,
             'tax_rate'        => 0.19,
             'tax_amount'      => 3045.51,
+            'vat_regime'      => 'standard',
             'total'           => 19074.51,
             'notes'           => null,
             'terms_conditions' => null,

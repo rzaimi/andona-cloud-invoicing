@@ -28,6 +28,7 @@ class Offer extends Model
         'subtotal',
         'tax_rate',
         'tax_amount',
+        'vat_regime',
         'total',
         'notes',
         'bauvorhaben',
@@ -111,7 +112,14 @@ class Offer extends Model
         
         // Calculate subtotal (sum of all items - items already have discount applied)
         $this->subtotal = $this->items->sum('total');
-        
+
+        if (($this->vat_regime ?? 'standard') !== 'standard') {
+            $this->tax_amount = 0;
+            $this->total      = $this->subtotal;
+
+            return;
+        }
+
         // Calculate tax amount per item (supports mixed tax rates)
         // If items have individual tax_rate, calculate per item
         // Otherwise, use offer-level tax_rate for all items
