@@ -503,9 +503,10 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                     </div>
                                 )}
                                 <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
-                                    <span className="truncate font-semibold">AndoBill</span>
-                                    <span className="truncate text-xs text-muted-foreground">
-                                        {availableCompanies.find((c) => c.id === selectedCompanyId)?.name || user.company?.name || "Keine Firma"}
+                                    <span className="truncate font-semibold">
+                                        {availableCompanies.find((c) => c.id === selectedCompanyId)?.name ||
+                                            user.company?.name ||
+                                            "Keine Firma"}
                                     </span>
                                 </div>
                             </Link>
