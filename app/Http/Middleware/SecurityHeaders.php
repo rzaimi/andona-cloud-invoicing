@@ -15,27 +15,27 @@ class SecurityHeaders
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Generate a per-request nonce for CSP so inline scripts can be whitelisted
+        // without resorting to 'unsafe-inline'.
+        $nonce = base64_encode(random_bytes(16));
+        $request->attributes->set('csp_nonce', $nonce);
+
         $response = $next($request);
 
-        // Security Headers
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
-        $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        
-        // HSTS (HTTP Strict Transport Security) - only for HTTPS
+
         if ($request->secure()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
-        // Content Security Policy
-        // In development, use report-only mode or disable to allow Vite dev server
-        $isDevelopment = app()->environment('local', 'development');
-        
-        if (!$isDevelopment) {
-            // Production: strict CSP - all resources are local, no external dependencies
+        // CSP is skipped in local/development to keep Vite HMR working.
+        if (!app()->environment('local', 'development')) {
+            // 'unsafe-eval' is NOT included — Vite production bundles do not need it.
+            // Inline scripts in app.blade.php must carry the nonce attribute.
             $csp = "default-src 'self'; " .
-                   "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " .
+                   "script-src 'self' 'nonce-{$nonce}'; " .
                    "style-src 'self' 'unsafe-inline'; " .
                    "font-src 'self' data:; " .
                    "img-src 'self' data: blob: https:; " .
@@ -44,16 +44,11 @@ class SecurityHeaders
                    "frame-ancestors 'self'; " .
                    "base-uri 'self'; " .
                    "form-action 'self';";
-            
+
             $response->headers->set('Content-Security-Policy', $csp);
         }
-        // In development, we skip CSP to avoid conflicts with Vite dev server
-        // Security headers other than CSP are still applied
 
-        // Permissions Policy (formerly Feature Policy)
-        $response->headers->set('Permissions-Policy', 
-            'geolocation=(), microphone=(), camera=()'
-        );
+        $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
         return $response;
     }

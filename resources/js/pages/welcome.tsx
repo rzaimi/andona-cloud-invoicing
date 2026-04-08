@@ -95,6 +95,7 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                     </a>
                                     <Link
                                         href="/login"
+                                        rel="nofollow"
                                         className="px-4 py-3 rounded-xl border border-white/12 text-sm font-semibold transition-all hover:translate-y-[-1px] hover:bg-white/10 hover:border-white/18"
                                         style={{
                                             background: '#0B4194',
@@ -142,6 +143,7 @@ export default function Welcome({ canLogin }: WelcomeProps) {
                                         {canLogin && (
                                             <Link
                                                 href="/login"
+                                                rel="nofollow"
                                                 className="px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-105 text-white"
                                                 style={{
                                                     background: '#0B4194',

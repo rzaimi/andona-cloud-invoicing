@@ -11,10 +11,14 @@ class PermissionController extends Controller
 {
     public function index()
     {
-        $permissions = Permission::orderBy('name')->get();
+        $permissions = Permission::with('roles')->orderBy('name')->get();
 
         return Inertia::render('admin/permissions', [
-            'permissions' => $permissions->pluck('name'),
+            'permissions' => $permissions->map(fn($p) => [
+                'id'    => $p->id,
+                'name'  => $p->name,
+                'roles' => $p->roles->pluck('name'),
+            ]),
         ]);
     }
 

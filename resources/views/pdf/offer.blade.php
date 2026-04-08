@@ -43,6 +43,7 @@
         line-height: 1.45;
         color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
         background: white;
+        padding-bottom: 22mm; /* Buffer so content stops before the fixed footer */
     }
 
     /* ── DIN 5008 address block ──────────────────────────────────────────────── */
@@ -232,7 +233,7 @@ if (isset($pdf)) {
         $text = "Seite {$pageNumber} / {$pageCount}";
         $w    = $fontMetrics->get_text_width($text, $font, $size);
         $x    = $canvas->get_width() - $w - 20;
-        $y    = $canvas->get_height() - 12;
+        $y    = $canvas->get_height() - 60; // above the fixed footer on every page
         $canvas->text($x, $y, $text, $font, $size, [0, 0, 0]);
     });
 }

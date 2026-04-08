@@ -226,6 +226,9 @@ class CustomerController extends Controller
         );
 
         $newCustomer = $customer->replicate(['number']);
+        // Always assign the effective company so the duplicate belongs to the active tenant,
+        // not the source tenant (important when super-admins cross company boundaries).
+        $newCustomer->company_id = $companyId;
         $newCustomer->number = $svc->next($format, Customer::where('company_id', $companyId)->pluck('number'));
         $newCustomer->name   = $customer->name . ' (Kopie)';
         $newCustomer->save();

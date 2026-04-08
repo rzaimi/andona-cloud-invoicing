@@ -185,7 +185,7 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="managing_director">Geschäftsführer</Label>
+                        <Label htmlFor="managing_director">Inhaber</Label>
                         <Input
                             id="managing_director"
                             value={data.managing_director}

@@ -28,17 +28,17 @@
 
     // Column widths depend on which optional columns appear
     // Base: Description | Qty | Unit | [USt] | Price | Total
-    $colDesc    = $hasAnyDiscount ? '40%' : '50%';
+    $colDesc    = $hasAnyDiscount ? '33%' : '43%';
     if (!$showUstColumn) {
-        $colDesc = $hasAnyDiscount ? '46%' : '56%';
+        $colDesc = $hasAnyDiscount ? '39%' : '49%';
     }
-    $colItemNo  = '12%';
+    $colItemNo  = '16%';
     $colPos     = '5%';
     $colQty     = '9%';
     $colUst     = '6%';
     $colPrice   = '10%';
     $colDisc    = '10%';
-    $colTotal   = '12%';
+    $colTotal   = '15%';
 
     $headerBgStyle = $tableHeaderBg
         ? "background-color: {$tableHeaderBg}; color: {$tableHeaderTextColor};"
@@ -90,7 +90,7 @@
                     <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">{{ $index + 1 }}</td>
                 @endif
                 @if($showItemCodes)
-                    <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">{{ $productCode ?: '-' }}</td>
+                    <td style="padding: {{ $cellPadding }}; white-space: nowrap; {{ $cellBorder }}">{{ $productCode ?: '-' }}</td>
                 @endif
                 <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
                     <div style="white-space:pre-wrap;">{!! nl2br(e($item->description)) !!}</div>
@@ -108,7 +108,7 @@
                     {{ number_format(($item->tax_rate ?? $invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}%
                 </td>
                 @endif
-                <td style="padding: {{ $cellPadding }}; text-align: right; {{ $cellBorder }}">
+                <td style="padding: {{ $cellPadding }}; text-align: right; white-space: nowrap; {{ $cellBorder }}">
                     {{ number_format($item->unit_price, 2, ',', '.') }} €
                 </td>
                 @if($hasAnyDiscount)
@@ -125,7 +125,7 @@
                         @endif
                     </td>
                 @endif
-                <td style="padding: {{ $cellPadding }}; text-align: right; font-weight: 600;">
+                <td style="padding: {{ $cellPadding }}; text-align: right; font-weight: 600; white-space: nowrap;">
                     {{ number_format($item->total, 2, ',', '.') }} €
                 </td>
             </tr>

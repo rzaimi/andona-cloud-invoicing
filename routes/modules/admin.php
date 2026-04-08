@@ -14,20 +14,19 @@ Route::middleware('can:manage_users')->group(function () {
     Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+});
 
-    // Roles management
+Route::middleware('can:manage_companies')->group(function () {
+    // Roles & Permissions management — superadmin only (system-wide, not per-tenant)
     Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
     Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
     Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
     Route::delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
 
-    // Permissions management
     Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
     Route::post('permissions', [PermissionController::class, 'store'])->name('permissions.store');
     Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
-});
 
-Route::middleware('can:manage_companies')->group(function () {
     Route::get('companies', [CompanyController::class, 'index'])->name('companies.index');
     Route::get('companies/create', [CompanyController::class, 'create'])->name('companies.create');
     

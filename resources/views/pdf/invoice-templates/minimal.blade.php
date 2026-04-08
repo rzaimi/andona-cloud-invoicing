@@ -96,7 +96,7 @@
         @include('pdf.invoice-partials.details', [
             'detailsLabelColor'  => $soft,
             'detailsBorderColor' => $border,
-            'detailsPad'         => '1.5mm 0',
+            'detailsPad'         => '0.5mm 0',
             'detailsFontSize'    => $fs - 1,
         ])
     </td>
@@ -143,7 +143,7 @@
 
 {{-- Payment terms (single line) --}}
 @if($ls['content']['show_payment_terms'] ?? true)
-<div style="margin-top:4mm; font-size:{{ $fs - 1 }}px; color:{{ $soft }};">
+<div style="margin-top:4mm; font-size:{{ $fs - 1 }}px; color:{{ $soft }}; page-break-inside:avoid;">
     @include('pdf.invoice-partials.payment-terms')
 </div>
 @endif

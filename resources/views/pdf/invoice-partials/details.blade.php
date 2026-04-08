@@ -17,7 +17,7 @@
     $hasSkonto    = !empty($invoice->skonto_percent) && !empty($invoice->skonto_days) && $skontoAmount > 0;
 
     $dtBg         = $detailsBg         ?? 'transparent';
-    $dtPad        = $detailsPad        ?? '4px 8px';
+    $dtPad        = $detailsPad        ?? '2px 6px';
     $dtLC         = $detailsLabelColor ?? '#6b7280';
     $dtBC         = $detailsBorderColor ?? '#e5e7eb';
     $dtFS         = $detailsFontSize   ?? $bodyFontSize;

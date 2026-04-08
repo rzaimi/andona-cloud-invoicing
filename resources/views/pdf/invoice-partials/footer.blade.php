@@ -80,7 +80,7 @@
             </td>
             @endif
 
-            {{-- ── Col 5: Amtsgericht + Geschäftsführer ────────────────── --}}
+            {{-- ── Col 5: Amtsgericht + Inhaber ────────────────────────── --}}
             @if($showReg)
             <td style="width:15%; vertical-align:top;">
                 @if($snapshot['commercial_register'] ?? null)
@@ -88,7 +88,7 @@
                     <div>{{ $snapshot['commercial_register'] }}</div>
                 @endif
                 @if($snapshot['managing_director'] ?? null)
-                    <div style="font-weight:bold; color:#111827; margin-top:2px;">Gesch&auml;ftsf&uuml;hrer:</div>
+                    <div style="font-weight:bold; color:#111827; margin-top:2px;">Inhaber:</div>
                     <div>{{ $snapshot['managing_director'] }}</div>
                 @endif
                 @if(!empty($ls['content']['custom_footer_text'] ?? ''))

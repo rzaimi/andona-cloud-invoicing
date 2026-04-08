@@ -10,8 +10,10 @@ Route::get('/', function () {
     ]);
 });
 
-// Contact routes (public)
-Route::post('/contact/demo', [App\Http\Controllers\ContactController::class, 'demo'])->name('contact.demo');
+// Contact routes (public) — throttled to 10 requests per minute per IP
+Route::post('/contact/demo', [App\Http\Controllers\ContactController::class, 'demo'])
+    ->middleware('throttle:10,1')
+    ->name('contact.demo');
 
 // API endpoint to load Ziggy routes dynamically (hides routes from HTML source)
 Route::get('/api/routes', function (\Illuminate\Http\Request $request) {

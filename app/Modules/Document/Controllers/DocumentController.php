@@ -61,9 +61,12 @@ class DocumentController extends Controller
                   ->where('linkable_id', $request->get('linkable_id'));
         }
 
-        // Sort
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
+        // Sort — whitelist columns and direction to prevent SQL identifier injection
+        $allowedSortColumns = ['created_at', 'name', 'original_filename', 'file_size', 'category', 'updated_at'];
+        $sortBy    = in_array($request->get('sort_by'), $allowedSortColumns, true)
+            ? $request->get('sort_by')
+            : 'created_at';
+        $sortOrder = $request->get('sort_order') === 'asc' ? 'asc' : 'desc';
         $query->orderBy($sortBy, $sortOrder);
 
         $documents = $query->paginate(20)->withQueryString();
@@ -90,7 +93,12 @@ class DocumentController extends Controller
 
         $validated = $request->validate([
             'files' => 'required|array|min:1',
-            'files.*' => 'required|file|max:10240', // 10MB max per file
+            'files.*' => [
+                'required',
+                'file',
+                'max:10240', // 10 MB per file
+                'mimes:pdf,jpg,jpeg,png,gif,webp,doc,docx,xls,xlsx,csv,txt,odt,ods',
+            ],
             'category' => 'required|in:employee,customer,invoice,company,financial,custom',
             'description' => 'nullable|string|max:1000',
             'tags' => 'nullable|string', // Comma-separated tags

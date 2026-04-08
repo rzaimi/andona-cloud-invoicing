@@ -63,7 +63,7 @@ class ERechnungService
             ->setPaper('a4')
             ->setOptions([
                 'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => true,
+                'isRemoteEnabled' => false, // Prevent SSRF via attacker-controlled URLs in HTML
                 'isHtml5ParserEnabled' => true,
             ]);
         

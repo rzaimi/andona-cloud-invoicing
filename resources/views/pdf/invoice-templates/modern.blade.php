@@ -148,7 +148,7 @@
             @include('pdf.invoice-partials.details', [
                 'detailsLabelColor'  => $light,
                 'detailsBorderColor' => $border,
-                'detailsPad'         => '1mm 0',
+                'detailsPad'         => '0.5mm 0',
                 'detailsFontSize'    => $fs - 1,
                 'detailsTableStyle'  => 'border:none;',
             ])
@@ -185,7 +185,7 @@
 @include('pdf.invoice-partials.totals')
 
 {{-- Payment box --}}
-<table style="width:100%; border-collapse:collapse; margin-top:7mm; border:1.5px solid {{ $primary }};">
+<table style="width:100%; border-collapse:collapse; margin-top:7mm; border:1.5px solid {{ $primary }}; page-break-inside:avoid;">
 <tr>
     <td colspan="2" style="background-color:{{ $primary }}; color:white; padding:2mm 4mm; font-size:{{ $fs - 2 }}px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
         Zahlungsinformationen
@@ -211,7 +211,7 @@
 
 {{-- Closing --}}
 @if($ls['content']['show_closing'] ?? true)
-<div style="margin-top:7mm; font-size:{{ $fs }}px; line-height:1.7;">
+<div style="margin-top:7mm; font-size:{{ $fs }}px; line-height:1.7; page-break-inside:avoid;">
     @if($invoice->closing ?? null)
         {!! nl2br(e($invoice->closing)) !!}
     @else

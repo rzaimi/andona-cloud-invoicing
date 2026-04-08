@@ -1036,6 +1036,7 @@ class MultiTenancyTest extends TestCase
             'notes' => null,
             'terms' => null,
             'layout_id' => null,
+            'vat_regime' => 'standard',
             'items' => [
                 [
                     'description' => 'Test Offer Item with 20% Discount',
@@ -1083,6 +1084,7 @@ class MultiTenancyTest extends TestCase
             'notes' => null,
             'terms' => null,
             'layout_id' => null,
+            'vat_regime' => 'standard',
             'items' => [
                 [
                     'description' => 'Test Offer Item with Fixed Discount',
@@ -1155,6 +1157,7 @@ class MultiTenancyTest extends TestCase
             'notes' => null,
             'terms' => null,
             'layout_id' => null,
+            'vat_regime' => 'standard',
             'status' => 'draft',
             'items' => [
                 [

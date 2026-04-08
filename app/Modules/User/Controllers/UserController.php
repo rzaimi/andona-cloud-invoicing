@@ -177,12 +177,23 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        // Sync roles and permissions if provided
+        // Sync roles and permissions if provided.
+        // Only super-admins (manage_companies) may assign privileged roles/permissions.
+        // Company admins (manage_users) are restricted to tenant-safe roles/permissions only.
         if (is_array($roleSync)) {
-            $user->syncRoles($roleSync);
+            $allowedRoles = $currentUser->hasPermissionTo('manage_companies')
+                ? Role::pluck('name')->toArray()
+                : ['admin', 'user']; // tenant admins may not assign super_admin
+            $safeRoles = array_values(array_intersect($roleSync, $allowedRoles));
+            $user->syncRoles($safeRoles);
         }
         if (is_array($permissionSync)) {
-            $user->syncPermissions($permissionSync);
+            $platformPermissions = ['manage_companies'];
+            $allowedPermissions = $currentUser->hasPermissionTo('manage_companies')
+                ? Permission::pluck('name')->toArray()
+                : Permission::whereNotIn('name', $platformPermissions)->pluck('name')->toArray();
+            $safePermissions = array_values(array_intersect($permissionSync, $allowedPermissions));
+            $user->syncPermissions($safePermissions);
         }
 
         return redirect()->route('users.index')

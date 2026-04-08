@@ -264,7 +264,7 @@ export default function CompaniesCreate() {
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="managing_director">Geschäftsführer</Label>
+                                    <Label htmlFor="managing_director">Inhaber</Label>
                                     <Input
                                         id="managing_director"
                                         value={data.managing_director}

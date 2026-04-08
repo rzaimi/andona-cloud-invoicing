@@ -63,6 +63,7 @@
             line-height: 1.4;
             color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
             background: white;
+            padding-bottom: 22mm; /* Buffer so content stops before the fixed footer */
         }
 
         /* DIN 5008 compliant address block for German envelope windows */
@@ -469,9 +470,10 @@ if (isset($pdf)) {
         $size = 7;
         $text = "Seite {$pageNumber} / {$pageCount}";
         $w = $fontMetrics->get_text_width($text, $font, $size);
-        // Bottom-right corner, slightly above page bottom
-        $x = $canvas->get_width() - $w - 5;
-        $y = $canvas->get_height() - 55;
+        // Place page number above the fixed footer (~42pt tall at bottom:0)
+        // 80pt ≈ 28mm from physical page bottom — safely above the footer
+        $x = $canvas->get_width() - $w - 20;
+        $y = $canvas->get_height() - 80;
         $canvas->text($x, $y, $text, $font, $size, [0, 0, 0]);
     });
 }
