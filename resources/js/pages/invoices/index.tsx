@@ -611,6 +611,9 @@ export default function InvoicesIndex() {
                     documentId={selectedInvoice.id}
                     documentNumber={selectedInvoice.number}
                     customerEmail={selectedInvoice.customer?.email}
+                    customerName={selectedInvoice.customer?.name}
+                    issueDate={selectedInvoice.issue_date}
+                    dueDate={selectedInvoice.due_date}
                     onSuccess={() => {
                         router.reload()
                     }}

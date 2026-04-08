@@ -107,15 +107,35 @@ export default function InvoicesShow() {
         to: invoice.customer?.email || "",
         cc: "",
         subject: `Rechnung ${invoice.number}`,
-        message: "",
+        message: "" as string,
     })
 
     const handleOpenSendDialog = () => {
+        const fmt = (d?: string) =>
+            d ? new Date(d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""
+        const greeting = invoice.customer?.name
+            ? `Sehr geehrte Damen und Herren von ${invoice.customer.name},`
+            : "Sehr geehrte Damen und Herren,"
+        const defaultMessage = [
+            greeting,
+            "",
+            `anbei erhalten Sie die Rechnung ${invoice.number}${invoice.issue_date ? ` vom ${fmt(invoice.issue_date)}` : ""}.`,
+            "",
+            "Die Rechnung als PDF-Datei finden Sie im Anhang dieser E-Mail.",
+            ...(invoice.due_date
+                ? ["", `Bitte überweisen Sie den Betrag bis zum ${fmt(invoice.due_date)} unter Angabe der Rechnungsnummer ${invoice.number}.`]
+                : []),
+            "",
+            "Bei Fragen stehen wir Ihnen gerne zur Verfügung.",
+            "",
+            "Mit freundlichen Grüßen",
+        ].join("\n")
+
         setSendForm({
             to: invoice.customer?.email || "",
             cc: "",
             subject: `Rechnung ${invoice.number}`,
-            message: "",
+            message: defaultMessage,
         })
         setIsSendDialogOpen(true)
     }
@@ -622,7 +642,7 @@ export default function InvoicesShow() {
                                 value={sendForm.message}
                                 onChange={(e) => setSendForm({ ...sendForm, message: e.target.value })}
                                 placeholder="Sehr geehrte Damen und Herren, ..."
-                                rows={4}
+                                rows={8}
                             />
                         </div>
 

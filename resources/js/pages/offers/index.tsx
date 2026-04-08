@@ -522,6 +522,9 @@ export default function OffersIndex() {
                     documentId={selectedOffer.id}
                     documentNumber={selectedOffer.number}
                     customerEmail={selectedOffer.customer?.email}
+                    customerName={selectedOffer.customer?.name}
+                    issueDate={selectedOffer.issue_date}
+                    validUntil={selectedOffer.valid_until}
                     onSuccess={() => {
                         router.reload()
                     }}

@@ -22,7 +22,55 @@ interface SendEmailDialogProps {
     documentId: string
     documentNumber: string
     customerEmail?: string
+    customerName?: string
+    issueDate?: string
+    dueDate?: string
+    validUntil?: string
     onSuccess?: () => void
+}
+
+function buildDefaultMessage(
+    type: "invoice" | "offer",
+    documentNumber: string,
+    customerName?: string,
+    issueDate?: string,
+    dueDate?: string,
+    validUntil?: string,
+): string {
+    const greeting = customerName
+        ? `Sehr geehrte Damen und Herren von ${customerName},`
+        : "Sehr geehrte Damen und Herren,"
+
+    const fmt = (d?: string) =>
+        d ? new Date(d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""
+
+    if (type === "invoice") {
+        const lines = [
+            greeting,
+            "",
+            `anbei erhalten Sie die Rechnung ${documentNumber}${issueDate ? ` vom ${fmt(issueDate)}` : ""}.`,
+            "",
+            "Die Rechnung als PDF-Datei finden Sie im Anhang dieser E-Mail.",
+        ]
+        if (dueDate) {
+            lines.push("", `Bitte überweisen Sie den Betrag bis zum ${fmt(dueDate)} unter Angabe der Rechnungsnummer ${documentNumber}.`)
+        }
+        lines.push("", "Bei Fragen stehen wir Ihnen gerne zur Verfügung.", "", "Mit freundlichen Grüßen")
+        return lines.join("\n")
+    } else {
+        const lines = [
+            greeting,
+            "",
+            `vielen Dank für Ihr Interesse. Gerne unterbreiten wir Ihnen das Angebot ${documentNumber}${issueDate ? ` vom ${fmt(issueDate)}` : ""}.`,
+            "",
+            "Das vollständige Angebot finden Sie als PDF-Datei im Anhang dieser E-Mail.",
+        ]
+        if (validUntil) {
+            lines.push("", `Dieses Angebot ist gültig bis zum ${fmt(validUntil)}.`)
+        }
+        lines.push("", "Für Rückfragen stehen wir Ihnen jederzeit gerne zur Verfügung.", "", "Mit freundlichen Grüßen")
+        return lines.join("\n")
+    }
 }
 
 export function SendEmailDialog({
@@ -32,6 +80,10 @@ export function SendEmailDialog({
     documentId,
     documentNumber,
     customerEmail,
+    customerName,
+    issueDate,
+    dueDate,
+    validUntil,
     onSuccess,
 }: SendEmailDialogProps) {
     const [errors, setErrors] = useState<Record<string, string>>({})
@@ -39,12 +91,10 @@ export function SendEmailDialog({
     const { data, setData, post, processing, reset } = useForm({
         to: customerEmail || "",
         cc: "",
-        subject: type === "invoice" 
-            ? `Rechnung ${documentNumber}` 
+        subject: type === "invoice"
+            ? `Rechnung ${documentNumber}`
             : `Angebot ${documentNumber}`,
-        message: type === "invoice"
-            ? `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung ${documentNumber}.\n\nMit freundlichen Grüßen`
-            : `Sehr geehrte Damen und Herren,\n\nvielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen das Angebot ${documentNumber}.\n\nMit freundlichen Grüßen`,
+        message: buildDefaultMessage(type, documentNumber, customerName, issueDate, dueDate, validUntil),
     })
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -144,7 +194,7 @@ export function SendEmailDialog({
                                 id="message"
                                 value={data.message}
                                 onChange={(e) => setData("message", e.target.value)}
-                                rows={6}
+                                rows={9}
                                 placeholder="Zusätzliche Nachricht..."
                             />
                             {errors.message && <p className="text-sm text-red-600">{errors.message}</p>}
