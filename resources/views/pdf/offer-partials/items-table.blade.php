@@ -46,7 +46,7 @@
                 <th style="padding:{{ $cp }}; text-align:center; width:6%; font-weight:600; font-size:{{ $fs }}px; border-right:1px solid {{ $thBordCol }};">Pos.</th>
             @endif
             @if($showItemCodes)
-                <th style="padding:{{ $cp }}; text-align:left; width:12%; font-weight:600; font-size:{{ $fs }}px; white-space:nowrap; border-right:1px solid {{ $thBordCol }};">Produkt-Nr.</th>
+                <th style="padding:{{ $cp }}; text-align:left; width:16%; font-weight:600; font-size:{{ $fs }}px; white-space:nowrap; border-right:1px solid {{ $thBordCol }};">Produkt-Nr.</th>
             @endif
             <th style="padding:{{ $cp }}; text-align:left; font-weight:600; font-size:{{ $fs }}px; border-right:1px solid {{ $thBordCol }};">Beschreibung</th>
             @if($showUnit)
@@ -56,8 +56,8 @@
             @if($hasAnyDiscount)
                 <th style="padding:{{ $cp }}; text-align:right; width:12%; font-weight:600; font-size:{{ $fs }}px; border-right:1px solid {{ $thBordCol }}; {{ $thBg ? '' : 'color:#dc2626;' }}">Rabatt</th>
             @endif
-            <th style="padding:{{ $cp }}; text-align:right; width:12%; font-weight:600; font-size:{{ $fs }}px; border-right:1px solid {{ $thBordCol }};">Preis</th>
-            <th style="padding:{{ $cp }}; text-align:right; width:13%; font-weight:600; font-size:{{ $fs }}px;">Summe</th>
+            <th style="padding:{{ $cp }}; text-align:right; width:12%; font-weight:600; font-size:{{ $fs }}px; white-space:nowrap; border-right:1px solid {{ $thBordCol }};">Preis</th>
+            <th style="padding:{{ $cp }}; text-align:right; width:15%; font-weight:600; font-size:{{ $fs }}px; white-space:nowrap;">Summe</th>
         </tr>
     </thead>
     <tbody>
@@ -114,8 +114,8 @@
                         @endif
                     </td>
                 @endif
-                <td style="padding:{{ $cp }}; text-align:right; {{ $cellBorder }}">{{ number_format((float)$price, 2, ',', '.') }} €</td>
-                <td style="padding:{{ $cp }}; text-align:right; font-weight:600;">{{ number_format((float)$itemTotal, 2, ',', '.') }} €</td>
+                <td style="padding:{{ $cp }}; text-align:right; white-space:nowrap; {{ $cellBorder }}">{{ number_format((float)$price, 2, ',', '.') }} €</td>
+                <td style="padding:{{ $cp }}; text-align:right; white-space:nowrap; font-weight:600;">{{ number_format((float)$itemTotal, 2, ',', '.') }} €</td>
             </tr>
         @endforeach
     </tbody>

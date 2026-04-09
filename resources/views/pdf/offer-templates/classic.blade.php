@@ -26,7 +26,7 @@
 <div class="container">
 
 {{-- ══ DARK LETTERHEAD BAND ═══════════════════════════════════════════════ --}}
-<table style="width:100%; border-collapse:collapse; background-color:{{ $primary }}; margin-bottom:6mm;">
+<table style="width:100%; border-collapse:collapse; background-color:{{ $primary }}; margin-bottom:4mm;">
     <tr>
         <td style="padding:6mm 7mm; vertical-align:middle;">
             <div style="color:white; font-size:{{ $fsH + 6 }}px; font-weight:800; line-height:1.15; letter-spacing:0.5px;">{{ $snapshot['name'] ?? '' }}</div>
@@ -47,14 +47,8 @@
     </tr>
 </table>
 
-{{-- ══ CENTERED DOCUMENT TITLE ════════════════════════════════════════════ --}}
-<div style="text-align:center; margin-bottom:6mm; padding-bottom:4mm; border-bottom:2px solid {{ $textCol }};">
-    <div style="font-size:{{ $fsH + 7 }}px; font-weight:800; color:{{ $textCol }}; letter-spacing:2px; text-transform:uppercase;">ANGEBOT</div>
-    <div style="font-size:{{ $fs + 1 }}px; color:{{ $secCol }}; margin-top:4px; letter-spacing:0.5px;">Nummer: <strong>{{ $offer->number ?? '' }}</strong></div>
-</div>
-
 {{-- ══ ADDRESS BLOCK (left) + BORDERED INFO TABLE (right) ════════════════ --}}
-<table style="width:100%; border-collapse:collapse; margin-bottom:8mm;">
+<table style="width:100%; border-collapse:collapse; margin-bottom:5mm;">
     <tr>
         <td style="width:52%; vertical-align:top; padding-right:8mm;">
             @if($customer)
@@ -77,35 +71,35 @@
         <td style="width:48%; vertical-align:top;">
             <table style="width:100%; border-collapse:collapse; border:1.5px solid {{ $textCol }}; font-size:{{ $fs - 1 }}px;">
                 <tr>
-                    <td style="padding:5px 8px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }}; width:44%;">Angebot Nr.</td>
-                    <td style="padding:5px 8px; font-weight:700; border-bottom:1px solid {{ $textCol }};">{{ $offer->number ?? '' }}</td>
+                    <td style="padding:3px 7px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }}; width:44%;">Angebot Nr.</td>
+                    <td style="padding:3px 7px; font-weight:700; border-bottom:1px solid {{ $textCol }};">{{ $offer->number ?? '' }}</td>
                 </tr>
                 <tr>
-                    <td style="padding:5px 8px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }};">Datum</td>
-                    <td style="padding:5px 8px; font-weight:600; border-bottom:1px solid {{ $textCol }};">{{ fmtOfferDate($offer->issue_date ?? $offer->created_at, $dateFormat) }}</td>
+                    <td style="padding:3px 7px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }};">Datum</td>
+                    <td style="padding:3px 7px; font-weight:600; border-bottom:1px solid {{ $textCol }};">{{ fmtOfferDate($offer->issue_date ?? $offer->created_at, $dateFormat) }}</td>
                 </tr>
                 @if(($ls['content']['show_validity_period'] ?? true) && ($offer->validity_date ?? $offer->valid_until ?? null))
                 <tr>
-                    <td style="padding:5px 8px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }};">Gültig bis</td>
-                    <td style="padding:5px 8px; font-weight:600; border-bottom:1px solid {{ $textCol }};">{{ fmtOfferDate($offer->validity_date ?? $offer->valid_until, $dateFormat) }}</td>
+                    <td style="padding:3px 7px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }};">Gültig bis</td>
+                    <td style="padding:3px 7px; font-weight:600; border-bottom:1px solid {{ $textCol }};">{{ fmtOfferDate($offer->validity_date ?? $offer->valid_until, $dateFormat) }}</td>
                 </tr>
                 @endif
                 @if(($ls['content']['show_customer_number'] ?? true) && $customer && !empty($customer->number ?? $customer->customer_number ?? null))
                 <tr>
-                    <td style="padding:5px 8px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }};">Kunden-Nr.</td>
-                    <td style="padding:5px 8px; font-weight:600; border-bottom:1px solid {{ $textCol }};">{{ $customer->number ?? $customer->customer_number }}</td>
+                    <td style="padding:3px 7px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }};">Kunden-Nr.</td>
+                    <td style="padding:3px 7px; font-weight:600; border-bottom:1px solid {{ $textCol }};">{{ $customer->number ?? $customer->customer_number }}</td>
                 </tr>
                 @endif
                 @if(($ls['content']['show_tax_number'] ?? true) && ($snapshot['tax_number'] ?? null))
                 <tr>
-                    <td style="padding:5px 8px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }};">Steuernummer</td>
-                    <td style="padding:5px 8px; font-weight:600; border-bottom:1px solid {{ $textCol }};">{{ $snapshot['tax_number'] }}</td>
+                    <td style="padding:3px 7px; color:{{ $secCol }}; border-bottom:1px solid {{ $textCol }}; border-right:1px solid {{ $textCol }};">Steuernummer</td>
+                    <td style="padding:3px 7px; font-weight:600; border-bottom:1px solid {{ $textCol }};">{{ $snapshot['tax_number'] }}</td>
                 </tr>
                 @endif
                 @if(!empty($offer->bauvorhaben) && ($ls['content']['show_bauvorhaben'] ?? true))
                 <tr>
-                    <td style="padding:5px 8px; color:{{ $secCol }}; border-right:1px solid {{ $textCol }};">BV</td>
-                    <td style="padding:5px 8px; font-weight:700; color:{{ $primary }};">{{ $offer->bauvorhaben }}</td>
+                    <td style="padding:3px 7px; color:{{ $secCol }}; border-right:1px solid {{ $textCol }};">BV</td>
+                    <td style="padding:3px 7px; font-weight:700; color:{{ $primary }};">{{ $offer->bauvorhaben }}</td>
                 </tr>
                 @endif
             </table>
@@ -128,7 +122,7 @@
     $tableHeaderBg    = $textCol;
     $tableOuterBorder = '1.5px solid ' . $textCol;
     $altRowBg         = $accent;
-    $cellPadding      = '7px 8px';
+    $cellPadding      = '6px 7px';
     $showRowNumber    = true;
 @endphp
 @include('pdf.offer-partials.items-table')
@@ -143,7 +137,7 @@
 <div style="margin-top:6mm; font-size:{{ $fs - 1 }}px; color:{{ $secCol }}; line-height:1.5;">{{ $offer->terms_conditions }}</div>
 @endif
 
-<div style="margin-top:8mm; font-size:{{ $fs }}px;">
+<div style="margin-top:6mm; font-size:{{ $fs }}px; page-break-inside:avoid;">
     <div style="margin-bottom:3px;">Mit freundlichen Grüßen</div>
     <div style="font-weight:600;">{{ $snapshot['name'] ?? '' }}</div>
 </div>

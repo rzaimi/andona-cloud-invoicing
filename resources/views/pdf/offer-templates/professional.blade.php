@@ -26,9 +26,9 @@
 <div class="container">
 
 {{-- ══ SPLIT HEADER ════════════════════════════════════════════════════════ --}}
-<table style="width:100%; border-collapse:collapse; margin-bottom:9mm;">
+<table style="width:100%; border-collapse:collapse; margin-bottom:6mm;">
     <tr>
-        <td style="width:60%; background-color:{{ $primary }}; padding:7mm 8mm; vertical-align:middle;">
+        <td style="width:60%; background-color:{{ $primary }}; padding:5mm 7mm; vertical-align:middle;">
             @if($showLogo)
                 <div style="margin-bottom:3mm;"><img src="{{ $logoSrc }}" alt="Logo" style="max-height:{{ $logoH }}; max-width:{{ $logoW }};"></div>
             @endif
@@ -42,7 +42,7 @@
                 </div>
             @endif
         </td>
-        <td style="width:40%; background-color:{{ $accent }}; padding:7mm 8mm; vertical-align:middle; text-align:right; border-left:4px solid white;">
+        <td style="width:40%; background-color:{{ $accent }}; padding:5mm 7mm; vertical-align:middle; text-align:right; border-left:4px solid white;">
             <div style="font-size:26px; font-weight:800; color:{{ $primary }}; letter-spacing:1px; margin-bottom:4mm; line-height:1;">ANGEBOT</div>
             <div style="font-size:{{ $fs }}px; color:{{ $textCol }}; line-height:1.8;">
                 <span style="color:{{ $secCol }}; font-size:{{ $fs - 1 }}px; display:inline-block; min-width:22mm; text-align:left;">Nr.</span>
@@ -68,7 +68,7 @@
 
 {{-- ══ DIN 5008 ADDRESS BLOCK ═════════════════════════════════════════════ --}}
 @if($customer)
-<div style="margin-bottom:9mm;">
+<div style="margin-bottom:5mm;">
     <div class="din-5008-address">
         @if($ls['content']['show_company_address'] ?? true)
             <div class="sender-return-address">{{ $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}</div>
@@ -97,7 +97,7 @@
 @endif
 
 {{-- ══ ITEMS TABLE ═════════════════════════════════════════════════════════ --}}
-@php $tableHeaderBg = $primary; $altRowBg = $accent; $cellPadding = '8px 8px'; @endphp
+@php $tableHeaderBg = $primary; $altRowBg = $accent; $cellPadding = '6px 7px'; @endphp
 @include('pdf.offer-partials.items-table')
 
 {{-- ══ TOTALS ═══════════════════════════════════════════════════════════════ --}}
@@ -110,7 +110,7 @@
 <div style="margin-top:6mm; font-size:{{ $fs - 1 }}px; color:{{ $secCol }}; line-height:1.5;">{{ $offer->terms_conditions }}</div>
 @endif
 
-<div style="margin-top:10mm; font-size:{{ $fs }}px;">
+<div style="margin-top:6mm; font-size:{{ $fs }}px; page-break-inside:avoid;">
     <div style="margin-bottom:3px;">Mit freundlichen Grüßen</div>
     <div style="font-weight:600;">{{ $snapshot['name'] ?? '' }}</div>
 </div>

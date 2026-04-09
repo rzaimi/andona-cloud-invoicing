@@ -26,7 +26,7 @@
 <div class="container">
 
 {{-- ══ CENTERED HEADER ════════════════════════════════════════════════════ --}}
-<div style="text-align:center; margin-bottom:7mm; padding-bottom:4mm; border-bottom:0.5px solid {{ $secCol }};">
+<div style="text-align:center; margin-bottom:5mm; padding-bottom:3mm; border-bottom:0.5px solid {{ $secCol }};">
     @if($showLogo)
         <div style="margin-bottom:3mm;"><img src="{{ $logoSrc }}" alt="Logo" style="max-height:{{ $logoH }}; max-width:{{ $logoW }};"></div>
     @endif
@@ -50,7 +50,7 @@
 </div>
 
 {{-- ══ ADDRESS BLOCK + STRUCTURED INFO TABLE ══════════════════════════════ --}}
-<table style="width:100%; border-collapse:collapse; margin-bottom:8mm;">
+<table style="width:100%; border-collapse:collapse; margin-bottom:5mm;">
     <tr>
         <td style="width:52%; vertical-align:top; padding-right:8mm;">
             @if($customer)
@@ -72,28 +72,21 @@
         </td>
         <td style="width:48%; vertical-align:top;">
             <table style="width:100%; border-collapse:collapse; border-left:2px solid {{ $secCol }}; font-size:{{ $fs - 1 }}px;">
-                <tr><td style="padding:4px 0 4px 6px; color:{{ $secCol }}; border-bottom:1px solid #e5e7eb; width:46%;">Angebot Nr.</td><td style="padding:4px 6px; font-weight:700; border-bottom:1px solid #e5e7eb;">{{ $offer->number ?? '' }}</td></tr>
-                <tr><td style="padding:4px 0 4px 6px; color:{{ $secCol }}; border-bottom:1px solid #e5e7eb;">Datum</td><td style="padding:4px 6px; font-weight:600; border-bottom:1px solid #e5e7eb;">{{ fmtOfferDate($offer->issue_date ?? $offer->created_at, $dateFormat) }}</td></tr>
+                <tr><td style="padding:3px 0 3px 6px; color:{{ $secCol }}; border-bottom:1px solid #e5e7eb; width:46%;">Angebot Nr.</td><td style="padding:3px 6px; font-weight:700; border-bottom:1px solid #e5e7eb;">{{ $offer->number ?? '' }}</td></tr>
+                <tr><td style="padding:3px 0 3px 6px; color:{{ $secCol }}; border-bottom:1px solid #e5e7eb;">Datum</td><td style="padding:3px 6px; font-weight:600; border-bottom:1px solid #e5e7eb;">{{ fmtOfferDate($offer->issue_date ?? $offer->created_at, $dateFormat) }}</td></tr>
                 @if(($ls['content']['show_validity_period'] ?? true) && ($offer->validity_date ?? $offer->valid_until ?? null))
-                <tr><td style="padding:4px 0 4px 6px; color:{{ $secCol }}; border-bottom:1px solid #e5e7eb;">Gültig bis</td><td style="padding:4px 6px; font-weight:600; border-bottom:1px solid #e5e7eb;">{{ fmtOfferDate($offer->validity_date ?? $offer->valid_until, $dateFormat) }}</td></tr>
+                <tr><td style="padding:3px 0 3px 6px; color:{{ $secCol }}; border-bottom:1px solid #e5e7eb;">Gültig bis</td><td style="padding:3px 6px; font-weight:600; border-bottom:1px solid #e5e7eb;">{{ fmtOfferDate($offer->validity_date ?? $offer->valid_until, $dateFormat) }}</td></tr>
                 @endif
                 @if(($ls['content']['show_customer_number'] ?? true) && $customer && !empty($customer->number ?? $customer->customer_number ?? null))
-                <tr><td style="padding:4px 0 4px 6px; color:{{ $secCol }}; border-bottom:1px solid #e5e7eb;">Kunden-Nr.</td><td style="padding:4px 6px; font-weight:600; border-bottom:1px solid #e5e7eb;">{{ $customer->number ?? $customer->customer_number }}</td></tr>
+                <tr><td style="padding:3px 0 3px 6px; color:{{ $secCol }}; border-bottom:1px solid #e5e7eb;">Kunden-Nr.</td><td style="padding:3px 6px; font-weight:600; border-bottom:1px solid #e5e7eb;">{{ $customer->number ?? $customer->customer_number }}</td></tr>
                 @endif
                 @if(!empty($offer->bauvorhaben) && ($ls['content']['show_bauvorhaben'] ?? true))
-                <tr><td style="padding:4px 0 4px 6px; color:{{ $secCol }};">BV</td><td style="padding:4px 6px; font-weight:700; color:{{ $primary }};">{{ $offer->bauvorhaben }}</td></tr>
+                <tr><td style="padding:3px 0 3px 6px; color:{{ $secCol }};">BV</td><td style="padding:3px 6px; font-weight:700; color:{{ $primary }};">{{ $offer->bauvorhaben }}</td></tr>
                 @endif
             </table>
         </td>
     </tr>
 </table>
-
-{{-- ══ CENTERED DOCUMENT TITLE ════════════════════════════════════════════ --}}
-<div style="text-align:center; margin-bottom:6mm; padding-bottom:4mm;">
-    <div style="font-size:{{ $fsH + 5 }}px; font-weight:300; color:{{ $textCol }}; letter-spacing:4px; text-transform:uppercase; margin-bottom:2mm;">ANGEBOT</div>
-    <div style="font-size:{{ $fs }}px; color:{{ $secCol }}; letter-spacing:1px;">Nr.&ensp;{{ $offer->number ?? '' }}</div>
-    <div style="border-bottom:0.5px solid {{ $secCol }}; margin-top:4mm;"></div>
-</div>
 
 {{-- ══ INTRO ═══════════════════════════════════════════════════════════════ --}}
 @if(($ls['content']['show_notes'] ?? true) && ($offer->notes ?? null))
@@ -110,7 +103,7 @@
     $tableHeaderBg        = $accent;
     $tableHeaderTextColor = $textCol;
     $tableHeaderStyle     = 'border-bottom:2px solid ' . $textCol . ';';
-    $cellPadding          = '7px 7px';
+    $cellPadding          = '6px 7px';
 @endphp
 @include('pdf.offer-partials.items-table')
 
@@ -124,7 +117,7 @@
 <div style="margin-top:6mm; font-size:{{ $fs - 1 }}px; color:{{ $secCol }}; line-height:1.5;">{{ $offer->terms_conditions }}</div>
 @endif
 
-<div style="margin-top:8mm; font-size:{{ $fs }}px; text-align:center; border-top:0.5px solid {{ $secCol }}; padding-top:5mm;">
+<div style="margin-top:6mm; font-size:{{ $fs }}px; text-align:center; border-top:0.5px solid {{ $secCol }}; padding-top:4mm; page-break-inside:avoid;">
     <div style="margin-bottom:3px; color:{{ $secCol }};">Mit freundlichen Grüßen</div>
     <div style="font-weight:700; letter-spacing:0.5px;">{{ $snapshot['name'] ?? '' }}</div>
 </div>

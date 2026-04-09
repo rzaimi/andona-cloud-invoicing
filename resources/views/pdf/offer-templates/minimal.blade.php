@@ -48,7 +48,7 @@
 </table>
 
 {{-- ══ ADDRESS BLOCK + PLAIN INFO ════════════════════════════════════════ --}}
-<table style="width:100%; border-collapse:collapse; margin-bottom:8mm;">
+<table style="width:100%; border-collapse:collapse; margin-bottom:5mm;">
     <tr>
         <td style="width:52%; vertical-align:top; padding-right:8mm;">
             @if($customer)
@@ -115,7 +115,7 @@
 <div style="margin-top:6mm; font-size:{{ $fs - 1 }}px; color:{{ $secCol }}; line-height:1.5;">{{ $offer->terms_conditions }}</div>
 @endif
 
-<div style="margin-top:8mm; font-size:{{ $fs }}px; color:{{ $textCol }};">
+<div style="margin-top:6mm; font-size:{{ $fs }}px; color:{{ $textCol }}; page-break-inside:avoid;">
     <div style="margin-bottom:3px;">Mit freundlichen Grüßen</div>
     <div style="font-weight:600;">{{ $snapshot['name'] ?? '' }}</div>
 </div>
