@@ -28,20 +28,21 @@ class ProductController extends Controller
                       ->orWhere('sku', 'like', "%{$search}%");
                 });
             })
-            ->when($request->category, function ($query, $category) {
-                $query->byCategory($category);
+            ->when($request->category && $request->category !== 'all', function ($query) use ($request) {
+                $query->byCategory($request->category);
             })
-            ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
+            ->when($request->status && $request->status !== 'all', function ($query) use ($request) {
+                $query->where('status', $request->status);
             })
-            ->when($request->type, function ($query, $type) {
-                if ($type === 'service') {
+            ->when($request->type && $request->type !== 'all', function ($query) use ($request) {
+                if ($request->type === 'service') {
                     $query->services();
-                } elseif ($type === 'product') {
+                } elseif ($request->type === 'product') {
                     $query->products();
                 }
             })
-            ->when($request->stock_status, function ($query, $stockStatus) {
+            ->when($request->stock_status && $request->stock_status !== 'all', function ($query) use ($request) {
+                $stockStatus = $request->stock_status;
                 if ($stockStatus === 'low_stock') {
                     $query->lowStock();
                 } elseif ($stockStatus === 'out_of_stock') {
