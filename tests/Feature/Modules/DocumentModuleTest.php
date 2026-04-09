@@ -26,6 +26,7 @@ class DocumentModuleTest extends TestCase
         parent::setUp();
         $this->withoutVite();
         Storage::fake('local');
+        Storage::fake('private');
         $this->seedRolesAndPermissions();
         
         $this->company = Company::create([

@@ -8,7 +8,9 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
-     * SQLite stores Laravel enum columns as varchar; MySQL uses a real ENUM and must be altered.
+     * For MySQL: alters the real ENUM column to include 'payroll'.
+     * For SQLite (tests/local): no-op — payroll is already in the base
+     * create_documents_table migration, so RefreshDatabase picks it up automatically.
      */
     public function up(): void
     {

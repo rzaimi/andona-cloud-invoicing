@@ -20,6 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('file_size'); // in bytes
             $table->string('mime_type');
             $table->enum('category', [
+                'payroll',
                 'employee',
                 'customer',
                 'invoice',
