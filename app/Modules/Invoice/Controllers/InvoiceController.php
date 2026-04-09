@@ -143,7 +143,7 @@ class InvoiceController extends Controller
             'bauvorhaben'          => 'nullable|string|max:255',
             'auftragsnummer'       => 'nullable|string|max:100',
             'layout_id'            => 'nullable|exists:invoice_layouts,id',
-            'vat_regime'           => 'required|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
+            'vat_regime'           => 'nullable|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
             // Rechnungstyp
             'invoice_type'     => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
             'sequence_number'  => 'nullable|integer|between:1,20',
@@ -370,7 +370,7 @@ class InvoiceController extends Controller
             'auftragsnummer'       => 'nullable|string|max:100',
             'layout_id'            => 'nullable|exists:invoice_layouts,id',
             'status'               => 'required|in:draft,sent,paid,overdue,cancelled',
-            'vat_regime'           => 'required|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
+            'vat_regime'           => 'nullable|in:standard,small_business,reverse_charge,reverse_charge_domestic,intra_community,export',
             // Rechnungstyp
             'invoice_type'    => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
             'sequence_number' => 'nullable|integer|between:1,20',

@@ -99,7 +99,7 @@ class DocumentController extends Controller
                 'max:10240', // 10 MB per file
                 'mimes:pdf,jpg,jpeg,png,gif,webp,doc,docx,xls,xlsx,csv,txt,odt,ods',
             ],
-            'category' => 'required|in:employee,customer,invoice,company,financial,custom',
+            'category' => 'required|in:payroll,employee,customer,invoice,company,financial,custom',
             'description' => 'nullable|string|max:1000',
             'tags' => 'nullable|string', // Comma-separated tags
             'linkable_type' => 'nullable|string|in:App\Modules\Invoice\Models\Invoice,App\Modules\Customer\Models\Customer',
@@ -212,7 +212,7 @@ class DocumentController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'category' => 'required|in:employee,customer,invoice,company,financial,custom',
+            'category' => 'required|in:payroll,employee,customer,invoice,company,financial,custom',
             'description' => 'nullable|string|max:1000',
             'tags' => 'nullable|string',
             'linkable_type' => 'nullable|string|in:App\Modules\Invoice\Models\Invoice,App\Modules\Customer\Models\Customer',

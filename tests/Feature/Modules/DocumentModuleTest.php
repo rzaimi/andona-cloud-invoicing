@@ -91,6 +91,24 @@ class DocumentModuleTest extends TestCase
         ]);
     }
 
+    public function test_user_can_upload_payroll_document()
+    {
+        $file = UploadedFile::fake()->create('lohn.pdf', 100);
+
+        $response = $this->actingAs($this->user)
+            ->post(route('documents.store'), [
+                'files' => [$file],
+                'category' => 'payroll',
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('documents', [
+            'original_filename' => 'lohn.pdf',
+            'category' => 'payroll',
+            'company_id' => $this->company->id,
+        ]);
+    }
+
     public function test_user_can_link_document_to_customer()
     {
         $customer = Customer::create([

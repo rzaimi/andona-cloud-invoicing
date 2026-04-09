@@ -37,6 +37,7 @@ class Document extends Model
     ];
 
     // Document categories
+    const CATEGORY_PAYROLL = 'payroll';
     const CATEGORY_EMPLOYEE = 'employee';
     const CATEGORY_CUSTOMER = 'customer';
     const CATEGORY_INVOICE = 'invoice';
