@@ -160,6 +160,20 @@ class OfferController extends Controller
             $effectiveCompanyId = $this->getEffectiveCompanyId();
             $company = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
 
+            // Security: verify customer belongs to this company
+            $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
+            if (!$customer) {
+                abort(403, 'Customer does not belong to your company');
+            }
+
+            // Security: verify layout belongs to this company
+            if (!empty($validated['layout_id'])) {
+                $layout = OfferLayout::forCompany($effectiveCompanyId)->find($validated['layout_id']);
+                if (!$layout) {
+                    abort(403, 'Offer layout does not belong to your company');
+                }
+            }
+
             // Generate offer number using dynamic format setting
             $svc    = new NumberFormatService();
             $format = $svc->normaliseToFormat(
@@ -315,6 +329,20 @@ class OfferController extends Controller
 
         DB::transaction(function () use ($validated, $offer) {
             $effectiveCompanyId = $this->getEffectiveCompanyId();
+
+            // Security: verify customer belongs to this company
+            $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
+            if (!$customer) {
+                abort(403, 'Customer does not belong to your company');
+            }
+
+            // Security: verify layout belongs to this company
+            if (!empty($validated['layout_id'])) {
+                $layout = OfferLayout::forCompany($effectiveCompanyId)->find($validated['layout_id']);
+                if (!$layout) {
+                    abort(403, 'Offer layout does not belong to your company');
+                }
+            }
 
             $vatRegime = $validated['vat_regime'] ?? 'standard';
             $company   = \App\Modules\Company\Models\Company::find($effectiveCompanyId);

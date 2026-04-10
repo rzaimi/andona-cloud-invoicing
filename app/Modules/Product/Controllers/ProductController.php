@@ -125,6 +125,15 @@ class ProductController extends Controller
         ]);
 
         $companyId = $this->getEffectiveCompanyId();
+
+        // Security: verify category belongs to this company
+        if (!empty($validated['category_id'])) {
+            $category = Category::where('company_id', $companyId)->find($validated['category_id']);
+            if (!$category) {
+                abort(403, 'Category does not belong to your company');
+            }
+        }
+
         $attempts  = 0;
 
         do {
@@ -234,6 +243,15 @@ class ProductController extends Controller
             'is_service' => 'boolean',
             'status' => 'required|in:active,inactive,discontinued',
         ]);
+
+        // Security: verify category belongs to this company
+        if (!empty($validated['category_id'])) {
+            $companyId = $this->getEffectiveCompanyId();
+            $category  = Category::where('company_id', $companyId)->find($validated['category_id']);
+            if (!$category) {
+                abort(403, 'Category does not belong to your company');
+            }
+        }
 
         $product->update($validated);
 
