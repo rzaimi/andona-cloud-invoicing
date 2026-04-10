@@ -43,11 +43,9 @@ class DocumentController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('original_filename', 'like', "%{$search}%");
+                  ->orWhere('original_filename', 'like', "%{$search}%")
+                  ->orWhereJsonContains('tags', $search);
             });
-            
-            // Also search in tags
-            $query->orWhereJsonContains('tags', $search);
         }
 
         // Link type filter
