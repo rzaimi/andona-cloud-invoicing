@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->string('auftragsnummer')->nullable()->after('bauvorhaben');
+            $table->string('auftragsnummer')->nullable();
         });
     }
 
