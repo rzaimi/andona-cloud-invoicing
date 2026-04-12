@@ -27,7 +27,11 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Session timeout check for authenticated routes
         $middleware->alias([
-            'session.timeout' => \App\Http\Middleware\CheckSessionTimeout::class,
+            'session.timeout'       => \App\Http\Middleware\CheckSessionTimeout::class,
+            'role'                  => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission'            => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission'    => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'employee.portal.only'  => \App\Http\Middleware\RedirectEmployeeToPortal::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

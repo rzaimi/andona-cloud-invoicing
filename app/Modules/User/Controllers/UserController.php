@@ -69,10 +69,13 @@ class UserController extends Controller
         $user = Auth::user();
 
         $rules = [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:user,admin',
+            'name'         => 'required|string|max:255',
+            'email'        => 'required|string|email|max:255|unique:users',
+            'password'     => 'required|string|min:8|confirmed',
+            'role'         => 'required|in:user,admin,employee',
+            'staff_number' => 'nullable|string|max:50',
+            'department'   => 'nullable|string|max:100',
+            'job_title'    => 'nullable|string|max:100',
         ];
 
         if ($user->hasPermissionTo('manage_companies')) {
@@ -92,7 +95,11 @@ class UserController extends Controller
         $newUser = User::create($validated);
 
         // Assign Spatie role based on the role field
-        $roleName = $validated['role'] === 'admin' ? 'admin' : 'user';
+        $roleName = match ($validated['role']) {
+            'admin'    => 'admin',
+            'employee' => 'employee',
+            default    => 'user',
+        };
         $role = Role::where('name', $roleName)->first();
         if ($role) {
             $newUser->assignRole($role);
@@ -144,10 +151,13 @@ class UserController extends Controller
         $currentUser = Auth::user();
 
         $rules = [
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => 'required|in:user,admin',
-            'status' => 'required|in:active,inactive',
+            'name'         => 'required|string|max:255',
+            'email'        => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'role'         => 'required|in:user,admin,employee',
+            'status'       => 'required|in:active,inactive',
+            'staff_number' => 'nullable|string|max:50',
+            'department'   => 'nullable|string|max:100',
+            'job_title'    => 'nullable|string|max:100',
         ];
 
         if ($currentUser->hasPermissionTo('manage_companies')) {
@@ -183,7 +193,7 @@ class UserController extends Controller
         if (is_array($roleSync)) {
             $allowedRoles = $currentUser->hasPermissionTo('manage_companies')
                 ? Role::pluck('name')->toArray()
-                : ['admin', 'user']; // tenant admins may not assign super_admin
+                : ['admin', 'user', 'employee']; // tenant admins may not assign super_admin
             $safeRoles = array_values(array_intersect($roleSync, $allowedRoles));
             $user->syncRoles($safeRoles);
         }
@@ -222,6 +232,29 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', 'Benutzer wurde erfolgreich gelöscht.');
+    }
+
+    public function documents(Request $request, User $user)
+    {
+        $this->authorize('update', $user);
+        $currentUser = Auth::user();
+
+        $companyId = $currentUser->hasPermissionTo('manage_companies')
+            ? $user->company_id
+            : $currentUser->company_id;
+
+        $documents = \App\Modules\Document\Models\Document::query()
+            ->where('company_id', $companyId)
+            ->where('linkable_type', \App\Modules\User\Models\User::class)
+            ->where('linkable_id', $user->id)
+            ->orderByDesc('created_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('users/documents', [
+            'employee' => $user->only('id', 'name', 'email', 'staff_number', 'department', 'job_title'),
+            'documents' => $documents,
+        ]);
     }
 
     private function canEditUser($currentUser, $targetUser)

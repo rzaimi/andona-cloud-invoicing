@@ -43,6 +43,8 @@ interface Document {
         id: string
         name: string
     }
+    linkable_type?: string
+    linkable_id?: string
     linkable?: {
         id: string
         number?: string
@@ -64,6 +66,7 @@ interface DocumentsProps {
     }
     customers: Array<{ id: string; name: string; number: string }>
     invoices: Array<{ id: string; number: string }>
+    employees: Array<{ id: string; name: string; staff_number?: string }>
     filters: {
         search?: string
         category?: string
@@ -81,7 +84,7 @@ const CATEGORIES = [
     { value: 'employee', label: 'Mitarbeiter' },
     { value: 'customer', label: 'Kunde' },
     { value: 'invoice', label: 'Rechnung' },
-    { value: 'company', label: 'Firma' },
+    { value: 'company', label: 'Unternehmen' },
     { value: 'financial', label: 'Finanzen' },
     { value: 'custom', label: 'Sonstiges' },
 ]
@@ -95,10 +98,19 @@ const LINK_TYPES = [
     { value: 'other', label: 'Sonstiges' },
 ]
 
+const EMPLOYEE_LINK_TYPES = [
+    { value: 'payroll',        label: 'Lohnabrechnung' },
+    { value: 'contract',       label: 'Arbeitsvertrag' },
+    { value: 'certificate',    label: 'Zeugnis / Zertifikat' },
+    { value: 'id_document',    label: 'Ausweisdokument' },
+    { value: 'warning',        label: 'Abmahnung' },
+    { value: 'other',          label: 'Sonstiges' },
+]
+
 export default function DocumentsSettings() {
     const { props } = usePage<DocumentsProps & { flash?: { success?: string; upload_errors?: string[] } }>()
     const user = props.auth?.user || props.user
-    const { documents, customers, invoices, filters, flash } = props
+    const { documents, customers, invoices, employees, filters, flash } = props
 
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
     const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -146,11 +158,13 @@ export default function DocumentsSettings() {
             category: document.category,
             description: document.description || '',
             tags: document.tags?.join(', ') || '',
-            linkable_type: document.linkable ? (document.linkable.number ? 'App\\Modules\\Invoice\\Models\\Invoice' : 'App\\Modules\\Customer\\Models\\Customer') : '',
+            linkable_type: document.linkable_type || '',
             linkable_id: document.linkable?.id || '',
             link_type: document.link_type || '',
         })
-        setLinkableType(document.linkable ? (document.linkable.number ? 'invoice' : 'customer') : '')
+        const ltRaw = document.linkable_type || ''
+        const ltShort = ltRaw.includes('Invoice') ? 'invoice' : ltRaw.includes('Customer') ? 'customer' : ltRaw.includes('User') ? 'employee' : ''
+        setLinkableType(ltShort)
         setEditDialogOpen(true)
     }
 
@@ -359,16 +373,26 @@ export default function DocumentsSettings() {
                                                 {document.linkable ? (
                                                     <div className="flex items-center gap-2">
                                                         <Link2 className="h-3 w-3 text-gray-400" />
-                                                        <Link
-                                                            href={
-                                                                document.linkable.number
-                                                                    ? `/invoices/${document.linkable.id}/edit`
-                                                                    : `/customers/${document.linkable.id}/edit`
-                                                            }
-                                                            className="text-blue-600 hover:underline"
-                                                        >
-                                                            {document.linkable.number || document.linkable.name}
-                                                        </Link>
+                                                        {document.linkable_type?.includes('User') ? (
+                                                            // Employee — link to admin documents page, no navigation to user edit
+                                                            <Link
+                                                                href={route('users.documents', { user: document.linkable.id })}
+                                                                className="text-blue-600 hover:underline"
+                                                            >
+                                                                {document.linkable.name}
+                                                            </Link>
+                                                        ) : (
+                                                            <Link
+                                                                href={
+                                                                    document.linkable.number
+                                                                        ? `/invoices/${document.linkable.id}/edit`
+                                                                        : `/customers/${document.linkable.id}/edit`
+                                                                }
+                                                                className="text-blue-600 hover:underline"
+                                                            >
+                                                                {document.linkable.number || document.linkable.name}
+                                                            </Link>
+                                                        )}
                                                         {document.link_type && (
                                                             <Badge variant="secondary" className="ml-1 text-xs">
                                                                 {getLinkTypeLabel(document.link_type)}
@@ -486,7 +510,7 @@ export default function DocumentsSettings() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {CATEGORIES.filter(c => c.value !== 'all').map((cat) => (
+                                            {CATEGORIES.filter(c => ['employee','company','financial','custom'].includes(c.value)).map((cat) => (
                                                 <SelectItem key={cat.value} value={cat.value}>
                                                     {cat.label}
                                                 </SelectItem>
@@ -523,9 +547,12 @@ export default function DocumentsSettings() {
                                                     uploadForm.setData('linkable_id', '')
                                                 } else {
                                                     setLinkableType(value)
-                                                    uploadForm.setData('linkable_type', value === 'invoice' 
-                                                        ? 'App\\Modules\\Invoice\\Models\\Invoice'
-                                                        : 'App\\Modules\\Customer\\Models\\Customer')
+                                                    const typeMap: Record<string, string> = {
+                                                        invoice:  'App\\Modules\\Invoice\\Models\\Invoice',
+                                                        customer: 'App\\Modules\\Customer\\Models\\Customer',
+                                                        employee: 'App\\Modules\\User\\Models\\User',
+                                                    }
+                                                    uploadForm.setData('linkable_type', typeMap[value] ?? '')
                                                     uploadForm.setData('linkable_id', '')
                                                 }
                                             }}
@@ -537,13 +564,14 @@ export default function DocumentsSettings() {
                                                 <SelectItem value="none">Keine Verknüpfung</SelectItem>
                                                 <SelectItem value="invoice">Rechnung</SelectItem>
                                                 <SelectItem value="customer">Kunde</SelectItem>
+                                                <SelectItem value="employee">Mitarbeiter</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     {linkableType && (
                                         <div>
                                             <Label htmlFor="linkable_id">
-                                                {linkableType === 'invoice' ? 'Rechnung' : 'Kunde'} *
+                                                {linkableType === 'invoice' ? 'Rechnung' : linkableType === 'employee' ? 'Mitarbeiter' : 'Kunde'} *
                                             </Label>
                                             <Select
                                                 value={uploadForm.data.linkable_id}
@@ -557,6 +585,12 @@ export default function DocumentsSettings() {
                                                         ? invoices.map((invoice) => (
                                                               <SelectItem key={invoice.id} value={invoice.id}>
                                                                   {invoice.number}
+                                                              </SelectItem>
+                                                          ))
+                                                        : linkableType === 'employee'
+                                                        ? employees.map((emp) => (
+                                                              <SelectItem key={emp.id} value={emp.id}>
+                                                                  {emp.name}{emp.staff_number ? ` (${emp.staff_number})` : ''}
                                                               </SelectItem>
                                                           ))
                                                         : customers.map((customer) => (
@@ -580,7 +614,7 @@ export default function DocumentsSettings() {
                                                 <SelectValue placeholder="Auswählen..." />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {LINK_TYPES.filter(t => t.value !== 'all').map((type) => (
+                                                {(linkableType === 'employee' ? EMPLOYEE_LINK_TYPES : LINK_TYPES.filter(t => t.value !== 'all')).map((type) => (
                                                     <SelectItem key={type.value} value={type.value}>
                                                         {type.label}
                                                     </SelectItem>
@@ -639,7 +673,7 @@ export default function DocumentsSettings() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {CATEGORIES.filter(c => c.value !== 'all').map((cat) => (
+                                            {CATEGORIES.filter(c => ['employee','company','financial','custom'].includes(c.value)).map((cat) => (
                                                 <SelectItem key={cat.value} value={cat.value}>
                                                     {cat.label}
                                                 </SelectItem>
@@ -675,9 +709,12 @@ export default function DocumentsSettings() {
                                                     editForm.setData('linkable_id', '')
                                                 } else {
                                                     setLinkableType(value)
-                                                    editForm.setData('linkable_type', value === 'invoice' 
-                                                        ? 'App\\Modules\\Invoice\\Models\\Invoice'
-                                                        : 'App\\Modules\\Customer\\Models\\Customer')
+                                                    const typeMap: Record<string, string> = {
+                                                        invoice:  'App\\Modules\\Invoice\\Models\\Invoice',
+                                                        customer: 'App\\Modules\\Customer\\Models\\Customer',
+                                                        employee: 'App\\Modules\\User\\Models\\User',
+                                                    }
+                                                    editForm.setData('linkable_type', typeMap[value] ?? '')
                                                     editForm.setData('linkable_id', '')
                                                 }
                                             }}
@@ -689,13 +726,14 @@ export default function DocumentsSettings() {
                                                 <SelectItem value="none">Keine Verknüpfung</SelectItem>
                                                 <SelectItem value="invoice">Rechnung</SelectItem>
                                                 <SelectItem value="customer">Kunde</SelectItem>
+                                                <SelectItem value="employee">Mitarbeiter</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     {linkableType && (
                                         <div>
                                             <Label htmlFor="edit-linkable_id">
-                                                {linkableType === 'invoice' ? 'Rechnung' : 'Kunde'}
+                                                {linkableType === 'invoice' ? 'Rechnung' : linkableType === 'employee' ? 'Mitarbeiter' : 'Kunde'}
                                             </Label>
                                             <Select
                                                 value={editForm.data.linkable_id}
@@ -709,6 +747,12 @@ export default function DocumentsSettings() {
                                                         ? invoices.map((invoice) => (
                                                               <SelectItem key={invoice.id} value={invoice.id}>
                                                                   {invoice.number}
+                                                              </SelectItem>
+                                                          ))
+                                                        : linkableType === 'employee'
+                                                        ? employees.map((emp) => (
+                                                              <SelectItem key={emp.id} value={emp.id}>
+                                                                  {emp.name}{emp.staff_number ? ` (${emp.staff_number})` : ''}
                                                               </SelectItem>
                                                           ))
                                                         : customers.map((customer) => (
@@ -732,7 +776,7 @@ export default function DocumentsSettings() {
                                                 <SelectValue placeholder="Auswählen..." />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {LINK_TYPES.filter(t => t.value !== 'all').map((type) => (
+                                                {(linkableType === 'employee' ? EMPLOYEE_LINK_TYPES : LINK_TYPES.filter(t => t.value !== 'all')).map((type) => (
                                                     <SelectItem key={type.value} value={type.value}>
                                                         {type.label}
                                                     </SelectItem>

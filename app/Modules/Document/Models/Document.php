@@ -29,11 +29,13 @@ class Document extends Model
         'linkable_type',
         'linkable_id',
         'link_type',
+        'visible_to_employee',
     ];
 
     protected $casts = [
-        'tags' => 'array',
-        'file_size' => 'integer',
+        'tags'                 => 'array',
+        'file_size'            => 'integer',
+        'visible_to_employee'  => 'boolean',
     ];
 
     // Document categories

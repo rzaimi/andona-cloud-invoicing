@@ -40,6 +40,10 @@ return new class extends Migration
     {
         $driver = DB::getDriverName();
 
+        // Demote any 'payroll' rows to 'custom' before removing 'payroll' from the constraint.
+        // Without this, existing payroll documents would violate the old CHECK constraint.
+        DB::statement("UPDATE documents SET category = 'custom' WHERE category = 'payroll'");
+
         if ($driver === 'mysql') {
             DB::statement(
                 "ALTER TABLE documents MODIFY COLUMN category
@@ -64,6 +68,9 @@ return new class extends Migration
     private function recreateSqliteTable(string $allowedValues): void
     {
         DB::statement('PRAGMA foreign_keys = OFF');
+
+        // Drop any orphaned _new table left by a previously failed migration run
+        DB::statement('DROP TABLE IF EXISTS documents_new');
 
         DB::statement("
             CREATE TABLE documents_new (

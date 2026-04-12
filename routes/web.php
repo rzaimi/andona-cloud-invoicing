@@ -23,7 +23,7 @@ Route::get('/api/routes', function (\Illuminate\Http\Request $request) {
     ]);
 })->middleware('auth');
 
-Route::middleware(['auth', 'session.timeout'])->group(function () {
+Route::middleware(['auth', 'session.timeout', 'employee.portal.only'])->group(function () {
     require __DIR__.'/modules/dashboard.php';
     require __DIR__.'/modules/profile.php';
     require __DIR__.'/modules/customers.php';
@@ -43,6 +43,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     require __DIR__.'/modules/calendar.php';
     require __DIR__.'/modules/reports.php';
     require __DIR__.'/modules/datev.php';
+    require __DIR__.'/modules/employee.php';
 });
 
 require __DIR__.'/auth.php';

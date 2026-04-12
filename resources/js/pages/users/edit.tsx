@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, Save, User as UserIcon, Shield, Key } from "lucide-react"
+import { ArrowLeft, Save, User as UserIcon, Shield, Key, FileText } from "lucide-react"
 import type { Company, User } from "@/types"
 
 const PERMISSION_LABELS: Record<string, string> = {
@@ -54,6 +54,9 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
         password_confirmation: "",
         roles: assigned_roles || [],
         permissions: assigned_permissions || [],
+        staff_number: (user as any).staff_number || "",
+        department: (user as any).department || "",
+        job_title: (user as any).job_title || "",
     })
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -80,10 +83,18 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                             Zurück
                         </Link>
                     </Button>
-                    <div>
+                    <div className="flex-1">
                         <h1 className="text-2xl font-bold text-foreground">Benutzer bearbeiten</h1>
                         <p className="text-muted-foreground">Aktualisieren Sie die Benutzerinformationen</p>
                     </div>
+                    {user.role === "employee" && (
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={route("users.documents", user.id)}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Dokumente
+                            </Link>
+                        </Button>
+                    )}
                 </div>
 
                 {/* Form */}
@@ -149,6 +160,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                         <SelectContent>
                                             <SelectItem value="user">Benutzer</SelectItem>
                                             <SelectItem value="admin">Administrator</SelectItem>
+                                            <SelectItem value="employee">Mitarbeiter</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {errors.role && (
@@ -301,6 +313,46 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                     })}
                                 </div>
                             </div>
+
+                            {/* Employee profile fields */}
+                            {data.role === "employee" && (
+                                <div className="col-span-2 space-y-3">
+                                    <Separator />
+                                    <div className="flex items-center gap-2">
+                                        <UserIcon className="h-4 w-4 text-muted-foreground" />
+                                        <Label className="text-base font-semibold">Mitarbeiterprofil</Label>
+                                    </div>
+                                    <div className="grid gap-4 md:grid-cols-3">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="staff_number">Personalnummer</Label>
+                                            <Input
+                                                id="staff_number"
+                                                value={data.staff_number}
+                                                onChange={(e) => setData("staff_number", e.target.value)}
+                                                placeholder="z.B. MA-001"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="department">Abteilung</Label>
+                                            <Input
+                                                id="department"
+                                                value={data.department}
+                                                onChange={(e) => setData("department", e.target.value)}
+                                                placeholder="z.B. Buchhaltung"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="job_title">Position</Label>
+                                            <Input
+                                                id="job_title"
+                                                value={data.job_title}
+                                                onChange={(e) => setData("job_title", e.target.value)}
+                                                placeholder="z.B. Sachbearbeiter"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Submit */}
                             <div className="flex justify-end gap-4">

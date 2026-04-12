@@ -9,6 +9,11 @@ class DocumentPolicy
 {
     public function viewAny(User $user): bool
     {
+        // Employees use the dedicated portal; regular users need a company
+        if ($user->hasPermissionTo('view_own_documents')) {
+            return true;
+        }
+
         return $user->company_id !== null || $user->hasPermissionTo('manage_companies');
     }
 
@@ -16,6 +21,13 @@ class DocumentPolicy
     {
         if ($user->hasPermissionTo('manage_companies')) {
             return true;
+        }
+
+        // Employee may only see documents explicitly linked to them and marked visible
+        if ($user->hasPermissionTo('view_own_documents')) {
+            return $document->linkable_type === 'App\\Modules\\User\\Models\\User'
+                && $document->linkable_id === $user->id
+                && $document->visible_to_employee;
         }
 
         return $user->company_id === $document->company_id;

@@ -42,7 +42,12 @@ class AuthenticatedSessionController extends Controller
         $request->session()->put('login_user_agent', $request->userAgent());
         $request->session()->put('login_at', now()->timestamp);
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = Auth::user();
+        $defaultRoute = $user->hasRole('employee')
+            ? route('portal.documents', absolute: false)
+            : route('dashboard', absolute: false);
+
+        return redirect()->intended($defaultRoute);
     }
 
     /**

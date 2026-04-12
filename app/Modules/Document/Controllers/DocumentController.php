@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Document\Models\Document;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
+use App\Modules\User\Models\User;
 use App\Services\ContextService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -71,13 +72,19 @@ class DocumentController extends Controller
 
         // Get linked entities for filters
         $customers = Customer::forCompany($companyId)->select('id', 'name', 'number')->get();
-        $invoices = Invoice::forCompany($companyId)->select('id', 'number')->latest()->limit(100)->get();
+        $invoices  = Invoice::forCompany($companyId)->select('id', 'number')->latest()->limit(100)->get();
+        $employees = User::where('company_id', $companyId)
+            ->where('role', 'employee')
+            ->select('id', 'name', 'staff_number')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('settings/documents', [
             'documents' => $documents,
             'customers' => $customers,
-            'invoices' => $invoices,
-            'filters' => $request->only(['search', 'category', 'link_type', 'linkable_type', 'linkable_id', 'sort_by', 'sort_order']),
+            'invoices'  => $invoices,
+            'employees' => $employees,
+            'filters'   => $request->only(['search', 'category', 'link_type', 'linkable_type', 'linkable_id', 'sort_by', 'sort_order']),
         ]);
     }
 
@@ -100,9 +107,10 @@ class DocumentController extends Controller
             'category' => 'required|in:payroll,employee,customer,invoice,company,financial,custom',
             'description' => 'nullable|string|max:1000',
             'tags' => 'nullable|string', // Comma-separated tags
-            'linkable_type' => 'nullable|string|in:App\Modules\Invoice\Models\Invoice,App\Modules\Customer\Models\Customer',
+            'linkable_type' => 'nullable|string|in:App\Modules\Invoice\Models\Invoice,App\Modules\Customer\Models\Customer,App\Modules\User\Models\User',
             'linkable_id' => 'nullable|uuid|required_with:linkable_type',
-            'link_type' => 'nullable|string|in:attachment,contract,receipt,certificate,other',
+            'link_type' => 'nullable|string|in:attachment,contract,receipt,certificate,other,payroll,id_document,warning',
+            'visible_to_employee' => 'nullable|boolean',
         ]);
 
         $files = $request->file('files');
@@ -118,7 +126,9 @@ class DocumentController extends Controller
         $linkable = null;
         if (!empty($validated['linkable_type']) && !empty($validated['linkable_id'])) {
             $linkable = $validated['linkable_type']::find($validated['linkable_id']);
-            if (!$linkable || $linkable->company_id !== $companyId) {
+            // For User linkable, verify the user belongs to the same company
+            $linkableCompanyId = $linkable?->company_id ?? null;
+            if (!$linkable || $linkableCompanyId !== $companyId) {
                 return back()->withErrors(['linkable_id' => 'Ungültige Verknüpfung.']);
             }
         }
@@ -143,19 +153,20 @@ class DocumentController extends Controller
                     $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
                     
                     Document::create([
-                        'company_id' => $companyId,
-                        'name' => $name,
-                        'original_filename' => $file->getClientOriginalName(),
-                        'file_path' => $filePath,
-                        'file_size' => $file->getSize(),
-                        'mime_type' => $file->getMimeType(),
-                        'category' => $validated['category'],
-                        'description' => $validated['description'] ?? null,
-                        'tags' => $tags,
-                        'uploaded_by' => $user->id,
-                        'linkable_type' => $linkable ? get_class($linkable) : null,
-                        'linkable_id' => $linkable ? $linkable->id : null,
-                        'link_type' => $validated['link_type'] ?? null,
+                        'company_id'          => $companyId,
+                        'name'                => $name,
+                        'original_filename'   => $file->getClientOriginalName(),
+                        'file_path'           => $filePath,
+                        'file_size'           => $file->getSize(),
+                        'mime_type'           => $file->getMimeType(),
+                        'category'            => $validated['category'],
+                        'description'         => $validated['description'] ?? null,
+                        'tags'                => $tags,
+                        'uploaded_by'         => $user->id,
+                        'linkable_type'       => $linkable ? get_class($linkable) : null,
+                        'linkable_id'         => $linkable ? $linkable->id : null,
+                        'link_type'           => $validated['link_type'] ?? null,
+                        'visible_to_employee' => $validated['visible_to_employee'] ?? true,
                     ]);
                     
                     $uploadedCount++;
@@ -171,7 +182,13 @@ class DocumentController extends Controller
                 $message .= ' ' . count($errors) . ' Fehler aufgetreten.';
             }
             
-            return redirect()->route('documents.index')
+            // Allow callers to specify a custom redirect (e.g. the employee documents admin page)
+            $redirectUrl = $request->input('_redirect');
+            $redirectResponse = $redirectUrl
+                ? redirect($redirectUrl)
+                : redirect()->route('documents.index');
+
+            return $redirectResponse
                 ->with('success', $message)
                 ->with('upload_errors', $errors);
                 
@@ -213,9 +230,10 @@ class DocumentController extends Controller
             'category' => 'required|in:payroll,employee,customer,invoice,company,financial,custom',
             'description' => 'nullable|string|max:1000',
             'tags' => 'nullable|string',
-            'linkable_type' => 'nullable|string|in:App\Modules\Invoice\Models\Invoice,App\Modules\Customer\Models\Customer',
+            'linkable_type' => 'nullable|string|in:App\Modules\Invoice\Models\Invoice,App\Modules\Customer\Models\Customer,App\Modules\User\Models\User',
             'linkable_id' => 'nullable|uuid|required_with:linkable_type',
-            'link_type' => 'nullable|string|in:attachment,contract,receipt,certificate,other',
+            'link_type' => 'nullable|string|in:attachment,contract,receipt,certificate,other,payroll,id_document,warning',
+            'visible_to_employee' => 'nullable|boolean',
         ]);
 
         // Parse tags
@@ -235,13 +253,14 @@ class DocumentController extends Controller
         }
 
         $document->update([
-            'name' => $validated['name'],
-            'category' => $validated['category'],
-            'description' => $validated['description'] ?? null,
-            'tags' => $tags,
-            'linkable_type' => $linkable ? get_class($linkable) : null,
-            'linkable_id' => $linkable ? $linkable->id : null,
-            'link_type' => $validated['link_type'] ?? null,
+            'name'                => $validated['name'],
+            'category'            => $validated['category'],
+            'description'         => $validated['description'] ?? null,
+            'tags'                => $tags,
+            'linkable_type'       => $linkable ? get_class($linkable) : null,
+            'linkable_id'         => $linkable ? $linkable->id : null,
+            'link_type'           => $validated['link_type'] ?? null,
+            'visible_to_employee' => $validated['visible_to_employee'] ?? $document->visible_to_employee,
         ]);
 
         return redirect()->route('documents.index')

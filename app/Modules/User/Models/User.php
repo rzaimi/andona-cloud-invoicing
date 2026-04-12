@@ -3,6 +3,7 @@
 namespace App\Modules\User\Models;
 
 use App\Modules\Company\Models\Company;
+use App\Modules\Document\Models\Document;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Offer\Models\Offer;
 use Spatie\Permission\Traits\HasRoles;
@@ -33,6 +34,9 @@ class User extends Authenticatable
         'company_id',
         'role',
         'status',
+        'staff_number',
+        'department',
+        'job_title',
     ];
 
     protected $hidden = [
@@ -68,8 +72,18 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isEmployee(): bool
+    {
+        return $this->role === 'employee';
+    }
+
     public function canManageCompany(): bool
     {
         return $this->isAdmin();
+    }
+
+    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(Document::class, 'linkable');
     }
 }

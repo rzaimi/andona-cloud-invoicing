@@ -20,7 +20,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_offers',
             'manage_products',
             'view_reports',
-            'create_stornorechnung', // Permission to create correction invoices (GoBD compliance)
+            'create_stornorechnung',       // Permission to create correction invoices (GoBD compliance)
+            'manage_employee_documents',   // Upload / manage documents for employees
+            'view_own_documents',          // Employee self-service: view own documents
         ];
 
         foreach ($permissions as $perm) {
@@ -28,8 +30,9 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         $superAdmin = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => $guard]);
-        $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => $guard]);
-        $user = Role::firstOrCreate(['name' => 'user', 'guard_name' => $guard]);
+        $admin      = Role::firstOrCreate(['name' => 'admin',       'guard_name' => $guard]);
+        $user       = Role::firstOrCreate(['name' => 'user',        'guard_name' => $guard]);
+        $employee   = Role::firstOrCreate(['name' => 'employee',    'guard_name' => $guard]);
 
         $superAdmin->syncPermissions(Permission::all());
 
@@ -40,7 +43,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_offers',
             'manage_products',
             'view_reports',
-            'create_stornorechnung', // Admins can create correction invoices
+            'create_stornorechnung',
+            'manage_employee_documents',
         ];
         $admin->syncPermissions(Permission::whereIn('name', $adminPermissions)->get());
 
@@ -51,6 +55,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_reports',
         ];
         $user->syncPermissions(Permission::whereIn('name', $userPermissions)->get());
+
+        $employeePermissions = [
+            'view_own_documents',
+        ];
+        $employee->syncPermissions(Permission::whereIn('name', $employeePermissions)->get());
     }
 }
 

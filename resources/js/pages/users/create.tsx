@@ -162,6 +162,7 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                                         <SelectContent>
                                             <SelectItem value="user">Benutzer</SelectItem>
                                             <SelectItem value="admin">Administrator</SelectItem>
+                                            <SelectItem value="employee">Mitarbeiter</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {errors.role && (
@@ -197,6 +198,41 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                                     </div>
                                 )}
                             </div>
+
+                            {/* Employee profile fields */}
+                            {data.role === "employee" && (
+                                <div className="space-y-3">
+                                    <div className="grid gap-4 md:grid-cols-3">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="staff_number">Personalnummer</Label>
+                                            <Input
+                                                id="staff_number"
+                                                value={data.staff_number ?? ""}
+                                                onChange={(e) => setData("staff_number" as any, e.target.value)}
+                                                placeholder="z.B. MA-001"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="department">Abteilung</Label>
+                                            <Input
+                                                id="department"
+                                                value={data.department ?? ""}
+                                                onChange={(e) => setData("department" as any, e.target.value)}
+                                                placeholder="z.B. Buchhaltung"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="job_title">Position</Label>
+                                            <Input
+                                                id="job_title"
+                                                value={data.job_title ?? ""}
+                                                onChange={(e) => setData("job_title" as any, e.target.value)}
+                                                placeholder="z.B. Sachbearbeiter"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Submit */}
                             <div className="flex justify-end gap-4">
