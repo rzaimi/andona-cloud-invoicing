@@ -30,6 +30,9 @@ return new class extends Migration
     {
         $driver = DB::getDriverName();
 
+        // Demote any 'employee' users to 'user' before removing 'employee' from the constraint.
+        DB::statement("UPDATE users SET role = 'user' WHERE role = 'employee'");
+
         if ($driver === 'mysql') {
             DB::statement(
                 "ALTER TABLE users MODIFY COLUMN role ENUM('admin','user') NOT NULL DEFAULT 'user'"
