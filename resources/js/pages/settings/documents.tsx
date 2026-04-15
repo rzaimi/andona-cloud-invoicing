@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Upload, Download, FileText, Edit, Trash2, Search, Filter, X, Tag, Link2, CheckCircle, AlertCircle } from "lucide-react"
+import { Upload, Download, FileText, Edit, Trash2, Search, Filter, X, Tag, Link2, CheckCircle, AlertCircle, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import { Pagination } from "@/components/pagination"
 import type { User } from "@/types"
@@ -116,6 +116,21 @@ export default function DocumentsSettings() {
     const [editDialogOpen, setEditDialogOpen] = useState(false)
     const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
     const [linkableType, setLinkableType] = useState<string>('')
+
+    const sortBy    = filters.sort_by    || 'created_at'
+    const sortOrder = filters.sort_order || 'desc'
+
+    const handleSort = (column: string) => {
+        const newOrder = sortBy === column && sortOrder === 'asc' ? 'desc' : 'asc'
+        router.get(route('documents.index'), { ...filters, sort_by: column, sort_order: newOrder }, { preserveState: true, replace: true })
+    }
+
+    const SortIcon = ({ column }: { column: string }) => {
+        if (sortBy !== column) return <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-40" />
+        return sortOrder === 'asc'
+            ? <ChevronUp   className="ml-1 h-3 w-3 inline text-primary" />
+            : <ChevronDown className="ml-1 h-3 w-3 inline text-primary" />
+    }
 
     const uploadForm = useForm({
         files: [] as File[],
@@ -345,12 +360,20 @@ export default function DocumentsSettings() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Kategorie</TableHead>
-                                        <TableHead>Größe</TableHead>
+                                        <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => handleSort('name')}>
+                                            Name <SortIcon column="name" />
+                                        </TableHead>
+                                        <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => handleSort('category')}>
+                                            Kategorie <SortIcon column="category" />
+                                        </TableHead>
+                                        <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => handleSort('file_size')}>
+                                            Größe <SortIcon column="file_size" />
+                                        </TableHead>
                                         <TableHead>Verknüpft mit</TableHead>
                                         <TableHead>Tags</TableHead>
-                                        <TableHead>Hochgeladen</TableHead>
+                                        <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => handleSort('created_at')}>
+                                            Hochgeladen <SortIcon column="created_at" />
+                                        </TableHead>
                                         <TableHead className="text-right">Aktionen</TableHead>
                                     </TableRow>
                                 </TableHeader>
