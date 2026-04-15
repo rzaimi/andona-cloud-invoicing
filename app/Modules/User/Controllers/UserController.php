@@ -138,8 +138,9 @@ class UserController extends Controller
             'user' => $user->load('company'),
             'companies' => $companies,
             'is_super_admin' => $currentUser->hasPermissionTo('manage_companies'),
-            'available_roles' => Role::pluck('name'),
-            'available_permissions' => Permission::pluck('name'),
+            // Spatie checkboxes are built from DB rows; run `php artisan roles:sync` if roles are missing on production.
+            'available_roles' => $this->spatieRoleNamesForGuard(),
+            'available_permissions' => $this->spatiePermissionNamesForGuard(),
             'assigned_roles' => $user->getRoleNames(),
             'assigned_permissions' => $user->getPermissionNames(),
         ]);
@@ -192,7 +193,7 @@ class UserController extends Controller
         // Company admins (manage_users) are restricted to tenant-safe roles/permissions only.
         if (is_array($roleSync)) {
             $allowedRoles = $currentUser->hasPermissionTo('manage_companies')
-                ? Role::pluck('name')->toArray()
+                ? $this->spatieRoleNamesForGuard()->toArray()
                 : ['admin', 'user', 'employee']; // tenant admins may not assign super_admin
             $safeRoles = array_values(array_intersect($roleSync, $allowedRoles));
             $user->syncRoles($safeRoles);
@@ -200,8 +201,11 @@ class UserController extends Controller
         if (is_array($permissionSync)) {
             $platformPermissions = ['manage_companies'];
             $allowedPermissions = $currentUser->hasPermissionTo('manage_companies')
-                ? Permission::pluck('name')->toArray()
-                : Permission::whereNotIn('name', $platformPermissions)->pluck('name')->toArray();
+                ? $this->spatiePermissionNamesForGuard()->toArray()
+                : Permission::where('guard_name', (string) config('auth.defaults.guard', 'web'))
+                    ->whereNotIn('name', $platformPermissions)
+                    ->pluck('name')
+                    ->toArray();
             $safePermissions = array_values(array_intersect($permissionSync, $allowedPermissions));
             $user->syncPermissions($safePermissions);
         }
@@ -255,6 +259,32 @@ class UserController extends Controller
             'employee' => $user->only('id', 'name', 'email', 'staff_number', 'department', 'job_title'),
             'documents' => $documents,
         ]);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    private function spatieRoleNamesForGuard()
+    {
+        $guard = (string) config('auth.defaults.guard', 'web');
+
+        return Role::query()
+            ->where('guard_name', $guard)
+            ->orderBy('name')
+            ->pluck('name');
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    private function spatiePermissionNamesForGuard()
+    {
+        $guard = (string) config('auth.defaults.guard', 'web');
+
+        return Permission::query()
+            ->where('guard_name', $guard)
+            ->orderBy('name')
+            ->pluck('name');
     }
 
     private function canEditUser($currentUser, $targetUser)
