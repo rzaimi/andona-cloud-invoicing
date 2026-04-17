@@ -89,6 +89,9 @@ const CATEGORIES = [
     { value: 'custom', label: 'Sonstiges' },
 ]
 
+/** Upload/edit modal: payroll & customer stay out of Kategorie (use Verknüpfen mit for Kunde/Rechnung links); Rechnung category kept for invoice-related files. */
+const MODAL_CATEGORY_VALUES = ['employee', 'company', 'financial', 'custom', 'invoice'] as const
+
 const LINK_TYPES = [
     { value: 'all', label: 'Alle Typen' },
     { value: 'attachment', label: 'Anhang' },
@@ -533,7 +536,7 @@ export default function DocumentsSettings() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {CATEGORIES.filter(c => ['employee','company','financial','custom'].includes(c.value)).map((cat) => (
+                                            {CATEGORIES.filter((c) => (MODAL_CATEGORY_VALUES as readonly string[]).includes(c.value)).map((cat) => (
                                                 <SelectItem key={cat.value} value={cat.value}>
                                                     {cat.label}
                                                 </SelectItem>
@@ -696,7 +699,7 @@ export default function DocumentsSettings() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {CATEGORIES.filter(c => ['employee','company','financial','custom'].includes(c.value)).map((cat) => (
+                                            {CATEGORIES.filter((c) => (MODAL_CATEGORY_VALUES as readonly string[]).includes(c.value)).map((cat) => (
                                                 <SelectItem key={cat.value} value={cat.value}>
                                                     {cat.label}
                                                 </SelectItem>
