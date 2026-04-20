@@ -16,6 +16,7 @@ deploy-build.sh
 .phpactor.json
 .phpunit.result.cache
 .DS_Store
+.DB_Store
 Homestead.json
 Homestead.yaml
 npm-debug.log
@@ -27,5 +28,3 @@ node_modules.zip
 /.nova
 /.vscode
 /.zed
-.DS_Store
-.DS_Store

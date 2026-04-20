@@ -35,6 +35,7 @@
         uasort($vatBreakdown, fn($a, $b) => $b['rate'] <=> $a['rate']);
     }
     $multipleRates = count($vatBreakdown) > 1;
+    $grandTotalLabel = $isStandardVat ? 'Gesamtbetrag (brutto)' : 'Gesamtbetrag';
 
     $trBg    = $totalRowBg        ?? ($ls['colors']['primary'] ?? '#1f2937');
     $trColor = $totalRowTextColor ?? '#ffffff';
@@ -84,7 +85,7 @@
     @endif
 
     <tr style="background-color:{{ $trBg }}; color:{{ $trColor }};">
-        <td style="padding:8px 10px; font-weight:700; font-size:{{ $fs + 1 }}px;">Gesamtbetrag (brutto)</td>
+        <td style="padding:8px 10px; font-weight:700; font-size:{{ $fs + 1 }}px;">{{ $grandTotalLabel }}</td>
         <td style="padding:8px 10px; text-align:right; font-weight:700; font-size:{{ $fs + 1 }}px; white-space:nowrap;">{{ number_format($offerTotal, 2, ',', '.') }} €</td>
     </tr>
 

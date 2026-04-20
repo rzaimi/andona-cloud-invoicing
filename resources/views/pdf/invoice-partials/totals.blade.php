@@ -36,6 +36,7 @@
     }
     $multipleRates = count($vatBreakdown) > 1;
     $singleRateVat = !$multipleRates && count($vatBreakdown) === 1 ? array_values($vatBreakdown)[0] : null;
+    $grandTotalLabel = $isStandardVat ? 'Gesamtbetrag (brutto)' : 'Gesamtbetrag';
 
     // Skonto
     $skontoAmount   = (float)($invoice->skonto_amount ?? 0);
@@ -97,7 +98,7 @@
 
     {{-- Grand total --}}
     <tr style="background-color: {{ $totalRowBg }}; color: {{ $totalRowTextColor }};">
-        <td style="padding: 8px 10px; text-align: left; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">Gesamtbetrag (brutto)</td>
+        <td style="padding: 8px 10px; text-align: left; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px;">{{ $grandTotalLabel }}</td>
         <td style="padding: 8px 10px; text-align: right; font-weight: 700; font-size: {{ $bodyFontSize + 1 }}px; white-space: nowrap;">{{ number_format($invoice->total, 2, ',', '.') }} €</td>
     </tr>
 
