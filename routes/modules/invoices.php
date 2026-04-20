@@ -12,20 +12,24 @@ Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('in
 Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
 
 #Route::post('invoices/{invoice}/duplicate', [InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
-Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])->name('invoices.send');
-Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
 Route::post('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('invoices.mark-paid');
-
-// Mahnung (Reminder) Routes
-Route::post('invoices/{invoice}/send-reminder', [InvoiceController::class, 'sendReminder'])->name('invoices.send-reminder');
-Route::get('invoices/{invoice}/reminder-history', [InvoiceController::class, 'reminderHistory'])->name('invoices.reminder-history');
 
 // Audit Log Route
 Route::get('invoices/{invoice}/audit-log', [InvoiceController::class, 'auditLog'])->name('invoices.audit-log');
 
-// E-Rechnung Routes
-Route::get('invoices/{invoice}/xrechnung', [InvoiceController::class, 'downloadXRechnung'])->name('invoices.xrechnung');
-Route::get('invoices/{invoice}/zugferd', [InvoiceController::class, 'downloadZugferd'])->name('invoices.zugferd');
+// Reminder History (read-only, not PDF — cheap)
+Route::get('invoices/{invoice}/reminder-history', [InvoiceController::class, 'reminderHistory'])->name('invoices.reminder-history');
+
+// Expensive endpoints (PDF / XML generation, mail dispatch). Throttled to
+// prevent a compromised or misbehaving session from DoSing the host via
+// repeated DomPDF renders.
+Route::middleware('throttle:30,1')->group(function () {
+    Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])->name('invoices.send');
+    Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+    Route::post('invoices/{invoice}/send-reminder', [InvoiceController::class, 'sendReminder'])->name('invoices.send-reminder');
+    Route::get('invoices/{invoice}/xrechnung', [InvoiceController::class, 'downloadXRechnung'])->name('invoices.xrechnung');
+    Route::get('invoices/{invoice}/zugferd', [InvoiceController::class, 'downloadZugferd'])->name('invoices.zugferd');
+});
 
 // Correction Routes
 Route::post('invoices/{invoice}/correction', [InvoiceController::class, 'createCorrection'])->name('invoices.create-correction');
@@ -34,13 +38,18 @@ Route::post('invoices/{invoice}/correction', [InvoiceController::class, 'createC
 Route::prefix('invoice-layouts')->name('invoice-layouts.')->group(function () {
     Route::get('/', [InvoiceLayoutController::class, 'index'])->name('index');
     Route::post('/', [InvoiceLayoutController::class, 'store'])->name('store');
-    Route::get('/{invoiceLayout}/preview', [InvoiceLayoutController::class, 'preview'])->name('preview');
-    Route::post('/preview-live', [InvoiceLayoutController::class, 'previewLive'])->name('preview-live');
-    Route::post('/preview-live-pdf', [InvoiceLayoutController::class, 'previewLivePdf'])->name('preview-live-pdf');
     Route::put('/{invoiceLayout}', [InvoiceLayoutController::class, 'update'])->name('update');
     Route::delete('/{invoiceLayout}', [InvoiceLayoutController::class, 'destroy'])->name('destroy');
     Route::post('/{invoiceLayout}/set-default', [InvoiceLayoutController::class, 'setDefault'])->name('set-default');
     Route::post('/{invoiceLayout}/duplicate', [InvoiceLayoutController::class, 'duplicate'])->name('duplicate');
+
+    // Preview routes render a full PDF — throttle them so the layout editor
+    // can't hammer DomPDF via repeated previews.
+    Route::middleware('throttle:30,1')->group(function () {
+        Route::get('/{invoiceLayout}/preview', [InvoiceLayoutController::class, 'preview'])->name('preview');
+        Route::post('/preview-live', [InvoiceLayoutController::class, 'previewLive'])->name('preview-live');
+        Route::post('/preview-live-pdf', [InvoiceLayoutController::class, 'previewLivePdf'])->name('preview-live-pdf');
+    });
 });
 
 // Redirect settings route to invoice-layouts

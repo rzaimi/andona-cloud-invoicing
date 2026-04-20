@@ -257,10 +257,12 @@ class SendDailyReminders extends Command
             'customer' => $invoice->customer,
         ])->setPaper('a4')->setOptions([
             'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => true,
+            // SECURITY: same hardening as InvoiceController::pdf — no remote
+            // fetch, local-file read, or PHP eval inside DomPDF.
+            'isRemoteEnabled' => false,
             'isHtml5ParserEnabled' => true,
-            'enable-local-file-access' => true,
-            'isPhpEnabled' => true,
+            'enable-local-file-access' => false,
+            'isPhpEnabled' => false,
         ]);
 
         // Calculate additional data for Inkasso level
@@ -320,10 +322,11 @@ class SendDailyReminders extends Command
             'customer' => $offer->customer,
         ])->setPaper('a4')->setOptions([
             'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => true,
+            // SECURITY: see InvoiceController::pdf — hardened DomPDF config.
+            'isRemoteEnabled' => false,
             'isHtml5ParserEnabled' => true,
-            'enable-local-file-access' => true,
-            'isPhpEnabled' => true,
+            'enable-local-file-access' => false,
+            'isPhpEnabled' => false,
         ]);
 
         $subject = "Erinnerung - Angebot {$offer->number}";

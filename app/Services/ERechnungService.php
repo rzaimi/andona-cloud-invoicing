@@ -18,16 +18,16 @@ class ERechnungService
     public function generateXRechnung(Invoice $invoice): string
     {
         $invoice->load(['customer', 'company', 'company.settings', 'items']);
-        
-        $profile = $this->getProfileFromSettings($invoice->company->settings);
+
+        $profile = $this->resolveProfile($invoice);
         $document = ZugferdDocumentBuilder::CreateNew($profile);
-        
+
         // Build the document
         $this->buildDocument($document, $invoice);
-        
+
         // Get XML content
         $xml = $document->getContent();
-        
+
         return $xml;
     }
     
@@ -70,7 +70,7 @@ class ERechnungService
         $pdfContent = $pdf->output();
         
         // Generate XML
-        $profile = $this->getProfileFromSettings($invoice->company->settings);
+        $profile = $this->resolveProfile($invoice);
         $document = ZugferdDocumentBuilder::CreateNew($profile);
         $this->buildDocument($document, $invoice);
         $xml = $document->getContent();
@@ -99,6 +99,13 @@ class ERechnungService
             $invoice->issue_date ?? new \DateTime(),
             $settings->currency ?? 'EUR'
         );
+
+        // BT-10 Buyer Reference / Routing ID. Mandatory for XRechnung to
+        // German public-sector customers (Leitweg-ID). Populated from the
+        // customer record when present.
+        if (!empty($customer->leitweg_id)) {
+            $document->setDocumentBuyerReference($customer->leitweg_id);
+        }
         
         // Seller (Company) information
         $document->setDocumentSeller(
@@ -273,19 +280,29 @@ class ERechnungService
     }
     
     /**
-     * Get ZUGFeRD profile from company settings
+     * Resolve the ZUGFeRD/XRechnung profile to use for this invoice.
+     *
+     * A customer with a Leitweg-ID is, by definition, a public-sector
+     * recipient — those invoices must be XRechnung per § 4a E-RechV. The
+     * company-level `zugferd_profile` setting only applies to B2B invoices.
      */
-    private function getProfileFromSettings($settings): int
+    private function resolveProfile(Invoice $invoice): int
     {
-        $profile = $settings->zugferd_profile ?? 'EN16931';
-        
-        return match($profile) {
-            'MINIMUM' => ZugferdProfiles::PROFILE_MINIMUM,
-            'BASIC' => ZugferdProfiles::PROFILE_BASICWL,
-            'EN16931' => ZugferdProfiles::PROFILE_EN16931,
-            'EXTENDED' => ZugferdProfiles::PROFILE_EXTENDED,
+        if (!empty($invoice->customer?->leitweg_id)) {
+            return ZugferdProfiles::PROFILE_XRECHNUNG;
+        }
+
+        // `settings` is a HasMany of key/value rows, not an object — use
+        // getSetting() to read a single key.
+        $profile = $invoice->company?->getSetting('zugferd_profile') ?? 'EN16931';
+
+        return match ($profile) {
+            'MINIMUM'   => ZugferdProfiles::PROFILE_MINIMUM,
+            'BASIC'     => ZugferdProfiles::PROFILE_BASICWL,
+            'EN16931'   => ZugferdProfiles::PROFILE_EN16931,
+            'EXTENDED'  => ZugferdProfiles::PROFILE_EXTENDED,
             'XRECHNUNG' => ZugferdProfiles::PROFILE_XRECHNUNG,
-            default => ZugferdProfiles::PROFILE_EN16931,
+            default     => ZugferdProfiles::PROFILE_EN16931,
         };
     }
     

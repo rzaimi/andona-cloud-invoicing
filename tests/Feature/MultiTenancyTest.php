@@ -731,14 +731,47 @@ class MultiTenancyTest extends TestCase
 
     // ==================== DELETE OPERATIONS TESTS ====================
 
-    public function test_users_can_delete_their_own_company_invoice()
+    public function test_users_cannot_delete_sent_invoices_per_gobd()
     {
+        // GoBD: finalised (sent/paid/overdue/cancelled) invoices must be
+        // retained. The controller redirects back with a flash error rather
+        // than 403 so the user sees *why* the action was blocked.
         $this->actingAs($this->user1);
 
         $response = $this->delete("/invoices/{$this->invoice1->id}");
 
         $response->assertRedirect();
-        $this->assertDatabaseMissing('invoices', ['id' => $this->invoice1->id]);
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('invoices', [
+            'id'         => $this->invoice1->id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_users_can_delete_their_own_draft_invoice()
+    {
+        $this->actingAs($this->user1);
+
+        $draft = Invoice::create([
+            'company_id' => $this->company1->id,
+            'customer_id' => $this->customer1->id,
+            'user_id' => $this->user1->id,
+            'number' => 'RE-2024-DRAFT-1',
+            'status' => 'draft',
+            'issue_date' => now(),
+            'due_date' => now()->addDays(14),
+            'subtotal' => 100.00,
+            'tax_rate' => 0.19,
+            'tax_amount' => 19.00,
+            'total' => 119.00,
+        ]);
+
+        $response = $this->delete("/invoices/{$draft->id}");
+
+        $response->assertRedirect();
+        // Soft-deleted: row survives but deleted_at is set, so default scope
+        // hides it. `withTrashed()` is how we confirm retention.
+        $this->assertSoftDeleted('invoices', ['id' => $draft->id]);
     }
 
     public function test_users_can_delete_their_own_company_customer()

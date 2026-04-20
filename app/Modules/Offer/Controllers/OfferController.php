@@ -158,7 +158,13 @@ class OfferController extends Controller
         DB::transaction(function () use ($validated, $request) {
             $user = $request->user();
             $effectiveCompanyId = $this->getEffectiveCompanyId();
-            $company = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
+
+            // Serialise offer-number generation per company (same pattern as
+            // InvoiceController::store — prevents concurrent requests from
+            // computing the same next sequence).
+            $company = \App\Modules\Company\Models\Company::whereKey($effectiveCompanyId)
+                ->lockForUpdate()
+                ->first();
 
             // Security: verify customer belongs to this company
             $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
@@ -433,7 +439,10 @@ class OfferController extends Controller
         }
 
         DB::transaction(function () use ($offer) {
-            $company = $offer->company;
+            // Serialise invoice-number generation per company.
+            $company = \App\Modules\Company\Models\Company::whereKey($offer->company_id)
+                ->lockForUpdate()
+                ->first();
 
             // Generate invoice number using dynamic format setting
             $svc    = new NumberFormatService();
@@ -547,11 +556,14 @@ class OfferController extends Controller
         $pdf = Pdf::loadHTML($html)
             ->setPaper('a4')
             ->setOptions([
-                'defaultFont'          => 'DejaVu Sans',
-                'isRemoteEnabled'      => true,
-                'isHtml5ParserEnabled' => true,
-                'isPhpEnabled'         => true,
-                'dpi'                  => 96,
+                'defaultFont'              => 'DejaVu Sans',
+                // SECURITY: no remote fetch / local-file read / PHP eval —
+                // logos are base64-inlined in the Blade templates.
+                'isRemoteEnabled'          => false,
+                'isHtml5ParserEnabled'     => true,
+                'enable-local-file-access' => false,
+                'isPhpEnabled'             => false,
+                'dpi'                      => 96,
             ]);
 
         return $pdf->download("Angebot-{$offer->number}.pdf");

@@ -182,11 +182,15 @@ class DocumentController extends Controller
                 $message .= ' ' . count($errors) . ' Fehler aufgetreten.';
             }
             
-            // Allow callers to specify a custom redirect (e.g. the employee documents admin page)
+            // Allow callers to specify a custom redirect (e.g. the employee documents admin page).
+            // SECURITY: accept only same-origin targets — rejecting anything
+            // else prevents open-redirect abuse (phishing flow where a crafted
+            // form bounces the victim to an attacker-controlled page after
+            // upload). A bare path like `/documents` is fine; a full URL must
+            // share the app's host. Scheme-relative (`//evil`) and external
+            // URLs are rejected.
             $redirectUrl = $request->input('_redirect');
-            $redirectResponse = $redirectUrl
-                ? redirect($redirectUrl)
-                : redirect()->route('documents.index');
+            $redirectResponse = $this->sameOriginRedirect($redirectUrl);
 
             return $redirectResponse
                 ->with('success', $message)
@@ -279,5 +283,40 @@ class DocumentController extends Controller
 
         return redirect()->route('documents.index')
             ->with('success', 'Dokument erfolgreich gelöscht.');
+    }
+
+    /**
+     * Build a redirect response for the post-upload target, refusing any URL
+     * that isn't same-origin. Falls back to the documents index.
+     */
+    private function sameOriginRedirect(?string $target): \Illuminate\Http\RedirectResponse
+    {
+        $fallback = redirect()->route('documents.index');
+
+        if (!is_string($target) || $target === '') {
+            return $fallback;
+        }
+
+        // Reject scheme-relative URLs (`//evil.example/path`) and anything
+        // that doesn't parse as a local path or an http(s) URL on our host.
+        if (str_starts_with($target, '//')) {
+            return $fallback;
+        }
+
+        if (str_starts_with($target, '/')) {
+            return redirect($target);
+        }
+
+        $parts = parse_url($target);
+        if (!$parts || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)) {
+            return $fallback;
+        }
+
+        $appHost = parse_url(config('app.url'), PHP_URL_HOST);
+        if (!$appHost || ($parts['host'] ?? '') !== $appHost) {
+            return $fallback;
+        }
+
+        return redirect($target);
     }
 }

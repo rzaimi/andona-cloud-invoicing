@@ -24,6 +24,7 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
         country: "Deutschland",
         tax_number: "",
         vat_number: "",
+        leitweg_id: "",
         contact_person: "",
         customer_type: "business" as "business" | "private",
     })
@@ -266,6 +267,20 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                                             placeholder="z.B. DE123456789"
                                         />
                                         {errors.vat_number && <p className="text-red-600 text-sm">{errors.vat_number}</p>}
+                                    </div>
+
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor="leitweg_id">Leitweg-ID (nur B2G)</Label>
+                                        <Input
+                                            id="leitweg_id"
+                                            value={data.leitweg_id}
+                                            onChange={(e) => setData("leitweg_id", e.target.value)}
+                                            placeholder="z.B. 991-01234-56"
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Pflichtfeld für XRechnungen an öffentliche Auftraggeber. Wird als BT-10 (Buyer Reference) in die E-Rechnung übernommen.
+                                        </p>
+                                        {errors.leitweg_id && <p className="text-red-600 text-sm">{errors.leitweg_id}</p>}
                                     </div>
                                 </div>
                             </CardContent>

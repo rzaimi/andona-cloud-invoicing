@@ -19,8 +19,9 @@
     $showRowNumber        = $layoutSettings['content']['show_row_number'] ?? ($showRowNumber ?? false);
     $showItemCodes        = $layoutSettings['content']['show_item_codes'] ?? false;
     $showBorderColor      = $layoutSettings['colors']['text'] ?? '#1f2937';
-    // §19 UStG (Kleinunternehmer): hide USt. column — line items still carry product tax_rate (e.g. 19%) but no VAT is charged
-    $showUstColumn        = ($invoice->vat_regime ?? 'standard') !== 'small_business';
+    // Show USt. column only for standard VAT invoices. For §19, §13b,
+    // intra-community and export regimes the tax column must stay hidden.
+    $showUstColumn        = ($invoice->vat_regime ?? 'standard') === 'standard';
 
     $hasAnyDiscount = $invoice->items->contains(
         fn($item) => (float)($item->discount_amount ?? 0) > 0.0001

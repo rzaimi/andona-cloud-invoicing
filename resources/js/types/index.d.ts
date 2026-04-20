@@ -48,6 +48,7 @@ export interface Customer {
     country: string
     tax_number?: string
     vat_number?: string
+    leitweg_id?: string
     contact_person?: string
     customer_type: "business" | "private"
     status: "active" | "inactive"

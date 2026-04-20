@@ -181,7 +181,14 @@ class InvoiceController extends Controller
         DB::transaction(function () use ($validated, $request) {
             $user = $request->user();
             $effectiveCompanyId = $this->getEffectiveCompanyId();
-            $company = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
+
+            // GoBD: invoice numbers must be fortlaufend + lückenlos. Serialise
+            // number generation per company by taking a pessimistic lock on the
+            // company row for the duration of the transaction. Concurrent stores
+            // will wait here instead of racing on `next($numbers)`.
+            $company = \App\Modules\Company\Models\Company::whereKey($effectiveCompanyId)
+                ->lockForUpdate()
+                ->first();
 
             // Security: Verify customer belongs to the same company
             $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
@@ -528,7 +535,26 @@ class InvoiceController extends Controller
     {
         $this->authorize('delete', $invoice);
 
-        $invoice->delete();
+        // GoBD: once an invoice leaves draft status it must be retained.
+        // Only drafts may ever be removed, and even then we soft-delete and log.
+        if (!$invoice->canBeEdited()) {
+            return back()->with(
+                'error',
+                'Rechnung im Status "' . ucfirst($invoice->status) . '" kann gemäß GoBD nicht gelöscht werden. Bitte erstellen Sie eine Stornorechnung.'
+            );
+        }
+
+        DB::transaction(function () use ($invoice) {
+            InvoiceAuditLog::log(
+                $invoice->id,
+                'deleted',
+                $invoice->status,
+                null,
+                null,
+                'Entwurfsrechnung gelöscht (soft-delete)'
+            );
+            $invoice->delete();
+        });
 
         return redirect()->route('invoices.index')
             ->with('success', 'Rechnung wurde erfolgreich gelöscht.');
@@ -616,12 +642,16 @@ class InvoiceController extends Controller
         $pdf = Pdf::loadHTML($html)
             ->setPaper('a4')
             ->setOptions([
-                'defaultFont'            => 'DejaVu Sans',
-                'isRemoteEnabled'        => true,
-                'isHtml5ParserEnabled'   => true,
-                'enable-local-file-access' => true,
-                'isPhpEnabled'           => true,
-                'dpi'                    => 96,
+                'defaultFont'              => 'DejaVu Sans',
+                // SECURITY: disable remote fetch (SSRF), local file reads, and
+                // embedded PHP evaluation (RCE). Logos are inlined as base64
+                // data-URIs in the Blade templates so no remote/local access
+                // is needed. JS is already disabled.
+                'isRemoteEnabled'          => false,
+                'isHtml5ParserEnabled'     => true,
+                'enable-local-file-access' => false,
+                'isPhpEnabled'             => false,
+                'dpi'                      => 96,
             ]);
 
         return $pdf->download("Rechnung-{$invoice->number}.pdf");
@@ -720,7 +750,7 @@ class InvoiceController extends Controller
 
     public function send(Request $request, Invoice $invoice)
     {
-        $this->authorize('update', $invoice);
+        $this->authorize('send', $invoice);
 
         $validated = $request->validate([
             'to' => 'required|email',
@@ -899,11 +929,12 @@ class InvoiceController extends Controller
         ->setPaper('a4')
         ->setOptions([
             'defaultFont'              => 'DejaVu Sans',
-            'isRemoteEnabled'          => true,
+            // SECURITY: see pdf() above — no remote/local/PHP/JS access needed.
+            'isRemoteEnabled'          => false,
             'isHtml5ParserEnabled'     => true,
-            'enable-local-file-access' => true,
+            'enable-local-file-access' => false,
             'enable-javascript'        => false,
-            'isPhpEnabled'             => true,
+            'isPhpEnabled'             => false,
             'dpi'                      => 96,
         ]);
     }
@@ -1164,6 +1195,13 @@ class InvoiceController extends Controller
 
             // Load relationships
             $invoice->load(['customer', 'items.product', 'company']);
+
+            // GoBD: serialise Stornorechnung numbering alongside the normal
+            // invoice counter by locking the company row for the duration of
+            // the transaction (same pattern as store()).
+            \App\Modules\Company\Models\Company::whereKey($invoice->company_id)
+                ->lockForUpdate()
+                ->first();
 
             // Create the correction invoice (Stornorechnung)
             $correctionInvoice = new Invoice();

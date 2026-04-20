@@ -563,9 +563,12 @@ class InvoiceLayoutController extends Controller
             ->setPaper('a4')
             ->setOptions([
                 'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => true,
+                // SECURITY: no remote fetch, local-file read, or PHP eval —
+                // logos are base64-inlined in Blade, nothing else needs it.
+                'isRemoteEnabled' => false,
                 'isHtml5ParserEnabled' => true,
-                'isPhpEnabled' => true,
+                'enable-local-file-access' => false,
+                'isPhpEnabled' => false,
             ]);
 
         return response($pdf->output(), 200, [

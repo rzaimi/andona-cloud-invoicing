@@ -28,6 +28,7 @@ class Customer extends Model
         'country',
         'tax_number',
         'vat_number',
+        'leitweg_id',
         'contact_person',
         'customer_type',
         'status',

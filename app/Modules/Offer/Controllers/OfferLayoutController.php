@@ -371,10 +371,12 @@ class OfferLayoutController extends Controller
         $pdf = Pdf::loadHTML($html)
             ->setPaper('a4')
             ->setOptions([
-                'defaultFont'         => 'DejaVu Sans',
-                'isRemoteEnabled'     => true,
-                'isHtml5ParserEnabled' => true,
-                'isPhpEnabled'        => true,
+                'defaultFont'              => 'DejaVu Sans',
+                // SECURITY: see InvoiceController::pdf — same hardening.
+                'isRemoteEnabled'          => false,
+                'isHtml5ParserEnabled'     => true,
+                'enable-local-file-access' => false,
+                'isPhpEnabled'             => false,
             ]);
 
         return response($pdf->output(), 200, [

@@ -22,14 +22,45 @@ class InvoicePolicy
         return $user->company_id !== null || $user->hasPermissionTo('manage_companies');
     }
 
+    /**
+     * Company-boundary check only. The GoBD status lock (drafts only) is
+     * enforced inside the controllers with a user-facing message so users
+     * aren't hit with a blunt 403 when they follow a stale link.
+     */
     public function update(User $user, Invoice $invoice): bool
     {
-        return $user->company_id === $invoice->company_id || $user->hasPermissionTo('manage_companies');
+        return $this->belongsToSameCompany($user, $invoice);
     }
 
     public function delete(User $user, Invoice $invoice): bool
     {
-        return $user->company_id === $invoice->company_id || $user->hasPermissionTo('manage_companies');
+        return $this->belongsToSameCompany($user, $invoice);
+    }
+
+    /**
+     * Sending / resending the invoice by email. Allowed on any status except
+     * cancelled — resending a sent invoice is legitimate.
+     */
+    public function send(User $user, Invoice $invoice): bool
+    {
+        return $this->belongsToSameCompany($user, $invoice)
+            && $invoice->status !== 'cancelled';
+    }
+
+    /**
+     * Trigger a Mahnung. Only valid once the invoice is actually out the door
+     * and unpaid — but that state check is handled in the controller so users
+     * get a friendly flash message instead of a hard 403.
+     */
+    public function sendReminder(User $user, Invoice $invoice): bool
+    {
+        return $this->belongsToSameCompany($user, $invoice);
+    }
+
+    private function belongsToSameCompany(User $user, Invoice $invoice): bool
+    {
+        return $user->company_id === $invoice->company_id
+            || $user->hasPermissionTo('manage_companies');
     }
 
     /**
