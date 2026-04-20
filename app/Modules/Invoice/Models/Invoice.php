@@ -5,9 +5,7 @@ namespace App\Modules\Invoice\Models;
 use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\User\Models\User;
-use App\Modules\Invoice\Models\InvoiceItem;
 use App\Services\NumberFormatService;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,17 +19,26 @@ class Invoice extends Model
 
     // Reminder Level Constants
     const REMINDER_NONE = 0;
+
     const REMINDER_FRIENDLY = 1;
+
     const REMINDER_MAHNUNG_1 = 2;
+
     const REMINDER_MAHNUNG_2 = 3;
+
     const REMINDER_MAHNUNG_3 = 4;
+
     const REMINDER_INKASSO = 5;
 
     // Valid invoice types
-    const TYPE_STANDARD          = 'standard';
+    const TYPE_STANDARD = 'standard';
+
     const TYPE_ABSCHLAGSRECHNUNG = 'abschlagsrechnung';
-    const TYPE_SCHLUSSRECHNUNG   = 'schlussrechnung';
+
+    const TYPE_SCHLUSSRECHNUNG = 'schlussrechnung';
+
     const TYPE_NACHTRAGSRECHNUNG = 'nachtragsrechnung';
+
     const TYPE_KORREKTURRECHNUNG = 'korrekturrechnung';
 
     protected $fillable = [
@@ -65,6 +72,7 @@ class Invoice extends Model
         'payment_method',
         'payment_terms',
         'layout_id',
+        'recurring_profile_id',
         'company_snapshot',
         'reminder_level',
         'last_reminder_sent_at',
@@ -78,25 +86,25 @@ class Invoice extends Model
     ];
 
     protected $casts = [
-        'issue_date'           => 'date',
-        'service_date'         => 'date',
+        'issue_date' => 'date',
+        'service_date' => 'date',
         'service_period_start' => 'date',
-        'service_period_end'   => 'date',
-        'due_date'             => 'date',
-        'skonto_due_date'      => 'date',
-        'skonto_percent'       => 'decimal:2',
-        'skonto_amount'        => 'decimal:2',
-        'subtotal'             => 'decimal:2',
-        'tax_rate'             => 'decimal:4',
-        'tax_amount'           => 'decimal:2',
-        'total'                => 'decimal:2',
-        'reminder_fee'         => 'decimal:2',
+        'service_period_end' => 'date',
+        'due_date' => 'date',
+        'skonto_due_date' => 'date',
+        'skonto_percent' => 'decimal:2',
+        'skonto_amount' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'tax_rate' => 'decimal:4',
+        'tax_amount' => 'decimal:2',
+        'total' => 'decimal:2',
+        'reminder_fee' => 'decimal:2',
         'last_reminder_sent_at' => 'datetime',
-        'reminder_history'     => 'array',
-        'company_snapshot'     => 'array',
-        'abschlag_refs'        => 'array',
-        'is_correction'        => 'boolean',
-        'corrected_at'         => 'datetime',
+        'reminder_history' => 'array',
+        'company_snapshot' => 'array',
+        'abschlag_refs' => 'array',
+        'is_correction' => 'boolean',
+        'corrected_at' => 'datetime',
     ];
 
     public function company(): BelongsTo
@@ -122,6 +130,17 @@ class Invoice extends Model
     public function layout(): BelongsTo
     {
         return $this->belongsTo(InvoiceLayout::class);
+    }
+
+    /**
+     * The recurring profile that auto-generated this invoice, if any.
+     */
+    public function recurringProfile(): BelongsTo
+    {
+        return $this->belongsTo(
+            \App\Modules\RecurringInvoice\Models\RecurringInvoiceProfile::class,
+            'recurring_profile_id'
+        );
     }
 
     /**
@@ -178,27 +197,27 @@ class Invoice extends Model
     public function createCompanySnapshot(): array
     {
         $company = $this->company;
-        
+
         return [
-            'name'                => $company->name,
-            'email'               => $company->email,
-            'phone'               => $company->phone,
-            'fax'                 => $company->fax,
-            'address'             => $company->address,
-            'postal_code'         => $company->postal_code,
-            'city'                => $company->city,
-            'country'             => $company->country ?? 'Deutschland',
-            'tax_number'          => $company->tax_number,
-            'tax_office'          => $company->tax_office,
-            'vat_number'          => $company->vat_number,
+            'name' => $company->name,
+            'email' => $company->email,
+            'phone' => $company->phone,
+            'fax' => $company->fax,
+            'address' => $company->address,
+            'postal_code' => $company->postal_code,
+            'city' => $company->city,
+            'country' => $company->country ?? 'Deutschland',
+            'tax_number' => $company->tax_number,
+            'tax_office' => $company->tax_office,
+            'vat_number' => $company->vat_number,
             'commercial_register' => $company->commercial_register,
-            'managing_director'   => $company->managing_director,
-            'website'             => $company->website,
-            'logo'                => $company->logo,
-            'bank_name'           => $company->bank_name,
-            'bank_iban'           => $company->bank_iban,
-            'bank_bic'            => $company->bank_bic,
-            'snapshot_date'       => now()->toDateTimeString(),
+            'managing_director' => $company->managing_director,
+            'website' => $company->website,
+            'logo' => $company->logo,
+            'bank_name' => $company->bank_name,
+            'bank_iban' => $company->bank_iban,
+            'bank_bic' => $company->bank_bic,
+            'snapshot_date' => now()->toDateTimeString(),
         ];
     }
 
@@ -210,7 +229,7 @@ class Invoice extends Model
         if ($this->company_snapshot) {
             return $this->company_snapshot;
         }
-        
+
         // Fallback: create snapshot from current company (for old invoices)
         return $this->createCompanySnapshot();
     }
@@ -227,21 +246,21 @@ class Invoice extends Model
     public function resolveRouteBinding($value, $field = null)
     {
         $invoice = parent::resolveRouteBinding($value, $field);
-        
+
         // If invoice not found, return null (Laravel will handle 404)
-        if (!$invoice) {
+        if (! $invoice) {
             return null;
         }
-        
+
         // Additional security: Check if user is authenticated and has access
         if (auth()->check()) {
             $user = auth()->user();
             // Allow access if user belongs to same company OR has manage_companies permission
-            if ($user->company_id !== $invoice->company_id && !$user->hasPermissionTo('manage_companies')) {
+            if ($user->company_id !== $invoice->company_id && ! $user->hasPermissionTo('manage_companies')) {
                 abort(403, 'Unauthorized access to invoice');
             }
         }
-        
+
         return $invoice;
     }
 
@@ -268,11 +287,11 @@ class Invoice extends Model
     public function getReadableTypeAttribute(): string
     {
         return match ($this->invoice_type ?? self::TYPE_STANDARD) {
-            self::TYPE_ABSCHLAGSRECHNUNG => 'Abschlagsrechnung ' . ($this->sequence_number ?? ''),
-            self::TYPE_SCHLUSSRECHNUNG   => 'Schlussrechnung',
+            self::TYPE_ABSCHLAGSRECHNUNG => 'Abschlagsrechnung '.($this->sequence_number ?? ''),
+            self::TYPE_SCHLUSSRECHNUNG => 'Schlussrechnung',
             self::TYPE_NACHTRAGSRECHNUNG => 'Nachtragsrechnung',
             self::TYPE_KORREKTURRECHNUNG => 'Korrekturrechnung',
-            default                      => 'Rechnung',
+            default => 'Rechnung',
         };
     }
 
@@ -283,39 +302,42 @@ class Invoice extends Model
     public function calculateSkonto(): void
     {
         if ($this->skonto_percent === null || $this->skonto_days === null) {
-            $this->skonto_amount   = null;
+            $this->skonto_amount = null;
             $this->skonto_due_date = null;
+
             return;
         }
 
-        $this->skonto_amount   = round((float) $this->total * ((float) $this->skonto_percent / 100), 2);
-        $baseDate              = $this->issue_date ?? now()->toDateObject();
+        $this->skonto_amount = round((float) $this->total * ((float) $this->skonto_percent / 100), 2);
+        $baseDate = $this->issue_date ?? now()->toDateObject();
         $this->skonto_due_date = \Carbon\Carbon::instance($baseDate)->addDays((int) $this->skonto_days);
     }
 
     public function calculateTotals(): void
     {
         // Load items if not already loaded
-        if (!$this->relationLoaded('items')) {
+        if (! $this->relationLoaded('items')) {
             $this->load('items');
         }
-        
+
         // If no items, set totals to zero
         if ($this->items->isEmpty()) {
             $this->subtotal = 0;
             $this->tax_amount = 0;
             $this->total = 0;
+
             return;
         }
-        
+
         // Calculate subtotal (sum of all items - items already have discount applied)
         $this->subtotal = $this->items->sum('total');
-        
+
         // Calculate tax amount
         // If VAT regime is not standard, tax is always 0
         if (($this->vat_regime ?? 'standard') !== 'standard') {
             $this->tax_amount = 0;
             $this->total = $this->subtotal;
+
             return;
         }
 
@@ -328,7 +350,7 @@ class Invoice extends Model
             // Tax is calculated on the item total (which already includes discount)
             $taxAmount += $item->total * $itemTaxRate;
         }
-        
+
         $this->tax_amount = $taxAmount;
         $this->total = $this->subtotal + $this->tax_amount;
     }
@@ -346,32 +368,32 @@ class Invoice extends Model
         foreach ($this->items as $item) {
             $rate = (float) ($item->tax_rate ?? $this->tax_rate);
             $rateKey = number_format($rate * 100, 2);
-            
-            if (!isset($breakdown[$rateKey])) {
+
+            if (! isset($breakdown[$rateKey])) {
                 $breakdown[$rateKey] = [
                     'rate' => $rate,
                     'net_amount' => 0,
                     'tax_amount' => 0,
                 ];
             }
-            
+
             $breakdown[$rateKey]['net_amount'] += $item->total;
             $breakdown[$rateKey]['tax_amount'] += $item->total * $rate;
         }
-        
+
         return $breakdown;
     }
 
     public function generateNumber(): string
     {
-        $company    = $this->company;
-        $svc        = new NumberFormatService();
-        $format     = $svc->normaliseToFormat(
+        $company = $this->company;
+        $svc = new NumberFormatService;
+        $format = $svc->normaliseToFormat(
             $company->getSetting('invoice_number_format')
                 ?? $company->getSetting('invoice_prefix', 'RE-')
         );
         $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
-        $numbers    = static::where('company_id', $this->company_id)->pluck('number');
+        $numbers = static::where('company_id', $this->company_id)->pluck('number');
 
         return $svc->next($format, $numbers, null, $minCounter);
     }
@@ -381,7 +403,7 @@ class Invoice extends Model
      */
     public function getReminderLevelNameAttribute(): string
     {
-        return match($this->reminder_level) {
+        return match ($this->reminder_level) {
             self::REMINDER_NONE => 'Keine',
             self::REMINDER_FRIENDLY => 'Freundliche Erinnerung',
             self::REMINDER_MAHNUNG_1 => '1. Mahnung',
@@ -397,9 +419,9 @@ class Invoice extends Model
      */
     public function isOverdue(): bool
     {
-        return $this->status !== 'paid' 
+        return $this->status !== 'paid'
             && $this->status !== 'cancelled'
-            && $this->due_date 
+            && $this->due_date
             && $this->due_date->isPast();
     }
 
@@ -408,9 +430,10 @@ class Invoice extends Model
      */
     public function getDaysOverdue(): int
     {
-        if (!$this->isOverdue()) {
+        if (! $this->isOverdue()) {
             return 0;
         }
+
         return abs($this->due_date->diffInDays(now()));
     }
 
@@ -422,7 +445,7 @@ class Invoice extends Model
         if ($this->status === 'paid' || $this->status === 'cancelled') {
             return false;
         }
-        
+
         if ($this->reminder_level >= self::REMINDER_INKASSO) {
             return false; // Already at max level
         }
@@ -452,21 +475,21 @@ class Invoice extends Model
             'days_overdue' => $this->getDaysOverdue(),
             'fee' => $fee,
         ];
-        
+
         $this->reminder_history = $history;
         $this->last_reminder_sent_at = now();
         $this->reminder_level = $level;
-        
+
         if ($fee > 0) {
             // Update cumulative fee tracker
             $this->reminder_fee = ($this->reminder_fee ?? 0) + $fee;
-            
+
             // Create invoice item for the fee
             $this->addReminderFeeItem($level, $fee);
-            
+
             // Reload items to include the newly created fee item
             $this->load('items');
-            
+
             // Recalculate totals (fees are net, so they're added to subtotal)
             $this->calculateTotals();
         }
@@ -481,10 +504,10 @@ class Invoice extends Model
         // Get the highest sort_order to add fee at the end
         $maxSortOrder = $this->items()->max('sort_order') ?? -1;
         $nextSortOrder = $maxSortOrder + 1;
-        
+
         // Get level name for description
         $levelName = $this->getReminderLevelNameForLevel($level);
-        
+
         // Create fee item (fees are VAT-exempt, 0% tax)
         InvoiceItem::create([
             'invoice_id' => $this->id,
@@ -504,7 +527,7 @@ class Invoice extends Model
      */
     public function getReminderLevelNameForLevel(int $level): string
     {
-        return match($level) {
+        return match ($level) {
             self::REMINDER_NONE => 'Keine',
             self::REMINDER_FRIENDLY => 'Freundliche Erinnerung',
             self::REMINDER_MAHNUNG_1 => '1. Mahnung',
@@ -531,9 +554,9 @@ class Invoice extends Model
         // Can only correct sent or paid invoices
         // Cannot correct if already corrected
         // Cannot correct if it's already a correction invoice
-        return in_array($this->status, ['sent', 'paid', 'overdue']) 
-            && !$this->corrected_by_invoice_id 
-            && !$this->is_correction;
+        return in_array($this->status, ['sent', 'paid', 'overdue'])
+            && ! $this->corrected_by_invoice_id
+            && ! $this->is_correction;
     }
 
     /**
@@ -549,14 +572,14 @@ class Invoice extends Model
      */
     public function generateCorrectionNumber(): string
     {
-        $company      = $this->company;
-        $svc          = new NumberFormatService();
+        $company = $this->company;
+        $svc = new NumberFormatService;
         $stornoFormat = $svc->normaliseToFormat(
             $company->getSetting('storno_number_format')
                 ?? 'STORNO-{YYYY}-{####}'
         );
         $minCounter = (int) ($company->getSetting('storno_next_counter') ?? 1);
-        $numbers    = static::where('company_id', $this->company_id)->pluck('number');
+        $numbers = static::where('company_id', $this->company_id)->pluck('number');
 
         return $svc->next($stornoFormat, $numbers, null, $minCounter);
     }
@@ -593,6 +616,7 @@ class Invoice extends Model
     public function isPartiallyPaid(): bool
     {
         $paidAmount = $this->getPaidAmount();
+
         return $paidAmount > 0 && $paidAmount < $this->total;
     }
 }

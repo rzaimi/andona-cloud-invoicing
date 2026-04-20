@@ -1,6 +1,7 @@
 <?php
 use App\Modules\Invoice\Controllers\InvoiceController;
 use App\Modules\Invoice\Controllers\InvoiceLayoutController;
+use App\Modules\RecurringInvoice\Controllers\RecurringInvoiceController;
 
 Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
 Route::get('invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
@@ -56,3 +57,24 @@ Route::prefix('invoice-layouts')->name('invoice-layouts.')->group(function () {
 Route::get('/settings/invoice-layouts', function () {
     return redirect()->route('invoice-layouts.index');
 })->name('settings.invoice-layouts');
+
+// Recurring invoices (Abo-Rechnungen). Route-model binding parameter is
+// `recurringInvoice` because the controller method signatures use that name.
+Route::prefix('recurring-invoices')->name('recurring-invoices.')->group(function () {
+    Route::get('/',                                [RecurringInvoiceController::class, 'index'])->name('index');
+    Route::get('/create',                          [RecurringInvoiceController::class, 'create'])->name('create');
+    Route::post('/',                               [RecurringInvoiceController::class, 'store'])->name('store');
+    Route::get('/{recurringInvoice}',              [RecurringInvoiceController::class, 'show'])->name('show');
+    Route::get('/{recurringInvoice}/edit',         [RecurringInvoiceController::class, 'edit'])->name('edit');
+    Route::put('/{recurringInvoice}',              [RecurringInvoiceController::class, 'update'])->name('update');
+    Route::delete('/{recurringInvoice}',           [RecurringInvoiceController::class, 'destroy'])->name('destroy');
+    Route::post('/{recurringInvoice}/pause',       [RecurringInvoiceController::class, 'pause'])->name('pause');
+    Route::post('/{recurringInvoice}/resume',      [RecurringInvoiceController::class, 'resume'])->name('resume');
+
+    // Immediate generation is expensive (same lock + number generation as
+    // `invoices.store`). Throttle it so a runaway click cannot hammer the
+    // company row.
+    Route::middleware('throttle:30,1')->group(function () {
+        Route::post('/{recurringInvoice}/run-now', [RecurringInvoiceController::class, 'runNow'])->name('run-now');
+    });
+});

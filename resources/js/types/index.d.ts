@@ -225,6 +225,7 @@ export interface Invoice {
     payment_method?: string
     payment_terms?: string
     layout_id?: string
+    recurring_profile_id?: string | null
     is_correction?: boolean
     corrects_invoice_id?: string
     corrected_by_invoice_id?: string
@@ -290,6 +291,65 @@ export interface Offer {
     converted_to_invoice?: Invoice
     created_at: string
     updated_at: string
+}
+
+export interface RecurringInvoiceItem {
+    id?: string
+    recurring_profile_id?: string
+    product_id?: string | null
+    description: string
+    quantity: number
+    unit_price: number
+    unit: string
+    tax_rate?: number | null
+    discount_type?: "percentage" | "fixed" | null
+    discount_value?: number | null
+    sort_order?: number
+}
+
+export interface RecurringInvoiceProfile {
+    id: string
+    company_id: string
+    customer_id: string
+    user_id?: string | null
+    layout_id?: string | null
+    name: string
+    description?: string | null
+    vat_regime?: string
+    tax_rate?: number
+    payment_method?: string | null
+    payment_terms?: string | null
+    skonto_percent?: number | null
+    skonto_days?: number | null
+    due_days_after_issue?: number
+    notes?: string | null
+    bauvorhaben?: string | null
+    auftragsnummer?: string | null
+    interval_unit: "day" | "week" | "month" | "quarter" | "year"
+    interval_count: number
+    day_of_month?: number | null
+    start_date: string
+    end_date?: string | null
+    max_occurrences?: number | null
+    occurrences_count: number
+    next_run_date: string
+    last_run_date?: string | null
+    status: "active" | "paused" | "completed" | "cancelled"
+    paused_until?: string | null
+    auto_send: boolean
+    email_subject_template?: string | null
+    email_body_template?: string | null
+    items?: RecurringInvoiceItem[]
+    customer?: Customer
+    layout?: InvoiceLayout
+    user?: User
+    generated_invoices?: Invoice[]
+    generated_invoices_count?: number
+    schedule_label?: string
+    status_label?: string
+    created_at: string
+    updated_at: string
+    deleted_at?: string | null
 }
 
 export interface InvoiceLayout {

@@ -33,6 +33,7 @@ import {
     Activity,
     Search,
     Check,
+    Repeat,
 } from "lucide-react"
 import {
     Sidebar,
@@ -591,6 +592,14 @@ export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
                                                 {stats.invoices.draft}
                                             </Badge>
                                         )}
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isActive("/recurring-invoices")}>
+                                    <Link href="/recurring-invoices" className="flex items-center min-w-0">
+                                        <Repeat className="shrink-0" />
+                                        <span className="truncate">Abo-Rechnungen</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
