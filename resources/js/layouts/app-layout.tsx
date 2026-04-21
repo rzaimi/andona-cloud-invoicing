@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button"
 import { Settings, Users, Building2, HelpCircle, Calendar, LayoutTemplate, Activity, Terminal, Shield, ShieldCheck } from "lucide-react"
 import { Link, usePage } from "@inertiajs/react"
 import AppearanceToggleDropdown from "@/components/appearance-dropdown"
+import { FlashToaster } from "@/components/flash-toaster"
+import { CommandPalette } from "@/components/command-palette"
 
 interface AppLayoutProps {
     children: React.ReactNode
@@ -202,6 +204,8 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
                 </header>
                 <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
             </SidebarInset>
+            <FlashToaster />
+            <CommandPalette />
         </SidebarProvider>
     )
 }

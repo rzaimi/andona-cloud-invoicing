@@ -5,8 +5,12 @@ use App\Modules\RecurringInvoice\Controllers\RecurringInvoiceController;
 
 Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
 Route::get('invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+Route::get('invoices/board', [InvoiceController::class, 'board'])->name('invoices.board');
 Route::get('invoices/selectable-abschlaege', [InvoiceController::class, 'selectableAbschlaege'])->name('invoices.selectable-abschlaege');
 Route::post('invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+// JSON status transition used by the kanban board. Narrow transitions only —
+// full edits must go through update() or createCorrection().
+Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'setStatus'])->name('invoices.set-status');
 Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
 Route::get('invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
 Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');

@@ -4,6 +4,10 @@ use App\Modules\Customer\Controllers\CustomerController;
 Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
 Route::get('customers/create', [CustomerController::class, 'create'])->name('customers.create');
 Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
+// JSON endpoint for the inline-create dialog on invoice / offer forms.
+Route::post('customers/quick', [CustomerController::class, 'quickStore'])->name('customers.quick-store');
+// JSON search for the ⌘K command palette.
+Route::get('customers/search', [CustomerController::class, 'search'])->name('customers.search');
 Route::get('customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
 Route::get('customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
 Route::put('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');

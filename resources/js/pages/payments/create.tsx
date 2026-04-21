@@ -170,7 +170,7 @@ export default function PaymentsCreate() {
                                         </div>
                                     )}
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="amount">Betrag (€) *</Label>
                                             <Input

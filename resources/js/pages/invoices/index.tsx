@@ -30,6 +30,7 @@ import {
     ArrowUpDown,
     ArrowUp,
     ArrowDown,
+    LayoutGrid,
 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import { SendEmailDialog } from "@/components/send-email-dialog"
@@ -218,16 +219,17 @@ export default function InvoicesIndex() {
             <Head title="Rechnungen" />
 
             <div className="flex flex-1 flex-col gap-6">
-                {/* Header */}
-                <div className="flex justify-between items-center">
+                {/* Header — stacked on mobile, inline on sm+ */}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Rechnungsverwaltung</h1>
-                        <p className="text-gray-600">Verwalten Sie Ihre Rechnungen und deren Status</p>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Rechnungsverwaltung</h1>
+                        <p className="text-gray-600 text-sm">Verwalten Sie Ihre Rechnungen und deren Status</p>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <Button
                             variant="outline"
+                            className="flex-1 sm:flex-initial"
                             onClick={() => {
                                 const params = new URLSearchParams()
                                 if (filters.search) params.append('search', filters.search)
@@ -238,12 +240,20 @@ export default function InvoicesIndex() {
                             }}
                         >
                             <Download className="mr-2 h-4 w-4" />
-                            Exportieren
+                            <span className="hidden sm:inline">Exportieren</span>
+                            <span className="sm:hidden">Export</span>
                         </Button>
-                        <Link href="/invoices/create">
-                            <Button>
+                        <Link href="/invoices/board" className="flex-1 sm:flex-initial">
+                            <Button variant="outline" className="w-full sm:w-auto">
+                                <LayoutGrid className="mr-2 h-4 w-4" />
+                                Board
+                            </Button>
+                        </Link>
+                        <Link href="/invoices/create" className="flex-1 sm:flex-initial">
+                            <Button className="w-full sm:w-auto">
                                 <Plus className="mr-2 h-4 w-4" />
-                                Neue Rechnung
+                                <span className="hidden sm:inline">Neue Rechnung</span>
+                                <span className="sm:hidden">Neu</span>
                             </Button>
                         </Link>
                     </div>
@@ -366,7 +376,7 @@ export default function InvoicesIndex() {
                         <CardTitle>Rechnungen ({stats.total})</CardTitle>
                         <CardDescription>Alle Rechnungen in Ihrem System</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>

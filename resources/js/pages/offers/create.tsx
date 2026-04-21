@@ -10,11 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Plus, Trash2, PackagePlus, Hash } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, PackagePlus, Hash, UserPlus } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import { useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
+import { QuickCustomerDialog, type QuickCustomer } from "@/components/quick-customer-dialog"
 
 interface OfferItem {
     id: number
@@ -80,7 +81,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function OffersCreate() {
-    const { customers, layouts, products, settings, nextNumber } = usePage<OffersCreateProps>().props
+    const { customers: initialCustomers, layouts, products, settings, nextNumber } = usePage<OffersCreateProps>().props
+    const [customers, setCustomers] = useState<Customer[]>(initialCustomers)
+    const [quickCustomerOpen, setQuickCustomerOpen] = useState(false)
     const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate)
 
     const { data, setData, post, processing, errors } = useForm({
@@ -264,18 +267,29 @@ export default function OffersCreate() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="customer_id">Kunde *</Label>
-                                    <Select value={data.customer_id} onValueChange={(value) => setData("customer_id", value)}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Kunde auswählen" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {customers.map((customer) => (
-                                                <SelectItem key={customer.id} value={customer.id.toString()}>
-                                                    {customer.name} ({customer.email})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="flex gap-2">
+                                        <Select value={data.customer_id} onValueChange={(value) => setData("customer_id", value)}>
+                                            <SelectTrigger className="flex-1">
+                                                <SelectValue placeholder="Kunde auswählen" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {customers.map((customer) => (
+                                                    <SelectItem key={customer.id} value={customer.id.toString()}>
+                                                        {customer.name}{customer.email ? ` (${customer.email})` : ""}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            title="Neuer Kunde"
+                                            onClick={() => setQuickCustomerOpen(true)}
+                                        >
+                                            <UserPlus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                     {errors.customer_id && <p className="text-red-600 text-sm">{errors.customer_id}</p>}
                                 </div>
 
@@ -670,6 +684,16 @@ export default function OffersCreate() {
 
                 </form>
             </div>
+
+            <QuickCustomerDialog
+                open={quickCustomerOpen}
+                onOpenChange={setQuickCustomerOpen}
+                onCreated={(customer: QuickCustomer) => {
+                    const shaped = { ...customer, email: customer.email ?? "" } as unknown as Customer
+                    setCustomers((current) => [shaped, ...current])
+                    setData("customer_id", customer.id)
+                }}
+            />
         </AppLayout>
     )
 }

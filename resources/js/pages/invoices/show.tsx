@@ -157,18 +157,18 @@ export default function InvoicesShow() {
             <Head title={`Rechnung ${invoice.number}`} />
 
             <div className="flex flex-1 flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                {/* Header — stacked on mobile, inline on lg+ */}
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div className="flex items-start sm:items-center gap-3 min-w-0">
                         <Link href="/invoices">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Zurück
                             </Button>
                         </Link>
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-1xl font-bold text-gray-900">
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
                                     {invoice.is_correction ? "Stornorechnung" : "Rechnung"} {invoice.number}
                                 </h1>
                                 {getStatusBadge(invoice.status)}
@@ -176,33 +176,35 @@ export default function InvoicesShow() {
                                     <Badge variant="destructive">Stornorechnung</Badge>
                                 )}
                             </div>
-                            <p className="text-gray-600 mt-1">
+                            <p className="text-gray-600 text-sm mt-1 truncate">
                                 {invoice.customer?.name} • {formatDate(invoice.issue_date)}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex gap-2">
-                        <Link href={`/payments/create?invoice_id=${invoice.id}`}>
-                            <Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Link href={`/payments/create?invoice_id=${invoice.id}`} className="flex-1 sm:flex-initial">
+                            <Button className="w-full sm:w-auto">
                                 <Plus className="mr-2 h-4 w-4" />
-                                Zahlung erfassen
+                                <span className="hidden sm:inline">Zahlung erfassen</span>
+                                <span className="sm:hidden">Zahlung</span>
                             </Button>
                         </Link>
-                        <Link href={`/invoices/${invoice.id}/edit`}>
-                            <Button variant="outline">
+                        <Link href={`/invoices/${invoice.id}/edit`} className="flex-1 sm:flex-initial">
+                            <Button variant="outline" className="w-full sm:w-auto">
                                 <Edit className="mr-2 h-4 w-4" />
                                 Bearbeiten
                             </Button>
                         </Link>
                         <Button
                             variant="outline"
+                            className="flex-1 sm:flex-initial"
                             onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}
                         >
                             <FileText className="mr-2 h-4 w-4" />
                             PDF
                         </Button>
-                        <Button variant="destructive" onClick={handleDelete}>
+                        <Button variant="destructive" className="flex-1 sm:flex-initial" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Löschen
                         </Button>

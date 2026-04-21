@@ -2,6 +2,7 @@ import type React from "react"
 import { Link, usePage } from "@inertiajs/react"
 import { FileText, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { FlashToaster } from "@/components/flash-toaster"
 import { route } from "ziggy-js"
 
 interface EmployeeLayoutProps {
@@ -40,6 +41,8 @@ export default function EmployeeLayout({ children }: EmployeeLayoutProps) {
             <main className="mx-auto max-w-5xl px-4 py-8">
                 {children}
             </main>
+
+            <FlashToaster />
         </div>
     )
 }

@@ -84,6 +84,90 @@ class InvoiceController extends Controller
         ]);
     }
 
+    /**
+     * Kanban-style board grouped by status. Limits to ~50 per column by
+     * `issue_date desc` so the UI stays snappy — full history is still
+     * available via the classic index/table view.
+     */
+    public function board(Request $request)
+    {
+        $companyId = $this->getEffectiveCompanyId();
+        $perColumn = 50;
+
+        $columns = [];
+        foreach (['draft', 'sent', 'paid', 'overdue', 'cancelled'] as $status) {
+            $columns[$status] = Invoice::forCompany($companyId)
+                ->where('status', $status)
+                ->with(['customer:id,name'])
+                ->orderBy('issue_date', 'desc')
+                ->limit($perColumn)
+                ->get(['id', 'number', 'customer_id', 'status', 'issue_date', 'due_date', 'total']);
+        }
+
+        return Inertia::render('invoices/board', [
+            'columns'     => $columns,
+            'perColumn'   => $perColumn,
+        ]);
+    }
+
+    /**
+     * Transition an invoice's status (used by the kanban board's drop handler).
+     *
+     * Allowed transitions are narrow on purpose — everything else must go
+     * through dedicated actions (send email, createCorrection, etc.) so the
+     * audit trail is meaningful:
+     *   - draft → sent | cancelled
+     *   - sent  → paid | cancelled
+     *   - overdue → paid | cancelled
+     *
+     * GoBD: paid invoices are terminal. Moving backwards requires a
+     * Stornorechnung.
+     */
+    public function setStatus(Request $request, Invoice $invoice)
+    {
+        $this->authorize('send', $invoice); // loose company-boundary check
+
+        $validated = $request->validate([
+            'status' => 'required|in:draft,sent,paid,overdue,cancelled',
+        ]);
+
+        $allowed = [
+            'draft'    => ['sent', 'cancelled'],
+            'sent'     => ['paid', 'cancelled'],
+            'overdue'  => ['paid', 'cancelled'],
+        ];
+
+        $from = $invoice->status;
+        $to   = $validated['status'];
+
+        if ($from === $to) {
+            return response()->json(['ok' => true]);
+        }
+
+        if (!isset($allowed[$from]) || !in_array($to, $allowed[$from], true)) {
+            return response()->json([
+                'ok'      => false,
+                'message' => "Wechsel von \"{$from}\" nach \"{$to}\" nicht erlaubt. Gemäß GoBD-Richtlinien können abgeschlossene Rechnungen nur per Stornorechnung korrigiert werden.",
+            ], 422);
+        }
+
+        DB::transaction(function () use ($invoice, $from, $to) {
+            $invoice->status = $to;
+            $invoice->save();
+
+            InvoiceAuditLog::log(
+                $invoice->id,
+                'status_changed',
+                $from,
+                $to,
+                null,
+                "Status via Board von {$from} auf {$to} geändert"
+            );
+        });
+
+        return response()->json(['ok' => true, 'status' => $to]);
+    }
+
     public function create()
     {
         $companyId = $this->getEffectiveCompanyId();

@@ -3,33 +3,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Info } from "lucide-react"
-
-// ─── Preview helper (mirrors settings/tabs/company.tsx) ───────────────────────
-function previewNumberFormat(format: string, counter: number = 1): string {
-    const now   = new Date()
-    const yyyy  = now.getFullYear().toString()
-    const yy    = yyyy.slice(2)
-    const mm    = String(now.getMonth() + 1).padStart(2, "0")
-    const dd    = String(now.getDate()).padStart(2, "0")
-
-    let result = format
-        .replace(/\{YYYY\}/g, yyyy)
-        .replace(/\{YY\}/g, yy)
-        .replace(/\{MM\}/g, mm)
-        .replace(/\{DD\}/g, dd)
-        .replace(/\{(#+)\}/g, (_: string, hashes: string) =>
-            String(counter).padStart(hashes.length, "0")
-        )
-    return result
-}
-
-const TOKENS: [string, string][] = [
-    ["{YYYY}", "4-stelliges Jahr (2025)"],
-    ["{YY}",   "2-stelliges Jahr (25)"],
-    ["{MM}",   "Monat (01–12)"],
-    ["{DD}",   "Tag (01–31)"],
-    ["{####}", "Laufende Nr. (Anzahl # = Stellenanzahl)"],
-]
+import { previewNumberFormat, NUMBER_FORMAT_TOKENS as TOKENS } from "@/utils/number-format"
 
 export default function Step3InvoiceSettings({ data, setData, errors }: any) {
     const inv = data.invoice_settings ?? {}

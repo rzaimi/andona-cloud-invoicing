@@ -12,27 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Save } from "lucide-react"
 import { route } from "ziggy-js"
 
-/** Resolve a number-format string to a preview using today's date and a sample counter. */
-function previewNumberFormat(format: string, sample = 1): string {
-    if (!format) return ""
-    const now = new Date()
-    const yyyy = String(now.getFullYear())
-    const yy   = yyyy.slice(-2)
-    const mm   = String(now.getMonth() + 1).padStart(2, "0")
-    const dd   = String(now.getDate()).padStart(2, "0")
-
-    let result = format
-        .replace(/\{YYYY\}/g, yyyy)
-        .replace(/\{YY\}/g, yy)
-        .replace(/\{MM\}/g, mm)
-        .replace(/\{DD\}/g, dd)
-
-    // Replace {####} with padded counter
-    result = result.replace(/\{(#+)\}/g, (_: string, hashes: string) =>
-        String(sample).padStart(hashes.length, "0")
-    )
-    return result
-}
+import { previewNumberFormat } from "@/utils/number-format"
 
 interface CompanySettingsTabProps {
     company: any
