@@ -76,8 +76,8 @@ export default function RecurringInvoicesEdit() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Abo "${profile.name}" bearbeiten`} />
-            <div className="p-4 md:p-6">
-                <h1 className="text-2xl font-semibold mb-6">Abo-Rechnung bearbeiten</h1>
+            <div className="flex flex-1 flex-col gap-6">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Abo-Rechnung bearbeiten</h1>
                 <RecurringProfileForm
                     data={data}
                     setData={setData as any}

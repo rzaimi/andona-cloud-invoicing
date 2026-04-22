@@ -124,7 +124,7 @@
     <td style="width:85mm; vertical-align:top; padding-right:6mm;">
         @if($ls['content']['show_company_address'] ?? true)
         @php
-            $retParts = array_filter([$snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
+            $retParts = array_filter([$snapshot['display_name'] ?? $snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
             $retLine  = implode(' · ', $retParts);
         @endphp
         <div style="font-size:7pt; color:{{ $light }}; border-bottom:0.25mm solid {{ $border }}; padding-bottom:1.5mm; margin-bottom:2mm; line-height:1;">
@@ -194,7 +194,7 @@
 <tr>
     <td style="width:50%; padding:3mm 4mm; background:{{ $bg }}; vertical-align:top; font-size:{{ $fs - 1 }}px;">
         <table style="width:100%; border-collapse:collapse;">
-            <tr><td><div style="font-size:6pt; text-transform:uppercase; letter-spacing:0.8px; color:{{ $light }};">Kontoinhaber</div><div style="font-size:{{ $fs - 1 }}px; font-weight:700; color:{{ $dark }}; margin-top:0.5mm;">{{ $snapshot['name'] ?? '' }}</div></td></tr>
+            <tr><td><div style="font-size:6pt; text-transform:uppercase; letter-spacing:0.8px; color:{{ $light }};">Kontoinhaber</div><div style="font-size:{{ $fs - 1 }}px; font-weight:700; color:{{ $dark }}; margin-top:0.5mm;">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }}</div></td></tr>
         </table>
         @if($bankIban)<div style="margin-top:2mm;"><div style="font-size:6pt; text-transform:uppercase; letter-spacing:0.8px; color:{{ $light }};">IBAN</div><div style="font-size:{{ $fs - 1 }}px; font-weight:700; color:{{ $dark }}; margin-top:0.5mm;">{{ $bankIban }}</div></div>@endif
         @if($bankBic)<div style="margin-top:2mm;"><div style="font-size:6pt; text-transform:uppercase; letter-spacing:0.8px; color:{{ $light }};">BIC</div><div style="font-size:{{ $fs - 1 }}px; font-weight:700; color:{{ $dark }}; margin-top:0.5mm;">{{ $bankBic }}</div></div>@endif

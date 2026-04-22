@@ -89,7 +89,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-1xl font-bold tracking-tight">Neues Produkt erstellen</h1>
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Neues Produkt erstellen</h1>
                             <p className="text-muted-foreground">Erstellen Sie ein neues Produkt oder eine Dienstleistung</p>
                         </div>
                     </div>

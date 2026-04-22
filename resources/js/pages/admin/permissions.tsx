@@ -104,7 +104,7 @@ export default function PermissionsIndex({ permissions }: Props) {
                         <ShieldCheck className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-semibold">Berechtigungen</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Berechtigungen</h1>
                         <p className="text-sm text-muted-foreground">
                             Systemberechtigungen einsehen und eigene Berechtigungen erstellen
                         </p>

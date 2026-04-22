@@ -131,7 +131,7 @@ export default function RolesIndex({ roles, permissions }: Props) {
                         <Shield className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-semibold">Rollenverwaltung</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Rollenverwaltung</h1>
                         <p className="text-sm text-muted-foreground">
                             Rollen definieren und Berechtigungen zuweisen
                         </p>

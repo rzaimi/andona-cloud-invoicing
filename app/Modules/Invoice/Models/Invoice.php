@@ -212,6 +212,14 @@ class Invoice extends Model
             'vat_number' => $company->vat_number,
             'commercial_register' => $company->commercial_register,
             'managing_director' => $company->managing_director,
+            // Snapshot the legal form + derived role label so historic PDFs
+            // keep rendering the correct "Inhaber"/"Geschäftsführer" even if
+            // the company later switches form.
+            'legal_form'       => $company->legal_form,
+            'legal_form_label' => $company->getLegalFormLabel(),
+            'manager_title'    => $company->getManagerTitle(),
+            // "Firma + Rechtsform" composite for headers / sender strips.
+            'display_name'     => $company->getDisplayName(),
             'website' => $company->website,
             'logo' => $company->logo,
             'bank_name' => $company->bank_name,
@@ -232,6 +240,46 @@ class Invoice extends Model
 
         // Fallback: create snapshot from current company (for old invoices)
         return $this->createCompanySnapshot();
+    }
+
+    /**
+     * Backfill snapshot fields that are missing today — for invoices created
+     * before a field was added to the snapshot schema (e.g. `legal_form_label`,
+     * `manager_title`, `display_name`).
+     *
+     * GoBD-safe by design: we ONLY fill fields that are currently null/empty
+     * in the stored snapshot. Values already captured at invoice time
+     * (managing_director, address, totals, etc.) stay frozen.
+     *
+     * Returns the list of field names that were actually filled. Caller is
+     * responsible for writing the audit-log entry.
+     */
+    public function refreshCompanySnapshot(): array
+    {
+        $fresh   = $this->createCompanySnapshot();
+        $current = $this->company_snapshot ?? [];
+        $filled  = [];
+
+        foreach ($fresh as $key => $value) {
+            if ($key === 'snapshot_date') {
+                continue; // preserve the original capture date
+            }
+
+            $existing = $current[$key] ?? null;
+            $isMissing = !array_key_exists($key, $current) || $existing === null || $existing === '';
+
+            if ($isMissing && $value !== null && $value !== '') {
+                $current[$key] = $value;
+                $filled[] = $key;
+            }
+        }
+
+        if (!empty($filled)) {
+            $this->company_snapshot = $current;
+            $this->save();
+        }
+
+        return $filled;
     }
 
     public function scopeForCompany($query, $companyId)

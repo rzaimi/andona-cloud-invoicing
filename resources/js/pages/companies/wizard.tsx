@@ -231,7 +231,7 @@ export default function CompanyWizard() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <div className="max-w-5xl mx-auto space-y-6">
                 <div>
-                    <h1 className="text-2xl font-bold">Neue Firma erstellen</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Neue Firma erstellen</h1>
                     <p className="text-muted-foreground">
                         Folgen Sie den Schritten, um eine neue Firma einzurichten
                     </p>

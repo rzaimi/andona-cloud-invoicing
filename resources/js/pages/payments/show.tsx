@@ -104,7 +104,7 @@ export default function PaymentsShow() {
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-1xl font-bold text-gray-900">Zahlungsdetails</h1>
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Zahlungsdetails</h1>
                             <p className="text-gray-600">Details zur Zahlung</p>
                         </div>
                     </div>

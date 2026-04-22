@@ -60,7 +60,7 @@ export default function RecurringInvoicesShow() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={profile.name} />
-            <div className="p-4 md:p-6 space-y-6">
+            <div className="flex flex-1 flex-col gap-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="flex items-center gap-3">
@@ -69,7 +69,7 @@ export default function RecurringInvoicesShow() {
                                     <ArrowLeft className="h-4 w-4" />
                                 </Link>
                             </Button>
-                            <h1 className="text-2xl font-semibold">{profile.name}</h1>
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{profile.name}</h1>
                             <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">

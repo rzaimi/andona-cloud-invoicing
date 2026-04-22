@@ -114,27 +114,30 @@ class InvoiceController extends Controller
      * Transition an invoice's status (used by the kanban board's drop handler).
      *
      * Allowed transitions are narrow on purpose — everything else must go
-     * through dedicated actions (send email, createCorrection, etc.) so the
-     * audit trail is meaningful:
-     *   - draft → sent | cancelled
-     *   - sent  → paid | cancelled
-     *   - overdue → paid | cancelled
+     * through dedicated actions so the audit trail stays meaningful:
+     *   - draft    → sent | cancelled
+     *   - sent     → cancelled
+     *   - overdue  → cancelled
      *
-     * GoBD: paid invoices are terminal. Moving backwards requires a
-     * Stornorechnung.
+     * `paid` is deliberately NOT a valid target here: an invoice becomes paid
+     * only after a matching Payment row is recorded (which flips the status
+     * itself). The board redirects users to the Zahlung-erfassen flow when
+     * they drop on the Paid column.
+     *
+     * GoBD: paid invoices are terminal. Corrections require a Stornorechnung.
      */
     public function setStatus(Request $request, Invoice $invoice)
     {
         $this->authorize('send', $invoice); // loose company-boundary check
 
         $validated = $request->validate([
-            'status' => 'required|in:draft,sent,paid,overdue,cancelled',
+            'status' => 'required|in:draft,sent,overdue,cancelled',
         ]);
 
         $allowed = [
-            'draft'    => ['sent', 'cancelled'],
-            'sent'     => ['paid', 'cancelled'],
-            'overdue'  => ['paid', 'cancelled'],
+            'draft'   => ['sent', 'cancelled'],
+            'sent'    => ['cancelled'],
+            'overdue' => ['cancelled'],
         ];
 
         $from = $invoice->status;
@@ -147,7 +150,7 @@ class InvoiceController extends Controller
         if (!isset($allowed[$from]) || !in_array($to, $allowed[$from], true)) {
             return response()->json([
                 'ok'      => false,
-                'message' => "Wechsel von \"{$from}\" nach \"{$to}\" nicht erlaubt. Gemäß GoBD-Richtlinien können abgeschlossene Rechnungen nur per Stornorechnung korrigiert werden.",
+                'message' => "Wechsel von \"{$from}\" nach \"{$to}\" ist nicht erlaubt. Für \"Bezahlt\" erfassen Sie bitte eine Zahlung; abgeschlossene Rechnungen werden per Stornorechnung korrigiert.",
             ], 422);
         }
 
@@ -166,6 +169,40 @@ class InvoiceController extends Controller
         });
 
         return response()->json(['ok' => true, 'status' => $to]);
+    }
+
+    /**
+     * Backfill any company-snapshot fields that were missing on the invoice
+     * — typically because the field (e.g. legal_form_label, manager_title,
+     * display_name) was added to the schema after the invoice was issued.
+     *
+     * GoBD-safe: the underlying Invoice::refreshCompanySnapshot() only fills
+     * null/empty fields. Existing values stay frozen. Every refresh writes
+     * an audit-log entry with the list of fields that changed.
+     */
+    public function refreshSnapshot(Invoice $invoice)
+    {
+        $this->authorize('refreshSnapshot', $invoice);
+
+        $filled = $invoice->refreshCompanySnapshot();
+
+        if (empty($filled)) {
+            return back()->with('success', 'Firmendaten sind bereits aktuell.');
+        }
+
+        InvoiceAuditLog::log(
+            $invoice->id,
+            'snapshot_refreshed',
+            $invoice->status,
+            $invoice->status,
+            ['filled_fields' => $filled],
+            'Fehlende Firmendaten-Felder ergänzt: ' . implode(', ', $filled)
+        );
+
+        return back()->with(
+            'success',
+            count($filled) . ' Feld(er) ergänzt: ' . implode(', ', $filled)
+        );
     }
 
     public function create()

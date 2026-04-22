@@ -12,6 +12,10 @@ export interface Company {
     is_small_business?: boolean
     commercial_register?: string
     managing_director?: string
+    /** German legal form key: einzelunternehmen | gmbh | ug | ag | … */
+    legal_form?: string | null
+    /** Optional free-text override for the auto-derived manager role label. */
+    manager_title_override?: string | null
     bank_name?: string
     bank_iban?: string
     bank_bic?: string

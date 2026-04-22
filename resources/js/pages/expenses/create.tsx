@@ -96,7 +96,7 @@ export default function ExpensesCreate() {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900">Neue Ausgabe</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Neue Ausgabe</h1>
                         <p className="text-gray-600">Erfassen Sie eine neue Geschäftsausgabe</p>
                     </div>
                 </div>

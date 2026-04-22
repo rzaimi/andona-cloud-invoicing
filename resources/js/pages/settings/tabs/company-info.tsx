@@ -32,6 +32,8 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
         is_small_business: company?.is_small_business || false,
         commercial_register: company?.commercial_register || '',
         managing_director: company?.managing_director || '',
+        legal_form: company?.legal_form || '',
+        manager_title_override: company?.manager_title_override || '',
         website: company?.website || '',
         logo: null as File | null,
     })
@@ -184,14 +186,80 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
                         {errors.website && <p className="text-red-600 text-sm">{errors.website}</p>}
                     </div>
 
-                    <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="managing_director">Inhaber</Label>
-                        <Input
-                            id="managing_director"
-                            value={data.managing_director}
-                            onChange={(e) => setData("managing_director", e.target.value)}
-                        />
+                    <div className="space-y-2">
+                        <Label htmlFor="legal_form">Rechtsform</Label>
+                        <Select
+                            value={data.legal_form || undefined}
+                            onValueChange={(value) => setData("legal_form", value)}
+                        >
+                            <SelectTrigger id="legal_form">
+                                <SelectValue placeholder="Rechtsform wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="einzelunternehmen">Einzelunternehmen</SelectItem>
+                                <SelectItem value="freiberufler">Freiberufler</SelectItem>
+                                <SelectItem value="gbr">GbR</SelectItem>
+                                <SelectItem value="ohg">OHG</SelectItem>
+                                <SelectItem value="kg">KG</SelectItem>
+                                <SelectItem value="gmbh">GmbH</SelectItem>
+                                <SelectItem value="ug">UG (haftungsbeschränkt)</SelectItem>
+                                <SelectItem value="gmbh_co_kg">GmbH &amp; Co. KG</SelectItem>
+                                <SelectItem value="ag">AG</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                            Pflichtangabe auf Rechnungen (HGB §37a / GmbHG §35a). Bestimmt den Titel der im Feld „Geschäftsführung" genannten Person(en).
+                        </p>
+                        {errors.legal_form && <p className="text-red-600 text-sm">{errors.legal_form}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        {(() => {
+                            const titleByForm: Record<string, string> = {
+                                einzelunternehmen: "Inhaber",
+                                freiberufler:      "Inhaber",
+                                gbr:               "Gesellschafter",
+                                ohg:               "Gesellschafter",
+                                kg:                "Komplementär",
+                                gmbh_co_kg:        "Komplementär",
+                                gmbh:              "Geschäftsführer",
+                                ug:                "Geschäftsführer",
+                                ag:                "Vorstand",
+                            }
+                            const derivedTitle =
+                                data.manager_title_override ||
+                                titleByForm[data.legal_form] ||
+                                "Geschäftsführung"
+                            return (
+                                <>
+                                    <Label htmlFor="managing_director">{derivedTitle}</Label>
+                                    <Input
+                                        id="managing_director"
+                                        value={data.managing_director}
+                                        onChange={(e) => setData("managing_director", e.target.value)}
+                                        placeholder="Vor- und Nachname (bei mehreren Personen kommagetrennt)"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Wird als „{derivedTitle}" im Rechnungs-Footer ausgewiesen.
+                                    </p>
+                                </>
+                            )
+                        })()}
                         {errors.managing_director && <p className="text-red-600 text-sm">{errors.managing_director}</p>}
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="manager_title_override">Titel überschreiben (optional)</Label>
+                        <Input
+                            id="manager_title_override"
+                            value={data.manager_title_override}
+                            onChange={(e) => setData("manager_title_override", e.target.value)}
+                            placeholder="z.B. Prokurist, Vorsitzender"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Nur ausfüllen, wenn der automatisch abgeleitete Titel nicht passt.
+                        </p>
+                        {errors.manager_title_override && <p className="text-red-600 text-sm">{errors.manager_title_override}</p>}
                     </div>
                 </CardContent>
             </Card>

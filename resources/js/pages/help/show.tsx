@@ -827,7 +827,7 @@ export default function HelpShow({ user, category }: HelpShowProps) {
                                 <CategoryIcon className="h-6 w-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-1xl font-bold tracking-tight dark:text-gray-100">{categoryInfo.title}</h1>
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{categoryInfo.title}</h1>
                                 <p className="text-muted-foreground">
                                     {articles.length} Artikel verfügbar
                                 </p>

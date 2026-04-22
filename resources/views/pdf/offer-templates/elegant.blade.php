@@ -34,7 +34,7 @@
         <tr>
             <td style="border-bottom:1px solid {{ $secCol }}; height:1px; width:20%;"></td>
             <td style="text-align:center; padding:0 8px; white-space:nowrap;">
-                <span style="font-size:{{ $fsH + 4 }}px; font-weight:700; color:{{ $textCol }}; letter-spacing:1.5px; text-transform:uppercase;">{{ $snapshot['name'] ?? '' }}</span>
+                <span style="font-size:{{ $fsH + 4 }}px; font-weight:700; color:{{ $textCol }}; letter-spacing:1.5px; text-transform:uppercase;">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }}</span>
             </td>
             <td style="border-bottom:1px solid {{ $secCol }}; height:1px; width:20%;"></td>
         </tr>
@@ -56,7 +56,7 @@
             @if($customer)
             <div class="din-5008-address">
                 @if($ls['content']['show_company_address'] ?? true)
-                    <div class="sender-return-address">{{ $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}</div>
+                    <div class="sender-return-address">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}</div>
                 @endif
                 <div style="font-weight:700; font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm;">{{ $customer->name ?? '' }}</div>
                 @if($customer->contact_person ?? null)<div style="font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm; color:{{ $secCol }};">{{ $customer->contact_person }}</div>@endif
@@ -119,7 +119,7 @@
 
 <div style="margin-top:6mm; font-size:{{ $fs }}px; text-align:center; border-top:0.5px solid {{ $secCol }}; padding-top:4mm; page-break-inside:avoid;">
     <div style="margin-bottom:3px; color:{{ $secCol }};">Mit freundlichen Grüßen</div>
-    <div style="font-weight:700; letter-spacing:0.5px;">{{ $snapshot['name'] ?? '' }}</div>
+    <div style="font-weight:700; letter-spacing:0.5px;">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }}</div>
 </div>
 
 </div>

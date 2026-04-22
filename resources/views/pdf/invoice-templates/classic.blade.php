@@ -94,7 +94,7 @@
     <td style="width:85mm; vertical-align:top; padding-right:8mm;">
         @if($ls['content']['show_company_address'] ?? true)
         @php
-            $retParts = array_filter([$snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
+            $retParts = array_filter([$snapshot['display_name'] ?? $snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
             $retLine  = implode(' · ', $retParts);
         @endphp
         <div style="font-size:7pt; color:{{ $soft }}; border-bottom:0.25mm solid {{ $border }}; padding-bottom:1.5mm; margin-bottom:2mm; line-height:1;">
@@ -160,7 +160,7 @@
     <td style="width:50%; padding-right:2mm; vertical-align:top;">
         <div style="padding:3mm 4mm; border:1px solid {{ $border }};">
             <div style="font-size:{{ $fs + 1 }}px; font-weight:600; color:{{ $primary }}; border-bottom:0.5mm solid {{ $primary }}; padding-bottom:1.5mm; margin-bottom:2mm;">Bankverbindung</div>
-            @if($snapshot['name'] ?? null)<div style="font-size:{{ $fs - 1 }}px; line-height:1.6;"><span style="color:{{ $soft }};">Kontoinhaber: </span><strong>{{ $snapshot['name'] }}</strong></div>@endif
+            @if($snapshot['name'] ?? null)<div style="font-size:{{ $fs - 1 }}px; line-height:1.6;"><span style="color:{{ $soft }};">Kontoinhaber: </span><strong>{{ $snapshot['display_name'] ?? $snapshot['name'] }}</strong></div>@endif
             @if($bankIban)<div style="font-size:{{ $fs - 1 }}px; line-height:1.6;"><span style="color:{{ $soft }};">IBAN: </span><strong>{{ $bankIban }}</strong></div>@endif
             @if($bankBic)<div style="font-size:{{ $fs - 1 }}px; line-height:1.6;"><span style="color:{{ $soft }};">BIC: </span><strong>{{ $bankBic }}</strong></div>@endif
             @if($bankName)<div style="font-size:{{ $fs - 1 }}px; line-height:1.6;"><span style="color:{{ $soft }};">Bank: </span><strong>{{ $bankName }}</strong></div>@endif

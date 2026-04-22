@@ -179,6 +179,13 @@ class Offer extends Model
             'vat_number'          => $company->vat_number,
             'commercial_register' => $company->commercial_register,
             'managing_director'   => $company->managing_director,
+            // Snapshot legal form + derived role label so historic PDFs keep
+            // the correct "Inhaber"/"Geschäftsführer" if the company form
+            // later changes.
+            'legal_form'          => $company->legal_form,
+            'legal_form_label'    => $company->getLegalFormLabel(),
+            'manager_title'       => $company->getManagerTitle(),
+            'display_name'        => $company->getDisplayName(),
             'website'             => $company->website,
             'logo'                => $company->logo,
             'bank_name'           => $company->bank_name,
@@ -196,8 +203,41 @@ class Offer extends Model
         if ($this->company_snapshot) {
             return $this->company_snapshot;
         }
-        
+
         // Fallback: create snapshot from current company (for old offers)
         return $this->createCompanySnapshot();
+    }
+
+    /**
+     * Backfill snapshot fields that are missing today. Fill-only — never
+     * overwrites values already captured at offer-creation time. Returns
+     * the list of fields that were filled.
+     */
+    public function refreshCompanySnapshot(): array
+    {
+        $fresh   = $this->createCompanySnapshot();
+        $current = $this->company_snapshot ?? [];
+        $filled  = [];
+
+        foreach ($fresh as $key => $value) {
+            if ($key === 'snapshot_date') {
+                continue;
+            }
+
+            $existing = $current[$key] ?? null;
+            $isMissing = !array_key_exists($key, $current) || $existing === null || $existing === '';
+
+            if ($isMissing && $value !== null && $value !== '') {
+                $current[$key] = $value;
+                $filled[] = $key;
+            }
+        }
+
+        if (!empty($filled)) {
+            $this->company_snapshot = $current;
+            $this->save();
+        }
+
+        return $filled;
     }
 }

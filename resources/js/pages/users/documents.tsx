@@ -171,7 +171,7 @@ export default function UserDocuments({ employee, documents }: Props) {
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold">Dokumente: {employee.name}</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Dokumente: {employee.name}</h1>
                         {employee.department && (
                             <p className="text-muted-foreground">
                                 {employee.job_title && <span>{employee.job_title} · </span>}

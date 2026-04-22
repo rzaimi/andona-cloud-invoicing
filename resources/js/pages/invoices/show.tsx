@@ -18,7 +18,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Invoice, InvoiceItem } from "@/types"
 import { route } from "ziggy-js"
@@ -50,13 +50,26 @@ interface InvoicesShowProps {
 
 export default function InvoicesShow() {
     // @ts-ignore
-    const { invoice, settings, paidAmount, remainingBalance } = usePage<InvoicesShowProps>().props
+    const { invoice, settings, paidAmount, remainingBalance, auth } = usePage<InvoicesShowProps>().props
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
         { title: "Rechnungen", href: "/invoices" },
         { title: invoice.number },
     ]
+
+    // Only admins / super-admins can refresh the company snapshot. The
+    // server-side policy is the source of truth — this check just hides the
+    // button from users who can't use it.
+    const canRefreshSnapshot = !!(
+        auth?.user?.permissions?.includes("manage_companies") ||
+        auth?.user?.roles?.includes("admin")
+    )
+
+    const handleRefreshSnapshot = () => {
+        if (!confirm("Fehlende Firmendaten-Felder ergänzen? Bereits erfasste Werte werden nicht überschrieben (GoBD-sicher).")) return
+        router.post(`/invoices/${invoice.id}/refresh-snapshot`, {}, { preserveScroll: true })
+    }
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
@@ -168,7 +181,7 @@ export default function InvoicesShow() {
                         </Link>
                         <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
                                     {invoice.is_correction ? "Stornorechnung" : "Rechnung"} {invoice.number}
                                 </h1>
                                 {getStatusBadge(invoice.status)}
@@ -204,6 +217,18 @@ export default function InvoicesShow() {
                             <FileText className="mr-2 h-4 w-4" />
                             PDF
                         </Button>
+                        {canRefreshSnapshot && (
+                            <Button
+                                variant="outline"
+                                className="flex-1 sm:flex-initial"
+                                onClick={handleRefreshSnapshot}
+                                title="Fehlende Firmendaten-Felder (z.B. Rechtsform, Titel) ergänzen — ohne bestehende Werte zu überschreiben"
+                            >
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                <span className="hidden sm:inline">Firmendaten aktualisieren</span>
+                                <span className="sm:hidden">Aktualisieren</span>
+                            </Button>
+                        )}
                         <Button variant="destructive" className="flex-1 sm:flex-initial" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Löschen

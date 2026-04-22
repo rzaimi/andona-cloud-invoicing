@@ -98,7 +98,7 @@ export default function Edit({ auth, company }: EditProps) {
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-1xl font-bold tracking-tight">Firma bearbeiten</h1>
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Firma bearbeiten</h1>
                             <p className="text-muted-foreground">{company.name}</p>
                         </div>
                     </div>

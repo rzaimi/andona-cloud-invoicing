@@ -74,7 +74,7 @@ export default function ExpensesReports({ expenses, totals, filters }: ExpensesR
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-1xl font-bold text-gray-900">Ausgabenberichte</h1>
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Ausgabenberichte</h1>
                             <p className="text-gray-600">Ausgaben nach Kategorien</p>
                         </div>
                     </div>

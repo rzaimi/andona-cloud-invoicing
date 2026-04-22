@@ -158,60 +158,6 @@ class CustomerController extends Controller
     }
 
     /**
-     * JSON endpoint used by the "inline customer create" dialog on forms like
-     * invoices/create. Returns the new customer so the caller can add it to
-     * its local list and auto-select it without a full page reload.
-     *
-     * Minimal fields only — anything richer should use the full customer form.
-     */
-    public function quickStore(Request $request)
-    {
-        $this->authorize('create', Customer::class);
-
-        $user      = Auth::user();
-        $companyId = $this->getEffectiveCompanyId();
-
-        $validated = $request->validate([
-            'name'          => 'required|string|max:255',
-            'email'         => 'nullable|email|max:255',
-            'customer_type' => 'required|in:business,private',
-        ]);
-
-        // Serialise customer-number generation per company — same pattern we
-        // use in invoices/offers store paths. Prevents concurrent quick-creates
-        // from grabbing the same sequence.
-        $customer = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $companyId, $user) {
-            \App\Modules\Company\Models\Company::whereKey($companyId)
-                ->lockForUpdate()
-                ->first();
-
-            $company = \App\Modules\Company\Models\Company::find($companyId);
-            $svc     = new NumberFormatService();
-            $format  = $svc->normaliseToFormat(
-                $company->getSetting('customer_number_format')
-                    ?? $company->getSetting('customer_prefix', 'KU-')
-            );
-
-            return Customer::create([
-                ...$validated,
-                'status'     => 'active',
-                'company_id' => $companyId,
-                'user_id'    => $user->id,
-                'number'     => $svc->next(
-                    $format,
-                    Customer::where('company_id', $companyId)->pluck('number')
-                ),
-            ]);
-        });
-
-        return response()->json([
-            'id'    => $customer->id,
-            'name'  => $customer->name,
-            'email' => $customer->email,
-        ], 201);
-    }
-
-    /**
      * Display the specified customer
      */
     public function show(Customer $customer)

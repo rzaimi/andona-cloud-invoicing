@@ -155,7 +155,7 @@ export default function CompanyInit({ user, companies, companyTypes }: Props) {
             <div className="space-y-6 max-w-3xl">
                 {/* Header */}
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight dark:text-gray-100">Firma initialisieren</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Firma initialisieren</h1>
                     <p className="text-muted-foreground text-sm mt-1">
                         Führt <code className="bg-muted px-1 rounded text-xs">php artisan company:init</code> für eine
                         Firma aus – erstellt branchenspezifische Produkte, Kategorien, Lager und Layouts.

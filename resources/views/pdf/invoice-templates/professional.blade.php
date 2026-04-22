@@ -91,7 +91,7 @@
     <td style="width:85mm; vertical-align:top; padding-right:6mm;">
         @if($ls['content']['show_company_address'] ?? true)
         @php
-            $retParts = array_filter([$snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
+            $retParts = array_filter([$snapshot['display_name'] ?? $snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
             $retLine  = implode(' · ', $retParts);
         @endphp
         <div style="font-size:7pt; color:{{ $soft }}; border-bottom:0.25mm solid {{ $border }}; padding-bottom:1.5mm; margin-bottom:2mm; line-height:1;">
@@ -159,7 +159,7 @@
         <table style="width:100%; border-collapse:collapse; border:1px solid {{ $border }};">
         <tr><td style="background-color:{{ $primary }}; color:white; padding:2mm 3mm; font-size:{{ $fs - 1 }}px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Zahlungsdetails</td></tr>
         <tr><td style="padding:3mm; background:{{ $bg }}; font-size:{{ $fs - 1 }}px; line-height:1.65;">
-            @if($snapshot['name'] ?? null)<div><span style="color:{{ $soft }};">Kontoinhaber: </span><strong>{{ $snapshot['name'] }}</strong></div>@endif
+            @if($snapshot['name'] ?? null)<div><span style="color:{{ $soft }};">Kontoinhaber: </span><strong>{{ $snapshot['display_name'] ?? $snapshot['name'] }}</strong></div>@endif
             @if($bankIban)<div><span style="color:{{ $soft }};">IBAN: </span><strong>{{ $bankIban }}</strong></div>@endif
             @if($bankBic)<div><span style="color:{{ $soft }};">BIC: </span><strong>{{ $bankBic }}</strong></div>@endif
             @if($bankName)<div><span style="color:{{ $soft }};">Bank: </span><strong>{{ $bankName }}</strong></div>@endif

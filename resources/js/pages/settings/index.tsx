@@ -153,7 +153,7 @@ export default function SettingsIndex() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-1xl font-bold tracking-tight">Einstellungen</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Einstellungen</h1>
                         <p className="text-muted-foreground">
                             Verwalten Sie alle Einstellungen für Ihr Unternehmen und Ihr Profil
                         </p>

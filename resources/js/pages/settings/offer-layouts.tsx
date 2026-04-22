@@ -775,7 +775,7 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
 
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Angebotslayouts</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Angebotslayouts</h1>
                         <p className="text-muted-foreground">Verwalten Sie Ihre Angebotslayouts und Templates</p>
                     </div>
 

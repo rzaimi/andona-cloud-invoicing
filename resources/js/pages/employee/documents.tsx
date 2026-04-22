@@ -112,7 +112,7 @@ export default function EmployeeDocuments({ documents, employee, filters }: Prop
 
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold">Meine Dokumente</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Meine Dokumente</h1>
                 {employee.department && (
                     <p className="mt-1 text-muted-foreground">
                         {employee.job_title && <span>{employee.job_title} · </span>}

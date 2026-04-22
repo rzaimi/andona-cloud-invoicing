@@ -36,7 +36,7 @@
                     @if($snapshot['phone'] ?? null) &ensp;|&ensp; {{ $snapshot['phone'] }}@endif
                     @if($snapshot['email'] ?? null) &ensp;|&ensp; {{ $snapshot['email'] }}@endif
                 </div>
-                <div style="font-size:{{ $fsH + 3 }}px; font-weight:700; color:{{ $textCol }}; margin-top:1mm;">{{ $snapshot['name'] ?? '' }}</div>
+                <div style="font-size:{{ $fsH + 3 }}px; font-weight:700; color:{{ $textCol }}; margin-top:1mm;">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }}</div>
             @endif
         </td>
         @if($showLogo)
@@ -54,7 +54,7 @@
             @if($customer)
             <div class="din-5008-address">
                 @if($ls['content']['show_company_address'] ?? true)
-                    <div class="sender-return-address">{{ $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}</div>
+                    <div class="sender-return-address">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}</div>
                 @endif
                 <div style="font-weight:700; font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm;">{{ $customer->name ?? '' }}</div>
                 @if($customer->contact_person ?? null)<div style="font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm;">{{ $customer->contact_person }}</div>@endif

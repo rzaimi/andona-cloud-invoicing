@@ -29,7 +29,7 @@
 <table style="width:100%; border-collapse:collapse; background-color:{{ $primary }}; margin-bottom:4mm;">
     <tr>
         <td style="padding:6mm 7mm; vertical-align:middle;">
-            <div style="color:white; font-size:{{ $fsH + 6 }}px; font-weight:800; line-height:1.15; letter-spacing:0.5px;">{{ $snapshot['name'] ?? '' }}</div>
+            <div style="color:white; font-size:{{ $fsH + 6 }}px; font-weight:800; line-height:1.15; letter-spacing:0.5px;">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }}</div>
             @if($ls['content']['show_company_address'] ?? true)
                 <div style="color:rgba(255,255,255,0.65); font-size:{{ $fs - 1 }}px; margin-top:2mm; line-height:1.4;">
                     @if($snapshot['address'] ?? null){{ $snapshot['address'] }} &ensp;·&ensp; @endif
@@ -54,7 +54,7 @@
             @if($customer)
             <div class="din-5008-address">
                 @if($ls['content']['show_company_address'] ?? true)
-                    <div class="sender-return-address">{{ $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}</div>
+                    <div class="sender-return-address">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}</div>
                 @endif
                 <div style="font-weight:700; font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm;">{{ $customer->name ?? '' }}</div>
                 @if($customer->contact_person ?? null)<div style="font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm;">{{ $customer->contact_person }}</div>@endif

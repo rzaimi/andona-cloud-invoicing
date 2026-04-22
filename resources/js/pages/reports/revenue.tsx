@@ -92,7 +92,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-1xl font-bold text-gray-900">Umsatzberichte</h1>
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Umsatzberichte</h1>
                             <p className="text-gray-600">Detaillierte Umsatzanalysen und Trends</p>
                         </div>
                     </div>

@@ -102,7 +102,7 @@
     <td style="width:86mm; vertical-align:top; padding-right:6mm;">
         @if($ls['content']['show_company_address'] ?? true)
         @php
-            $retParts = array_filter([$snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
+            $retParts = array_filter([$snapshot['display_name'] ?? $snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
             $retLine  = implode(' · ', $retParts);
         @endphp
         <div style="font-size:7pt; color:{{ $soft }}; border-bottom:0.2mm solid {{ $border }}; padding-bottom:1.5mm; margin-bottom:2mm; font-weight:300; letter-spacing:0.3px; line-height:1;">
@@ -169,7 +169,7 @@
         <table style="width:100%; border-collapse:collapse; border:1px solid {{ $border }};">
         <tr><td style="background-color:{{ $primary }}; color:white; padding:2mm 3mm; font-size:{{ $fs - 1 }}px; font-weight:500; letter-spacing:0.5px;">Bankverbindung</td></tr>
         <tr><td style="padding:3mm; background:{{ $pale }}; font-size:{{ $fs - 1 }}px; line-height:1.7; font-weight:300;">
-            @if($snapshot['name'] ?? null)<div><span style="color:{{ $soft }};">Kontoinhaber: </span><strong style="font-weight:500; color:{{ $ink }};">{{ $snapshot['name'] }}</strong></div>@endif
+            @if($snapshot['name'] ?? null)<div><span style="color:{{ $soft }};">Kontoinhaber: </span><strong style="font-weight:500; color:{{ $ink }};">{{ $snapshot['display_name'] ?? $snapshot['name'] }}</strong></div>@endif
             @if($bankIban)<div><span style="color:{{ $soft }};">IBAN: </span><strong style="font-weight:500; color:{{ $ink }};">{{ $bankIban }}</strong></div>@endif
             @if($bankBic)<div><span style="color:{{ $soft }};">BIC: </span><strong style="font-weight:500; color:{{ $ink }};">{{ $bankBic }}</strong></div>@endif
             @if($bankName)<div><span style="color:{{ $soft }};">Bank: </span><strong style="font-weight:500; color:{{ $ink }};">{{ $bankName }}</strong></div>@endif

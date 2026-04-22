@@ -41,6 +41,8 @@ class Company extends Model
         'is_small_business',
         'commercial_register',
         'managing_director',
+        'legal_form',
+        'manager_title_override',
         'website',
         'logo',
         'status',
@@ -52,6 +54,95 @@ class Company extends Model
         'settings' => 'array',
         'is_small_business' => 'boolean',
     ];
+
+    // ── Legal forms (Rechtsformen) ─────────────────────────────────────────────
+    // Short keys used in the `legal_form` column. The UI-level label and the
+    // role of the managing person are derived via getLegalFormLabel() /
+    // getManagerTitle() so incorrect combinations (e.g. "Geschäftsführer" on
+    // an Einzelunternehmen) become impossible.
+    public const LEGAL_FORM_EINZEL        = 'einzelunternehmen';
+    public const LEGAL_FORM_FREIBERUFLER  = 'freiberufler';
+    public const LEGAL_FORM_GBR           = 'gbr';
+    public const LEGAL_FORM_OHG           = 'ohg';
+    public const LEGAL_FORM_KG            = 'kg';
+    public const LEGAL_FORM_GMBH          = 'gmbh';
+    public const LEGAL_FORM_UG            = 'ug';
+    public const LEGAL_FORM_GMBH_CO_KG    = 'gmbh_co_kg';
+    public const LEGAL_FORM_AG            = 'ag';
+
+    /**
+     * Human-readable label for each legal form. This is what's printed on the
+     * invoice footer (Pflichtangabe per HGB §37a / GmbHG §35a).
+     */
+    public static function legalFormLabels(): array
+    {
+        return [
+            self::LEGAL_FORM_EINZEL       => 'Einzelunternehmen',
+            self::LEGAL_FORM_FREIBERUFLER => 'Freiberufler',
+            self::LEGAL_FORM_GBR          => 'GbR',
+            self::LEGAL_FORM_OHG          => 'OHG',
+            self::LEGAL_FORM_KG           => 'KG',
+            self::LEGAL_FORM_GMBH         => 'GmbH',
+            self::LEGAL_FORM_UG           => 'UG (haftungsbeschränkt)',
+            self::LEGAL_FORM_GMBH_CO_KG   => 'GmbH & Co. KG',
+            self::LEGAL_FORM_AG           => 'AG',
+        ];
+    }
+
+    /**
+     * Role label for the person(s) named in `managing_director`:
+     * "Inhaber" for sole traders, "Geschäftsführer" for GmbH/UG,
+     * "Vorstand" for AG, "Gesellschafter" for partnerships. An optional
+     * `manager_title_override` wins when set (e.g. "Prokurist").
+     */
+    public function getManagerTitle(): ?string
+    {
+        if (!empty($this->manager_title_override)) {
+            return $this->manager_title_override;
+        }
+
+        return match ($this->legal_form) {
+            self::LEGAL_FORM_EINZEL,
+            self::LEGAL_FORM_FREIBERUFLER   => 'Inhaber',
+            self::LEGAL_FORM_GBR,
+            self::LEGAL_FORM_OHG            => 'Gesellschafter',
+            self::LEGAL_FORM_KG,
+            self::LEGAL_FORM_GMBH_CO_KG     => 'Komplementär',
+            self::LEGAL_FORM_GMBH,
+            self::LEGAL_FORM_UG             => 'Geschäftsführer',
+            self::LEGAL_FORM_AG             => 'Vorstand',
+            default                         => null,
+        };
+    }
+
+    public function getLegalFormLabel(): ?string
+    {
+        return self::legalFormLabels()[$this->legal_form] ?? null;
+    }
+
+    /**
+     * Company name with the legal form appended — for use in letterheads and
+     * sender-return strips where HGB §37a compliance applies. Guards against
+     * duplication when the user already typed the form into `name` (e.g.
+     * "Musterfirma GmbH") by checking whether the label is already present.
+     */
+    public function getDisplayName(): string
+    {
+        $name = (string) ($this->name ?? '');
+        $form = $this->getLegalFormLabel();
+
+        if (!$form || $name === '') {
+            return $name;
+        }
+
+        // Substring match (case-insensitive) — covers "Musterfirma GmbH",
+        // "Muster GmbH & Co. KG", etc.
+        if (mb_stripos($name, $form) !== false) {
+            return $name;
+        }
+
+        return trim($name . ' ' . $form);
+    }
 
     /**
      * The accessors to append to the model's array form.

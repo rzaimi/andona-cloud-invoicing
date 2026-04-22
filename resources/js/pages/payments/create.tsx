@@ -101,7 +101,7 @@ export default function PaymentsCreate() {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900">Neue Zahlung</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Neue Zahlung</h1>
                         <p className="text-gray-600">Erfassen Sie eine neue Zahlung für eine Rechnung</p>
                     </div>
                 </div>

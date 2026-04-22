@@ -318,7 +318,7 @@ export default function InvoicesEdit() {
                         </Link>
                         <div className="flex-1">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                                     {invoice.is_correction ? "Stornorechnung bearbeiten" : "Rechnung bearbeiten"}
                                 </h1>
                                 {getStatusBadge(invoice.status)}

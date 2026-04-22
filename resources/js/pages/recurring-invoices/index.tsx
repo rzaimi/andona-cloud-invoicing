@@ -90,10 +90,15 @@ export default function RecurringInvoicesIndex() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Abo-Rechnungen" />
-            <div className="p-4 md:p-6 space-y-6">
+            {/*
+              AppLayout already applies `p-4 pt-0` to its children container, so
+              every page should just use `flex flex-1 flex-col gap-6` here
+              — an extra `p-4 md:p-6` wrapper double-pads the content.
+            */}
+            <div className="flex flex-1 flex-col gap-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                             <Repeat className="h-5 w-5" />
                             Abo-Rechnungen
                         </h1>

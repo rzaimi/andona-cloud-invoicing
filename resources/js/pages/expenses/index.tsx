@@ -106,7 +106,7 @@ export default function ExpensesIndex() {
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">Ausgabenverwaltung</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Ausgabenverwaltung</h1>
                         <p className="text-gray-600">Verwalten Sie alle Geschäftsausgaben</p>
                     </div>
 

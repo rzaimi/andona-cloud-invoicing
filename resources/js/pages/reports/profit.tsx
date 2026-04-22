@@ -75,7 +75,7 @@ export default function ProfitReports({ profit, months, filters }: ProfitReports
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-1xl font-bold text-gray-900">Gewinn- und Verlustbericht</h1>
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Gewinn- und Verlustbericht</h1>
                             <p className="text-gray-600">Einnahmen vs. Ausgaben</p>
                         </div>
                     </div>

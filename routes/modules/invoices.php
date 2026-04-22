@@ -11,6 +11,10 @@ Route::post('invoices', [InvoiceController::class, 'store'])->name('invoices.sto
 // JSON status transition used by the kanban board. Narrow transitions only —
 // full edits must go through update() or createCorrection().
 Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'setStatus'])->name('invoices.set-status');
+// Admin/super-admin only — fill any company-snapshot fields that are missing
+// (e.g. legal_form/display_name on invoices created before those fields
+// existed). Never overwrites existing values; every call is audit-logged.
+Route::post('invoices/{invoice}/refresh-snapshot', [InvoiceController::class, 'refreshSnapshot'])->name('invoices.refresh-snapshot');
 Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
 Route::get('invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
 Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');

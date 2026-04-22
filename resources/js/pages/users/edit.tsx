@@ -84,7 +84,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                         </Link>
                     </Button>
                     <div className="flex-1">
-                        <h1 className="text-2xl font-bold text-foreground">Benutzer bearbeiten</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Benutzer bearbeiten</h1>
                         <p className="text-muted-foreground">Aktualisieren Sie die Benutzerinformationen</p>
                     </div>
                     {user.role === "employee" && (

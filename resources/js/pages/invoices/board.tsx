@@ -42,10 +42,14 @@ const COLUMN_META: Record<InvoiceStatus, { label: string; hint: string }> = {
 // Allowed transitions mirror InvoiceController::setStatus. Any other drop
 // is rejected by the server anyway — but disabling the drop target here
 // gives instant UX feedback.
+//
+// `paid` is intentionally absent: an invoice only becomes paid once an
+// actual Payment row exists. Dropping on the Paid column redirects to the
+// Zahlung-erfassen form instead of attempting a blind status change.
 const ALLOWED_TRANSITIONS: Partial<Record<InvoiceStatus, InvoiceStatus[]>> = {
     draft:   ["sent", "cancelled"],
-    sent:    ["paid", "cancelled"],
-    overdue: ["paid", "cancelled"],
+    sent:    ["cancelled"],
+    overdue: ["cancelled"],
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -88,6 +92,19 @@ export default function InvoicesBoard() {
         const card = columns[from].find((c) => c.id === id)
         if (!card) return
 
+        // Dropping on "Paid" means the user wants to record payment, not
+        // flip a flag. Route to the Zahlung-erfassen form with the invoice
+        // prefilled — the status flips once the payment is saved.
+        if (to === "paid") {
+            if (from === "draft" || from === "cancelled") {
+                toast.error(`Rechnungen im Status "${COLUMN_META[from].label}" können nicht als bezahlt markiert werden.`)
+                return
+            }
+            toast.info("Bitte erfassen Sie die Zahlung.")
+            router.visit(`/payments/create?invoice_id=${card.id}`)
+            return
+        }
+
         if (!ALLOWED_TRANSITIONS[from]?.includes(to)) {
             toast.error(`Wechsel von "${COLUMN_META[from].label}" nach "${COLUMN_META[to].label}" nicht erlaubt.`)
             return
@@ -118,7 +135,7 @@ export default function InvoicesBoard() {
                             Zurück
                         </Button>
                     </Link>
-                    <h1 className="text-xl font-semibold">Rechnungen – Board</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Rechnungen – Board</h1>
                     <Badge variant="outline" className="gap-1">
                         <LayoutGrid className="h-3 w-3" />
                         Board
@@ -141,13 +158,18 @@ export default function InvoicesBoard() {
             </div>
 
             <p className="text-xs text-muted-foreground">
-                Ziehen Sie eine Karte in eine andere Spalte, um den Status zu ändern. GoBD-Sperre: bezahlte und stornierte Rechnungen bleiben fix.
+                Ziehen Sie eine Karte in eine andere Spalte, um den Status zu ändern.
+                Für <strong>Bezahlt</strong> wird die Zahlungserfassung geöffnet — ohne erfasste Zahlung wird keine Rechnung als bezahlt markiert.
+                GoBD-Sperre: bezahlte und stornierte Rechnungen bleiben fix.
             </p>
 
             <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5 flex-1 min-h-[500px]">
                 {COLUMN_ORDER.map((status) => {
                     const items = columns[status] ?? []
-                    const accept = !!(dragFrom && ALLOWED_TRANSITIONS[dragFrom]?.includes(status))
+                    // "Paid" accepts drops from sent/overdue but routes to the
+                    // payment form rather than flipping the status directly.
+                    const canRecordPayment = status === "paid" && (dragFrom === "sent" || dragFrom === "overdue")
+                    const accept = !!(dragFrom && (ALLOWED_TRANSITIONS[dragFrom]?.includes(status) || canRecordPayment))
                     const isHover = hoverTarget === status && accept
 
                     return (

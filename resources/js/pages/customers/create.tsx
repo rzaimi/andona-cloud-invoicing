@@ -65,7 +65,7 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Neuer Kunde</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Neuer Kunde</h1>
                         <p className="text-muted-foreground">Erstellen Sie einen neuen Kunden</p>
                     </div>
                 </div>

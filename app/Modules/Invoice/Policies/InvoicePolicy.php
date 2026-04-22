@@ -57,6 +57,22 @@ class InvoicePolicy
         return $this->belongsToSameCompany($user, $invoice);
     }
 
+    /**
+     * Backfill missing company-snapshot fields. Gated tighter than `update`:
+     * requires either super-admin (manage_companies) or the `admin` role on
+     * the same company, because the action touches a GoBD-relevant structure
+     * even though it only fills empty fields.
+     */
+    public function refreshSnapshot(User $user, Invoice $invoice): bool
+    {
+        if ($user->hasPermissionTo('manage_companies')) {
+            return true;
+        }
+
+        return $user->company_id === $invoice->company_id
+            && $user->hasRole('admin');
+    }
+
     private function belongsToSameCompany(User $user, Invoice $invoice): bool
     {
         return $user->company_id === $invoice->company_id

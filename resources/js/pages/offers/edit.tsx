@@ -268,7 +268,7 @@ export default function OffersEdit() {
                         </Link>
                         <div className="flex-1">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-1xl font-bold text-gray-900">Angebot bearbeiten</h1>
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Angebot bearbeiten</h1>
                                 {getStatusBadge(offer.status)}
                             </div>
                             <p className="text-gray-600">{offer.number}</p>

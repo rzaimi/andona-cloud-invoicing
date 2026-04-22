@@ -21,10 +21,16 @@
     <table style="width:100%; border-collapse:collapse; font-size:8pt; line-height:1.4; color:{{ $fgColor }};">
         <tr>
 
-            {{-- ── Col 1: Company name + address ───────────────────────── --}}
+            {{-- ── Col 1: Company name + legal form + address ──────────── --}}
             <td style="width:19%; vertical-align:top; padding-right:3px;">
                 @if($snapshot['name'] ?? null)
-                    <div style="font-weight:bold; color:#111827; font-size:8.5pt;">{{ $snapshot['name'] }}</div>
+                    <div style="font-weight:bold; color:#111827; font-size:8.5pt;">
+                        {{ $snapshot['name'] }}
+                    </div>
+                @endif
+                {{-- Rechtsform (Pflichtangabe HGB §37a / GmbHG §35a) --}}
+                @if($snapshot['legal_form_label'] ?? null)
+                    <div>{{ $snapshot['legal_form_label'] }}</div>
                 @endif
                 @if($snapshot['address'] ?? null)
                     <div>{{ $snapshot['address'] }}</div>
@@ -80,7 +86,7 @@
             </td>
             @endif
 
-            {{-- ── Col 5: Amtsgericht + Inhaber ────────────────────────── --}}
+            {{-- ── Col 5: Amtsgericht + Geschäftsführer / Inhaber ───────── --}}
             @if($showReg)
             <td style="width:15%; vertical-align:top;">
                 @if($snapshot['commercial_register'] ?? null)
@@ -88,7 +94,12 @@
                     <div>{{ $snapshot['commercial_register'] }}</div>
                 @endif
                 @if($snapshot['managing_director'] ?? null)
-                    <div style="font-weight:bold; color:#111827; margin-top:2px;">Inhaber:</div>
+                    {{-- Role label (Inhaber / Geschäftsführer / Vorstand /
+                         Gesellschafter) is derived from legal_form.
+                         Falls back to "Inhaber" if no legal form is set yet. --}}
+                    <div style="font-weight:bold; color:#111827; margin-top:2px;">
+                        {{ ($snapshot['manager_title'] ?? null) ?: 'Inhaber' }}:
+                    </div>
                     <div>{{ $snapshot['managing_director'] }}</div>
                 @endif
                 @if(!empty($ls['content']['custom_footer_text'] ?? ''))

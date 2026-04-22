@@ -145,7 +145,7 @@ export default function OffersShow() {
                         </Link>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h1 className="text-1xl font-bold text-gray-900 dark:text-gray-100">
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                                     Angebot {offer.number}
                                 </h1>
                                 {getStatusBadge(offer.status)}

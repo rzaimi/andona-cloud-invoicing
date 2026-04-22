@@ -30,7 +30,7 @@
     @if($showLogo)
         <div style="margin-bottom:3mm;"><img src="{{ $logoSrc }}" alt="Logo" style="max-height:{{ $logoH }}; max-width:{{ $logoW }};"></div>
     @endif
-    <div style="font-size:{{ $fsH + 6 }}px; font-weight:800; color:{{ $primary }}; line-height:1.1; margin-bottom:2mm;">{{ $snapshot['name'] ?? '' }}</div>
+    <div style="font-size:{{ $fsH + 6 }}px; font-weight:800; color:{{ $primary }}; line-height:1.1; margin-bottom:2mm;">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }}</div>
     @if($ls['content']['show_company_address'] ?? true)
         <div style="font-size:{{ $fs - 1 }}px; color:{{ $secCol }}; line-height:1.45;">
             @if($snapshot['address'] ?? null){{ $snapshot['address'] }}@endif
@@ -48,7 +48,7 @@
             @if($customer)
             <div class="din-5008-address">
                 @if($ls['content']['show_company_address'] ?? true)
-                    <div class="sender-return-address">{{ $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}</div>
+                    <div class="sender-return-address">{{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }} · {{ $snapshot['address'] ?? '' }} · {{ $snapshot['postal_code'] ?? '' }} {{ $snapshot['city'] ?? '' }}</div>
                 @endif
                 <div style="font-weight:700; font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm;">{{ $customer->name ?? '' }}</div>
                 @if($customer->contact_person ?? null)<div style="font-size:{{ $fs }}px; line-height:1.3; margin-bottom:1mm;">{{ $customer->contact_person }}</div>@endif
