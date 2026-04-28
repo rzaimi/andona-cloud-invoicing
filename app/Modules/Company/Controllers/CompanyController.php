@@ -13,21 +13,28 @@ use Inertia\Inertia;
 class CompanyController extends Controller
 {
     use ResizesCompanyLogo;
-    public function index()
+    public function index(Request $request)
     {
-        $user = Auth::user();
+        $user   = Auth::user();
+        $search = $request->input('search', '');
 
-        // Super admin with manage_companies can see all companies
         $companies = Company::withCount(['users', 'customers', 'invoices', 'offers'])
             ->with(['users' => function ($query) {
                 $query->whereHas('roles', function ($q) {
                     $q->where('name', 'admin');
                 })->limit(3);
             }])
-            ->paginate(15);
+            ->when($search, fn ($q) => $q->where(function ($inner) use ($search) {
+                $inner->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+            }))
+            ->orderBy('name')
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('companies/index', [
-            'companies' => $companies,
+            'companies'  => $companies,
+            'search'     => $search,
             'can_create' => $user->hasPermissionTo('manage_companies'),
         ]);
     }

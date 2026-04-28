@@ -25,10 +25,11 @@ interface CompanyWithStats extends Company {
 
 interface Props {
     companies: PaginatedResponse<CompanyWithStats>
+    search: string
 }
 
-export default function CompaniesIndex({ companies }: Props) {
-    const [search, setSearch] = useState("")
+export default function CompaniesIndex({ companies, search: initialSearch }: Props) {
+    const [search, setSearch] = useState(initialSearch ?? "")
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()

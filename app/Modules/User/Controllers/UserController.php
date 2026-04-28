@@ -20,8 +20,13 @@ class UserController extends Controller
         $user = Auth::user();
         $search = $request->input('search', '');
 
+        // Always scope to the effective company so super-admins see users
+        // for the company they have currently selected, not every user in
+        // the system.  They can switch context via the company selector.
+        $companyId = $this->getEffectiveCompanyId();
+
         $query = User::with('company')
-            ->when(!$user->hasPermissionTo('manage_companies'), fn($q) => $q->where('company_id', $user->company_id))
+            ->where('company_id', $companyId)
             ->when($search, fn($q) => $q->where(function ($inner) use ($search) {
                 $inner->where('name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%");
