@@ -74,6 +74,9 @@ class InvoiceSeeder extends Seeder
                 continue;
             }
 
+            // Create one realistic Abschlag → Schlussrechnung chain per company
+            $this->createAbschlagChain($company, $customers->first(), $users->first());
+
             // Create invoices
             for ($i = 1; $i <= 15; $i++) {
                 $customer = $customers->random();
@@ -145,6 +148,168 @@ class InvoiceSeeder extends Seeder
                 $this->createAuditTrail($invoice, $user, $issueDate);
             }
         }
+    }
+
+    /**
+     * Create a realistic Abschlag 1 → 2 → 3 → Schlussrechnung chain for a
+     * construction project.  Numbers are chosen so each intermediate "Verbleibender
+     * Betrag" (remaining amount) is always positive and the Schlussrechnung settles
+     * the contract to a small final balance.
+     *
+     * Chain mechanics demonstrated:
+     *   - Abschlag 1  : first partial invoice, no previous references
+     *   - Abschlag 2  : references Abschlag 1 (new feature: abschlag→abschlag chain)
+     *   - Abschlag 3  : standalone partial invoice (no back-refs, to keep numbers clean)
+     *   - Schlussrechnung: full project scope, deducts all three Abschlags
+     */
+    private function createAbschlagChain($company, $customer, $user): void
+    {
+        $prefix   = $company->getSetting('invoice_prefix', 'RE-');
+        $year     = now()->year;
+        $taxRate  = $company->getSetting('tax_rate', 0.19);
+        $terms    = $company->getSetting('invoice_terms');
+        $footer   = $company->getSetting('invoice_footer');
+
+        $bv = 'BV Neubau Musterstraße 12, Berlin';
+        $an = 'AUF-' . $year . '-DEMO';
+
+        $nextNumber = function () use ($company, $prefix, $year): string {
+            $count = Invoice::where('company_id', $company->id)
+                ->whereYear('created_at', $year)
+                ->count() + 1;
+            return $prefix . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        };
+
+        $makeInvoice = function (array $attrs) use ($company, $customer, $user, $taxRate, $terms, $footer, $nextNumber): Invoice {
+            return Invoice::create(array_merge([
+                'number'         => $nextNumber(),
+                'company_id'     => $company->id,
+                'customer_id'    => $customer->id,
+                'user_id'        => $user->id,
+                'tax_rate'       => $taxRate,
+                'notes'          => $footer,
+                'payment_terms'  => $terms,
+                'payment_method' => 'Überweisung',
+                'vat_regime'     => 'standard',
+            ], $attrs));
+        };
+
+        $addItems = function (Invoice $inv, array $positions, float $itemTaxRate) use ($taxRate): void {
+            foreach ($positions as $idx => $pos) {
+                $item = new InvoiceItem([
+                    'description' => $pos['description'],
+                    'quantity'    => $pos['quantity'],
+                    'unit'        => $pos['unit'],
+                    'unit_price'  => $pos['unit_price'],
+                    'tax_rate'    => $itemTaxRate,
+                    'sort_order'  => $idx,
+                ]);
+                $item->calculateTotal();
+                $inv->items()->save($item);
+            }
+            $inv->calculateTotals();
+            $inv->save();
+        };
+
+        // ── All 10 contract positions (used partially in each Abschlag, fully in Schlussrechnung) ──
+        $pos = [
+            ['description' => 'Erdarbeiten und Ausschachtung', 'quantity' => 250, 'unit' => 'm³',  'unit_price' => 180.00],   // 45 000
+            ['description' => 'Fundament und Bodenplatte',     'quantity' => 1,   'unit' => 'Psch.','unit_price' => 58000.00], // 58 000
+            ['description' => 'Rohbau Mauerwerk EG',           'quantity' => 1,   'unit' => 'Psch.','unit_price' => 72000.00], // 72 000  → A1 total net 175 000
+            ['description' => 'Rohbau Mauerwerk OG',           'quantity' => 1,   'unit' => 'Psch.','unit_price' => 68000.00], // 68 000
+            ['description' => 'Rohbaudecken und Treppen',      'quantity' => 1,   'unit' => 'Psch.','unit_price' => 55000.00], // 55 000
+            ['description' => 'Dachstuhl und Eindeckung',      'quantity' => 1,   'unit' => 'Psch.','unit_price' => 82000.00], // 82 000  → A2 total net 205 000
+            ['description' => 'Fenster und Außentüren',        'quantity' => 12,  'unit' => 'Stk.', 'unit_price' =>  3200.00], // 38 400
+            ['description' => 'Elektroinstallation',           'quantity' => 1,   'unit' => 'Psch.','unit_price' => 45000.00], // 45 000
+            ['description' => 'Sanitär- und Heizungsanlage',   'quantity' => 1,   'unit' => 'Psch.','unit_price' => 68000.00], // 68 000  → A3 total net 151 400
+            ['description' => 'Innenputz, Estrich und Fliesen','quantity' => 1,   'unit' => 'Psch.','unit_price' => 52000.00], // 52 000  → Schluss net 583 400
+        ];
+
+        // ── Abschlag 1 – Bauphase 1 (Erdarbeiten, Fundament, Rohbau EG) ──────────
+        // Net: 175 000 €  |  no prior refs
+        $baseDate = Carbon::now()->subDays(90);
+        $a1 = $makeInvoice([
+            'issue_date'     => $baseDate,
+            'due_date'       => $baseDate->copy()->addDays(14),
+            'status'         => 'paid',
+            'invoice_type'   => 'abschlagsrechnung',
+            'sequence_number'=> 1,
+            'bauvorhaben'    => $bv,
+            'auftragsnummer' => $an,
+        ]);
+        $addItems($a1, array_slice($pos, 0, 3), $taxRate);
+        $this->createAuditTrail($a1, $user, $baseDate);
+
+        // ── Abschlag 2 – Bauphase 2 (Rohbau OG, Decken, Dachstuhl) ─────────────
+        // Net: 205 000 €  |  refs A1 (175 000) → Verbleibender Betrag = 30 000
+        $a2Date = $baseDate->copy()->addDays(30);
+        $a2 = $makeInvoice([
+            'issue_date'     => $a2Date,
+            'due_date'       => $a2Date->copy()->addDays(14),
+            'status'         => 'paid',
+            'invoice_type'   => 'abschlagsrechnung',
+            'sequence_number'=> 2,
+            'bauvorhaben'    => $bv,
+            'auftragsnummer' => $an,
+            'abschlag_refs'  => [[
+                'invoice_id' => $a1->id,
+                'number'     => $a1->number,
+                'amount'     => (float) $a1->total,   // gross incl. VAT
+                'date'       => $a1->issue_date->format('Y-m-d'),
+            ]],
+        ]);
+        $addItems($a2, array_slice($pos, 3, 3), $taxRate);
+        $this->createAuditTrail($a2, $user, $a2Date);
+
+        // ── Abschlag 3 – Bauphase 3 (Fenster, Elektro, Sanitär) ─────────────────
+        // Net: 151 400 €  |  standalone partial (no back-refs to keep math clean)
+        $a3Date = $baseDate->copy()->addDays(60);
+        $a3 = $makeInvoice([
+            'issue_date'     => $a3Date,
+            'due_date'       => $a3Date->copy()->addDays(14),
+            'status'         => 'sent',
+            'invoice_type'   => 'abschlagsrechnung',
+            'sequence_number'=> 3,
+            'bauvorhaben'    => $bv,
+            'auftragsnummer' => $an,
+        ]);
+        $addItems($a3, array_slice($pos, 6, 3), $taxRate);
+        $this->createAuditTrail($a3, $user, $a3Date);
+
+        // ── Schlussrechnung – Gesamtabrechnung ───────────────────────────────────
+        // Full scope (all 10 positions), net 583 400 €
+        // Deducts A1 + A2 + A3 gross totals → small final balance remains
+        $schlussDate = $baseDate->copy()->addDays(80);
+        $schluss = $makeInvoice([
+            'issue_date'     => $schlussDate,
+            'due_date'       => $schlussDate->copy()->addDays(30),
+            'status'         => 'sent',
+            'invoice_type'   => 'schlussrechnung',
+            'bauvorhaben'    => $bv,
+            'auftragsnummer' => $an,
+            'abschlag_refs'  => [
+                [
+                    'invoice_id' => $a1->id,
+                    'number'     => $a1->number,
+                    'amount'     => (float) $a1->total,
+                    'date'       => $a1->issue_date->format('Y-m-d'),
+                ],
+                [
+                    'invoice_id' => $a2->id,
+                    'number'     => $a2->number,
+                    'amount'     => (float) $a2->total,
+                    'date'       => $a2->issue_date->format('Y-m-d'),
+                ],
+                [
+                    'invoice_id' => $a3->id,
+                    'number'     => $a3->number,
+                    'amount'     => (float) $a3->total,
+                    'date'       => $a3->issue_date->format('Y-m-d'),
+                ],
+            ],
+        ]);
+        $addItems($schluss, $pos, $taxRate); // all 10 positions
+        $this->createAuditTrail($schluss, $user, $schlussDate);
     }
 
     /**

@@ -18,10 +18,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw, GitBranch, Loader2, FlagTriangleRight } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Invoice, InvoiceItem } from "@/types"
 import { route } from "ziggy-js"
+import { toast } from "sonner"
 
 interface Payment {
     id: string
@@ -112,6 +113,43 @@ export default function InvoicesShow() {
         if (confirm(`Möchten Sie die Rechnung "${invoice.number}" wirklich löschen?`)) {
             router.delete(`/invoices/${invoice.id}`)
         }
+    }
+
+    const [isCreatingSchlussrechnung, setIsCreatingSchlussrechnung] = useState(false)
+    const handleCreateSchlussrechnung = () => {
+        const refs = (invoice as any).abschlag_refs ?? []
+        const chainCount = refs.length + 1 // existing refs + this invoice
+        if (!confirm(`Schlussrechnung auf Basis von ${invoice.number} erstellen?\n\n${chainCount} Abschlag(e) werden als Abzüge vorausgefüllt. Anschließend können alle Projektpositionen ergänzt werden.`)) return
+        setIsCreatingSchlussrechnung(true)
+        router.post(
+            route("invoices.create-schlussrechnung", invoice.id),
+            {},
+            {
+                onError: () => {
+                    setIsCreatingSchlussrechnung(false)
+                    toast.error("Fehler beim Erstellen der Schlussrechnung.")
+                },
+                onFinish: () => setIsCreatingSchlussrechnung(false),
+            }
+        )
+    }
+
+    const [isCreatingNextAbschlag, setIsCreatingNextAbschlag] = useState(false)
+    const handleCreateNextAbschlag = () => {
+        const nextSeq = ((invoice as any).sequence_number ?? 1) + 1
+        if (!confirm(`Nächsten Abschlag (Abschlag ${nextSeq}) auf Basis von ${invoice.number} erstellen?\n\nDie Positionen werden übernommen und können anschließend angepasst werden.`)) return
+        setIsCreatingNextAbschlag(true)
+        router.post(
+            route("invoices.create-next-abschlag", invoice.id),
+            {},
+            {
+                onError: () => {
+                    setIsCreatingNextAbschlag(false)
+                    toast.error("Fehler beim Erstellen des nächsten Abschlags.")
+                },
+                onFinish: () => setIsCreatingNextAbschlag(false),
+            }
+        )
     }
 
     const [isSendDialogOpen, setIsSendDialogOpen] = useState(false)
@@ -209,6 +247,42 @@ export default function InvoicesShow() {
                                 Bearbeiten
                             </Button>
                         </Link>
+                        {(invoice as any).invoice_type === "abschlagsrechnung" && (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 sm:flex-initial"
+                                    onClick={handleCreateNextAbschlag}
+                                    disabled={isCreatingNextAbschlag || isCreatingSchlussrechnung}
+                                    title="Nächsten Abschlag auf Basis dieser Rechnung erstellen"
+                                >
+                                    {isCreatingNextAbschlag
+                                        ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        : <GitBranch className="mr-2 h-4 w-4" />
+                                    }
+                                    <span className="hidden sm:inline">
+                                        {isCreatingNextAbschlag ? "Wird erstellt…" : "Nächsten Abschlag erstellen"}
+                                    </span>
+                                    <span className="sm:hidden">Abschlag +1</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 sm:flex-initial"
+                                    onClick={handleCreateSchlussrechnung}
+                                    disabled={isCreatingSchlussrechnung || isCreatingNextAbschlag}
+                                    title="Schlussrechnung mit allen bisherigen Abschlags als Abzüge erstellen"
+                                >
+                                    {isCreatingSchlussrechnung
+                                        ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        : <FlagTriangleRight className="mr-2 h-4 w-4" />
+                                    }
+                                    <span className="hidden sm:inline">
+                                        {isCreatingSchlussrechnung ? "Wird erstellt…" : "Schlussrechnung erstellen"}
+                                    </span>
+                                    <span className="sm:hidden">Schluss</span>
+                                </Button>
+                            </>
+                        )}
                         <Button
                             variant="outline"
                             className="flex-1 sm:flex-initial"
@@ -441,17 +515,18 @@ export default function InvoicesShow() {
                                             <span>{formatCurrency((Number(invoice.total) || 0) + (Number(invoice.reminder_fee) || 0))}</span>
                                         </div>
 
-                                        {/* Abschlag deductions for Schlussrechnung */}
-                                        {(invoice as any).invoice_type === "schlussrechnung" &&
+                                        {/* Abschlag deductions – shown for both Abschlagsrechnung (chain) and Schlussrechnung */}
+                                        {(["schlussrechnung", "abschlagsrechnung"].includes((invoice as any).invoice_type)) &&
                                             Array.isArray((invoice as any).abschlag_refs) &&
                                             (invoice as any).abschlag_refs.length > 0 && (() => {
                                                 const refs = (invoice as any).abschlag_refs as Array<{ invoice_id: string; number: string; amount: number; date: string }>
                                                 const abschlagTotal = refs.reduce((s, r) => s + r.amount, 0)
                                                 const remaining = Math.max(0, Number(invoice.total) - abschlagTotal)
+                                                const isAbschlag = (invoice as any).invoice_type === "abschlagsrechnung"
                                                 return (
                                                     <div className="mt-4 pt-3 border-t space-y-2">
                                                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                                            Abzügl. Abschlagsrechnungen
+                                                            {isAbschlag ? "Abzügl. bereits gezahlter Abschlags" : "Abzügl. Abschlagsrechnungen"}
                                                         </p>
                                                         {refs.map((r) => (
                                                             <div key={r.invoice_id} className="flex justify-between text-sm text-muted-foreground">
@@ -460,7 +535,7 @@ export default function InvoicesShow() {
                                                             </div>
                                                         ))}
                                                         <div className="flex justify-between pt-2 border-t font-bold text-base">
-                                                            <span>Verbleibender Betrag</span>
+                                                            <span>{isAbschlag ? "Verbleibender Abschlagsbetrag" : "Verbleibender Betrag"}</span>
                                                             <span className="tabular-nums">{formatCurrency(remaining)}</span>
                                                         </div>
                                                     </div>

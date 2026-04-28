@@ -119,14 +119,15 @@ export default function InvoicesCreate() {
     const [selectableAbschlaege, setSelectableAbschlaege] = useState<SelectableAbschlag[]>([])
     const [loadingAbschlaege, setLoadingAbschlaege] = useState(false)
 
-    // Fetch selectable Abschlagsrechnungen when Schlussrechnung type and customer are selected
+    // Fetch selectable Abschlagsrechnungen for Schlussrechnung and Abschlagsrechnung types
     useEffect(() => {
-        if (data.invoice_type !== "schlussrechnung" || !data.customer_id) {
+        const needsAbschlaege = data.invoice_type === "schlussrechnung" || data.invoice_type === "abschlagsrechnung"
+        if (!needsAbschlaege || !data.customer_id) {
             setSelectableAbschlaege([])
             return
         }
         setLoadingAbschlaege(true)
-        axios.get(`/invoices/selectable-abschlaege?customer_id=${data.customer_id}`)
+        axios.get(`/invoices/selectable-abschlaege?customer_id=${data.customer_id}&for_type=${data.invoice_type}`)
             .then((res) => setSelectableAbschlaege(res.data))
             .catch(() => setSelectableAbschlaege([]))
             .finally(() => setLoadingAbschlaege(false))
@@ -409,6 +410,7 @@ export default function InvoicesCreate() {
                                     {errors.auftragsnummer && <p className="text-red-600 text-sm">{errors.auftragsnummer}</p>}
                                 </div>
 
+
                                 <div className="space-y-2">
                                     <Label htmlFor="vat_regime">Umsatzsteuer-Regelung *</Label>
                                     <Select value={data.vat_regime} onValueChange={(value) => setData("vat_regime", value)}>
@@ -545,12 +547,18 @@ export default function InvoicesCreate() {
                                 )}
                             </div>
 
-                            {/* Abschlagsrechnungen selector – only for Schlussrechnung */}
-                            {data.invoice_type === "schlussrechnung" && (
+                            {/* Abschlagsrechnungen selector – Schlussrechnung and Abschlagsrechnung */}
+                            {(data.invoice_type === "schlussrechnung" || data.invoice_type === "abschlagsrechnung") && (
                                 <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
-                                    <p className="font-medium text-sm">Verknüpfte Abschlagsrechnungen</p>
+                                    <p className="font-medium text-sm">
+                                        {data.invoice_type === "schlussrechnung"
+                                            ? "Verknüpfte Abschlagsrechnungen"
+                                            : "Bereits geleistete Abschlagszahlungen"}
+                                    </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Wähle die Abschlagsrechnungen aus, die in dieser Schlussrechnung abgezogen werden sollen.
+                                        {data.invoice_type === "schlussrechnung"
+                                            ? "Wähle die Abschlagsrechnungen aus, die in dieser Schlussrechnung abgezogen werden sollen."
+                                            : "Wähle vorherige Abschlagsrechnungen, die in dieser Abschlagsrechnung als bereits bezahlt abgezogen werden sollen."}
                                     </p>
                                     <AbschlagSelectionDialog
                                         abschlaege={selectableAbschlaege}

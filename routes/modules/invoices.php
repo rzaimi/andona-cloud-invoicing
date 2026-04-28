@@ -22,6 +22,8 @@ Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->name
 
 #Route::post('invoices/{invoice}/duplicate', [InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
 Route::post('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('invoices.mark-paid');
+Route::post('invoices/{invoice}/create-next-abschlag', [InvoiceController::class, 'createNextAbschlag'])->name('invoices.create-next-abschlag');
+Route::post('invoices/{invoice}/create-schlussrechnung', [InvoiceController::class, 'createSchlussrechnung'])->name('invoices.create-schlussrechnung');
 
 // Audit Log Route
 Route::get('invoices/{invoice}/audit-log', [InvoiceController::class, 'auditLog'])->name('invoices.audit-log');

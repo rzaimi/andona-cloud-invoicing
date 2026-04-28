@@ -131,12 +131,13 @@ export default function InvoicesEdit() {
     const [loadingAbschlaege, setLoadingAbschlaege] = useState(false)
 
     useEffect(() => {
-        if (data.invoice_type !== "schlussrechnung" || !data.customer_id) {
+        const needsAbschlaege = data.invoice_type === "schlussrechnung" || data.invoice_type === "abschlagsrechnung"
+        if (!needsAbschlaege || !data.customer_id) {
             setSelectableAbschlaege([])
             return
         }
         setLoadingAbschlaege(true)
-        axios.get(`/invoices/selectable-abschlaege?customer_id=${data.customer_id}&exclude_invoice_id=${invoice.id}`)
+        axios.get(`/invoices/selectable-abschlaege?customer_id=${data.customer_id}&exclude_invoice_id=${invoice.id}&for_type=${data.invoice_type}`)
             .then((res) => setSelectableAbschlaege(res.data))
             .catch(() => setSelectableAbschlaege([]))
             .finally(() => setLoadingAbschlaege(false))
@@ -684,12 +685,18 @@ export default function InvoicesEdit() {
                                 )}
                             </div>
 
-                            {/* Abschlagsrechnungen selector – only for Schlussrechnung */}
-                            {data.invoice_type === "schlussrechnung" && (
+                            {/* Abschlagsrechnungen selector – Schlussrechnung and Abschlagsrechnung */}
+                            {(data.invoice_type === "schlussrechnung" || data.invoice_type === "abschlagsrechnung") && (
                                 <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
-                                    <p className="font-medium text-sm">Verknüpfte Abschlagsrechnungen</p>
+                                    <p className="font-medium text-sm">
+                                        {data.invoice_type === "schlussrechnung"
+                                            ? "Verknüpfte Abschlagsrechnungen"
+                                            : "Bereits geleistete Abschlagszahlungen"}
+                                    </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Wähle die Abschlagsrechnungen aus, die in dieser Schlussrechnung abgezogen werden sollen.
+                                        {data.invoice_type === "schlussrechnung"
+                                            ? "Wähle die Abschlagsrechnungen aus, die in dieser Schlussrechnung abgezogen werden sollen."
+                                            : "Wähle vorherige Abschlagsrechnungen, die in dieser Abschlagsrechnung als bereits bezahlt abgezogen werden sollen."}
                                     </p>
                                     <AbschlagSelectionDialog
                                         abschlaege={selectableAbschlaege}

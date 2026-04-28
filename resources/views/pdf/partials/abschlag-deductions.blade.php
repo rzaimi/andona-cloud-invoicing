@@ -1,11 +1,11 @@
 {{--
-    Abschlag deduction rows for Schlussrechnung (invoice-only).
+    Abschlag deduction rows for Schlussrechnung and Abschlagsrechnung (invoice-only).
     Rendered inside the totals table after the grand-total row.
     Safely no-ops when called from an offer context.
     Required scope: $invoice (optional), $bodyFontSize, $layoutSettings
     Only outputs rows when:
       - $invoice is in scope (i.e. we're rendering an invoice, not an offer)
-      - invoice_type === 'schlussrechnung'
+      - invoice_type is 'schlussrechnung' or 'abschlagsrechnung'
       - abschlag_refs is a non-empty array
 --}}
 @php
@@ -17,7 +17,8 @@
     $refs = collect($invoice->abschlag_refs ?? [])
         ->filter(fn ($r) => !empty($r['invoice_id']) && isset($r['amount']));
 
-    if ($refs->isEmpty() || ($invoice->invoice_type ?? '') !== 'schlussrechnung') {
+    $invoiceType = $invoice->invoice_type ?? '';
+    if ($refs->isEmpty() || !in_array($invoiceType, ['schlussrechnung', 'abschlagsrechnung'])) {
         return; // nothing to render
     }
 
@@ -26,6 +27,10 @@
     $primaryColor     = $layoutSettings['colors']['primary'] ?? '#1f2937';
     $borderColor      = '#e5e7eb';
     $fs               = $bodyFontSize;
+
+    $sectionHeading = $invoiceType === 'abschlagsrechnung'
+        ? 'Abzüglich bereits geleisteter Abschlagszahlungen'
+        : 'Abzüglich geleisteter Abschlagszahlungen';
 @endphp
 
 {{-- Section divider --}}
@@ -34,7 +39,7 @@
 </tr>
 <tr>
     <td colspan="2" style="padding: 4px 10px; font-size: {{ $fs - 1 }}px; font-weight: 600; color: {{ $primaryColor }}; border-top: 1px solid {{ $primaryColor }}; letter-spacing: 0.3px;">
-        Abzüglich geleisteter Abschlagszahlungen
+        {{ $sectionHeading }}
     </td>
 </tr>
 
@@ -55,7 +60,7 @@
 {{-- Remaining amount row --}}
 <tr style="background-color: {{ $primaryColor }}; color: #ffffff;">
     <td style="padding: 8px 10px; text-align: left; font-weight: 700; font-size: {{ $fs + 1 }}px;">
-        Verbleibender Betrag
+        {{ $invoiceType === 'abschlagsrechnung' ? 'Verbleibender Abschlagsbetrag' : 'Verbleibender Betrag' }}
     </td>
     <td style="padding: 8px 10px; text-align: right; font-weight: 700; font-size: {{ $fs + 1 }}px; white-space: nowrap;">
         {{ number_format($remainingAmount, 2, ',', '.') }} €

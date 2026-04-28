@@ -267,7 +267,7 @@ class InvoiceController extends Controller
             // Rechnungstyp
             'invoice_type' => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
             'sequence_number' => 'nullable|integer|between:1,20',
-            // Abschlagsrechnungen linked to a Schlussrechnung
+            // Abschlagsrechnungen linked to a Schlussrechnung or Abschlagsrechnung
             'abschlag_refs' => 'nullable|array',
             'abschlag_refs.*.invoice_id' => 'required_with:abschlag_refs|string',
             'abschlag_refs.*.number' => 'required_with:abschlag_refs|string',
@@ -354,7 +354,7 @@ class InvoiceController extends Controller
                 'notes' => $validated['notes'],
                 'bauvorhaben' => $validated['bauvorhaben'] ?? null,
                 'auftragsnummer' => $validated['auftragsnummer'] ?? null,
-                'abschlag_refs' => ($validated['invoice_type'] ?? 'standard') === 'schlussrechnung'
+                'abschlag_refs' => in_array($validated['invoice_type'] ?? 'standard', ['schlussrechnung', 'abschlagsrechnung'])
                                              ? ($validated['abschlag_refs'] ?? null)
                                              : null,
                 'layout_id' => $validated['layout_id'],
@@ -501,7 +501,7 @@ class InvoiceController extends Controller
             // Rechnungstyp
             'invoice_type' => 'nullable|in:standard,abschlagsrechnung,schlussrechnung,nachtragsrechnung,korrekturrechnung',
             'sequence_number' => 'nullable|integer|between:1,20',
-            // Abschlagsrechnungen linked to a Schlussrechnung
+            // Abschlagsrechnungen linked to a Schlussrechnung or Abschlagsrechnung
             'abschlag_refs' => 'nullable|array',
             'abschlag_refs.*.invoice_id' => 'required_with:abschlag_refs|string',
             'abschlag_refs.*.number' => 'required_with:abschlag_refs|string',
@@ -574,7 +574,7 @@ class InvoiceController extends Controller
                 'notes' => $validated['notes'],
                 'bauvorhaben' => $validated['bauvorhaben'] ?? null,
                 'auftragsnummer' => $validated['auftragsnummer'] ?? null,
-                'abschlag_refs' => ($validated['invoice_type'] ?? 'standard') === 'schlussrechnung'
+                'abschlag_refs' => in_array($validated['invoice_type'] ?? 'standard', ['schlussrechnung', 'abschlagsrechnung'])
                                              ? ($validated['abschlag_refs'] ?? null)
                                              : null,
                 'layout_id' => $validated['layout_id'],
@@ -1393,14 +1393,253 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Return Abschlagsrechnungen for a given customer that can be linked to a Schlussrechnung.
-     * Excludes invoices that are already referenced by another Schlussrechnung.
+     * Create the next Abschlagsrechnung in a chain from an existing one.
+     *
+     * The new invoice gets:
+     *   - Same customer, layout, bauvorhaben, auftragsnummer, vat_regime, payment details
+     *   - A copy of all line items from the source (so the user can adjust them)
+     *   - sequence_number incremented by 1
+     *   - abschlag_refs pre-filled with the source Abschlagsrechnung (so the PDF
+     *     already shows the deduction chain)
+     *   - status = 'draft'
+     *
+     * The user is redirected to the edit page of the new invoice.
+     */
+    public function createNextAbschlag(Invoice $invoice)
+    {
+        $this->authorize('update', $invoice);
+
+        if ($invoice->invoice_type !== 'abschlagsrechnung') {
+            return back()->with('error', 'Nur Abschlagsrechnungen können auf diese Weise fortgeführt werden.');
+        }
+
+        $invoice->load(['items', 'company']);
+
+        try {
+            DB::beginTransaction();
+
+            // Lock the company row for serialised number generation (same pattern as store())
+            \App\Modules\Company\Models\Company::whereKey($invoice->company_id)
+                ->lockForUpdate()
+                ->first();
+
+            $next = new Invoice;
+            $next->company_id      = $invoice->company_id;
+            $next->customer_id     = $invoice->customer_id;
+            $next->user_id         = request()->user()->id;
+            $next->status          = 'draft';
+            $next->issue_date      = now();
+            $next->due_date        = now()->addDays(
+                (int) ($invoice->company->getSetting('payment_terms', 14))
+            );
+            $next->tax_rate        = $invoice->tax_rate;
+            $next->vat_regime      = $invoice->vat_regime ?? 'standard';
+            $next->notes           = $invoice->notes;
+            $next->payment_terms   = $invoice->payment_terms;
+            $next->payment_method  = $invoice->payment_method;
+            $next->layout_id       = $invoice->layout_id;
+            $next->invoice_type    = 'abschlagsrechnung';
+            $next->sequence_number = ($invoice->sequence_number ?? 1) + 1;
+            $next->bauvorhaben     = $invoice->bauvorhaben;
+            $next->auftragsnummer  = $invoice->auftragsnummer;
+
+            // Build the full deduction chain:
+            // inherit all refs the source invoice already has, then append the
+            // source invoice itself.  This means:
+            //   Abschlag #1 (no refs) → create #2 → refs = [#1]
+            //   Abschlag #2 (refs [#1]) → create #3 → refs = [#1, #2]
+            //   Abschlag #3 (refs [#1,#2]) → create #4 → refs = [#1, #2, #3]
+            $inheritedRefs = collect($invoice->abschlag_refs ?? [])
+                ->filter(fn ($r) => !empty($r['invoice_id']))
+                ->values()
+                ->toArray();
+
+            $next->abschlag_refs = array_merge($inheritedRefs, [[
+                'invoice_id' => $invoice->id,
+                'number'     => $invoice->number,
+                'amount'     => (float) $invoice->total,
+                'date'       => $invoice->issue_date?->format('Y-m-d'),
+            ]]);
+
+            $next->number = $this->generateTypedNumber('abschlagsrechnung', $invoice->company);
+            $next->save();
+
+            // Copy all line items so the user has a starting point to edit
+            foreach ($invoice->items as $item) {
+                InvoiceItem::create([
+                    'invoice_id'     => $next->id,
+                    'product_id'     => $item->product_id,
+                    'description'    => $item->description,
+                    'quantity'       => $item->quantity,
+                    'unit_price'     => $item->unit_price,
+                    'unit'           => $item->unit,
+                    'tax_rate'       => $item->tax_rate,
+                    'discount_type'  => $item->discount_type,
+                    'discount_value' => $item->discount_value,
+                    'total'          => $item->total,
+                    'sort_order'     => $item->sort_order,
+                ]);
+            }
+
+            $next->calculateTotals();
+            $next->save();
+
+            DB::commit();
+
+            return redirect()->route('invoices.edit', $next->id)
+                ->with('success', "Abschlag {$next->sequence_number} wurde erstellt. Bitte Positionen anpassen und speichern.");
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Fehler beim Erstellen des nächsten Abschlags: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Create a Schlussrechnung from an existing Abschlagsrechnung.
+     *
+     * The new Schlussrechnung gets:
+     *   - Same customer, layout, bauvorhaben, auftragsnummer, vat_regime, payment details
+     *   - abschlag_refs pre-filled with the full chain:
+     *     the source invoice's inherited refs + the source invoice itself
+     *   - A copy of the source invoice's line items as a starting point
+     *     (the user typically adds remaining project positions before saving)
+     *   - status = 'draft', invoice_type = 'schlussrechnung'
+     */
+    public function createSchlussrechnung(Invoice $invoice)
+    {
+        $this->authorize('update', $invoice);
+
+        if ($invoice->invoice_type !== 'abschlagsrechnung') {
+            return back()->with('error', 'Eine Schlussrechnung kann nur aus einer Abschlagsrechnung erstellt werden.');
+        }
+
+        $invoice->load(['items', 'company']);
+
+        try {
+            DB::beginTransaction();
+
+            \App\Modules\Company\Models\Company::whereKey($invoice->company_id)
+                ->lockForUpdate()
+                ->first();
+
+            $schluss = new Invoice;
+            $schluss->company_id      = $invoice->company_id;
+            $schluss->customer_id     = $invoice->customer_id;
+            $schluss->user_id         = request()->user()->id;
+            $schluss->status          = 'draft';
+            $schluss->issue_date      = now();
+            $schluss->due_date        = now()->addDays(
+                (int) ($invoice->company->getSetting('payment_terms', 30))
+            );
+            $schluss->tax_rate        = $invoice->tax_rate;
+            $schluss->vat_regime      = $invoice->vat_regime ?? 'standard';
+            $schluss->notes           = $invoice->notes;
+            $schluss->payment_terms   = $invoice->payment_terms;
+            $schluss->payment_method  = $invoice->payment_method;
+            $schluss->layout_id       = $invoice->layout_id;
+            $schluss->invoice_type    = 'schlussrechnung';
+            $schluss->bauvorhaben     = $invoice->bauvorhaben;
+            $schluss->auftragsnummer  = $invoice->auftragsnummer;
+
+            // Full deduction chain: all refs the source already carries + the source itself
+            $inheritedRefs = collect($invoice->abschlag_refs ?? [])
+                ->filter(fn ($r) => !empty($r['invoice_id']))
+                ->values()
+                ->toArray();
+
+            $schluss->abschlag_refs = array_merge($inheritedRefs, [[
+                'invoice_id' => $invoice->id,
+                'number'     => $invoice->number,
+                'amount'     => (float) $invoice->total,
+                'date'       => $invoice->issue_date?->format('Y-m-d'),
+            ]]);
+
+            $schluss->number = $this->generateTypedNumber('schlussrechnung', $invoice->company);
+            $schluss->save();
+
+            // Copy line items as a starting point — user adds remaining project positions
+            foreach ($invoice->items as $item) {
+                InvoiceItem::create([
+                    'invoice_id'     => $schluss->id,
+                    'product_id'     => $item->product_id,
+                    'description'    => $item->description,
+                    'quantity'       => $item->quantity,
+                    'unit_price'     => $item->unit_price,
+                    'unit'           => $item->unit,
+                    'tax_rate'       => $item->tax_rate,
+                    'discount_type'  => $item->discount_type,
+                    'discount_value' => $item->discount_value,
+                    'total'          => $item->total,
+                    'sort_order'     => $item->sort_order,
+                ]);
+            }
+
+            $schluss->calculateTotals();
+            $schluss->save();
+
+            DB::commit();
+
+            $abschlagCount = count($schluss->abschlag_refs);
+            return redirect()->route('invoices.edit', $schluss->id)
+                ->with('success', "Schlussrechnung erstellt mit {$abschlagCount} verknüpften Abschlag(en). Bitte alle Projektpositionen ergänzen und speichern.");
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Fehler beim Erstellen der Schlussrechnung: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Generate the next invoice number for a given type using the company's
+     * dedicated format settings — mirrors the same logic used in store().
+     *
+     * Types → settings keys:
+     *   abschlagsrechnung → abschlag_number_format  / abschlag_next_counter
+     *   schlussrechnung   → schluss_number_format   / schluss_next_counter
+     *   everything else   → invoice_number_format   / invoice_next_counter
+     */
+    private function generateTypedNumber(string $invoiceType, \App\Modules\Company\Models\Company $company): string
+    {
+        $svc        = new NumberFormatService;
+        $allNumbers = Invoice::where('company_id', $company->id)->pluck('number');
+
+        if ($invoiceType === 'abschlagsrechnung') {
+            $format     = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
+            $minCounter = (int) ($company->getSetting('abschlag_next_counter') ?? 1);
+        } elseif ($invoiceType === 'schlussrechnung') {
+            $format     = $svc->normaliseToFormat($company->getSetting('schluss_number_format') ?? 'SR-{YYYY}-{####}');
+            $minCounter = (int) ($company->getSetting('schluss_next_counter') ?? 1);
+        } else {
+            $format     = $svc->normaliseToFormat(
+                $company->getSetting('invoice_number_format')
+                    ?? $company->getSetting('invoice_prefix', 'RE-')
+            );
+            $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
+        }
+
+        return $svc->next($format, $allNumbers, null, $minCounter);
+    }
+
+    /**
+     * Return Abschlagsrechnungen for a given customer that can be linked to a
+     * Schlussrechnung or another Abschlagsrechnung.
+     *
+     * Query params:
+     *   customer_id         – filter by customer
+     *   exclude_invoice_id  – the invoice currently being edited (excluded from "claimed" check)
+     *   for_type            – 'schlussrechnung' (default) or 'abschlagsrechnung'
+     *
+     * already_claimed logic:
+     *   schlussrechnung  → true when referenced by another Schlussrechnung
+     *   abschlagsrechnung → true when referenced by another Abschlagsrechnung
      */
     public function selectableAbschlaege(Request $request)
     {
-        $companyId = $this->getEffectiveCompanyId();
+        $companyId  = $this->getEffectiveCompanyId();
         $customerId = $request->query('customer_id');
-        $excludeId = $request->query('exclude_invoice_id'); // current Schlussrechnung being edited
+        $excludeId  = $request->query('exclude_invoice_id');
+        $forType    = $request->query('for_type', 'schlussrechnung');
 
         $query = Invoice::forCompany($companyId)
             ->where('invoice_type', 'abschlagsrechnung')
@@ -1410,20 +1649,27 @@ class InvoiceController extends Controller
             $query->where('customer_id', $customerId);
         }
 
+        // When building an Abschlagsrechnung, exclude the invoice itself from the list.
+        if ($forType === 'abschlagsrechnung' && $excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
         $abschlaege = $query
             ->select('id', 'number', 'total', 'issue_date', 'sequence_number', 'status', 'bauvorhaben')
             ->orderBy('sequence_number')
             ->orderBy('issue_date')
             ->get();
 
-        // Find IDs already claimed by any other Schlussrechnung
-        $allSchluss = Invoice::forCompany($companyId)
-            ->where('invoice_type', 'schlussrechnung')
+        // Determine which Abschlags are already claimed by another invoice of the relevant type.
+        $claimedByType = $forType === 'abschlagsrechnung' ? 'abschlagsrechnung' : 'schlussrechnung';
+
+        $claimingRefs = Invoice::forCompany($companyId)
+            ->where('invoice_type', $claimedByType)
             ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
             ->whereNotNull('abschlag_refs')
             ->pluck('abschlag_refs');
 
-        $claimedIds = collect($allSchluss)
+        $claimedIds = collect($claimingRefs)
             ->flatten(1)
             ->pluck('invoice_id')
             ->filter()
@@ -1432,13 +1678,13 @@ class InvoiceController extends Controller
 
         return response()->json(
             $abschlaege->map(fn ($inv) => [
-                'id' => $inv->id,
-                'number' => $inv->number,
-                'amount' => (float) $inv->total,
-                'date' => $inv->issue_date?->format('Y-m-d'),
+                'id'              => $inv->id,
+                'number'          => $inv->number,
+                'amount'          => (float) $inv->total,
+                'date'            => $inv->issue_date?->format('Y-m-d'),
                 'sequence_number' => $inv->sequence_number,
-                'status' => $inv->status,
-                'bauvorhaben' => $inv->bauvorhaben,
+                'status'          => $inv->status,
+                'bauvorhaben'     => $inv->bauvorhaben,
                 'already_claimed' => $claimedIds->contains($inv->id),
             ])
         );
