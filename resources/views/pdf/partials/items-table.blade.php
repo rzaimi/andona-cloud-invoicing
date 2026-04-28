@@ -98,7 +98,11 @@
                     <td style="padding: {{ $cellPadding }}; white-space: nowrap; {{ $cellBorder }}">{{ $productCode ?: '-' }}</td>
                 @endif
                 <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
-                    <div style="white-space:pre-wrap;">{{ $inlineRowNumber ? ($index + 1) . '. ' : '' }}{!! nl2br(e($item->description)) !!}</div>
+                    {{-- nl2br() converts \n to <br>, so don't also use
+                         white-space: pre-wrap — that would honour the
+                         literal \n a second time, producing visibly
+                         double line-spacing on multi-line descriptions. --}}
+                    <div>{{ $inlineRowNumber ? ($index + 1) . '. ' : '' }}{!! nl2br(e($item->description)) !!}</div>
                 </td>
                 <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
                     {{ number_format($item->quantity, 2, ',', '.') }}
