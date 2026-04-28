@@ -437,11 +437,29 @@ class InvoiceController extends Controller
         $paidAmount = $invoice->getPaidAmount();
         $remainingBalance = $invoice->getRemainingBalance();
 
+        // Chain successor flags — only relevant for Abschlagsrechnungen.
+        // hasSuccessor  : another invoice already has THIS invoice in its abschlag_refs
+        //                 → this is not the latest in the chain, hide chain buttons
+        // hasSchlussrechnung : a Schlussrechnung that references this invoice exists
+        //                 → the chain is closed, hide chain buttons
+        $hasSuccessor       = false;
+        $hasSchlussrechnung = false;
+        if ($invoice->invoice_type === 'abschlagsrechnung') {
+            $successors = Invoice::where('company_id', $invoice->company_id)
+                ->whereJsonContains('abschlag_refs', ['invoice_id' => $invoice->id])
+                ->get(['invoice_type', 'status']);
+
+            $hasSuccessor       = $successors->isNotEmpty();
+            $hasSchlussrechnung = $successors->contains('invoice_type', 'schlussrechnung');
+        }
+
         return Inertia::render('invoices/show', [
-            'invoice' => $invoice,
-            'settings' => $invoice->company->getDefaultSettings(),
-            'paidAmount' => $paidAmount,
-            'remainingBalance' => $remainingBalance,
+            'invoice'            => $invoice,
+            'settings'           => $invoice->company->getDefaultSettings(),
+            'paidAmount'         => $paidAmount,
+            'remainingBalance'   => $remainingBalance,
+            'hasSuccessor'       => $hasSuccessor,
+            'hasSchlussrechnung' => $hasSchlussrechnung,
         ]);
     }
 

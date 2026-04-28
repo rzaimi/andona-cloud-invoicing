@@ -47,11 +47,13 @@ interface InvoicesShowProps {
     settings: any
     paidAmount: number
     remainingBalance: number
+    hasSuccessor: boolean
+    hasSchlussrechnung: boolean
 }
 
 export default function InvoicesShow() {
     // @ts-ignore
-    const { invoice, settings, paidAmount, remainingBalance, auth } = usePage<InvoicesShowProps>().props
+    const { invoice, settings, paidAmount, remainingBalance, hasSuccessor, hasSchlussrechnung, auth } = usePage<InvoicesShowProps>().props
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -247,40 +249,50 @@ export default function InvoicesShow() {
                                 Bearbeiten
                             </Button>
                         </Link>
-                        {(invoice as any).invoice_type === "abschlagsrechnung" && (
+                        {/* Chain buttons — only on the latest Abschlag (no successor, not cancelled) */}
+                        {(invoice as any).invoice_type === "abschlagsrechnung" &&
+                            invoice.status !== "cancelled" &&
+                            !hasSuccessor && (
                             <>
-                                <Button
-                                    variant="outline"
-                                    className="flex-1 sm:flex-initial"
-                                    onClick={handleCreateNextAbschlag}
-                                    disabled={isCreatingNextAbschlag || isCreatingSchlussrechnung}
-                                    title="Nächsten Abschlag auf Basis dieser Rechnung erstellen"
-                                >
-                                    {isCreatingNextAbschlag
-                                        ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        : <GitBranch className="mr-2 h-4 w-4" />
-                                    }
-                                    <span className="hidden sm:inline">
-                                        {isCreatingNextAbschlag ? "Wird erstellt…" : "Nächsten Abschlag erstellen"}
-                                    </span>
-                                    <span className="sm:hidden">Abschlag +1</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="flex-1 sm:flex-initial"
-                                    onClick={handleCreateSchlussrechnung}
-                                    disabled={isCreatingSchlussrechnung || isCreatingNextAbschlag}
-                                    title="Schlussrechnung mit allen bisherigen Abschlags als Abzüge erstellen"
-                                >
-                                    {isCreatingSchlussrechnung
-                                        ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        : <FlagTriangleRight className="mr-2 h-4 w-4" />
-                                    }
-                                    <span className="hidden sm:inline">
-                                        {isCreatingSchlussrechnung ? "Wird erstellt…" : "Schlussrechnung erstellen"}
-                                    </span>
-                                    <span className="sm:hidden">Schluss</span>
-                                </Button>
+                                {/* "Nächsten Abschlag" — hidden once a Schlussrechnung closes the chain */}
+                                {!hasSchlussrechnung && (
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 sm:flex-initial"
+                                        onClick={handleCreateNextAbschlag}
+                                        disabled={isCreatingNextAbschlag || isCreatingSchlussrechnung}
+                                        title="Nächsten Abschlag auf Basis dieser Rechnung erstellen"
+                                    >
+                                        {isCreatingNextAbschlag
+                                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            : <GitBranch className="mr-2 h-4 w-4" />
+                                        }
+                                        <span className="hidden sm:inline">
+                                            {isCreatingNextAbschlag ? "Wird erstellt…" : "Nächsten Abschlag erstellen"}
+                                        </span>
+                                        <span className="sm:hidden">Abschlag +1</span>
+                                    </Button>
+                                )}
+
+                                {/* "Schlussrechnung" — hidden once one already exists */}
+                                {!hasSchlussrechnung && (
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 sm:flex-initial"
+                                        onClick={handleCreateSchlussrechnung}
+                                        disabled={isCreatingSchlussrechnung || isCreatingNextAbschlag}
+                                        title="Schlussrechnung mit allen bisherigen Abschlags als Abzüge erstellen"
+                                    >
+                                        {isCreatingSchlussrechnung
+                                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            : <FlagTriangleRight className="mr-2 h-4 w-4" />
+                                        }
+                                        <span className="hidden sm:inline">
+                                            {isCreatingSchlussrechnung ? "Wird erstellt…" : "Schlussrechnung erstellen"}
+                                        </span>
+                                        <span className="sm:hidden">Schluss</span>
+                                    </Button>
+                                )}
                             </>
                         )}
                         <Button
