@@ -96,7 +96,10 @@
         <div style="height:40mm; overflow:hidden;">
             @if($ls['content']['show_company_address'] ?? true)
             @php
-                $retParts = array_filter([$snapshot['display_name'] ?? $snapshot['name'] ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
+                // $senderName is set by invoice.blade.php / offer.blade.php:
+                // company name for GmbH/UG/AG etc., managing_director name
+                // for Einzelunternehmen and Freiberufler.
+                $retParts = array_filter([$senderName ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
             @endphp
             <div style="font-size:6.5pt; color:{{ $soft }}; padding-bottom:1.5mm; margin-bottom:2.5mm; border-bottom:0.2mm solid {{ $border }}; line-height:1;">
                 {{ implode(' · ', $retParts) }}

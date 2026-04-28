@@ -232,6 +232,14 @@
     $doc          = $invoice;
     $docKind      = 'invoice';
     $templateFile = 'pdf.templates.' . ($template ?? 'minimal');
+
+    // Sender identity shown in the return-address line and sign-off.
+    // Sole traders (Einzelunternehmen) and freelancers (Freiberufler) are
+    // legally identified by the owner's name, not a registered company name.
+    $personalForms = ['einzelunternehmen', 'freiberufler'];
+    $senderName = (in_array($snapshot['legal_form'] ?? null, $personalForms) && !empty($snapshot['managing_director']))
+        ? $snapshot['managing_director']
+        : ($snapshot['display_name'] ?? $snapshot['name'] ?? '');
 @endphp
 
 {{-- Debug indicator in preview mode --}}

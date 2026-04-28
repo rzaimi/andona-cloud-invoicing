@@ -258,6 +258,12 @@
     $doc          = $offer;
     $docKind      = 'offer';
     $templateFile = 'pdf.templates.' . $template;
+
+    // Sender identity shown in the return-address line and sign-off.
+    $personalForms = ['einzelunternehmen', 'freiberufler'];
+    $senderName = (in_array($snapshot['legal_form'] ?? null, $personalForms) && !empty($snapshot['managing_director']))
+        ? $snapshot['managing_director']
+        : ($snapshot['display_name'] ?? $snapshot['name'] ?? '');
 @endphp
 
 @if(isset($preview) && $preview)

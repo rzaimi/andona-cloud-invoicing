@@ -201,7 +201,7 @@
     @endif
     @if($ls['content']['show_signature'] ?? true)
     <div style="margin-top:3mm; font-size:{{ $fs + 1 }}px; font-weight:700; color:{{ $primary }};">
-        {{ $snapshot['display_name'] ?? $snapshot['name'] ?? '' }}
+        {{ $senderName ?? $snapshot['display_name'] ?? $snapshot['name'] ?? '' }}
     </div>
     @endif
 </div>
