@@ -11,9 +11,9 @@
                 // Target: body 10–12pt, matching invoice sizing convention.
                 switch ($size) {
                     case 'small':  return 11;   //  ~8 pt
-                    case 'large':  return 14;   // ~10.5 pt
+                    case 'large':  return 16;   // ~12 pt
                     case 'medium':
-                    default:       return 12;   //  ~9 pt — offer default
+                    default:       return 13;   // ~10 pt — offer default
                 }
             }
         }
@@ -26,13 +26,27 @@
             $layoutSettings = $layout['settings'];
         }
 
-        $bodyFontSize    = getOfferFontSizePx($layoutSettings['fonts']['size'] ?? 'medium');
+        $bodyFontSize    = getOfferFontSizePx($layoutSettings['fonts']['size'] ?? 'small');
         $headingFontSize = $bodyFontSize + 3;
 
         // ── Determine template ────────────────────────────────────────────────
-        $template      = is_object($layout) ? ($layout->template ?? 'modern') : ($layout['template'] ?? 'modern');
-        $validTemplates = ['modern', 'classic', 'minimal', 'professional', 'creative', 'elegant'];
-        if (!in_array($template, $validTemplates)) $template = 'modern';
+        $template = is_object($layout) ? ($layout->template ?? 'minimal') : ($layout['template'] ?? 'minimal');
+        // Three unified themes: minimal, professional, modern.
+        // Legacy template keys (including offer-only "creative") alias to
+        // the closest survivor.
+        $templateAliases = [
+            'clean'        => 'minimal',
+            'classic'      => 'professional',
+            'elegant'      => 'professional',
+            'creative'     => 'modern',
+        ];
+        if (isset($templateAliases[$template])) {
+            $template = $templateAliases[$template];
+        }
+        $validTemplates = ['minimal', 'professional', 'modern'];
+        if (!in_array($template, $validTemplates, true)) {
+            $template = 'minimal';
+        }
     @endphp
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -43,7 +57,11 @@
         line-height: 1.45;
         color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
         background: white;
-        padding-bottom: 22mm; /* Buffer so content stops before the fixed footer */
+        /* margin-bottom (not padding) — DomPDF paginates against body
+           margins reliably; reserves room for the fixed 5-column
+           footer block. Kept in sync with invoice.blade.php so shared
+           templates render identically across both document kinds. */
+        margin-bottom: 35mm;
     }
 
     /* ── DIN 5008 address block ──────────────────────────────────────────────── */
@@ -66,14 +84,9 @@
     }
 
     /* ── Container ───────────────────────────────────────────────────────────── */
-    .container {
-        max-width: 210mm;
-        margin: 0 auto;
-        padding: {{ min($layoutSettings['layout']['margin_top'] ?? 15, 20) }}mm
-                 {{ min($layoutSettings['layout']['margin_right'] ?? 20, 25) }}mm
-                 {{ min($layoutSettings['layout']['margin_bottom'] ?? 20, 25) }}mm
-                 {{ min($layoutSettings['layout']['margin_left'] ?? 20, 25) }}mm;
-    }
+    /* .container intentionally rule-free — see invoice.blade.php for
+       the rationale. Templates handle inline padding themselves. */
+    .container { }
 
     /* ── Items table (base styles) ───────────────────────────────────────────── */
     .items-table {
@@ -131,7 +144,7 @@
         border-bottom: 2px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
     }
 
-    /* ── Footer: rendered by pdf.invoice-partials.footer partial ─────────────── */
+    /* ── Footer: rendered by pdf.partials.footer partial ─────────────── */
 
     /* ── Preview notice ──────────────────────────────────────────────────────── */
     @if(isset($preview) && $preview)
@@ -148,13 +161,12 @@
     }
     @endif
 
-    /* ── Page margins ─────────────────────────────────────────────────────────── */
+    /* Small uniform top/bottom @page margin (5mm ≈ 20px). Horizontal
+       insets are 0 — templates apply their own 20mm inline padding so
+       content lands at the DIN 5008 address-window x-coordinate
+       (20mm from page edge). Kept in sync with invoice.blade.php. */
     @page {
-        margin-top: 22mm;
-        margin-bottom: 30mm;
-    }
-    @page :first {
-        margin-top: 0mm;
+        margin: 5mm 0;
     }
     </style>
 </head>
@@ -202,10 +214,36 @@
     // ── Date helpers ──────────────────────────────────────────────────────────
     $dateFormat = $settings['date_format'] ?? 'd.m.Y';
 
+    // The unified templates + partials call formatInvoiceDate() and
+    // getReadableInvoiceType() regardless of doc kind; define them here too
+    // (same bodies as pdf/invoice.blade.php, guarded by function_exists so
+    // a single request that renders both documents doesn't redeclare).
+    if (!function_exists('formatInvoiceDate')) {
+        function formatInvoiceDate($date, $format = 'd.m.Y') {
+            if (!$date) {
+                return '';
+            }
+            try { return \Carbon\Carbon::parse($date)->format($format); } catch (\Exception $e) { return ''; }
+        }
+    }
+
+    if (!function_exists('getReadableInvoiceType')) {
+        function getReadableInvoiceType($type, $sequenceNumber = null) {
+            switch ($type) {
+                case 'abschlagsrechnung': return 'Abschlagsrechnung ' . ($sequenceNumber ?? '');
+                case 'schlussrechnung':   return 'Schlussrechnung';
+                case 'nachtragsrechnung': return 'Nachtragsrechnung';
+                case 'korrekturrechnung': return 'Korrekturrechnung';
+                default:                  return 'Rechnung';
+            }
+        }
+    }
+
+    // Legacy alias used by the old offer-only flow — kept for any external
+    // views that still reference it.
     if (!function_exists('fmtOfferDate')) {
         function fmtOfferDate($date, $format = 'd.m.Y') {
-            if (!$date) return '';
-            try { return \Carbon\Carbon::parse($date)->format($format); } catch (\Exception $e) { return ''; }
+            return formatInvoiceDate($date, $format);
         }
     }
 
@@ -216,7 +254,10 @@
         }
     }
 
-    $templateFile = 'pdf.offer-templates.' . $template;
+    // Offer-side doc helpers used by the shared template files.
+    $doc          = $offer;
+    $docKind      = 'offer';
+    $templateFile = 'pdf.templates.' . $template;
 @endphp
 
 @if(isset($preview) && $preview)
@@ -225,26 +266,32 @@
 </div>
 @endif
 
-{{-- ── FOOTER (fixed, direct child of body) ──────────────────────────────── --}}
-@include('pdf.invoice-partials.footer')
+{{-- ── FOOTER: rendered as a DIRECT child of <body> so DomPDF's
+     position:fixed extractor clones it onto every page. If it's
+     nested inside the template's container <div>, DomPDF falls back
+     to flow rendering and only the last page shows the footer. ──── --}}
+@include('pdf.partials.footer')
 
-{{-- ── PAGE NUMBER ─────────────────────────────────────────────────────────── --}}
+{{-- ── INCLUDE SUB-TEMPLATE ─────────────────────────────────────────── --}}
+@includeFirst([$templateFile, 'pdf.templates.minimal'])
+
+{{-- ── PAGE NUMBER: bottom-right corner, small letters. y=height-12pt
+     (~4mm from bottom edge) places it inside the footer's right edge,
+     below the column text on the footer's white background. Matches
+     invoice.blade.php so both render identically. ── --}}
 <script type="text/php">
 if (isset($pdf)) {
     $pdf->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
         $font = $fontMetrics->get_font("DejaVu Sans", "normal");
-        $size = 7;
+        $size = 6.5;
         $text = "Seite {$pageNumber} / {$pageCount}";
         $w    = $fontMetrics->get_text_width($text, $font, $size);
-        $x    = $canvas->get_width() - $w - 20;
-        $y    = $canvas->get_height() - 60; // above the fixed footer on every page
-        $canvas->text($x, $y, $text, $font, $size, [0, 0, 0]);
+        $x    = $canvas->get_width() - $w - 23;
+        $y    = $canvas->get_height() - 12;
+        $canvas->text($x, $y, $text, $font, $size, [0.4, 0.4, 0.4]);
     });
 }
 </script>
-
-{{-- ── INCLUDE SUB-TEMPLATE ────────────────────────────────────────────────── --}}
-@includeFirst([$templateFile, 'pdf.offer-templates.modern'])
 
 </body>
 </html>

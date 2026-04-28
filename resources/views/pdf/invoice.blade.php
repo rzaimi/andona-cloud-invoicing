@@ -16,7 +16,7 @@
                         case 'small': return 11;   //  ~8 pt  — compact layouts
                         case 'large': return 16;   // ~12 pt  — generous readability
                         case 'medium':
-                        default: return 14;        // ~10.5 pt — DIN-compliant default
+                        default: return 13;        //  ~10 pt — DIN-compliant default
                     }
                 }
             }
@@ -38,23 +38,48 @@
                 }
             }
 
-            $bodyFontSize    = getFontSizePx($layoutSettings['fonts']['size'] ?? 'medium');
+            $bodyFontSize    = getFontSizePx($layoutSettings['fonts']['size'] ?? 'small');
             $headingFontSize = $bodyFontSize + 4;
             $titleFontSize   = $bodyFontSize + 8;
             $bodyFont        = $layoutSettings['fonts']['body']    ?? 'DejaVu Sans';
             $headingFont     = $layoutSettings['fonts']['heading']  ?? $bodyFont;
 
             // Determine template early (so we can vary DIN-address rendering per template)
-            $template = is_object($layout) ? ($layout->template ?? 'clean') : ($layout['template'] ?? 'clean');
-            $validTemplates = ['clean', 'modern', 'professional', 'elegant', 'minimal', 'classic'];
-            if (!in_array($template, $validTemplates)) {
-                $template = 'clean';
+            $template = is_object($layout) ? ($layout->template ?? 'minimal') : ($layout['template'] ?? 'minimal');
+            // Three unified themes: minimal, professional, modern.
+            // Legacy template keys map onto the closest survivor.
+            $templateAliases = [
+                'clean'        => 'minimal',
+                'classic'      => 'professional',
+                'elegant'      => 'professional',
+                'creative'     => 'modern',
+            ];
+            if (isset($templateAliases[$template])) {
+                $template = $templateAliases[$template];
+            }
+            $validTemplates = ['minimal', 'professional', 'modern'];
+            if (!in_array($template, $validTemplates, true)) {
+                $template = 'minimal';
             }
         @endphp
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* Minimal stylesheet — only rules that active templates
+           (minimal/modern/professional) actually consume. The legacy
+           class rules (.header, .logo-container, .items-table,
+           .totals, .payment-section, …) were left over from an older
+           template structure; templates now use inline styles so the
+           class rules were dead code. Worse, several of them
+           (float-based .header, position:fixed .preview-notice + body
+           layout interactions) interfered with DomPDF's per-page
+           margin engine and silently dropped @page margin-top on
+           continuation pages. Stripping the dead rules made the
+           strip-test PDF render page 2's top margin correctly. */
+
+        /* Small uniform top/bottom @page margin (5mm ≈ 20px) on every
+           page. Horizontal insets are 0 here — templates apply their
+           own 20mm inline left/right padding so content lands at the
+           DIN 5008 address-window x-coordinate (20mm from page edge). */
+        @page {
+            margin: 5mm 0;
         }
 
         body {
@@ -63,222 +88,13 @@
             line-height: 1.4;
             color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
             background: white;
-            padding-bottom: 22mm; /* Buffer so content stops before the fixed footer */
+            /* margin-bottom reserves space for the fixed 5-column
+               footer block (~25mm) plus buffer so body content
+               never bleeds into the footer area. */
+            margin-bottom: 35mm;
         }
 
-        /* DIN 5008 compliant address block for German envelope windows */
-        /* Standard: Address window 45mm from top, 20mm from left, 85mm × 45mm */
-        .din-5008-address {
-            width: 85mm; /* 8.5cm max width - DIN 5008 standard */
-            min-height: 40mm; /* Minimum height for address block */
-            max-height: 45mm; /* 4.5cm max height - DIN 5008 standard */
-            font-size: {{ $bodyFontSize }}px;
-            line-height: 1.3;
-            color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-            page-break-inside: avoid;
-            margin-bottom: 10mm;
-        }
-
-        /* Company return address (small text above recipient) - DIN 5008 */
-        .sender-return-address {
-            font-size: 7pt;
-            line-height: 1.2;
-            color: #6b7280;
-            border-bottom: 1px solid #d1d5db;
-            padding-bottom: 1mm;
-            margin-bottom: 2mm;
-        }
-
-        /* Regular address block (for display in document, not envelope window) */
-        .address-block {
-            margin-bottom: 20px;
-        }
-
-        .container {
-            max-width: 210mm;
-            margin: 0 auto;
-            /* Bottom padding should NOT also reserve footer space (that's handled by @page margin-bottom). */
-            padding: {{ min($layoutSettings['layout']['margin_top'] ?? 15, 20) }}mm {{ min($layoutSettings['layout']['margin_right'] ?? 20, 25) }}mm {{ min($layoutSettings['layout']['margin_bottom'] ?? 20, 25) }}mm {{ min($layoutSettings['layout']['margin_left'] ?? 20, 25) }}mm;
-            position: relative;
-        }
-
-        .header {
-            width: 100%;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .company-header-line {
-            font-size: {{ $bodyFontSize }}px;
-            color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};
-            margin-bottom: 20px;
-            float: left;
-            width: 70%;
-        }
-
-        .company-header-line .company-name {
-            font-weight: bold;
-            color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};
-        }
-
-        .logo-container {
-            width: 120px;
-            height: 60px;
-            background-color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};
-            float: right;
-            text-align: center;
-            vertical-align: middle;
-            color: white;
-            font-size: {{ $bodyFontSize - 2 }}px;
-            padding: 8px;
-            line-height: 44px;
-            box-sizing: border-box;
-        }
-
-        .logo-container img {
-            max-width: 104px;
-            max-height: 44px;
-            vertical-align: middle;
-        }
-
-        .invoice-number {
-            font-size: {{ $headingFontSize + 4 }}px;
-            font-weight: bold;
-            margin: 25px 0 15px 0;
-            color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-        }
-
-        .intro-text {
-            margin-bottom: 25px;
-            line-height: 1.6;
-            color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-        }
-
-        .customer-block {
-            margin-bottom: 30px;
-        }
-
-        .customer-block strong {
-            font-size: {{ $bodyFontSize }}px;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .customer-block .contact-person {
-            margin-bottom: 5px;
-        }
-
-        .invoice-meta-row {
-            width: 100%;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .meta-item {
-            float: left;
-            margin-right: 40px;
-            margin-bottom: 10px;
-        }
-
-        .meta-label {
-            font-size: {{ $bodyFontSize - 1 }}px;
-            color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }};
-            margin-bottom: 3px;
-        }
-
-        .meta-value {
-            font-weight: bold;
-            font-size: {{ $bodyFontSize }}px;
-        }
-
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 25px 0;
-            border-top: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-            border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-        }
-
-        .items-table th {
-            padding: 10px 8px;
-            text-align: left;
-            font-weight: bold;
-            font-size: {{ $bodyFontSize }}px;
-            border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-            color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-        }
-
-        .items-table td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: {{ $bodyFontSize }}px;
-        }
-
-        .items-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .totals {
-            margin-top: 30px;
-            float: right;
-            width: 300px;
-        }
-
-        .totals-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .totals-table td {
-            padding: 8px 0;
-            text-align: right;
-        }
-
-        .totals-table td:first-child {
-            text-align: left;
-        }
-
-        .totals-table tr {
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .totals-table .total-row {
-            border-top: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-            border-bottom: 1px solid {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
-            font-weight: bold;
-            font-size: {{ $bodyFontSize + 1 }}px;
-            padding-top: 5px;
-            padding-bottom: 5px;
-        }
-
-        .payment-section {
-            clear: both;
-            margin-top: 40px;
-        }
-
-        .payment-terms {
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .greeting {
-            margin-bottom: 15px;
-        }
-
-        .signature {
-            font-size: {{ $headingFontSize }}px;
-            font-style: italic;
-            color: {{ $layoutSettings['colors']['primary'] ?? '#3b82f6' }};
-            margin-top: 40px;
-        }
+        .container { }
 
         .pdf-footer {
             position: fixed;
@@ -292,53 +108,7 @@
             color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }};
             background-color: white;
             z-index: 1000;
-            height: auto;
         }
-
-        /* Page margins:
-           - Keep page 1 as-is (so DIN address window stays correct)
-           - Add some top margin on following pages so content doesn't start too high */
-        @page {
-            margin-top: 25mm;
-            margin-bottom: 50mm; /* Reserve space for fixed footer */
-        }
-        @page :first {
-            margin-top: 0mm;
-        }
-
-        .footer-columns {
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .footer-column {
-            float: left;
-            width: 32%;
-            margin-right: 2%;
-            line-height: 1.5;
-        }
-
-        .footer-column:last-child {
-            margin-right: 0;
-        }
-
-        .clearfix {
-            clear: both;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            font-size: {{ $bodyFontSize - 1 }}px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .status-draft { background-color: #fef3c7; color: #92400e; }
-        .status-sent { background-color: #dbeafe; color: #1e40af; }
-        .status-paid { background-color: #d1fae5; color: #065f46; }
-        .status-overdue { background-color: #fee2e2; color: #991b1b; }
-        .status-cancelled { background-color: #f3f4f6; color: #374151; }
 
         @if(isset($preview) && $preview)
         .preview-notice {
@@ -354,8 +124,6 @@
             z-index: 1000;
         }
         @endif
-
-        /* @page margin-bottom already defined above */
     </style>
 </head>
 <body>
@@ -439,7 +207,14 @@
 
 @endphp
 
-    {{-- Footer moved to individual templates for variety --}}
+    {{-- Footer must be a DIRECT child of <body> for DomPDF's
+         position:fixed extractor to clone it onto every page.
+         If it's nested inside the template's container <div>, DomPDF
+         falls back to flow rendering and only the LAST page shows
+         the footer (issue reproduced repeatedly during DIN 5008 work).
+         Render it here, BEFORE the template include — DomPDF will
+         strip the position:fixed element and apply it on every page. --}}
+    @include('pdf.partials.footer')
 
 @php
     // Ensure settings are accessible (keep behavior, but do not recompute $template here)
@@ -453,7 +228,10 @@
         }
     }
 
-    $templateFile = 'pdf.invoice-templates.' . ($template ?? 'clean');
+    // Invoice-side doc helpers used by the shared template files.
+    $doc          = $invoice;
+    $docKind      = 'invoice';
+    $templateFile = 'pdf.templates.' . ($template ?? 'minimal');
 @endphp
 
 {{-- Debug indicator in preview mode --}}
@@ -464,21 +242,23 @@
 @endif
 
 {{-- Include the specific template file based on layout->template --}}
-@includeFirst([$templateFile, 'pdf.invoice-templates.clean'])
+@includeFirst([$templateFile, 'pdf.templates.minimal'])
 
-{{-- Page number script (at end of document for all pages) --}}
+{{-- Page number: bottom-right corner of every page in small
+     letters. page_script fires once per page, so this draws on
+     EVERY page automatically. y = height - 12pt (≈4mm from
+     bottom edge) places it inside the footer's right edge — below
+     the column text, on the footer's white background. --}}
 <script type="text/php">
 if (isset($pdf)) {
     $pdf->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
         $font = $fontMetrics->get_font("DejaVu Sans", "normal");
-        $size = 7;
+        $size = 6.5;
         $text = "Seite {$pageNumber} / {$pageCount}";
-        $w = $fontMetrics->get_text_width($text, $font, $size);
-        // Place page number above the fixed footer (~42pt tall at bottom:0)
-        // 80pt ≈ 28mm from physical page bottom — safely above the footer
-        $x = $canvas->get_width() - $w - 20;
-        $y = $canvas->get_height() - 80;
-        $canvas->text($x, $y, $text, $font, $size, [0, 0, 0]);
+        $w    = $fontMetrics->get_text_width($text, $font, $size);
+        $x = $canvas->get_width() - $w - 23;
+        $y = $canvas->get_height() - 12;
+        $canvas->text($x, $y, $text, $font, $size, [0.4, 0.4, 0.4]);
     });
 }
 </script>

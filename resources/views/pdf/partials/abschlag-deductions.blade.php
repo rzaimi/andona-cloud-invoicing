@@ -1,12 +1,19 @@
 {{--
-    Abschlag deduction rows for Schlussrechnung.
+    Abschlag deduction rows for Schlussrechnung (invoice-only).
     Rendered inside the totals table after the grand-total row.
-    Required scope: $invoice, $bodyFontSize, $layoutSettings
+    Safely no-ops when called from an offer context.
+    Required scope: $invoice (optional), $bodyFontSize, $layoutSettings
     Only outputs rows when:
+      - $invoice is in scope (i.e. we're rendering an invoice, not an offer)
       - invoice_type === 'schlussrechnung'
       - abschlag_refs is a non-empty array
 --}}
 @php
+    // Invoice-only feature — bail silently on offer PDFs.
+    if (!isset($invoice)) {
+        return;
+    }
+
     $refs = collect($invoice->abschlag_refs ?? [])
         ->filter(fn ($r) => !empty($r['invoice_id']) && isset($r['amount']));
 

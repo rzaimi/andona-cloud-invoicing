@@ -708,7 +708,7 @@ class InvoiceController extends Controller
                     'fonts' => [
                         'heading' => 'DejaVu Sans',
                         'body' => 'DejaVu Sans',
-                        'size' => 'medium',
+                        'size' => 'small',
                     ],
                     'layout' => [
                         'margin_top' => 20,
@@ -735,7 +735,6 @@ class InvoiceController extends Controller
                         'show_notes' => true,
                         'show_bank_details' => true,
                         'show_company_registration' => true,
-                        'show_payment_terms' => true,
                         'show_item_images' => false,
                         'show_item_codes' => false,
                         'show_tax_breakdown' => false,
@@ -763,14 +762,14 @@ class InvoiceController extends Controller
             ->setPaper('a4')
             ->setOptions([
                 'defaultFont' => 'DejaVu Sans',
-                // SECURITY: disable remote fetch (SSRF), local file reads, and
-                // embedded PHP evaluation (RCE). Logos are inlined as base64
-                // data-URIs in the Blade templates so no remote/local access
-                // is needed. JS is already disabled.
+                // SECURITY: remote fetch (SSRF) and local-file reads are
+                // disabled. PHP is enabled only for the page_script block
+                // in pdf/invoice.blade.php (page numbering) — those templates
+                // are server-controlled Blade files, not user input.
                 'isRemoteEnabled' => false,
                 'isHtml5ParserEnabled' => true,
                 'enable-local-file-access' => false,
-                'isPhpEnabled' => false,
+                'isPhpEnabled' => true,
                 'dpi' => 96,
             ]);
 
@@ -791,7 +790,7 @@ class InvoiceController extends Controller
                 $layout->settings = [];
             }
             if (! $layout->template) {
-                $layout->template = 'clean';
+                $layout->template = 'minimal';
             }
         } else {
             $layout = InvoiceLayout::forCompany($invoice->company_id)
@@ -804,7 +803,7 @@ class InvoiceController extends Controller
                     $layout->settings = [];
                 }
                 if (! $layout->template) {
-                    $layout->template = 'clean';
+                    $layout->template = 'minimal';
                 }
             }
         }
@@ -812,7 +811,7 @@ class InvoiceController extends Controller
         // If no layout exists, create a minimal default layout
         if (! $layout) {
             $layout = (object) [
-                'template' => 'clean',
+                'template' => 'minimal',
                 'settings' => [
                     'colors' => [
                         'primary' => '#3b82f6',
@@ -823,7 +822,7 @@ class InvoiceController extends Controller
                     'fonts' => [
                         'heading' => 'DejaVu Sans',
                         'body' => 'DejaVu Sans',
-                        'size' => 'medium',
+                        'size' => 'small',
                     ],
                     'layout' => [
                         'margin_top' => 20,
@@ -914,13 +913,13 @@ class InvoiceController extends Controller
                 $layout->settings = [];
             }
             if (! $layout->template) {
-                $layout->template = 'clean';
+                $layout->template = 'minimal';
             }
         }
 
         if (! $layout) {
             $layout = (object) [
-                'template' => 'clean',
+                'template' => 'minimal',
                 'settings' => [
                     'colors' => [
                         'primary' => '#3B82F6',
@@ -930,7 +929,7 @@ class InvoiceController extends Controller
                     'fonts' => [
                         'heading' => 'DejaVu Sans',
                         'body' => 'DejaVu Sans',
-                        'size' => 'medium',
+                        'size' => 'small',
                     ],
                     'layout' => [
                         'margin_top' => 20,
@@ -982,12 +981,13 @@ class InvoiceController extends Controller
             ->setPaper('a4')
             ->setOptions([
                 'defaultFont' => 'DejaVu Sans',
-                // SECURITY: see pdf() above — no remote/local/PHP/JS access needed.
+                // PHP enabled for page_script (page numbering); remote/local
+                // file access remains disabled for SSRF/LFI prevention.
                 'isRemoteEnabled' => false,
                 'isHtml5ParserEnabled' => true,
                 'enable-local-file-access' => false,
                 'enable-javascript' => false,
-                'isPhpEnabled' => false,
+                'isPhpEnabled' => true,
                 'dpi' => 96,
             ]);
     }

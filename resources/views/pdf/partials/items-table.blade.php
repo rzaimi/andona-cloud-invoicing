@@ -1,15 +1,19 @@
 {{--
-    Invoice items table — shared across all templates.
-    Required scope: $invoice, $layoutSettings, $bodyFontSize
-    Optional:       $tableHeaderBg        (background color for <thead> row)
-                    $tableHeaderTextColor (text color for <thead> row, default white)
-                    $tableHeaderStyle     (extra inline CSS on the header <tr>)
-                    $tableOuterBorder     (outer border style, e.g. "1px solid #1f2937")
-                    $altRowBg             (alternate row background color)
-                    $cellPadding          (padding for td/th, default "8px 6px")
-                    $showRowNumber        (bool, show a leading Pos. column — classic template)
+    Shared items table — works for both invoices and offers.
+    Callers set $invoice or $offer in scope; the partial coerces to a generic
+    $doc. Pass $docKind explicitly if you need different branching.
+
+    Required: $invoice OR $offer in scope, $layoutSettings, $bodyFontSize.
+    Optional: $tableHeaderBg / $tableHeaderTextColor / $tableHeaderStyle /
+              $tableOuterBorder / $altRowBg / $cellPadding / $showRowNumber /
+              $inlineRowNumber (prefix "1." to the description cell instead
+              of rendering a dedicated NR column — typewriter-style layouts).
 --}}
 @php
+    $doc     = $doc     ?? ($invoice ?? null) ?? ($offer ?? null);
+    $docKind = $docKind ?? (isset($invoice) ? 'invoice' : 'offer');
+
+    $inlineRowNumber      = $inlineRowNumber ?? false;
     $tableHeaderBg        = $tableHeaderBg        ?? null;
     $tableHeaderTextColor = $tableHeaderTextColor  ?? 'white';
     $tableHeaderStyle     = $tableHeaderStyle      ?? '';
@@ -21,9 +25,9 @@
     $showBorderColor      = $layoutSettings['colors']['text'] ?? '#1f2937';
     // Show USt. column only for standard VAT invoices. For §19, §13b,
     // intra-community and export regimes the tax column must stay hidden.
-    $showUstColumn        = ($invoice->vat_regime ?? 'standard') === 'standard';
+    $showUstColumn        = ($doc->vat_regime ?? 'standard') === 'standard';
 
-    $hasAnyDiscount = $invoice->items->contains(
+    $hasAnyDiscount = $doc->items->contains(
         fn($item) => (float)($item->discount_amount ?? 0) > 0.0001
     );
 
@@ -46,10 +50,10 @@
         : "border-bottom: 2px solid {$showBorderColor};";
     $headerBgStyle .= ' ' . $tableHeaderStyle;
 @endphp
-<table style="width: 100%; border-collapse: collapse; margin: 10px 0; {{ $tableOuterBorder !== 'none' ? 'border: ' . $tableOuterBorder . ';' : '' }}">
+<table style="width: 100%; border-collapse: collapse; margin: 0 0 10px 0; {{ $tableOuterBorder !== 'none' ? 'border: ' . $tableOuterBorder . ';' : '' }}">
     <thead>
         <tr style="{{ $headerBgStyle }}">
-            @if($showRowNumber)
+            @if($showRowNumber && !$inlineRowNumber)
                 <th style="padding: {{ $cellPadding }}; text-align: left; font-weight: 600; font-size: {{ $bodyFontSize }}px; border-right: 1px solid {{ $tableHeaderBg ? 'rgba(255,255,255,0.3)' : $showBorderColor }}; width: {{ $colPos }};">NR.</th>
             @endif
             @if($showItemCodes)
@@ -68,7 +72,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach($invoice->items as $index => $item)
+        @foreach($doc->items as $index => $item)
             @php
                 $discountAmount = (float)($item->discount_amount ?? 0);
                 $hasDiscount    = $discountAmount > 0.0001;
@@ -87,14 +91,14 @@
                     : '';
             @endphp
             <tr style="{{ $borderStyle }} {{ $rowBg }}">
-                @if($showRowNumber)
+                @if($showRowNumber && !$inlineRowNumber)
                     <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">{{ $index + 1 }}</td>
                 @endif
                 @if($showItemCodes)
                     <td style="padding: {{ $cellPadding }}; white-space: nowrap; {{ $cellBorder }}">{{ $productCode ?: '-' }}</td>
                 @endif
                 <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
-                    <div style="white-space:pre-wrap;">{!! nl2br(e($item->description)) !!}</div>
+                    <div style="white-space:pre-wrap;">{{ $inlineRowNumber ? ($index + 1) . '. ' : '' }}{!! nl2br(e($item->description)) !!}</div>
                 </td>
                 <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
                     {{ number_format($item->quantity, 2, ',', '.') }}
@@ -106,7 +110,7 @@
                 </td>
                 @if($showUstColumn)
                 <td style="padding: {{ $cellPadding }}; text-align: right; {{ $cellBorder }}">
-                    {{ number_format(($item->tax_rate ?? $invoice->tax_rate ?? 0) * 100, 0, ',', '.') }}%
+                    {{ number_format(($item->tax_rate ?? $doc->tax_rate ?? 0) * 100, 0, ',', '.') }}%
                 </td>
                 @endif
                 <td style="padding: {{ $cellPadding }}; text-align: right; white-space: nowrap; {{ $cellBorder }}">

@@ -245,13 +245,14 @@ class InitializeCompanyData extends Command
         }
 
         $settings  = $this->defaultLayoutSettings();
+        // Seed the three unified themes. Legacy template keys (professional,
+        // elegant, clean, creative) still alias to these at render time for
+        // compatibility with older layout rows, but we don't create new rows
+        // with those values.
         $templates = [
-            ['name' => 'Standard Rechnung',    'template' => 'modern',       'is_default' => true],
-            ['name' => 'Klassische Rechnung',   'template' => 'classic',      'is_default' => false],
-            ['name' => 'Minimale Rechnung',     'template' => 'minimal',      'is_default' => false],
-            ['name' => 'Professionell',         'template' => 'professional', 'is_default' => false],
-            ['name' => 'Elegant',               'template' => 'elegant',      'is_default' => false],
-            ['name' => 'Clean',                 'template' => 'clean',        'is_default' => false],
+            ['name' => 'Standard Rechnung',     'template' => 'modern',   'is_default' => true],
+            ['name' => 'Klassische Rechnung',   'template' => 'classic',  'is_default' => false],
+            ['name' => 'Minimale Rechnung',     'template' => 'minimal',  'is_default' => false],
         ];
 
         foreach ($templates as $t) {
@@ -280,12 +281,9 @@ class InitializeCompanyData extends Command
 
         $settings  = $this->defaultLayoutSettings();
         $templates = [
-            ['name' => 'Standard Angebot',        'template' => 'modern',       'is_default' => true],
-            ['name' => 'Klassisches Angebot',      'template' => 'classic',      'is_default' => false],
-            ['name' => 'Minimales Angebot',        'template' => 'minimal',      'is_default' => false],
-            ['name' => 'Professionelles Angebot',  'template' => 'professional', 'is_default' => false],
-            ['name' => 'Elegantes Angebot',        'template' => 'elegant',      'is_default' => false],
-            ['name' => 'Clean Angebot',            'template' => 'clean',        'is_default' => false],
+            ['name' => 'Standard Angebot',      'template' => 'modern',   'is_default' => true],
+            ['name' => 'Klassisches Angebot',   'template' => 'classic',  'is_default' => false],
+            ['name' => 'Minimales Angebot',     'template' => 'minimal',  'is_default' => false],
         ];
 
         foreach ($templates as $t) {

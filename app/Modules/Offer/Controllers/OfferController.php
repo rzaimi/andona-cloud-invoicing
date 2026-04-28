@@ -557,12 +557,12 @@ class OfferController extends Controller
             ->setPaper('a4')
             ->setOptions([
                 'defaultFont'              => 'DejaVu Sans',
-                // SECURITY: no remote fetch / local-file read / PHP eval —
-                // logos are base64-inlined in the Blade templates.
+                // PHP enabled for page_script (page numbering). Remote/local
+                // file access stays disabled; logos are base64-inlined.
                 'isRemoteEnabled'          => false,
                 'isHtml5ParserEnabled'     => true,
                 'enable-local-file-access' => false,
-                'isPhpEnabled'             => false,
+                'isPhpEnabled'             => true,
                 'dpi'                      => 96,
             ]);
 
@@ -682,7 +682,7 @@ class OfferController extends Controller
                     'fonts' => [
                         'heading' => 'DejaVu Sans',
                         'body' => 'DejaVu Sans',
-                        'size' => 'medium',
+                        'size' => 'small',
                     ],
                     'layout' => [
                         'margin_top' => 20,

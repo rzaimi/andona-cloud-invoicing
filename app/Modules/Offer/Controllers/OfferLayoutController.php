@@ -26,61 +26,35 @@ class OfferLayoutController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Three unified themes: minimal, professional, modern.
         $templates = [
-            [
-                'id' => 'modern',
-                'name' => 'Modern',
-                'description' => 'Modernes, sauberes Design mit klaren Linien und großzügigen Weißräumen',
-                'preview_image' => '/images/templates/modern.png',
-                'features' => ['Minimalistisch', 'Professionell', 'Responsive'],
-                'colors' => ['#2563eb', '#64748b', '#0ea5e9', '#1e293b'],
-                'fonts' => ['Inter', 'Roboto']
-            ],
-            [
-                'id' => 'classic',
-                'name' => 'Klassisch',
-                'description' => 'Traditionelles Layout für professionelle Dokumente mit bewährter Struktur',
-                'preview_image' => '/images/templates/classic.png',
-                'features' => ['Traditionell', 'Bewährt', 'Seriös'],
-                'colors' => ['#1f2937', '#6b7280', '#374151', '#111827'],
-                'fonts' => ['Times New Roman', 'Georgia']
-            ],
             [
                 'id' => 'minimal',
                 'name' => 'Minimal',
-                'description' => 'Minimalistisches Design mit Fokus auf Inhalt und Lesbarkeit',
+                'description' => 'Ultra-aufgeräumt mit viel Weißraum und schlichter Typografie — ideal für moderne Dienstleister',
                 'preview_image' => '/images/templates/minimal.png',
-                'features' => ['Schlicht', 'Übersichtlich', 'Fokussiert'],
-                'colors' => ['#000000', '#666666', '#999999', '#333333'],
-                'fonts' => ['Helvetica', 'Arial']
+                'features' => ['Schlicht', 'Übersichtlich', 'Modern'],
+                'colors' => ['#111111', '#888888', '#dedede', '#1c1033'],
+                'fonts' => ['Inter', 'Roboto'],
             ],
             [
                 'id' => 'professional',
                 'name' => 'Professionell',
-                'description' => 'Geschäftliches Layout für Unternehmen mit Corporate Design',
+                'description' => 'Navy-Titelbalken, Infopanel-Raster und Zahlungsboxen — repräsentativ und strukturiert',
                 'preview_image' => '/images/templates/professional.png',
-                'features' => ['Corporate', 'Strukturiert', 'Vertrauenswürdig'],
-                'colors' => ['#1e40af', '#3b82f6', '#60a5fa', '#1e293b'],
-                'fonts' => ['Open Sans', 'Lato']
+                'features' => ['Professionell', 'Strukturiert', 'Repräsentativ'],
+                'colors' => ['#0d2240', '#64748b', '#f7f9fc', '#1e293b'],
+                'fonts' => ['DejaVu Sans', 'Inter'],
             ],
             [
-                'id' => 'creative',
-                'name' => 'Kreativ',
-                'description' => 'Kreatives Design für moderne Unternehmen mit frischen Akzenten',
-                'preview_image' => '/images/templates/creative.png',
-                'features' => ['Modern', 'Auffällig', 'Innovativ'],
-                'colors' => ['#7c3aed', '#a855f7', '#c084fc', '#1f2937'],
-                'fonts' => ['Montserrat', 'Poppins']
+                'id' => 'modern',
+                'name' => 'Modern',
+                'description' => 'Farbige Seitenleiste und Info-Band — präsent und auffällig',
+                'preview_image' => '/images/templates/modern.png',
+                'features' => ['Modern', 'Auffällig', 'Farbstark'],
+                'colors' => ['#2563eb', '#475569', '#94a3b8', '#0f172a'],
+                'fonts' => ['Inter', 'Open Sans'],
             ],
-            [
-                'id' => 'elegant',
-                'name' => 'Elegant',
-                'description' => 'Elegantes Design mit raffinierten Details und hochwertiger Anmutung',
-                'preview_image' => '/images/templates/elegant.png',
-                'features' => ['Raffiniert', 'Hochwertig', 'Stilvoll'],
-                'colors' => ['#059669', '#10b981', '#34d399', '#1f2937'],
-                'fonts' => ['Playfair Display', 'Source Sans Pro']
-            ]
         ];
 
         $company = Company::find($companyId);
@@ -372,11 +346,12 @@ class OfferLayoutController extends Controller
             ->setPaper('a4')
             ->setOptions([
                 'defaultFont'              => 'DejaVu Sans',
-                // SECURITY: see InvoiceController::pdf — same hardening.
+                // PHP enabled for page_script (page numbering in preview).
+                // Remote and local file access remain disabled.
                 'isRemoteEnabled'          => false,
                 'isHtml5ParserEnabled'     => true,
                 'enable-local-file-access' => false,
-                'isPhpEnabled'             => false,
+                'isPhpEnabled'             => true,
             ]);
 
         return response($pdf->output(), 200, [

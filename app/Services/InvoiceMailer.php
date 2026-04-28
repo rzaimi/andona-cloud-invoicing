@@ -144,10 +144,10 @@ class InvoiceMailer
 
         if ($layout) {
             $layout->settings = $layout->settings ?: [];
-            $layout->template = $layout->template ?: 'clean';
+            $layout->template = $layout->template ?: 'minimal';
         } else {
             $layout = (object) [
-                'template' => 'clean',
+                'template' => 'minimal',
                 'settings' => [
                     'colors' => [
                         'primary' => '#3B82F6',
@@ -212,7 +212,7 @@ class InvoiceMailer
                 'isHtml5ParserEnabled' => true,
                 'enable-local-file-access' => false,
                 'enable-javascript' => false,
-                'isPhpEnabled' => false,
+                'isPhpEnabled' => true,
                 'dpi' => 96,
             ]);
     }

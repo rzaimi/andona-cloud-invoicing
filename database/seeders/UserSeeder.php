@@ -22,10 +22,10 @@ class UserSeeder extends Seeder
         $firstCompany = Company::query()->first();
         if ($firstCompany) {
             $super = User::firstOrCreate(
-                ['email' => 'superadmin@example.com'],
+                ['email' => 'admin@andona.de'],
                 [
                     'name' => 'Super Admin',
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make('10000Vab20000!'),
                     'company_id' => $firstCompany->id,
                     // DB role column only supports 'admin'|'user', use 'admin' and grant Spatie role 'super_admin'
                     'role' => 'admin',
