@@ -1443,9 +1443,9 @@ class InvoiceController extends Controller
             $next->bauvorhaben     = $invoice->bauvorhaben;
             $next->auftragsnummer  = $invoice->auftragsnummer;
 
-            // Build the full deduction chain:
-            // inherit all refs the source invoice already has, then append the
-            // source invoice itself.  This means:
+            // Build the full deduction chain and refresh amounts from the DB so
+            // that any edits made to prior Abschlags after chain creation are
+            // reflected correctly:
             //   Abschlag #1 (no refs) → create #2 → refs = [#1]
             //   Abschlag #2 (refs [#1]) → create #3 → refs = [#1, #2]
             //   Abschlag #3 (refs [#1,#2]) → create #4 → refs = [#1, #2, #3]
@@ -1453,6 +1453,17 @@ class InvoiceController extends Controller
                 ->filter(fn ($r) => !empty($r['invoice_id']))
                 ->values()
                 ->toArray();
+
+            // Refresh amounts for all inherited refs from their live invoice records
+            $inheritedRefIds = array_column($inheritedRefs, 'invoice_id');
+            $liveAmounts = Invoice::whereIn('id', $inheritedRefIds)
+                ->pluck('total', 'id');
+            foreach ($inheritedRefs as &$ref) {
+                if (isset($liveAmounts[$ref['invoice_id']])) {
+                    $ref['amount'] = (float) $liveAmounts[$ref['invoice_id']];
+                }
+            }
+            unset($ref);
 
             $next->abschlag_refs = array_merge($inheritedRefs, [[
                 'invoice_id' => $invoice->id,
@@ -1464,7 +1475,9 @@ class InvoiceController extends Controller
             $next->number = $this->generateTypedNumber('abschlagsrechnung', $invoice->company);
             $next->save();
 
-            // Copy all line items so the user has a starting point to edit
+            // Copy all positions from the source invoice — the user then adds the
+            // new work items on top (cumulative VOB model: each Abschlag includes
+            // all prior positions + new ones, so the total grows with each phase).
             foreach ($invoice->items as $item) {
                 InvoiceItem::create([
                     'invoice_id'     => $next->id,
@@ -1487,7 +1500,7 @@ class InvoiceController extends Controller
             DB::commit();
 
             return redirect()->route('invoices.edit', $next->id)
-                ->with('success', "Abschlag {$next->sequence_number} wurde erstellt. Bitte Positionen anpassen und speichern.");
+                ->with('success', "Abschlag {$next->sequence_number} wurde erstellt. Positionen aus Abschlag {$invoice->sequence_number} wurden übernommen – bitte neue Leistungen ergänzen und speichern.");
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -1542,11 +1555,22 @@ class InvoiceController extends Controller
             $schluss->bauvorhaben     = $invoice->bauvorhaben;
             $schluss->auftragsnummer  = $invoice->auftragsnummer;
 
-            // Full deduction chain: all refs the source already carries + the source itself
+            // Full deduction chain: all refs the source already carries + the source itself.
+            // Refresh inherited amounts from live invoice totals.
             $inheritedRefs = collect($invoice->abschlag_refs ?? [])
                 ->filter(fn ($r) => !empty($r['invoice_id']))
                 ->values()
                 ->toArray();
+
+            $inheritedRefIds = array_column($inheritedRefs, 'invoice_id');
+            $liveAmounts = Invoice::whereIn('id', $inheritedRefIds)
+                ->pluck('total', 'id');
+            foreach ($inheritedRefs as &$ref) {
+                if (isset($liveAmounts[$ref['invoice_id']])) {
+                    $ref['amount'] = (float) $liveAmounts[$ref['invoice_id']];
+                }
+            }
+            unset($ref);
 
             $schluss->abschlag_refs = array_merge($inheritedRefs, [[
                 'invoice_id' => $invoice->id,
@@ -1558,7 +1582,9 @@ class InvoiceController extends Controller
             $schluss->number = $this->generateTypedNumber('schlussrechnung', $invoice->company);
             $schluss->save();
 
-            // Copy line items as a starting point — user adds remaining project positions
+            // Copy all positions from the last Abschlag — these already represent the
+            // full cumulative work to date.  The user adds any remaining project
+            // positions on the edit page before finalising.
             foreach ($invoice->items as $item) {
                 InvoiceItem::create([
                     'invoice_id'     => $schluss->id,
@@ -1582,7 +1608,7 @@ class InvoiceController extends Controller
 
             $abschlagCount = count($schluss->abschlag_refs);
             return redirect()->route('invoices.edit', $schluss->id)
-                ->with('success', "Schlussrechnung erstellt mit {$abschlagCount} verknüpften Abschlag(en). Bitte alle Projektpositionen ergänzen und speichern.");
+                ->with('success', "Schlussrechnung erstellt – {$abschlagCount} Abschlag(e) als Abzüge eingetragen. Positionen aus dem letzten Abschlag wurden übernommen – bitte fehlende Projektpositionen ergänzen und speichern.");
 
         } catch (\Throwable $e) {
             DB::rollBack();

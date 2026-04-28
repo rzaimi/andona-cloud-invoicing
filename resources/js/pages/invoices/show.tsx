@@ -137,7 +137,7 @@ export default function InvoicesShow() {
     const [isCreatingNextAbschlag, setIsCreatingNextAbschlag] = useState(false)
     const handleCreateNextAbschlag = () => {
         const nextSeq = ((invoice as any).sequence_number ?? 1) + 1
-        if (!confirm(`Nächsten Abschlag (Abschlag ${nextSeq}) auf Basis von ${invoice.number} erstellen?\n\nDie Positionen werden übernommen und können anschließend angepasst werden.`)) return
+        if (!confirm(`Nächsten Abschlag (Abschlag ${nextSeq}) auf Basis von ${invoice.number} erstellen?\n\nAlle Positionen werden übernommen – bitte neue Leistungen ergänzen. ${invoice.number} wird automatisch als Abzug eingetragen.`)) return
         setIsCreatingNextAbschlag(true)
         router.post(
             route("invoices.create-next-abschlag", invoice.id),
