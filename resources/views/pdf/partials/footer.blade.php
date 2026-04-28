@@ -28,10 +28,6 @@
                         {{ $snapshot['name'] }}
                     </div>
                 @endif
-                {{-- Rechtsform (Pflichtangabe HGB §37a / GmbHG §35a) --}}
-                @if($snapshot['legal_form_label'] ?? null)
-                    <div>{{ $snapshot['legal_form_label'] }}</div>
-                @endif
                 @if($snapshot['address'] ?? null)
                     <div>{{ $snapshot['address'] }}</div>
                 @endif
