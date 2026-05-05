@@ -141,7 +141,12 @@
 
 {{-- Salutation --}}
 @if($ls['content']['show_salutation'] ?? true)
-@if($doc->salutation ?? null)
+@if($docKind === 'offer')
+<div style="margin-top:5mm; font-size:{{ $fs }}px; line-height:1.7;">
+    Sehr geehrte Damen und Herren,<br>
+    vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:
+</div>
+@elseif($doc->salutation ?? null)
 <div style="margin-top:5mm; font-size:{{ $fs }}px; line-height:1.7;">{!! nl2br(e($doc->salutation)) !!}</div>
 @endif
 @endif

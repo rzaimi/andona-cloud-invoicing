@@ -50,7 +50,7 @@
         : "border-bottom: 2px solid {$showBorderColor};";
     $headerBgStyle .= ' ' . $tableHeaderStyle;
 @endphp
-<table style="width: 100%; border-collapse: collapse; margin: 0 0 10px 0; {{ $tableOuterBorder !== 'none' ? 'border: ' . $tableOuterBorder . ';' : '' }}">
+<table style="width: 100%; border-collapse: collapse; margin: 0 0 10px 0; page-break-inside: auto; {{ $tableOuterBorder !== 'none' ? 'border: ' . $tableOuterBorder . ';' : '' }}">
     <thead>
         <tr style="{{ $headerBgStyle }}">
             @if($showRowNumber && !$inlineRowNumber)
@@ -97,12 +97,12 @@
                 @if($showItemCodes)
                     <td style="padding: {{ $cellPadding }}; white-space: nowrap; {{ $cellBorder }}">{{ $productCode ?: '-' }}</td>
                 @endif
-                <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
+                <td style="padding: {{ $cellPadding }}; page-break-inside: auto; {{ $cellBorder }}">
                     {{-- nl2br() converts \n to <br>, so don't also use
                          white-space: pre-wrap — that would honour the
                          literal \n a second time, producing visibly
                          double line-spacing on multi-line descriptions. --}}
-                    <div>{{ $inlineRowNumber ? ($index + 1) . '. ' : '' }}{!! nl2br(e($item->description)) !!}</div>
+                    <div style="page-break-inside: auto;">{{ $inlineRowNumber ? ($index + 1) . '. ' : '' }}{!! nl2br(e($item->description)) !!}</div>
                 </td>
                 <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
                     {{ number_format($item->quantity, 2, ',', '.') }}

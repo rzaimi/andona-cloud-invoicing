@@ -77,7 +77,7 @@
                     <div>BIC: {{ $snapshot['bank_bic'] }}</div>
                 @endif
                 @if($snapshot['bank_iban'] ?? null)
-                    <div style="word-break:break-all;">IBAN: {{ $snapshot['bank_iban'] }}</div>
+                    <div style="white-space:nowrap; overflow:hidden; font-size:7pt;">IBAN: {{ $snapshot['bank_iban'] }}</div>
                 @endif
             </td>
             @endif

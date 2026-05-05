@@ -44,10 +44,14 @@ interface OfferLayoutSettings {
         margin_bottom: number
         margin_left: number
         margin_right: number
+        header_height?: number
+        footer_height?: number
     }
     branding: {
         logo_position: string
         logo_size: string
+        show_logo?: boolean
+        company_info_position?: string
     }
     content: {
         show_company_address: boolean
@@ -56,6 +60,8 @@ interface OfferLayoutSettings {
         show_bank_details: boolean
         show_company_registration: boolean
         show_payment_terms: boolean
+        show_validity_period?: boolean
+        show_item_images?: boolean
         show_item_codes: boolean
         show_row_number: boolean
         show_bauvorhaben: boolean
@@ -113,6 +119,8 @@ const getDefaultSettings = (): OfferLayoutSettings => ({
     branding: {
         logo_position: "top-left",
         logo_size: "medium",
+        show_logo: true,
+        company_info_position: "top-right",
     },
     content: {
         show_company_address: true,
@@ -121,6 +129,8 @@ const getDefaultSettings = (): OfferLayoutSettings => ({
         show_bank_details: true,
         show_company_registration: true,
         show_payment_terms: true,
+        show_validity_period: true,
+        show_item_images: false,
         show_item_codes: true,
         show_row_number: false,
         show_bauvorhaben: true,

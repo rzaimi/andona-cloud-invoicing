@@ -131,9 +131,9 @@
     @if($doc->salutation ?? null)
         {!! nl2br(e($doc->salutation)) !!}
     @else
-        Sehr geehrte Damen und Herren,<br><br>
+        Sehr geehrte Damen und Herren,<br>
         @if($docKind === 'offer')
-            anbei unser Angebot zu Ihrer Anfrage. Wir freuen uns auf Ihre Rückmeldung.
+            vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:
         @else
             vielen Dank für Ihren Auftrag. Hiermit stellen wir Ihnen die folgenden Leistungen in Rechnung:
         @endif

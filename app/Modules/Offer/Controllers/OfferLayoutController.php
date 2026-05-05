@@ -86,16 +86,16 @@ class OfferLayoutController extends Controller
             'settings.fonts.body'                         => 'required|string|max:50',
             'settings.fonts.size'                         => 'required|in:small,medium,large',
             'settings.layout'                             => 'required|array',
-            'settings.layout.header_height'               => 'required|integer|min:50|max:300',
-            'settings.layout.footer_height'               => 'required|integer|min:30|max:200',
+            'settings.layout.header_height'               => 'sometimes|integer|min:50|max:300',
+            'settings.layout.footer_height'               => 'sometimes|integer|min:30|max:200',
             'settings.layout.margin_top'                  => 'required|integer|min:0|max:100',
             'settings.layout.margin_bottom'               => 'required|integer|min:0|max:100',
             'settings.layout.margin_left'                 => 'required|integer|min:0|max:100',
             'settings.layout.margin_right'                => 'required|integer|min:0|max:100',
             'settings.branding'                           => 'required|array',
-            'settings.branding.show_logo'                 => 'required|boolean',
+            'settings.branding.show_logo'                 => 'sometimes|boolean',
             'settings.branding.logo_position'             => 'required|in:top-left,top-center,top-right,left,center,right',
-            'settings.branding.company_info_position'     => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.branding.company_info_position'     => 'sometimes|in:top-left,top-center,top-right,left,center,right',
             'settings.branding.show_header_line'          => 'sometimes|boolean',
             'settings.branding.show_footer_line'          => 'sometimes|boolean',
             'settings.branding.show_footer'               => 'sometimes|boolean',
@@ -109,14 +109,47 @@ class OfferLayoutController extends Controller
             'settings.content.show_bank_details'          => 'sometimes|boolean',
             'settings.content.show_company_registration'  => 'sometimes|boolean',
             'settings.content.show_payment_terms'         => 'required|boolean',
-            'settings.content.show_validity_period'       => 'required|boolean',
-            'settings.content.show_item_images'           => 'required|boolean',
+            'settings.content.show_validity_period'       => 'sometimes|boolean',
+            'settings.content.show_item_images'           => 'sometimes|boolean',
             'settings.content.show_item_codes'            => 'required|boolean',
             'settings.content.show_row_number'            => 'required|boolean',
             'settings.content.show_bauvorhaben'           => 'required|boolean',
             'settings.content.show_tax_breakdown'         => 'required|boolean',
             'settings.content.custom_footer_text'         => 'nullable|string|max:2000',
             'settings.template_specific'                  => 'sometimes|array',
+        ];
+    }
+
+    /** Lighter validation for live-preview endpoints — no header/footer height required. */
+    private function previewValidationRules(): array
+    {
+        return [
+            'template'                                => 'required|string',
+            'settings'                                => 'required|array',
+            'settings.colors'                         => 'required|array',
+            'settings.colors.primary'                 => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.secondary'               => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.accent'                  => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.colors.text'                    => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'settings.fonts'                          => 'required|array',
+            'settings.fonts.heading'                  => 'required|string|max:50',
+            'settings.fonts.body'                     => 'required|string|max:50',
+            'settings.fonts.size'                     => 'required|in:small,medium,large',
+            'settings.layout'                         => 'required|array',
+            'settings.layout.margin_top'              => 'required|integer|min:0|max:100',
+            'settings.layout.margin_bottom'           => 'required|integer|min:0|max:100',
+            'settings.layout.margin_left'             => 'required|integer|min:0|max:100',
+            'settings.layout.margin_right'            => 'required|integer|min:0|max:100',
+            'settings.branding'                       => 'required|array',
+            'settings.branding.logo_position'         => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.content'                        => 'required|array',
+            'settings.content.show_item_codes'        => 'required|boolean',
+            'settings.content.show_row_number'        => 'required|boolean',
+            'settings.content.show_bauvorhaben'       => 'required|boolean',
+            'settings.content.show_tax_breakdown'     => 'required|boolean',
+            'settings.content.show_payment_terms'     => 'required|boolean',
+            'settings.content.custom_footer_text'     => 'nullable|string|max:2000',
+            'settings.template_specific'              => 'sometimes|array',
         ];
     }
 
@@ -228,40 +261,7 @@ class OfferLayoutController extends Controller
     {
         $companyId = $this->getEffectiveCompanyId();
 
-        $request->validate([
-            'template'                                    => 'required|string',
-            'settings'                                    => 'required|array',
-            'settings.colors'                             => 'required|array',
-            'settings.colors.primary'                     => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.secondary'                   => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.accent'                      => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.text'                        => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.fonts'                              => 'required|array',
-            'settings.fonts.heading'                      => 'required|string|max:50',
-            'settings.fonts.body'                         => 'required|string|max:50',
-            'settings.fonts.size'                         => 'required|in:small,medium,large',
-            'settings.layout'                             => 'required|array',
-            'settings.layout.header_height'               => 'required|integer|min:50|max:300',
-            'settings.layout.footer_height'               => 'required|integer|min:30|max:200',
-            'settings.layout.margin_top'                  => 'required|integer|min:0|max:100',
-            'settings.layout.margin_bottom'               => 'required|integer|min:0|max:100',
-            'settings.layout.margin_left'                 => 'required|integer|min:0|max:100',
-            'settings.layout.margin_right'                => 'required|integer|min:0|max:100',
-            'settings.branding'                           => 'required|array',
-            'settings.branding.show_logo'                 => 'required|boolean',
-            'settings.branding.logo_position'             => 'required|in:top-left,top-center,top-right,left,center,right',
-            'settings.branding.company_info_position'     => 'required|in:top-left,top-center,top-right,left,center,right',
-            'settings.content'                            => 'required|array',
-            'settings.content.show_item_images'           => 'required|boolean',
-            'settings.content.show_item_codes'            => 'required|boolean',
-            'settings.content.show_row_number'            => 'required|boolean',
-            'settings.content.show_bauvorhaben'           => 'required|boolean',
-            'settings.content.show_tax_breakdown'         => 'required|boolean',
-            'settings.content.show_payment_terms'         => 'required|boolean',
-            'settings.content.show_validity_period'       => 'required|boolean',
-            'settings.content.custom_footer_text'         => 'nullable|string|max:2000',
-            'settings.template_specific'                  => 'sometimes|array',
-        ]);
+        $request->validate($this->previewValidationRules());
 
         $layout             = new OfferLayout();
         $layout->company_id = $companyId;
@@ -289,40 +289,7 @@ class OfferLayoutController extends Controller
     {
         $companyId = $this->getEffectiveCompanyId();
 
-        $request->validate([
-            'template'                                    => 'required|string',
-            'settings'                                    => 'required|array',
-            'settings.colors'                             => 'required|array',
-            'settings.colors.primary'                     => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.secondary'                   => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.accent'                      => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.colors.text'                        => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'settings.fonts'                              => 'required|array',
-            'settings.fonts.heading'                      => 'required|string|max:50',
-            'settings.fonts.body'                         => 'required|string|max:50',
-            'settings.fonts.size'                         => 'required|in:small,medium,large',
-            'settings.layout'                             => 'required|array',
-            'settings.layout.header_height'               => 'required|integer|min:50|max:300',
-            'settings.layout.footer_height'               => 'required|integer|min:30|max:200',
-            'settings.layout.margin_top'                  => 'required|integer|min:0|max:100',
-            'settings.layout.margin_bottom'               => 'required|integer|min:0|max:100',
-            'settings.layout.margin_left'                 => 'required|integer|min:0|max:100',
-            'settings.layout.margin_right'                => 'required|integer|min:0|max:100',
-            'settings.branding'                           => 'required|array',
-            'settings.branding.show_logo'                 => 'required|boolean',
-            'settings.branding.logo_position'             => 'required|in:top-left,top-center,top-right,left,center,right',
-            'settings.branding.company_info_position'     => 'required|in:top-left,top-center,top-right,left,center,right',
-            'settings.content'                            => 'required|array',
-            'settings.content.show_item_images'           => 'required|boolean',
-            'settings.content.show_item_codes'            => 'required|boolean',
-            'settings.content.show_row_number'            => 'required|boolean',
-            'settings.content.show_bauvorhaben'           => 'required|boolean',
-            'settings.content.show_tax_breakdown'         => 'required|boolean',
-            'settings.content.show_payment_terms'         => 'required|boolean',
-            'settings.content.show_validity_period'       => 'required|boolean',
-            'settings.content.custom_footer_text'         => 'nullable|string|max:2000',
-            'settings.template_specific'                  => 'sometimes|array',
-        ]);
+        $request->validate($this->previewValidationRules());
 
         $layout             = new OfferLayout();
         $layout->company_id = $companyId;
