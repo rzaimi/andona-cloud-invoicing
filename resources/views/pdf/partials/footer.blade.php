@@ -22,7 +22,7 @@
         <tr>
 
             {{-- ── Col 1: Company name + legal form + address ──────────── --}}
-            <td style="width:19%; vertical-align:top; padding-right:4mm;">
+            <td style="width:17%; vertical-align:top; padding-right:4mm;">
                 @if($snapshot['name'] ?? null)
                     <div style="font-weight:bold; color:#111827; font-size:8.5pt;">
                         {{ $snapshot['name'] }}
@@ -37,7 +37,7 @@
             </td>
 
             {{-- ── Col 2: Kontakt (Tel, Fax, Email, Web) ───────────────── --}}
-            <td style="width:21%; vertical-align:top; padding-right:4mm;">
+            <td style="width:19%; vertical-align:top; padding-right:4mm;">
                 <div style="font-weight:bold; color:#111827;">Kontakt:</div>
                 @if($snapshot['phone'] ?? null)
                     <div>Tel.: {{ $snapshot['phone'] }}</div>
@@ -68,7 +68,7 @@
 
             {{-- ── Col 4: Bankverbindung ────────────────────────────────── --}}
             @if($showBank)
-            <td style="width:26%; vertical-align:top; padding-right:4mm;">
+            <td style="width:30%; vertical-align:top; padding-right:4mm;">
                 <div style="font-weight:bold; color:#111827;">Bankverbindung:</div>
                 @if($snapshot['bank_name'] ?? null)
                     <div>{{ $snapshot['bank_name'] }}</div>
@@ -77,7 +77,7 @@
                     <div>BIC: {{ $snapshot['bank_bic'] }}</div>
                 @endif
                 @if($snapshot['bank_iban'] ?? null)
-                    <div style="white-space:nowrap; overflow:hidden; font-size:7pt;">IBAN: {{ $snapshot['bank_iban'] }}</div>
+                    <div>IBAN: {{ $snapshot['bank_iban'] }}</div>
                 @endif
             </td>
             @endif
