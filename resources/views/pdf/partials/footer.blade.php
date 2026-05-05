@@ -13,7 +13,7 @@
     position: fixed;
     bottom: 0; left: 0; right: 0;
     width: 100%;
-    padding: 5mm 8mm 4mm 8mm;
+    padding: 2mm 4mm 2mm 4mm;
     background-color: white;
     border-top: 1.5px solid {{ $lineColor }};
     z-index: 1000;
@@ -22,7 +22,7 @@
         <tr>
 
             {{-- ── Col 1: Company name + legal form + address ──────────── --}}
-            <td style="width:19%; vertical-align:top; padding-right:2mm;">
+            <td style="width:17%; vertical-align:top; padding-right:1mm;">
                 @if($snapshot['name'] ?? null)
                     <div style="font-weight:bold; color:#111827; font-size:8.5pt;">
                         {{ $snapshot['name'] }}
@@ -37,7 +37,7 @@
             </td>
 
             {{-- ── Col 2: Kontakt (Tel, Fax, Email, Web) ───────────────── --}}
-            <td style="width:21%; vertical-align:top; padding-right:2mm;">
+            <td style="width:23%; vertical-align:top; padding-right:1mm;">
                 <div style="font-weight:bold; color:#111827;">Kontakt:</div>
                 @if($snapshot['phone'] ?? null)
                     <div>Tel.: {{ $snapshot['phone'] }}</div>
@@ -56,19 +56,19 @@
             {{-- ── Col 3: Ust-IdNr., Finanzamt, St.Nr. ────────────────── --}}
             <td style="width:18%; vertical-align:top; padding-right:2mm;">
                 @if($snapshot['vat_number'] ?? null)
-                    <div><span style="font-weight:bold;">Ust-IdNr.:</span> {{ $snapshot['vat_number'] }}</div>
+                    <div><span style="font-weight:bold; color:#111827;">Ust-IdNr.:</span> {{ $snapshot['vat_number'] }}</div>
                 @endif
                 @if($snapshot['tax_office'] ?? null)
-                    <div><span style="font-weight:bold;">Finanzamt:</span> {{ $snapshot['tax_office'] }}</div>
+                    <div><span style="font-weight:bold; color:#111827;">Finanzamt:</span> {{ $snapshot['tax_office'] }}</div>
                 @endif
                 @if($snapshot['tax_number'] ?? null)
-                    <div><span style="font-weight:bold;">St.Nr.:</span> {{ $snapshot['tax_number'] }}</div>
+                    <div><span style="font-weight:bold; color:#111827;">St.Nr.:</span> {{ $snapshot['tax_number'] }}</div>
                 @endif
             </td>
 
             {{-- ── Col 4: Bankverbindung ────────────────────────────────── --}}
             @if($showBank)
-            <td style="width:26%; vertical-align:top; padding-right:2mm;">
+            <td style="width:26%; vertical-align:top; padding-right:1mm;">
                 <div style="font-weight:bold; color:#111827;">Bankverbindung:</div>
                 @if($snapshot['bank_name'] ?? null)
                     <div>{{ $snapshot['bank_name'] }}</div>
@@ -84,7 +84,7 @@
 
             {{-- ── Col 5: Amtsgericht + Geschäftsführer / Inhaber ───────── --}}
             @if($showReg)
-            <td style="width:16%; vertical-align:top; padding-right:8mm;">
+            <td style="width:16%; vertical-align:top; padding-right:2mm;">
                 @if($snapshot['commercial_register'] ?? null)
                     <div style="font-weight:bold; color:#111827;">Amtsgericht:</div>
                     <div>{{ $snapshot['commercial_register'] }}</div>
