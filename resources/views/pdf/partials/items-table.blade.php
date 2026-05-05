@@ -90,7 +90,7 @@
                     ? "border-right: 1px solid {$showBorderColor};"
                     : '';
             @endphp
-            <tr style="{{ $borderStyle }} {{ $rowBg }}">
+            <tr style="{{ $borderStyle }} {{ $rowBg }} page-break-inside: auto;">
                 @if($showRowNumber && !$inlineRowNumber)
                     <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">{{ $index + 1 }}</td>
                 @endif
@@ -98,11 +98,18 @@
                     <td style="padding: {{ $cellPadding }}; white-space: nowrap; {{ $cellBorder }}">{{ $productCode ?: '-' }}</td>
                 @endif
                 <td style="padding: {{ $cellPadding }}; page-break-inside: auto; {{ $cellBorder }}">
-                    {{-- nl2br() converts \n to <br>, so don't also use
-                         white-space: pre-wrap — that would honour the
-                         literal \n a second time, producing visibly
-                         double line-spacing on multi-line descriptions. --}}
-                    <div style="page-break-inside: auto;">{{ $inlineRowNumber ? ($index + 1) . '. ' : '' }}{!! nl2br(e($item->description)) !!}</div>
+                    {{-- DomPDF cannot split a <tr> mid-row, but it CAN split a <td>
+                         whose children are block-level elements.  We convert each
+                         line of the description into a <p> (block) so DomPDF is
+                         allowed to paginate inside the cell rather than pushing the
+                         entire row to the next page. --}}
+                    @php
+                        $descLines  = preg_split('/\r?\n/', $item->description ?? '');
+                        $prefix     = $inlineRowNumber ? ($index + 1) . '. ' : '';
+                    @endphp
+                    @foreach($descLines as $lineIdx => $descLine)
+                        <p style="margin: 0; padding: 1px 0; line-height: 1.5; page-break-inside: auto;">{{ ($lineIdx === 0 ? $prefix : '') }}{{ $descLine }}</p>
+                    @endforeach
                 </td>
                 <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
                     {{ number_format($item->quantity, 2, ',', '.') }}
