@@ -131,10 +131,10 @@
 {{-- Wrap the rest of the body content (after the address window) in a
      left/right padded block so subject, items, totals etc. share the
      same 20mm horizontal insets used on page 1. --}}
-<div style="padding:0 20mm;">
+<div style="padding:0 15mm;">
 
 {{-- Title --}}
-<div style="margin-top:8mm; padding-bottom:2mm; border-bottom:0.2mm solid {{ $border }};">
+<div style="margin-top:0mm; padding-bottom:2mm; border-bottom:0.2mm solid {{ $border }};">
     <span style="font-size:{{ $fs + 5 }}px; font-weight:600; letter-spacing:-0.3px;">{{ $docHeading }}</span>
     <span style="font-size:{{ $fs + 3 }}px; color:{{ $soft }}; margin-left:3mm;">{{ $doc->number }}{{ ($doc->title ?? null) ? ' – '.$doc->title : '' }}</span>
 </div>
@@ -142,7 +142,7 @@
 {{-- Salutation --}}
 @if($ls['content']['show_salutation'] ?? true)
 @if($docKind === 'offer')
-<div style="margin-top:5mm; font-size:{{ $fs }}px; line-height:1.7;">
+<div style="margin-top:5mm; margin-bottom:5mm; font-size:{{ $fs }}px; line-height:1.7;">
     Sehr geehrte Damen und Herren,<br>
     vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:
 </div>

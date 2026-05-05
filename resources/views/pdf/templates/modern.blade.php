@@ -115,11 +115,11 @@
 </table>
 
 {{-- Rest of body content with 20mm horizontal insets --}}
-<div style="padding:0 20mm;">
+<div style="padding:0 15mm;">
 
 {{-- Title block --}}
 @if($ls['content']['show_subject'] ?? true)
-<div style="margin-top:12mm; padding-bottom:3mm; border-bottom:0.5mm solid {{ $primary }};">
+<div style="margin-top:0mm; padding-bottom:3mm; border-bottom:0.5mm solid {{ $primary }};">
     <span style="font-family:{{ $heading }},DejaVu Serif,serif; font-style:italic; font-size:{{ $fs + 11 }}px; color:{{ $primary }}; letter-spacing:-0.3px;">{{ $docHeading }}</span>
     <span style="font-size:{{ $fs + 2 }}px; color:{{ $muted }}; margin-left:4mm;">{{ $doc->number }}{{ ($doc->title ?? null) ? ' · '.$doc->title : '' }}</span>
 </div>
@@ -127,7 +127,7 @@
 
 {{-- Salutation --}}
 @if($ls['content']['show_salutation'] ?? true)
-<div style="margin-top:7mm; font-size:{{ $fs }}px; line-height:1.7;">
+<div style="margin-top:7mm; margin-bottom:5mm; font-size:{{ $fs }}px; line-height:1.7;">
     @if($doc->salutation ?? null)
         {!! nl2br(e($doc->salutation)) !!}
     @else

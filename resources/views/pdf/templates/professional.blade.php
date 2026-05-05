@@ -114,7 +114,7 @@
 </table>
 
 {{-- Rest of body content with 20mm horizontal insets --}}
-<div style="padding:0 20mm;">
+<div style="padding:0 15mm;">
 
 {{-- Subject — solid navy block, uppercase --}}
 @if($ls['content']['show_subject'] ?? true)
@@ -126,14 +126,14 @@
 
 {{-- Salutation --}}
 @if($ls['content']['show_salutation'] ?? true)
-<div style="margin-top:6mm; font-size:{{ $fs }}px; line-height:1.7;">
+<div style="margin-top:6mm; margin-bottom:5mm; font-size:{{ $fs }}px; line-height:1.7;">
     @if($doc->salutation ?? null)
         {!! nl2br(e($doc->salutation)) !!}
     @elseif($docKind === 'offer')
         Sehr geehrte Damen und Herren,<br>
         vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:
     @else
-        Sehr geehrte Damen und Herren,<br><br>
+        Sehr geehrte Damen und Herren,<br>
         für die nachstehend aufgeführten Leistungen erlauben wir uns, folgende Rechnung zu stellen:
     @endif
 </div>

@@ -49,7 +49,25 @@
         }
     @endphp
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* Minimal stylesheet — only rules that active templates
+           (minimal/modern/professional) actually consume. The legacy
+           class rules (.header, .logo-container, .items-table,
+           .totals, .payment-section, …) were left over from an older
+           template structure; templates now use inline styles so the
+           class rules were dead code. Worse, several of them
+           (float-based .header, position:fixed .preview-notice + body
+           layout interactions) interfered with DomPDF's per-page
+           margin engine and silently dropped @page margin-top on
+           continuation pages. Stripping the dead rules made the
+           strip-test PDF render page 2's top margin correctly. */
+
+        /* Small uniform top/bottom @page margin (5mm ≈ 20px) on every
+           page. Horizontal insets are 0 here — templates apply their
+           own 20mm inline left/right padding so content lands at the
+           DIN 5008 address-window x-coordinate (20mm from page edge). */
+        @page {
+            margin: 5mm 0;
+        }
 
     body {
         font-family: {{ $layoutSettings['fonts']['body'] ?? 'DejaVu Sans' }}, DejaVu Sans, sans-serif;
