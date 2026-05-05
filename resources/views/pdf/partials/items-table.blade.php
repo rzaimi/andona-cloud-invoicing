@@ -72,6 +72,14 @@
         </tr>
     </thead>
     <tbody>
+        {{--
+            DomPDF never splits a <tr> mid-row.  The only reliable workaround is
+            to render each LINE of the description as its own <tr> (one line tall).
+            Pricing columns (Qty, USt, Price, Total) appear on the FIRST line row
+            only; continuation rows have empty cells in those columns.
+            Because every row is now a single text line it always fits on one page,
+            so DomPDF naturally breaks between rows at page boundaries.
+        --}}
         @foreach($doc->items as $index => $item)
             @php
                 $discountAmount = (float)($item->discount_amount ?? 0);
@@ -82,69 +90,96 @@
                     ?? data_get($item, 'product.sku')
                     ?? data_get($item, 'product_number')
                     ?? data_get($item, 'product_sku');
-                $rowBg = ($altRowBg && $index % 2 === 1) ? "background-color: {$altRowBg};" : '';
+                $rowBg       = ($altRowBg && $index % 2 === 1) ? "background-color: {$altRowBg};" : '';
                 $borderStyle = $tableOuterBorder !== 'none'
                     ? "border-bottom: 1px solid {$showBorderColor};"
                     : 'border-bottom: 1px solid #e5e7eb;';
-                $cellBorder = $tableOuterBorder !== 'none'
+                $noBorder    = 'border-bottom: none;';
+                $cellBorder  = $tableOuterBorder !== 'none'
                     ? "border-right: 1px solid {$showBorderColor};"
                     : '';
+
+                // Split description into individual lines; keep empty lines as spacers.
+                $descLines = preg_split('/\r?\n/', $item->description ?? '');
+                $lineCount  = count($descLines);
+                $prefix     = $inlineRowNumber ? ($index + 1) . '. ' : '';
             @endphp
-            <tr style="{{ $borderStyle }} {{ $rowBg }} page-break-inside: auto;">
-                @if($showRowNumber && !$inlineRowNumber)
-                    <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">{{ $index + 1 }}</td>
-                @endif
-                @if($showItemCodes)
-                    <td style="padding: {{ $cellPadding }}; white-space: nowrap; {{ $cellBorder }}">{{ $productCode ?: '-' }}</td>
-                @endif
-                <td style="padding: {{ $cellPadding }}; page-break-inside: auto; {{ $cellBorder }}">
-                    {{-- DomPDF cannot split a <tr> mid-row, but it CAN split a <td>
-                         whose children are block-level elements.  We convert each
-                         line of the description into a <p> (block) so DomPDF is
-                         allowed to paginate inside the cell rather than pushing the
-                         entire row to the next page. --}}
-                    @php
-                        $descLines  = preg_split('/\r?\n/', $item->description ?? '');
-                        $prefix     = $inlineRowNumber ? ($index + 1) . '. ' : '';
-                    @endphp
-                    @foreach($descLines as $lineIdx => $descLine)
-                        <p style="margin: 0; padding: 1px 0; line-height: 1.5; page-break-inside: auto;">{{ ($lineIdx === 0 ? $prefix : '') }}{{ $descLine }}</p>
-                    @endforeach
-                </td>
-                <td style="padding: {{ $cellPadding }}; {{ $cellBorder }}">
-                    {{ number_format($item->quantity, 2, ',', '.') }}
-                    @if(($layoutSettings['content']['show_unit_column'] ?? true) && !empty($item->unit))
-                        {{ $item->unit }}
-                    @else
-                        Std.
+
+            {{-- One <tr> per description line --}}
+            @foreach($descLines as $lineIdx => $descLine)
+                @php
+                    $isFirstLine = ($lineIdx === 0);
+                    $isLastLine  = ($lineIdx === $lineCount - 1);
+                    // Border only on the last row of the item
+                    $trBorder    = $isLastLine ? $borderStyle : $noBorder;
+                    // Continuation lines get slightly reduced top padding
+                    $linePad     = $isFirstLine ? $cellPadding : '1px 7px';
+                @endphp
+                <tr style="{{ $trBorder }} {{ $rowBg }}">
+                    {{-- Optional row-number column — only on first line --}}
+                    @if($showRowNumber && !$inlineRowNumber)
+                        <td style="padding: {{ $linePad }}; {{ $cellBorder }} vertical-align: top;">
+                            {{ $isFirstLine ? ($index + 1) : '' }}
+                        </td>
                     @endif
-                </td>
-                @if($showUstColumn)
-                <td style="padding: {{ $cellPadding }}; text-align: right; {{ $cellBorder }}">
-                    {{ number_format(($item->tax_rate ?? $doc->tax_rate ?? 0) * 100, 0, ',', '.') }}%
-                </td>
-                @endif
-                <td style="padding: {{ $cellPadding }}; text-align: right; white-space: nowrap; {{ $cellBorder }}">
-                    {{ number_format($item->unit_price, 2, ',', '.') }} €
-                </td>
-                @if($hasAnyDiscount)
-                    <td style="padding: {{ $cellPadding }}; text-align: right; {{ $cellBorder }} color: {{ $hasDiscount ? '#dc2626' : '#9ca3af' }};">
-                        @if($hasDiscount)
-                            @if($discountType === 'percentage')
-                                -{{ number_format($discountValue, 0) }}%<br>
-                                <span style="font-size: {{ $bodyFontSize - 1 }}px;">(-{{ number_format($discountAmount, 2, ',', '.') }} €)</span>
-                            @elseif($discountType === 'fixed')
-                                -{{ number_format($discountAmount, 2, ',', '.') }} €
-                            @endif
-                        @else
-                            <span style="color: #d1d5db;">—</span>
-                        @endif
+
+                    {{-- Optional item-code column — only on first line --}}
+                    @if($showItemCodes)
+                        <td style="padding: {{ $linePad }}; white-space: nowrap; {{ $cellBorder }} vertical-align: top;">
+                            {{ $isFirstLine ? ($productCode ?: '-') : '' }}
+                        </td>
+                    @endif
+
+                    {{-- Description cell: one line of text --}}
+                    <td style="padding: {{ $linePad }}; {{ $cellBorder }} vertical-align: top;">
+                        {{ ($isFirstLine ? $prefix : '') }}{{ $descLine }}
                     </td>
-                @endif
-                <td style="padding: {{ $cellPadding }}; text-align: right; font-weight: 600; white-space: nowrap;">
-                    {{ number_format($item->total, 2, ',', '.') }} €
-                </td>
-            </tr>
+
+                    {{-- Pricing columns: only on the first line row --}}
+                    @if($isFirstLine)
+                        <td style="padding: {{ $cellPadding }}; {{ $cellBorder }} vertical-align: top;">
+                            {{ number_format($item->quantity, 2, ',', '.') }}
+                            @if(($layoutSettings['content']['show_unit_column'] ?? true) && !empty($item->unit))
+                                {{ $item->unit }}
+                            @else
+                                Std.
+                            @endif
+                        </td>
+                        @if($showUstColumn)
+                        <td style="padding: {{ $cellPadding }}; text-align: right; {{ $cellBorder }} vertical-align: top;">
+                            {{ number_format(($item->tax_rate ?? $doc->tax_rate ?? 0) * 100, 0, ',', '.') }}%
+                        </td>
+                        @endif
+                        <td style="padding: {{ $cellPadding }}; text-align: right; white-space: nowrap; {{ $cellBorder }} vertical-align: top;">
+                            {{ number_format($item->unit_price, 2, ',', '.') }} €
+                        </td>
+                        @if($hasAnyDiscount)
+                        <td style="padding: {{ $cellPadding }}; text-align: right; {{ $cellBorder }} vertical-align: top; color: {{ $hasDiscount ? '#dc2626' : '#9ca3af' }};">
+                            @if($hasDiscount)
+                                @if($discountType === 'percentage')
+                                    -{{ number_format($discountValue, 0) }}%
+                                    (-{{ number_format($discountAmount, 2, ',', '.') }} €)
+                                @elseif($discountType === 'fixed')
+                                    -{{ number_format($discountAmount, 2, ',', '.') }} €
+                                @endif
+                            @else
+                                <span style="color: #d1d5db;">—</span>
+                            @endif
+                        </td>
+                        @endif
+                        <td style="padding: {{ $cellPadding }}; text-align: right; font-weight: 600; white-space: nowrap; vertical-align: top;">
+                            {{ number_format($item->total, 2, ',', '.') }} €
+                        </td>
+                    @else
+                        {{-- Empty cells to keep column structure intact --}}
+                        <td style="padding: {{ $linePad }}; {{ $cellBorder }}"></td>
+                        @if($showUstColumn)<td style="{{ $cellBorder }}"></td>@endif
+                        <td style="{{ $cellBorder }}"></td>
+                        @if($hasAnyDiscount)<td style="{{ $cellBorder }}"></td>@endif
+                        <td></td>
+                    @endif
+                </tr>
+            @endforeach
         @endforeach
     </tbody>
 </table>
