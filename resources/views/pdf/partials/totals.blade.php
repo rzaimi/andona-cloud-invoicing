@@ -51,7 +51,7 @@
     $skontoInvoiceType = $doc->invoice_type ?? 'standard';
     $skontoAbschlagRefs = collect($doc->abschlag_refs ?? [])
         ->filter(fn ($r) => !empty($r['invoice_id']) && isset($r['amount']));
-    $skontoRemainingDue = ($skontoInvoiceType === 'abschlagsrechnung' && $skontoAbschlagRefs->isNotEmpty())
+    $skontoRemainingDue = (in_array($skontoInvoiceType, ['abschlagsrechnung', 'schlussrechnung']) && $skontoAbschlagRefs->isNotEmpty())
         ? max(0.0, (float)$doc->total - (float)$skontoAbschlagRefs->sum('amount'))
         : (float)$doc->total;
 

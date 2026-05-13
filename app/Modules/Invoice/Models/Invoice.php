@@ -347,9 +347,10 @@ class Invoice extends Model
      * Calculate skonto amount and due date based on total and configuration.
      * Must be called AFTER calculateTotals() so $this->total is accurate.
      *
-     * For Abschlagsrechnung the skonto base is the remaining balance after
-     * deducting prior Abschlags, because that is the amount the customer
-     * actually owes. For all other invoice types the full total is used.
+     * For Abschlagsrechnung and Schlussrechnung the skonto base is the
+     * remaining balance after deducting prior Abschlags, because that is
+     * the amount the customer actually owes. For all other types the full
+     * total is used.
      */
     public function calculateSkonto(): void
     {
@@ -362,7 +363,7 @@ class Invoice extends Model
 
         $skontoBase = (float) $this->total;
 
-        if ($this->invoice_type === 'abschlagsrechnung') {
+        if (in_array($this->invoice_type, ['abschlagsrechnung', 'schlussrechnung'])) {
             $refs = collect($this->abschlag_refs ?? [])
                 ->filter(fn ($r) => !empty($r['invoice_id']) && isset($r['amount']));
 
