@@ -27,7 +27,7 @@ class InvoiceController extends Controller
         $companyId = $this->getEffectiveCompanyId();
 
         $query = Invoice::forCompany($companyId)
-            ->with(['customer:id,name', 'user:id,name'])
+            ->with(['customer:id,name,email', 'user:id,name'])
             ->select('invoices.*'); // Ensure all invoice fields including is_correction are selected
 
         // Apply status filter
