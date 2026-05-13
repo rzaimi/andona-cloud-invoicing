@@ -18,7 +18,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw, GitBranch, Loader2, FlagTriangleRight, Copy } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw, GitBranch, Loader2, FlagTriangleRight, Copy, MoreHorizontal } from "lucide-react"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Invoice, InvoiceItem } from "@/types"
 import { route } from "ziggy-js"
@@ -236,96 +243,85 @@ export default function InvoicesShow() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <Link href={`/payments/create?invoice_id=${invoice.id}`} className="flex-1 sm:flex-initial">
-                            <Button className="w-full sm:w-auto">
+                        {/* Primary CTA */}
+                        <Link href={`/payments/create?invoice_id=${invoice.id}`}>
+                            <Button>
                                 <Plus className="mr-2 h-4 w-4" />
-                                <span className="hidden sm:inline">Zahlung erfassen</span>
-                                <span className="sm:hidden">Zahlung</span>
+                                Zahlung erfassen
                             </Button>
                         </Link>
-                        <Link href={`/invoices/${invoice.id}/edit`} className="flex-1 sm:flex-initial">
-                            <Button variant="outline" className="w-full sm:w-auto">
+
+                        {/* Always-visible secondary actions */}
+                        <Link href={`/invoices/${invoice.id}/edit`}>
+                            <Button variant="outline">
                                 <Edit className="mr-2 h-4 w-4" />
                                 Bearbeiten
                             </Button>
                         </Link>
                         <Button
                             variant="outline"
-                            className="flex-1 sm:flex-initial"
-                            onClick={() => router.post(route("invoices.duplicate", invoice.id))}
-                            title="Rechnung als neuen Entwurf duplizieren"
-                        >
-                            <Copy className="mr-2 h-4 w-4" />
-                            <span className="hidden sm:inline">Duplizieren</span>
-                            <span className="sm:hidden">Kopie</span>
-                        </Button>
-                        {/* Chain buttons — only on the latest Abschlag (no successor, not cancelled) */}
-                        {(invoice as any).invoice_type === "abschlagsrechnung" &&
-                            invoice.status !== "cancelled" &&
-                            !hasSuccessor && (
-                            <>
-                                {/* "Nächsten Abschlag" — hidden once a Schlussrechnung closes the chain */}
-                                {!hasSchlussrechnung && (
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1 sm:flex-initial"
-                                        onClick={handleCreateNextAbschlag}
-                                        disabled={isCreatingNextAbschlag || isCreatingSchlussrechnung}
-                                        title="Nächsten Abschlag auf Basis dieser Rechnung erstellen"
-                                    >
-                                        {isCreatingNextAbschlag
-                                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            : <GitBranch className="mr-2 h-4 w-4" />
-                                        }
-                                        <span className="hidden sm:inline">
-                                            {isCreatingNextAbschlag ? "Wird erstellt…" : "Nächsten Abschlag erstellen"}
-                                        </span>
-                                        <span className="sm:hidden">Abschlag +1</span>
-                                    </Button>
-                                )}
-
-                                {/* "Schlussrechnung" — hidden once one already exists */}
-                                {!hasSchlussrechnung && (
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1 sm:flex-initial"
-                                        onClick={handleCreateSchlussrechnung}
-                                        disabled={isCreatingSchlussrechnung || isCreatingNextAbschlag}
-                                        title="Schlussrechnung mit allen bisherigen Abschlags als Abzüge erstellen"
-                                    >
-                                        {isCreatingSchlussrechnung
-                                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            : <FlagTriangleRight className="mr-2 h-4 w-4" />
-                                        }
-                                        <span className="hidden sm:inline">
-                                            {isCreatingSchlussrechnung ? "Wird erstellt…" : "Schlussrechnung erstellen"}
-                                        </span>
-                                        <span className="sm:hidden">Schluss</span>
-                                    </Button>
-                                )}
-                            </>
-                        )}
-                        <Button
-                            variant="outline"
-                            className="flex-1 sm:flex-initial"
                             onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}
                         >
                             <FileText className="mr-2 h-4 w-4" />
                             PDF
                         </Button>
-                        {canRefreshSnapshot && (
-                            <Button
-                                variant="outline"
-                                className="flex-1 sm:flex-initial"
-                                onClick={handleRefreshSnapshot}
-                                title="Fehlende Firmendaten-Felder (z.B. Rechtsform, Titel) ergänzen — ohne bestehende Werte zu überschreiben"
-                            >
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                <span className="hidden sm:inline">Firmendaten aktualisieren</span>
-                                <span className="sm:hidden">Aktualisieren</span>
-                            </Button>
-                        )}
-                        <Button variant="destructive" className="flex-1 sm:flex-initial" onClick={handleDelete}>
+
+                        {/* More actions dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => router.post(route("invoices.duplicate", invoice.id))}>
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Duplizieren
+                                </DropdownMenuItem>
+
+                                {/* Chain actions — only on the latest non-cancelled Abschlag */}
+                                {(invoice as any).invoice_type === "abschlagsrechnung" &&
+                                    invoice.status !== "cancelled" &&
+                                    !hasSuccessor &&
+                                    !hasSchlussrechnung && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onClick={handleCreateNextAbschlag}
+                                            disabled={isCreatingNextAbschlag || isCreatingSchlussrechnung}
+                                        >
+                                            {isCreatingNextAbschlag
+                                                ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                : <GitBranch className="mr-2 h-4 w-4" />
+                                            }
+                                            {isCreatingNextAbschlag ? "Wird erstellt…" : "Nächsten Abschlag erstellen"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={handleCreateSchlussrechnung}
+                                            disabled={isCreatingSchlussrechnung || isCreatingNextAbschlag}
+                                        >
+                                            {isCreatingSchlussrechnung
+                                                ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                : <FlagTriangleRight className="mr-2 h-4 w-4" />
+                                            }
+                                            {isCreatingSchlussrechnung ? "Wird erstellt…" : "Schlussrechnung erstellen"}
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+
+                                {canRefreshSnapshot && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={handleRefreshSnapshot}>
+                                            <RefreshCw className="mr-2 h-4 w-4" />
+                                            Firmendaten aktualisieren
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <Button variant="destructive" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Löschen
                         </Button>
