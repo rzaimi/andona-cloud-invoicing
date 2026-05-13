@@ -18,7 +18,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw, GitBranch, Loader2, FlagTriangleRight } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw, GitBranch, Loader2, FlagTriangleRight, Copy } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Invoice, InvoiceItem } from "@/types"
 import { route } from "ziggy-js"
@@ -249,6 +249,16 @@ export default function InvoicesShow() {
                                 Bearbeiten
                             </Button>
                         </Link>
+                        <Button
+                            variant="outline"
+                            className="flex-1 sm:flex-initial"
+                            onClick={() => router.post(route("invoices.duplicate", invoice.id))}
+                            title="Rechnung als neuen Entwurf duplizieren"
+                        >
+                            <Copy className="mr-2 h-4 w-4" />
+                            <span className="hidden sm:inline">Duplizieren</span>
+                            <span className="sm:hidden">Kopie</span>
+                        </Button>
                         {/* Chain buttons — only on the latest Abschlag (no successor, not cancelled) */}
                         {(invoice as any).invoice_type === "abschlagsrechnung" &&
                             invoice.status !== "cancelled" &&

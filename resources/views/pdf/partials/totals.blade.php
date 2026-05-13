@@ -45,7 +45,17 @@
     // Skonto
     $skontoAmount   = (float)($doc->skonto_amount ?? 0);
     $hasSkonto      = !empty($doc->skonto_percent) && !empty($doc->skonto_days) && $skontoAmount > 0;
-    $netAfterSkonto = $doc->total - $skontoAmount;
+
+    // For Abschlagsrechnung the "Bei Skonto zahlen Sie" base is the remaining
+    // balance after prior Abschlag deductions, not the full gross total.
+    $skontoInvoiceType = $doc->invoice_type ?? 'standard';
+    $skontoAbschlagRefs = collect($doc->abschlag_refs ?? [])
+        ->filter(fn ($r) => !empty($r['invoice_id']) && isset($r['amount']));
+    $skontoRemainingDue = ($skontoInvoiceType === 'abschlagsrechnung' && $skontoAbschlagRefs->isNotEmpty())
+        ? max(0.0, (float)$doc->total - (float)$skontoAbschlagRefs->sum('amount'))
+        : (float)$doc->total;
+
+    $netAfterSkonto = $skontoRemainingDue - $skontoAmount;
     $skontoColor    = $layoutSettings['colors']['skonto'] ?? '#16a34a';
 @endphp
 <table style="width: {{ $tableWidth }}; margin-left: auto; border-collapse: collapse; font-size: {{ $bodyFontSize }}px;">

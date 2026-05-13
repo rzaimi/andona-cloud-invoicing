@@ -24,6 +24,7 @@ import {
     Bell,
     History,
     FileCheck,
+    Copy,
     Download,
     Eye,
     MoreHorizontal,
@@ -541,6 +542,10 @@ export default function InvoicesIndex() {
                                                                 <Edit className="mr-2 h-4 w-4" />
                                                                 Bearbeiten
                                                             </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => router.post(route("invoices.duplicate", invoice.id))}>
+                                                            <Copy className="mr-2 h-4 w-4" />
+                                                            Duplizieren
                                                         </DropdownMenuItem>
 
                                                         <DropdownMenuItem onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}>

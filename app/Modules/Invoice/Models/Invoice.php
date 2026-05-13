@@ -346,6 +346,10 @@ class Invoice extends Model
     /**
      * Calculate skonto amount and due date based on total and configuration.
      * Must be called AFTER calculateTotals() so $this->total is accurate.
+     *
+     * For Abschlagsrechnung the skonto base is the remaining balance after
+     * deducting prior Abschlags, because that is the amount the customer
+     * actually owes. For all other invoice types the full total is used.
      */
     public function calculateSkonto(): void
     {
@@ -356,7 +360,18 @@ class Invoice extends Model
             return;
         }
 
-        $this->skonto_amount = round((float) $this->total * ((float) $this->skonto_percent / 100), 2);
+        $skontoBase = (float) $this->total;
+
+        if ($this->invoice_type === 'abschlagsrechnung') {
+            $refs = collect($this->abschlag_refs ?? [])
+                ->filter(fn ($r) => !empty($r['invoice_id']) && isset($r['amount']));
+
+            if ($refs->isNotEmpty()) {
+                $skontoBase = max(0.0, $skontoBase - (float) $refs->sum('amount'));
+            }
+        }
+
+        $this->skonto_amount = round($skontoBase * ((float) $this->skonto_percent / 100), 2);
         $baseDate = $this->issue_date ?? now()->toDateObject();
         $this->skonto_due_date = \Carbon\Carbon::instance($baseDate)->addDays((int) $this->skonto_days);
     }
