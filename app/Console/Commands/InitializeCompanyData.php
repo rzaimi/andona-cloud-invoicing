@@ -328,6 +328,7 @@ class InitializeCompanyData extends Command
                 'show_item_codes'    => true,
                 'show_row_number'    => true,
                 'show_bauvorhaben'   => false,
+                'show_customer_number' => true,
                 'show_tax_breakdown' => true,
                 'show_payment_terms' => true,
                 'custom_footer_text' => '',

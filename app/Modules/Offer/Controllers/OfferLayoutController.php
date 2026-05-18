@@ -146,6 +146,7 @@ class OfferLayoutController extends Controller
             'settings.content.show_item_codes'        => 'required|boolean',
             'settings.content.show_row_number'        => 'required|boolean',
             'settings.content.show_bauvorhaben'       => 'required|boolean',
+            'settings.content.show_customer_number'   => 'required|boolean',
             'settings.content.show_tax_breakdown'     => 'required|boolean',
             'settings.content.show_payment_terms'     => 'required|boolean',
             'settings.content.custom_footer_text'     => 'nullable|string|max:2000',

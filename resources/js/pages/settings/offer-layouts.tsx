@@ -65,6 +65,7 @@ interface OfferLayoutSettings {
         show_item_codes: boolean
         show_row_number: boolean
         show_bauvorhaben: boolean
+        show_customer_number: boolean
         show_tax_breakdown: boolean
         custom_footer_text: string
     }
@@ -134,6 +135,7 @@ const getDefaultSettings = (): OfferLayoutSettings => ({
         show_item_codes: true,
         show_row_number: false,
         show_bauvorhaben: true,
+        show_customer_number: true,
         show_tax_breakdown: true,
         custom_footer_text: "",
     },
@@ -182,6 +184,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_customer_number: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -208,6 +211,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_customer_number: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -234,6 +238,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: false,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_customer_number: true,
                 show_tax_breakdown: false,
                 custom_footer_text: "",
             }
@@ -260,6 +265,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_customer_number: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -286,6 +292,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_item_codes: true,
                 show_row_number: false,
                 show_bauvorhaben: true,
+                show_customer_number: true,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -333,6 +340,7 @@ const mergeWithDefaults = (settings: Partial<OfferLayoutSettings> | null): Offer
             show_item_codes: settings.content?.show_item_codes ?? defaults.content.show_item_codes,
             show_row_number: settings.content?.show_row_number ?? defaults.content.show_row_number,
             show_bauvorhaben: settings.content?.show_bauvorhaben ?? defaults.content.show_bauvorhaben,
+            show_customer_number: settings.content?.show_customer_number ?? defaults.content.show_customer_number,
             show_tax_breakdown: settings.content?.show_tax_breakdown ?? defaults.content.show_tax_breakdown,
             custom_footer_text: settings.content?.custom_footer_text ?? defaults.content.custom_footer_text,
         },
@@ -355,9 +363,10 @@ const COLOR_PRESETS = [
     "#dc2626", "#7c3aed", "#ea580c", "#475569",
 ]
 
-const CONTENT_TOGGLES: Array<{ key: "show_company_address" | "show_bauvorhaben" | "show_unit_column" | "show_item_codes" | "show_row_number" | "show_tax_breakdown" | "show_notes"; label: string }> = [
+const CONTENT_TOGGLES: Array<{ key: "show_company_address" | "show_bauvorhaben" | "show_customer_number" | "show_unit_column" | "show_item_codes" | "show_row_number" | "show_tax_breakdown" | "show_notes"; label: string }> = [
     { key: "show_company_address", label: "Firmenadresse im Header" },
     { key: "show_bauvorhaben",     label: "BV (Bauvorhaben)" },
+    { key: "show_customer_number", label: "Kundennummer" },
     { key: "show_unit_column",     label: "Einheitsspalte" },
     { key: "show_item_codes",      label: "Artikelnummern" },
     { key: "show_row_number",      label: "Positionsnummern" },

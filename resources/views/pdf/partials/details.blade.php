@@ -59,7 +59,7 @@
         <td style="padding:{{ $dtPad }}; font-weight:600; color:{{ $skontoColor }}; border-bottom:1px solid {{ $dtBC }};">{{ formatInvoiceDate($doc->skonto_due_date, $dateFormat ?? 'd.m.Y') }}</td>
     </tr>
     @endif
-    @if(!empty($doc->customer->number))
+    @if(!empty($doc->customer->number) && ($layoutSettings['content']['show_customer_number'] ?? true))
     <tr>
         <td style="padding:{{ $dtPad }}; color:{{ $dtLC }}; font-size:{{ $dtFS - 1 }}px; border-bottom:1px solid {{ $dtBC }};">Kundennr.</td>
         <td style="padding:{{ $dtPad }}; font-weight:600; border-bottom:1px solid {{ $dtBC }};">{{ $doc->customer->number }}</td>
