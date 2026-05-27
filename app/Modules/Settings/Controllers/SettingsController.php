@@ -723,17 +723,17 @@ class SettingsController extends Controller
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Handle logo removal
+        // Handle logo: removal > upload > preserve (never let a missing file wipe an existing logo)
         if ($request->input('remove_logo') === '1' && !$request->hasFile('logo')) {
             if ($company->logo && \Storage::disk('public')->exists($company->logo)) {
                 \Storage::disk('public')->delete($company->logo);
             }
             $validated['logo'] = null;
-        }
-
-        // Handle logo upload
-        if ($request->hasFile('logo')) {
+        } elseif ($request->hasFile('logo')) {
             $validated['logo'] = $this->processAndStoreLogo($request->file('logo'), $company->id);
+        } else {
+            // No new file and not removing — preserve existing logo path
+            unset($validated['logo']);
         }
 
         // Update company

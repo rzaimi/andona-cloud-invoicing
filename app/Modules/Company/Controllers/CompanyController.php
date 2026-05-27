@@ -320,11 +320,13 @@ class CompanyController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
             'phone' => 'nullable|string|max:50',
+            'fax' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
             'postal_code' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
             'country' => 'required|string|max:100',
             'tax_number' => 'nullable|string|max:50',
+            'tax_office' => 'nullable|string|max:100',
             'vat_number' => 'nullable|string|max:50',
             'is_small_business' => 'nullable|boolean',
             'commercial_register' => 'nullable|string|max:100',
@@ -347,10 +349,15 @@ class CompanyController extends Controller
         ];
         unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic']);
 
-        if ($request->hasFile('logo')) {
+        // Handle logo: removal > upload > preserve (never let a missing file wipe an existing logo)
+        if ($request->input('remove_logo') === '1' && !$request->hasFile('logo')) {
+            if ($company->logo && Storage::disk('public')->exists($company->logo)) {
+                Storage::disk('public')->delete($company->logo);
+            }
+            $validated['logo'] = null;
+        } elseif ($request->hasFile('logo')) {
             $validated['logo'] = $this->processAndStoreLogo($request->file('logo'), $company->id);
         } else {
-            // Preserve existing logo when no new file is uploaded
             unset($validated['logo']);
         }
 
