@@ -86,6 +86,7 @@ class SettingsController extends Controller
             'smtp_encryption' => $company->smtp_encryption ?? 'tls',
             'smtp_from_address' => $company->smtp_from_address ?? $company->email,
             'smtp_from_name' => $company->smtp_from_name ?? $company->name,
+            'smtp_reply_to' => $company->smtp_reply_to ?? '',
         ];
 
         $reminderSettings = [
@@ -444,6 +445,7 @@ class SettingsController extends Controller
                 'smtp_encryption' => $company->smtp_encryption ?? 'tls',
                 'smtp_from_address' => $company->smtp_from_address ?? $company->email,
                 'smtp_from_name' => $company->smtp_from_name ?? $company->name,
+                'smtp_reply_to' => $company->smtp_reply_to ?? '',
             ],
         ]);
     }
@@ -461,6 +463,7 @@ class SettingsController extends Controller
             'smtp_encryption' => 'required|string|in:tls,ssl,none',
             'smtp_from_address' => 'required|email|max:255',
             'smtp_from_name' => 'required|string|max:255',
+            'smtp_reply_to' => 'nullable|email|max:255',
         ]);
 
         // Don't update password if it's the masked value

@@ -48,6 +48,8 @@ class InvoiceMailer
             ];
         }
 
+        $replyTo = $company->smtp_reply_to ?: null;
+
         $subject ??= "Rechnung {$invoice->number}";
 
         try {
@@ -59,10 +61,13 @@ class InvoiceMailer
                 'invoice' => $invoice,
                 'company' => $company,
                 'customMessage' => $customMessage,
-            ], function ($message) use ($to, $cc, $subject, $invoice, $pdf) {
+            ], function ($message) use ($to, $cc, $subject, $invoice, $pdf, $replyTo) {
                 $message->to($to);
                 if (! empty($cc)) {
                     $message->cc($cc);
+                }
+                if ($replyTo) {
+                    $message->replyTo($replyTo);
                 }
                 $message->subject($subject);
                 $message->attachData($pdf->output(), "Rechnung_{$invoice->number}.pdf", [

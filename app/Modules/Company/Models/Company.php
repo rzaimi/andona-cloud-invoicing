@@ -410,6 +410,16 @@ class Company extends Model
         $this->setSetting('smtp_from_name', $value, 'string');
     }
 
+    public function getSmtpReplyToAttribute(): ?string
+    {
+        return $this->getSetting('smtp_reply_to');
+    }
+
+    public function setSmtpReplyToAttribute($value): void
+    {
+        $this->setSetting('smtp_reply_to', $value, 'string');
+    }
+
     /**
      * Mutator methods to save bank settings to company_settings
      */
@@ -434,7 +444,7 @@ class Company extends Model
     public function setSmtpSettings(array $settings): void
     {
         foreach ($settings as $key => $value) {
-            if (in_array($key, ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption', 'smtp_from_address', 'smtp_from_name'])) {
+            if (in_array($key, ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption', 'smtp_from_address', 'smtp_from_name', 'smtp_reply_to'])) {
                 $type = $key === 'smtp_port' ? 'integer' : 'string';
                 $this->setSetting($key, $value, $type);
             }

@@ -122,6 +122,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
         smtp_encryption: emailSettings?.smtp_encryption || "tls",
         smtp_from_address: emailSettings?.smtp_from_address || "",
         smtp_from_name: emailSettings?.smtp_from_name || "",
+        smtp_reply_to: emailSettings?.smtp_reply_to || "",
     })
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -257,6 +258,22 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                             required
                         />
                         {errors.smtp_from_name && <p className="text-sm text-red-600">{errors.smtp_from_name}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="smtp_reply_to">Reply-To E-Mail</Label>
+                        <Input
+                            id="smtp_reply_to"
+                            type="email"
+                            placeholder="z.B. kontakt@ihrefirma.de"
+                            value={data.smtp_reply_to}
+                            onChange={(e) => setData("smtp_reply_to", e.target.value)}
+                        />
+                        {errors.smtp_reply_to && <p className="text-sm text-red-600">{errors.smtp_reply_to}</p>}
+                        <p className="text-xs text-muted-foreground">
+                            Optional. Wenn gesetzt, werden Antworten der Empfänger an diese Adresse zugestellt — nicht an die Absender-E-Mail.
+                            Ideal wenn Sie no-reply@ als Absender verwenden, aber Antworten direkt an den Händler gehen sollen.
+                        </p>
                     </div>
                 </CardContent>
             </Card>

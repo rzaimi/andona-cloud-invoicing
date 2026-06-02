@@ -271,14 +271,19 @@ class SendDailyReminders extends Command
             ? $invoice->total * 0.09 * ($invoice->getDaysOverdue() / 365) 
             : 0;
 
+        $replyTo = $company->smtp_reply_to ?: null;
+
         Mail::send($template, [
             'invoice' => $invoice,
             'company' => $company,
             'fee' => $fee,
             'inkassoFee' => $inkassoFee,
             'delayInterest' => $delayInterest,
-        ], function ($message) use ($invoice, $pdf, $subject) {
+        ], function ($message) use ($invoice, $pdf, $subject, $replyTo) {
             $message->to($invoice->customer->email);
+            if ($replyTo) {
+                $message->replyTo($replyTo);
+            }
             $message->subject($subject);
             $message->attachData($pdf->output(), "Rechnung_{$invoice->number}.pdf", [
                 'mime' => 'application/pdf',
@@ -331,11 +336,16 @@ class SendDailyReminders extends Command
 
         $subject = "Erinnerung - Angebot {$offer->number}";
 
+        $replyTo = $company->smtp_reply_to ?: null;
+
         Mail::send('emails.offer-reminder', [
             'offer' => $offer,
             'company' => $company,
-        ], function ($message) use ($offer, $pdf, $subject) {
+        ], function ($message) use ($offer, $pdf, $subject, $replyTo) {
             $message->to($offer->customer->email);
+            if ($replyTo) {
+                $message->replyTo($replyTo);
+            }
             $message->subject($subject);
             $message->attachData($pdf->output(), "Angebot_{$offer->number}.pdf", [
                 'mime' => 'application/pdf',

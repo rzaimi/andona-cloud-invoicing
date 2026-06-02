@@ -631,18 +631,23 @@ class OfferController extends Controller
             // Generate PDF
             $pdf = $this->generateOfferPdf($offer);
 
+            $replyTo = $company->smtp_reply_to ?: null;
+
             // Send email
             Mail::send('emails.offer-sent', [
                 'offer' => $offer,
                 'company' => $company,
                 'customMessage' => $validated['message'] ?? null,
-            ], function ($message) use ($validated, $offer, $pdf, $company) {
+            ], function ($message) use ($validated, $offer, $pdf, $company, $replyTo) {
                 $message->to($validated['to']);
-                
+
                 if (!empty($validated['cc'])) {
                     $message->cc($validated['cc']);
                 }
-                
+                if ($replyTo) {
+                    $message->replyTo($replyTo);
+                }
+
                 $message->subject($validated['subject'] ?: "Angebot {$offer->number}");
                 $message->attachData($pdf->output(), "Angebot_{$offer->number}.pdf", [
                     'mime' => 'application/pdf',
