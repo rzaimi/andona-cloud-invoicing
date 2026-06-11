@@ -23,6 +23,7 @@ interface ProductCreateProps {
 
 interface ProductFormData {
     name: string
+    number: string
     description: string
     unit: string
     price: number
@@ -42,6 +43,7 @@ interface ProductFormData {
 export default function ProductCreate({ user, categories }: ProductCreateProps) {
     const { data, setData, post, processing, errors } = useForm<ProductFormData>({
         name: "",
+        number: "",
         description: "",
         unit: "Stk.",
         price: 0,
@@ -141,6 +143,24 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
                                                 className={errors.name ? "border-red-500" : ""}
                                             />
                                             {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="number">Produktnummer</Label>
+                                            <Input
+                                                id="number"
+                                                value={data.number}
+                                                onChange={(e) => setData("number", e.target.value)}
+                                                placeholder="Automatisch (z.B. PR-2026-0001)"
+                                                className={errors.number ? "border-red-500" : ""}
+                                            />
+                                            {errors.number ? (
+                                                <p className="text-sm text-red-600">{errors.number}</p>
+                                            ) : (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Leer lassen, um automatisch zu generieren. Wird auf Rechnungen/Angeboten angezeigt.
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
@@ -454,6 +474,7 @@ export default function ProductCreate({ user, categories }: ProductCreateProps) 
 function getFieldLabel(field: string): string {
     const labels: Record<string, string> = {
         name: "Produktname",
+        number: "Produktnummer",
         description: "Beschreibung",
         unit: "Einheit",
         price: "Verkaufspreis",

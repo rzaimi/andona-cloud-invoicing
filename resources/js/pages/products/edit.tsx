@@ -24,6 +24,7 @@ interface ProductEditProps {
 
 interface ProductFormData {
     name: string
+    number: string
     description: string
     unit: string
     price: number
@@ -43,6 +44,7 @@ interface ProductFormData {
 export default function ProductEdit({ user, product, categories }: ProductEditProps) {
     const { data, setData, put, processing, errors } = useForm<ProductFormData>({
         name: product.name,
+        number: product.number || "",
         description: product.description || "",
         unit: product.unit,
         price: product.price,
@@ -158,6 +160,25 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                                                 className={errors.name ? "border-red-500" : ""}
                                             />
                                             {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="number">Produktnummer *</Label>
+                                            <Input
+                                                id="number"
+                                                value={data.number}
+                                                onChange={(e) => setData("number", e.target.value)}
+                                                placeholder="z.B. PR-2026-0001"
+                                                required
+                                                className={errors.number ? "border-red-500" : ""}
+                                            />
+                                            {errors.number ? (
+                                                <p className="text-sm text-red-600">{errors.number}</p>
+                                            ) : (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Wird auf Rechnungen/Angeboten angezeigt.
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
@@ -479,6 +500,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
 function getFieldLabel(field: string): string {
     const labels: Record<string, string> = {
         name: "Produktname",
+        number: "Produktnummer",
         description: "Beschreibung",
         unit: "Einheit",
         price: "Verkaufspreis",

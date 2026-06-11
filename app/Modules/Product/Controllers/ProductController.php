@@ -11,6 +11,7 @@ use App\Modules\Product\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -107,8 +108,17 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        $companyId = $this->getEffectiveCompanyId();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            // Leave blank to auto-generate (e.g. PR-2026-0001); unique within the company.
+            'number' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('products', 'number')->where(fn ($query) => $query->where('company_id', $companyId)),
+            ],
             'description' => 'nullable|string',
             'unit' => 'required|string|max:50',
             'price' => 'required|numeric|min:0',
@@ -124,7 +134,10 @@ class ProductController extends Controller
             'status' => 'required|in:active,inactive,discontinued',
         ]);
 
-        $companyId = $this->getEffectiveCompanyId();
+        // Empty string must fall through to model auto-generation, not persist "".
+        if (empty($validated['number'])) {
+            unset($validated['number']);
+        }
 
         // Security: verify category belongs to this company
         if (!empty($validated['category_id'])) {
@@ -227,8 +240,18 @@ class ProductController extends Controller
     {
         $this->authorize('update', $product);
 
+        $companyId = $this->getEffectiveCompanyId();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'number' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('products', 'number')
+                    ->ignore($product->id)
+                    ->where(fn ($query) => $query->where('company_id', $companyId)),
+            ],
             'description' => 'nullable|string',
             'unit' => 'required|string|max:50',
             'price' => 'required|numeric|min:0',
@@ -246,7 +269,6 @@ class ProductController extends Controller
 
         // Security: verify category belongs to this company
         if (!empty($validated['category_id'])) {
-            $companyId = $this->getEffectiveCompanyId();
             $category  = Category::where('company_id', $companyId)->find($validated['category_id']);
             if (!$category) {
                 abort(403, 'Category does not belong to your company');
