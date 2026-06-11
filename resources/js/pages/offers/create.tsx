@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { Head, Link, useForm, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,7 +9,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Plus, Trash2, PackagePlus, Hash } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, PackagePlus, Hash, GripVertical } from "lucide-react"
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
+import type { DragEndEvent } from "@dnd-kit/core"
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import AppLayout from "@/layouts/app-layout"
 import { useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer } from "@/types"
@@ -169,6 +172,17 @@ export default function OffersCreate() {
             "items",
             data.items.filter((item) => item.id !== id),
         )
+    }
+
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event
+        if (over && active.id !== over.id) {
+            const oldIndex = data.items.findIndex((i) => String(i.id) === String(active.id))
+            const newIndex = data.items.findIndex((i) => String(i.id) === String(over.id))
+            setData("items", arrayMove(data.items, oldIndex, newIndex))
+        }
     }
 
     const updateItem = (id: number, field: keyof OfferItem, value: string | number | null) => {
@@ -407,8 +421,9 @@ export default function OffersCreate() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead className="w-[2%]" />
                                             <TableHead className="w-[12%]">Produkt-Nr.</TableHead>
-                                            <TableHead className="w-[26%]">Beschreibung</TableHead>
+                                            <TableHead className="w-[24%]">Beschreibung</TableHead>
                                             <TableHead className="w-[8%]">Menge</TableHead>
                                             <TableHead className="w-[8%]">Einheit</TableHead>
                                             <TableHead className="w-[6%]">USt.</TableHead>
@@ -419,10 +434,12 @@ export default function OffersCreate() {
                                             <TableHead className="w-[10%]">Aktionen</TableHead>
                                         </TableRow>
                                     </TableHeader>
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                    <SortableContext items={data.items.map((i) => String(i.id))} strategy={verticalListSortingStrategy}>
                                     <TableBody>
                                         {data.items.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={10} className="py-12 text-center">
+                                                <TableCell colSpan={11} className="py-12 text-center">
                                                     <div className="flex flex-col items-center gap-3 text-muted-foreground">
                                                         <PackagePlus className="h-10 w-10 opacity-30" />
                                                         <p className="text-sm font-medium">Noch keine Positionen vorhanden</p>
@@ -431,7 +448,10 @@ export default function OffersCreate() {
                                                 </TableCell>
                                             </TableRow>
                                         ) : data.items.map((item, index) => (
-                                            <TableRow key={item.id}>
+                                            <SortableOfferRow key={item.id} id={String(item.id)}>
+                                                <TableCell className="w-8 align-top pt-3 px-1 text-muted-foreground">
+                                                    <SortableOfferRow.Handle />
+                                                </TableCell>
                                                 <TableCell className="align-top">
                                                     <div className="text-sm">
                                                         {item.product_number || item.product_sku || (
@@ -565,9 +585,11 @@ export default function OffersCreate() {
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </TableCell>
-                                            </TableRow>
+                                            </SortableOfferRow>
                                         ))}
                                     </TableBody>
+                                    </SortableContext>
+                                    </DndContext>
                                 </Table>
                             </div>
 
@@ -673,3 +695,25 @@ export default function OffersCreate() {
         </AppLayout>
     )
 }
+
+function SortableOfferRowHandle() {
+    return <GripVertical className="h-4 w-4 cursor-grab active:cursor-grabbing" />
+}
+
+function SortableOfferRow({ id, children }: { id: string; children: React.ReactNode }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+    return (
+        <TableRow
+            ref={setNodeRef}
+            style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+            {...attributes}
+        >
+            {React.Children.map(children, (child, i) =>
+                i === 0
+                    ? React.cloneElement(child as React.ReactElement, { ...listeners })
+                    : child
+            )}
+        </TableRow>
+    )
+}
+SortableOfferRow.Handle = SortableOfferRowHandle

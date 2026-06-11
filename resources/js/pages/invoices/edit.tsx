@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { Head, Link, useForm, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,7 +10,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Trash2, FileText, FileCheck, ChevronDown, XCircle, Download, ExternalLink } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, FileText, FileCheck, ChevronDown, XCircle, Download, ExternalLink, GripVertical } from "lucide-react"
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
+import type { DragEndEvent } from "@dnd-kit/core"
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import axios from "axios"
 import AppLayout from "@/layouts/app-layout"
 import { AbschlagSelectionDialog } from "@/components/abschlag-selection-dialog"
@@ -242,6 +245,18 @@ export default function InvoicesEdit() {
                 "items",
                 (data.items as any[]).filter((item: any) => item.id !== id),
             )
+        }
+    }
+
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event
+        if (over && active.id !== over.id) {
+            const items = data.items as any[]
+            const oldIndex = items.findIndex((i) => String(i.id) === String(active.id))
+            const newIndex = items.findIndex((i) => String(i.id) === String(over.id))
+            setData("items", arrayMove(items, oldIndex, newIndex))
         }
     }
 
@@ -817,8 +832,9 @@ export default function InvoicesEdit() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead className="w-[2%]" />
                                             <TableHead className="w-[12%]">Produkt-Nr.</TableHead>
-                                            <TableHead className="w-[26%]">Beschreibung</TableHead>
+                                            <TableHead className="w-[24%]">Beschreibung</TableHead>
                                             <TableHead className="w-[8%]">Menge</TableHead>
                                             <TableHead className="w-[8%]">Einheit</TableHead>
                                             <TableHead className="w-[6%]">USt.</TableHead>
@@ -829,9 +845,14 @@ export default function InvoicesEdit() {
                                             <TableHead className="w-[10%]">Aktionen</TableHead>
                                         </TableRow>
                                     </TableHeader>
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                    <SortableContext items={(data.items as any[]).map((i) => String(i.id))} strategy={verticalListSortingStrategy}>
                                     <TableBody>
                                         {(data.items as any[]).map((item: any, index: number) => (
-                                            <TableRow key={item.id}>
+                                            <SortableInvoiceRow key={item.id} id={String(item.id)}>
+                                                <TableCell className="w-8 align-top pt-3 px-1 text-muted-foreground">
+                                                    {canEdit && <SortableInvoiceRow.Handle />}
+                                                </TableCell>
                                                 <TableCell className="align-top">
                                                     <div className="text-sm">
                                                         {item.product_number || item.product_sku || (
@@ -978,9 +999,11 @@ export default function InvoicesEdit() {
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </TableCell>
-                                            </TableRow>
+                                            </SortableInvoiceRow>
                                         ))}
                                     </TableBody>
+                                    </SortableContext>
+                                    </DndContext>
                                 </Table>
                             </div>
 
@@ -1113,3 +1136,25 @@ export default function InvoicesEdit() {
         </AppLayout>
     )
 }
+
+function SortableInvoiceRowHandle() {
+    return <GripVertical className="h-4 w-4 cursor-grab active:cursor-grabbing" />
+}
+
+function SortableInvoiceRow({ id, children }: { id: string; children: React.ReactNode }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+    return (
+        <TableRow
+            ref={setNodeRef}
+            style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+            {...attributes}
+        >
+            {React.Children.map(children, (child, i) =>
+                i === 0
+                    ? React.cloneElement(child as React.ReactElement, { ...listeners })
+                    : child
+            )}
+        </TableRow>
+    )
+}
+SortableInvoiceRow.Handle = SortableInvoiceRowHandle
