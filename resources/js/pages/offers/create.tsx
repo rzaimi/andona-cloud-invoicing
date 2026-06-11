@@ -696,24 +696,30 @@ export default function OffersCreate() {
     )
 }
 
+type SortableRowCtx = { listeners: Record<string, unknown> | undefined; setActivatorNodeRef: (node: HTMLElement | null) => void }
+const SortableOfferRowContext = React.createContext<SortableRowCtx>({ listeners: undefined, setActivatorNodeRef: () => {} })
+
 function SortableOfferRowHandle() {
-    return <GripVertical className="h-4 w-4 cursor-grab active:cursor-grabbing" />
+    const { listeners, setActivatorNodeRef } = React.useContext(SortableOfferRowContext)
+    return (
+        <button type="button" ref={setActivatorNodeRef} {...listeners} className="touch-none cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-muted">
+            <GripVertical className="h-4 w-4" />
+        </button>
+    )
 }
 
 function SortableOfferRow({ id, children }: { id: string; children: React.ReactNode }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+    const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id })
     return (
-        <TableRow
-            ref={setNodeRef}
-            style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
-            {...attributes}
-        >
-            {React.Children.map(children, (child, i) =>
-                i === 0
-                    ? React.cloneElement(child as React.ReactElement, { ...listeners })
-                    : child
-            )}
-        </TableRow>
+        <SortableOfferRowContext.Provider value={{ listeners: listeners as Record<string, unknown> | undefined, setActivatorNodeRef }}>
+            <TableRow
+                ref={setNodeRef}
+                style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+                {...attributes}
+            >
+                {children}
+            </TableRow>
+        </SortableOfferRowContext.Provider>
     )
 }
 SortableOfferRow.Handle = SortableOfferRowHandle
