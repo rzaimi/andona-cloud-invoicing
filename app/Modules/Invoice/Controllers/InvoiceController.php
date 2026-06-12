@@ -298,6 +298,12 @@ class InvoiceController extends Controller
             $validated['sequence_number'] = null;
         }
 
+        // Retry on the rare race where two concurrent requests generate the same
+        // number despite the company-row lock (MySQL REPEATABLE READ edge case).
+        $attempts = 0;
+        do {
+            $collision = false;
+            try {
         DB::transaction(function () use ($validated, $request) {
             $user = $request->user();
             $effectiveCompanyId = $this->getEffectiveCompanyId();
@@ -324,9 +330,11 @@ class InvoiceController extends Controller
                 }
             }
 
-            // Generate invoice number using the format for the selected invoice type
+            // Generate invoice number using the format for the selected invoice type.
+            // sharedLock() forces a current read (breaks the REPEATABLE READ snapshot)
+            // so we always see numbers committed by concurrent transactions.
             $svc = new NumberFormatService;
-            $allNums = Invoice::where('company_id', $effectiveCompanyId)->pluck('number');
+            $allNums = Invoice::where('company_id', $effectiveCompanyId)->sharedLock()->pluck('number');
             $invType = $validated['invoice_type'] ?? 'standard';
             if ($invType === 'abschlagsrechnung') {
                 $format = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
@@ -422,6 +430,13 @@ class InvoiceController extends Controller
                 'Rechnung erstellt mit '.count($validated['items']).' Positionen'
             );
         });
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                $collision = true;
+                if (++$attempts >= 5) {
+                    throw $e;
+                }
+            }
+        } while ($collision);
 
         return redirect()->route('invoices.index')
             ->with('success', 'Rechnung wurde erfolgreich erstellt.');
@@ -1709,7 +1724,8 @@ class InvoiceController extends Controller
     private function generateTypedNumber(string $invoiceType, \App\Modules\Company\Models\Company $company): string
     {
         $svc        = new NumberFormatService;
-        $allNumbers = Invoice::where('company_id', $company->id)->pluck('number');
+        // sharedLock() forces a current read so concurrent transactions are visible.
+        $allNumbers = Invoice::where('company_id', $company->id)->sharedLock()->pluck('number');
 
         if ($invoiceType === 'abschlagsrechnung') {
             $format     = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
