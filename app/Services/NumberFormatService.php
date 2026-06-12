@@ -97,8 +97,7 @@ class NumberFormatService
      */
     public function lastSequential(string $format, Collection $numbers, ?Carbon $date = null): int
     {
-        $prefix   = $this->scopePrefix($format, $date);
-        $padWidth = $this->seqPadWidth($format);
+        $prefix    = $this->scopePrefix($format, $date);
         $prefixLen = strlen($prefix);
 
         $max = 0;
@@ -106,8 +105,12 @@ class NumberFormatService
             if (!str_starts_with((string) $number, $prefix)) {
                 continue;
             }
-            // The sequential number occupies the last $padWidth chars of the number
-            $seq = (int) substr((string) $number, -$padWidth);
+            // Extract the portion after the scope prefix and cast to int.
+            // Using the prefix length (not -padWidth from the end) means
+            // existing numbers with a shorter or longer counter width are
+            // still parsed correctly, e.g. "AR-2026-01" and "AR-2026-0007"
+            // both yield the right counter value against prefix "AR-2026-".
+            $seq = (int) substr((string) $number, $prefixLen);
             if ($seq > $max) {
                 $max = $seq;
             }

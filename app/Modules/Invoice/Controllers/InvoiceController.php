@@ -448,58 +448,71 @@ class InvoiceController extends Controller
 
         $invoice->load(['items', 'company']);
 
-        DB::transaction(function () use ($invoice) {
-            $company = \App\Modules\Company\Models\Company::whereKey($invoice->company_id)
-                ->lockForUpdate()
-                ->first();
+        $attempts = 0;
+        do {
+            $collision = false;
+            try {
+                DB::transaction(function () use ($invoice) {
+                    $company = \App\Modules\Company\Models\Company::whereKey($invoice->company_id)
+                        ->lockForUpdate()
+                        ->first();
 
-            $copy = Invoice::create([
-                'number'               => $this->generateTypedNumber($invoice->invoice_type ?? 'standard', $company),
-                'company_id'           => $invoice->company_id,
-                'customer_id'          => $invoice->customer_id,
-                'user_id'              => request()->user()->id,
-                'status'               => 'draft',
-                'issue_date'           => now()->toDateString(),
-                'due_date'             => now()->addDays((int) ($company->getSetting('payment_terms', 14)))->toDateString(),
-                'service_date'         => $invoice->service_date,
-                'service_period_start' => $invoice->service_period_start,
-                'service_period_end'   => $invoice->service_period_end,
-                'notes'                => $invoice->notes,
-                'bauvorhaben'          => $invoice->bauvorhaben,
-                'auftragsnummer'       => $invoice->auftragsnummer,
-                'layout_id'            => $invoice->layout_id,
-                'vat_regime'           => $invoice->vat_regime ?? 'standard',
-                'tax_rate'             => $invoice->tax_rate,
-                'invoice_type'         => $invoice->invoice_type ?? 'standard',
-                'skonto_percent'       => $invoice->skonto_percent,
-                'skonto_days'          => $invoice->skonto_days,
-                // abschlag_refs intentionally not copied — the duplicate is a
-                // fresh invoice; the user can link refs manually if needed.
-            ]);
+                    $copy = Invoice::create([
+                        'number'               => $this->generateTypedNumber($invoice->invoice_type ?? 'standard', $company),
+                        'company_id'           => $invoice->company_id,
+                        'customer_id'          => $invoice->customer_id,
+                        'user_id'              => request()->user()->id,
+                        'status'               => 'draft',
+                        'issue_date'           => now()->toDateString(),
+                        'due_date'             => now()->addDays((int) ($company->getSetting('payment_terms', 14)))->toDateString(),
+                        'service_date'         => $invoice->service_date,
+                        'service_period_start' => $invoice->service_period_start,
+                        'service_period_end'   => $invoice->service_period_end,
+                        'notes'                => $invoice->notes,
+                        'bauvorhaben'          => $invoice->bauvorhaben,
+                        'auftragsnummer'       => $invoice->auftragsnummer,
+                        'layout_id'            => $invoice->layout_id,
+                        'vat_regime'           => $invoice->vat_regime ?? 'standard',
+                        'tax_rate'             => $invoice->tax_rate,
+                        'invoice_type'         => $invoice->invoice_type ?? 'standard',
+                        'skonto_percent'       => $invoice->skonto_percent,
+                        'skonto_days'          => $invoice->skonto_days,
+                        // abschlag_refs intentionally not copied — the duplicate is a
+                        // fresh invoice; the user can link refs manually if needed.
+                    ]);
 
-            $copy->company_snapshot = $copy->createCompanySnapshot();
-            $copy->save();
+                    $copy->company_snapshot = $copy->createCompanySnapshot();
+                    $copy->save();
 
-            foreach ($invoice->items as $item) {
-                InvoiceItem::create([
-                    'invoice_id'     => $copy->id,
-                    'product_id'     => $item->product_id,
-                    'description'    => $item->description,
-                    'quantity'       => $item->quantity,
-                    'unit_price'     => $item->unit_price,
-                    'unit'           => $item->unit,
-                    'tax_rate'       => $item->tax_rate,
-                    'discount_type'  => $item->discount_type,
-                    'discount_value' => $item->discount_value,
-                    'total'          => $item->total,
-                    'sort_order'     => $item->sort_order,
-                ]);
+                    foreach ($invoice->items as $item) {
+                        InvoiceItem::create([
+                            'invoice_id'     => $copy->id,
+                            'product_id'     => $item->product_id,
+                            'description'    => $item->description,
+                            'quantity'       => $item->quantity,
+                            'unit_price'     => $item->unit_price,
+                            'unit'           => $item->unit,
+                            'tax_rate'       => $item->tax_rate,
+                            'discount_type'  => $item->discount_type,
+                            'discount_value' => $item->discount_value,
+                            'total'          => $item->total,
+                            'sort_order'     => $item->sort_order,
+                        ]);
+                    }
+
+                    $copy->calculateTotals();
+                    $copy->calculateSkonto();
+                    $copy->save();
+                });
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                $collision = true;
+                if (++$attempts >= 5) {
+                    return back()->with('error', 'Fehler beim Duplizieren: Rechnungsnummer konnte nicht generiert werden.');
+                }
+            } catch (\Throwable $e) {
+                return back()->with('error', 'Fehler beim Duplizieren der Rechnung: '.$e->getMessage());
             }
-
-            $copy->calculateTotals();
-            $copy->calculateSkonto();
-            $copy->save();
-        });
+        } while ($collision);
 
         return redirect()->route('invoices.index')
             ->with('success', "Rechnung {$invoice->number} wurde als Entwurf dupliziert.");
