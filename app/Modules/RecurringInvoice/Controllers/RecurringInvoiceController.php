@@ -131,6 +131,7 @@ class RecurringInvoiceController extends Controller
                 'next_run_date' => $startDate->toDateString(),
                 'status' => 'active',
                 'auto_send' => (bool) ($validated['auto_send'] ?? false),
+                'service_period_full_month' => (bool) ($validated['service_period_full_month'] ?? false),
                 'email_subject_template' => $validated['email_subject_template'] ?? null,
                 'email_body_template' => $validated['email_body_template'] ?? null,
             ]);
@@ -227,6 +228,7 @@ class RecurringInvoiceController extends Controller
                 'end_date' => $validated['end_date'] ?? null,
                 'max_occurrences' => $validated['max_occurrences'] ?? null,
                 'auto_send' => (bool) ($validated['auto_send'] ?? false),
+                'service_period_full_month' => (bool) ($validated['service_period_full_month'] ?? false),
                 'email_subject_template' => $validated['email_subject_template'] ?? null,
                 'email_body_template' => $validated['email_body_template'] ?? null,
             ]);
@@ -314,6 +316,7 @@ class RecurringInvoiceController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'max_occurrences' => 'nullable|integer|min:1|max:1000',
             'auto_send' => 'nullable|boolean',
+            'service_period_full_month' => 'nullable|boolean',
             'email_subject_template' => 'nullable|string|max:255',
             'email_body_template' => 'nullable|string|max:5000',
             'items' => 'required|array|min:1',

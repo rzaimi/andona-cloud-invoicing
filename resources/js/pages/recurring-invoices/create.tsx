@@ -50,6 +50,7 @@ export default function RecurringInvoicesCreate() {
         end_date: "",
         max_occurrences: "",
         auto_send: false,
+        service_period_full_month: false,
         email_subject_template: "",
         email_body_template: "",
         items: [],

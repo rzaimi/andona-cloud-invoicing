@@ -146,6 +146,15 @@ class RecurringInvoiceService
 
         $dueDate = $issueDate->addDays(max(0, (int) $profile->due_days_after_issue));
 
+        // Derive the service period dates when the profile has the full-month flag enabled.
+        // start = first day of the invoice month, end = last day of the invoice month.
+        $servicePeriodStart = $profile->service_period_full_month
+            ? $issueDate->startOfMonth()->toDateString()
+            : null;
+        $servicePeriodEnd = $profile->service_period_full_month
+            ? $issueDate->endOfMonth()->toDateString()
+            : null;
+
         $invoice = Invoice::create([
             'number' => $invoiceNumber,
             'company_id' => $company->id,
@@ -168,6 +177,8 @@ class RecurringInvoiceService
             'payment_terms' => $profile->payment_terms,
             'skonto_percent' => $profile->skonto_percent,
             'skonto_days' => $profile->skonto_days,
+            'service_period_start' => $servicePeriodStart,
+            'service_period_end' => $servicePeriodEnd,
         ]);
 
         $invoice->company_snapshot = $invoice->createCompanySnapshot();

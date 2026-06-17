@@ -48,6 +48,7 @@ export interface RecurringFormData {
     end_date: string
     max_occurrences: number | ""
     auto_send: boolean
+    service_period_full_month: boolean
     email_subject_template: string
     email_body_template: string
     items: RecurringFormItem[]
@@ -324,6 +325,21 @@ export function RecurringProfileForm({
                             }
                             placeholder="z.B. 12"
                         />
+                    </div>
+                    <div className="md:col-span-4 flex items-center gap-3 pt-2">
+                        <Switch
+                            id="service_period_full_month"
+                            checked={data.service_period_full_month}
+                            onCheckedChange={(v) => setData("service_period_full_month", v)}
+                        />
+                        <div>
+                            <Label htmlFor="service_period_full_month">
+                                Leistungszeitraum automatisch setzen
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                Wenn aktiv: Leistungszeitraum von = erster Tag des Monats, bis = letzter Tag des Monats.
+                            </p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

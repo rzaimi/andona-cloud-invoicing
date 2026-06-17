@@ -52,6 +52,7 @@ export default function RecurringInvoicesEdit() {
         end_date: profile.end_date ?? "",
         max_occurrences: profile.max_occurrences ?? "",
         auto_send: profile.auto_send,
+        service_period_full_month: profile.service_period_full_month ?? false,
         email_subject_template: profile.email_subject_template ?? "",
         email_body_template: profile.email_body_template ?? "",
         items: (profile.items ?? []).map((it, idx) => ({

@@ -67,6 +67,7 @@ class RecurringInvoiceProfile extends Model
         'status',
         'paused_until',
         'auto_send',
+        'service_period_full_month',
         'email_subject_template',
         'email_body_template',
     ];
@@ -86,6 +87,7 @@ class RecurringInvoiceProfile extends Model
         'last_run_date' => 'date',
         'paused_until' => 'date',
         'auto_send' => 'boolean',
+        'service_period_full_month' => 'boolean',
     ];
 
     public function company(): BelongsTo
