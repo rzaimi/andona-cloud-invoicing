@@ -225,7 +225,9 @@ class InvoiceController extends Controller
             ->get();
 
         $svc = new NumberFormatService;
-        $allNumbers = Invoice::where('company_id', $companyId)->pluck('number');
+        // withTrashed(): soft-deleted invoices still occupy the unique index,
+        // so the preview must reflect them to match what store() will generate.
+        $allNumbers = Invoice::withTrashed()->where('company_id', $companyId)->pluck('number');
 
         $stdFormat = $svc->normaliseToFormat($company->getSetting('invoice_number_format') ?? $company->getSetting('invoice_prefix', 'RE-'));
         $arFormat = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
@@ -334,7 +336,11 @@ class InvoiceController extends Controller
             // sharedLock() forces a current read (breaks the REPEATABLE READ snapshot)
             // so we always see numbers committed by concurrent transactions.
             $svc = new NumberFormatService;
-            $allNums = Invoice::where('company_id', $effectiveCompanyId)->sharedLock()->pluck('number');
+            // withTrashed(): soft-deleted invoices still occupy the
+            // (company_id, number) unique index, so they MUST be considered
+            // when generating the next number — otherwise a deleted draft's
+            // number gets re-generated and the insert fails.
+            $allNums = Invoice::withTrashed()->where('company_id', $effectiveCompanyId)->sharedLock()->pluck('number');
             $invType = $validated['invoice_type'] ?? 'standard';
             if ($invType === 'abschlagsrechnung') {
                 $format = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
@@ -1738,7 +1744,8 @@ class InvoiceController extends Controller
     {
         $svc        = new NumberFormatService;
         // sharedLock() forces a current read so concurrent transactions are visible.
-        $allNumbers = Invoice::where('company_id', $company->id)->sharedLock()->pluck('number');
+        // withTrashed(): soft-deleted invoices still occupy the unique index.
+        $allNumbers = Invoice::withTrashed()->where('company_id', $company->id)->sharedLock()->pluck('number');
 
         if ($invoiceType === 'abschlagsrechnung') {
             $format     = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');

@@ -457,7 +457,9 @@ class Invoice extends Model
                 ?? $company->getSetting('invoice_prefix', 'RE-')
         );
         $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
-        $numbers = static::where('company_id', $this->company_id)->pluck('number');
+        // withTrashed(): soft-deleted invoices still occupy the (company_id, number)
+        // unique index and must be counted to avoid regenerating a deleted number.
+        $numbers = static::withTrashed()->where('company_id', $this->company_id)->pluck('number');
 
         return $svc->next($format, $numbers, null, $minCounter);
     }
@@ -643,7 +645,8 @@ class Invoice extends Model
                 ?? 'STORNO-{YYYY}-{####}'
         );
         $minCounter = (int) ($company->getSetting('storno_next_counter') ?? 1);
-        $numbers = static::where('company_id', $this->company_id)->pluck('number');
+        // withTrashed(): soft-deleted invoices still occupy the unique index.
+        $numbers = static::withTrashed()->where('company_id', $this->company_id)->pluck('number');
 
         return $svc->next($stornoFormat, $numbers, null, $minCounter);
     }

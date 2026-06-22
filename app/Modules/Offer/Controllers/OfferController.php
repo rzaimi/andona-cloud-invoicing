@@ -450,7 +450,9 @@ class OfferController extends Controller
                 $company->getSetting('invoice_number_format')
                     ?? $company->getSetting('invoice_prefix', 'RE-')
             );
-            $invoiceNumber = $svc->next($format, Invoice::where('company_id', $offer->company_id)->pluck('number'));
+            // withTrashed(): soft-deleted invoices still occupy the (company_id, number)
+            // unique index, so they must be considered when generating the next number.
+            $invoiceNumber = $svc->next($format, Invoice::withTrashed()->where('company_id', $offer->company_id)->pluck('number'));
 
             $vatRegime = $offer->vat_regime ?? 'standard';
             $isStandardVat = $vatRegime === 'standard';
