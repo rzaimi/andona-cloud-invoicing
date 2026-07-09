@@ -86,13 +86,13 @@ class InvoicePolicy
     public function createCorrection(User $user, Invoice $invoice): bool
     {
         // Must belong to same company
-        if ($user->company_id !== $invoice->company_id && !$user->hasPermissionTo('manage_companies')) {
+        if ($user->company_id !== $invoice->company_id && ! $user->hasPermissionTo('manage_companies')) {
             return false;
         }
 
         // Check if user has specific permission to create corrections
         // or is an admin/super admin
-        return $user->hasPermissionTo('create_stornorechnung') 
+        return $user->hasPermissionTo('create_stornorechnung')
             || $user->hasRole(['admin', 'super-admin'])
             || $user->hasPermissionTo('manage_companies');
     }

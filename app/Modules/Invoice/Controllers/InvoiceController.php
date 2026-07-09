@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class InvoiceController extends Controller
@@ -105,8 +106,8 @@ class InvoiceController extends Controller
         }
 
         return Inertia::render('invoices/board', [
-            'columns'     => $columns,
-            'perColumn'   => $perColumn,
+            'columns' => $columns,
+            'perColumn' => $perColumn,
         ]);
     }
 
@@ -135,21 +136,21 @@ class InvoiceController extends Controller
         ]);
 
         $allowed = [
-            'draft'   => ['sent', 'cancelled'],
-            'sent'    => ['cancelled'],
+            'draft' => ['sent', 'cancelled'],
+            'sent' => ['cancelled'],
             'overdue' => ['cancelled'],
         ];
 
         $from = $invoice->status;
-        $to   = $validated['status'];
+        $to = $validated['status'];
 
         if ($from === $to) {
             return response()->json(['ok' => true]);
         }
 
-        if (!isset($allowed[$from]) || !in_array($to, $allowed[$from], true)) {
+        if (! isset($allowed[$from]) || ! in_array($to, $allowed[$from], true)) {
             return response()->json([
-                'ok'      => false,
+                'ok' => false,
                 'message' => "Wechsel von \"{$from}\" nach \"{$to}\" ist nicht erlaubt. Für \"Bezahlt\" erfassen Sie bitte eine Zahlung; abgeschlossene Rechnungen werden per Stornorechnung korrigiert.",
             ], 422);
         }
@@ -196,12 +197,12 @@ class InvoiceController extends Controller
             $invoice->status,
             $invoice->status,
             ['filled_fields' => $filled],
-            'Fehlende Firmendaten-Felder ergänzt: ' . implode(', ', $filled)
+            'Fehlende Firmendaten-Felder ergänzt: '.implode(', ', $filled)
         );
 
         return back()->with(
             'success',
-            count($filled) . ' Feld(er) ergänzt: ' . implode(', ', $filled)
+            count($filled).' Feld(er) ergänzt: '.implode(', ', $filled)
         );
     }
 
@@ -225,9 +226,7 @@ class InvoiceController extends Controller
             ->get();
 
         $svc = new NumberFormatService;
-        // withTrashed(): soft-deleted invoices still occupy the unique index,
-        // so the preview must reflect them to match what store() will generate.
-        $allNumbers = Invoice::withTrashed()->where('company_id', $companyId)->pluck('number');
+        $allNumbers = Invoice::where('company_id', $companyId)->pluck('number');
 
         $stdFormat = $svc->normaliseToFormat($company->getSetting('invoice_number_format') ?? $company->getSetting('invoice_prefix', 'RE-'));
         $arFormat = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
@@ -306,136 +305,132 @@ class InvoiceController extends Controller
         do {
             $collision = false;
             try {
-        DB::transaction(function () use ($validated, $request) {
-            $user = $request->user();
-            $effectiveCompanyId = $this->getEffectiveCompanyId();
+                DB::transaction(function () use ($validated, $request) {
+                    $user = $request->user();
+                    $effectiveCompanyId = $this->getEffectiveCompanyId();
 
-            // GoBD: invoice numbers must be fortlaufend + lückenlos. Serialise
-            // number generation per company by taking a pessimistic lock on the
-            // company row for the duration of the transaction. Concurrent stores
-            // will wait here instead of racing on `next($numbers)`.
-            $company = \App\Modules\Company\Models\Company::whereKey($effectiveCompanyId)
-                ->lockForUpdate()
-                ->first();
-
-            // Security: Verify customer belongs to the same company
-            $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
-            if (! $customer) {
-                abort(403, 'Customer does not belong to your company');
-            }
-
-            // Security: Verify layout belongs to the same company if provided
-            if (! empty($validated['layout_id'])) {
-                $layout = InvoiceLayout::forCompany($effectiveCompanyId)->find($validated['layout_id']);
-                if (! $layout) {
-                    abort(403, 'Layout does not belong to your company');
-                }
-            }
-
-            // Generate invoice number using the format for the selected invoice type.
-            // sharedLock() forces a current read (breaks the REPEATABLE READ snapshot)
-            // so we always see numbers committed by concurrent transactions.
-            $svc = new NumberFormatService;
-            // withTrashed(): soft-deleted invoices still occupy the
-            // (company_id, number) unique index, so they MUST be considered
-            // when generating the next number — otherwise a deleted draft's
-            // number gets re-generated and the insert fails.
-            $allNums = Invoice::withTrashed()->where('company_id', $effectiveCompanyId)->sharedLock()->pluck('number');
-            $invType = $validated['invoice_type'] ?? 'standard';
-            if ($invType === 'abschlagsrechnung') {
-                $format = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
-                $minCounter = (int) ($company->getSetting('abschlag_next_counter') ?? 1);
-            } elseif ($invType === 'schlussrechnung') {
-                $format = $svc->normaliseToFormat($company->getSetting('schluss_number_format') ?? 'SR-{YYYY}-{####}');
-                $minCounter = (int) ($company->getSetting('schluss_next_counter') ?? 1);
-            } else {
-                $format = $svc->normaliseToFormat($company->getSetting('invoice_number_format') ?? $company->getSetting('invoice_prefix', 'RE-'));
-                $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
-            }
-            $invoiceNumber = $svc->next($format, $allNums, null, $minCounter);
-
-            // Create invoice
-            $invoice = Invoice::create([
-                'number' => $invoiceNumber,
-                'company_id' => $effectiveCompanyId,
-                'customer_id' => $validated['customer_id'],
-                'user_id' => $user->id,
-                'issue_date' => $validated['issue_date'],
-                'service_date' => $validated['service_date'] ?? null,
-                'service_period_start' => $validated['service_period_start'] ?? null,
-                'service_period_end' => $validated['service_period_end'] ?? null,
-                'due_date' => $validated['due_date'],
-                'notes' => $validated['notes'],
-                'bauvorhaben' => $validated['bauvorhaben'] ?? null,
-                'auftragsnummer' => $validated['auftragsnummer'] ?? null,
-                'abschlag_refs' => in_array($validated['invoice_type'] ?? 'standard', ['schlussrechnung', 'abschlagsrechnung'])
-                                             ? ($validated['abschlag_refs'] ?? null)
-                                             : null,
-                'layout_id' => $validated['layout_id'],
-                'vat_regime' => $validated['vat_regime'] ?? 'standard',
-                'tax_rate' => ($validated['vat_regime'] ?? 'standard') === 'standard' ? $company->getSetting('tax_rate', 0.19) : 0,
-                'invoice_type' => $validated['invoice_type'] ?? 'standard',
-                'sequence_number' => $validated['sequence_number'] ?? null,
-                'skonto_percent' => isset($validated['skonto_percent']) ? (float) $validated['skonto_percent'] : null,
-                'skonto_days' => isset($validated['skonto_days']) ? (int) $validated['skonto_days'] : null,
-            ]);
-
-            // Save company snapshot
-            $invoice->company_snapshot = $invoice->createCompanySnapshot();
-            $invoice->save();
-
-            // Create invoice items
-            foreach ($validated['items'] as $index => $itemData) {
-                $productId = null;
-                if (! empty($itemData['product_id'])) {
-                    $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
-                        ->where('id', $itemData['product_id'])
+                    // GoBD: invoice numbers must be fortlaufend + lückenlos. Serialise
+                    // number generation per company by taking a pessimistic lock on the
+                    // company row for the duration of the transaction. Concurrent stores
+                    // will wait here instead of racing on `next($numbers)`.
+                    $company = \App\Modules\Company\Models\Company::whereKey($effectiveCompanyId)
+                        ->lockForUpdate()
                         ->first();
-                    if (! $product) {
-                        abort(403, 'Product does not belong to your company');
+
+                    // Security: Verify customer belongs to the same company
+                    $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
+                    if (! $customer) {
+                        abort(403, 'Customer does not belong to your company');
                     }
-                    $productId = $product->id;
-                }
 
-                // Handle discount fields - convert empty strings and 'none' to null
-                $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none'
-                    ? $itemData['discount_type']
-                    : null;
-                $discountValue = isset($itemData['discount_value']) && $itemData['discount_value'] !== '' && $itemData['discount_value'] !== null
-                    ? $itemData['discount_value']
-                    : null;
+                    // Security: Verify layout belongs to the same company if provided
+                    if (! empty($validated['layout_id'])) {
+                        $layout = InvoiceLayout::forCompany($effectiveCompanyId)->find($validated['layout_id']);
+                        if (! $layout) {
+                            abort(403, 'Layout does not belong to your company');
+                        }
+                    }
 
-                $item = new InvoiceItem([
-                    'invoice_id' => $invoice->id,
-                    'product_id' => $productId,
-                    'description' => $itemData['description'],
-                    'quantity' => $itemData['quantity'],
-                    'unit_price' => $itemData['unit_price'],
-                    'unit' => $itemData['unit'] ?? 'Stk.',
-                    'tax_rate' => $itemData['tax_rate'] ?? $invoice->tax_rate, // Use item tax rate or fallback to invoice rate
-                    'discount_type' => $discountType,
-                    'discount_value' => $discountValue,
-                    'sort_order' => $index,
-                ]);
-                $item->calculateTotal();
-                $item->save();
-            }
+                    // Generate invoice number using the format for the selected invoice type.
+                    // sharedLock() forces a current read (breaks the REPEATABLE READ snapshot)
+                    // so we always see numbers committed by concurrent transactions.
+                    $svc = new NumberFormatService;
+                    $allNums = Invoice::where('company_id', $effectiveCompanyId)->sharedLock()->pluck('number');
+                    $invType = $validated['invoice_type'] ?? 'standard';
+                    if ($invType === 'abschlagsrechnung') {
+                        $format = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
+                        $minCounter = (int) ($company->getSetting('abschlag_next_counter') ?? 1);
+                    } elseif ($invType === 'schlussrechnung') {
+                        $format = $svc->normaliseToFormat($company->getSetting('schluss_number_format') ?? 'SR-{YYYY}-{####}');
+                        $minCounter = (int) ($company->getSetting('schluss_next_counter') ?? 1);
+                    } else {
+                        $format = $svc->normaliseToFormat($company->getSetting('invoice_number_format') ?? $company->getSetting('invoice_prefix', 'RE-'));
+                        $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
+                    }
+                    $invoiceNumber = $svc->next($format, $allNums, null, $minCounter);
 
-            // Recalculate totals, then skonto (skonto depends on the final total)
-            $invoice->calculateTotals();
-            $invoice->calculateSkonto();
-            $invoice->save();
+                    // Create invoice
+                    $invoice = Invoice::create([
+                        'number' => $invoiceNumber,
+                        'company_id' => $effectiveCompanyId,
+                        'customer_id' => $validated['customer_id'],
+                        'user_id' => $user->id,
+                        'issue_date' => $validated['issue_date'],
+                        'service_date' => $validated['service_date'] ?? null,
+                        'service_period_start' => $validated['service_period_start'] ?? null,
+                        'service_period_end' => $validated['service_period_end'] ?? null,
+                        'due_date' => $validated['due_date'],
+                        'notes' => $validated['notes'],
+                        'bauvorhaben' => $validated['bauvorhaben'] ?? null,
+                        'auftragsnummer' => $validated['auftragsnummer'] ?? null,
+                        'abschlag_refs' => in_array($validated['invoice_type'] ?? 'standard', ['schlussrechnung', 'abschlagsrechnung'])
+                                                     ? ($validated['abschlag_refs'] ?? null)
+                                                     : null,
+                        'layout_id' => $validated['layout_id'],
+                        'vat_regime' => $validated['vat_regime'] ?? 'standard',
+                        'tax_rate' => ($validated['vat_regime'] ?? 'standard') === 'standard' ? $company->getSetting('tax_rate', 0.19) : 0,
+                        'invoice_type' => $validated['invoice_type'] ?? 'standard',
+                        'sequence_number' => $validated['sequence_number'] ?? null,
+                        'skonto_percent' => isset($validated['skonto_percent']) ? (float) $validated['skonto_percent'] : null,
+                        'skonto_days' => isset($validated['skonto_days']) ? (int) $validated['skonto_days'] : null,
+                    ]);
 
-            // Audit Log: Invoice created
-            InvoiceAuditLog::log(
-                $invoice->id,
-                'created',
-                null,
-                'draft',
-                null,
-                'Rechnung erstellt mit '.count($validated['items']).' Positionen'
-            );
-        });
+                    // Save company snapshot
+                    $invoice->company_snapshot = $invoice->createCompanySnapshot();
+                    $invoice->save();
+
+                    // Create invoice items
+                    foreach ($validated['items'] as $index => $itemData) {
+                        $productId = null;
+                        if (! empty($itemData['product_id'])) {
+                            $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
+                                ->where('id', $itemData['product_id'])
+                                ->first();
+                            if (! $product) {
+                                abort(403, 'Product does not belong to your company');
+                            }
+                            $productId = $product->id;
+                        }
+
+                        // Handle discount fields - convert empty strings and 'none' to null
+                        $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none'
+                            ? $itemData['discount_type']
+                            : null;
+                        $discountValue = isset($itemData['discount_value']) && $itemData['discount_value'] !== '' && $itemData['discount_value'] !== null
+                            ? $itemData['discount_value']
+                            : null;
+
+                        $item = new InvoiceItem([
+                            'invoice_id' => $invoice->id,
+                            'product_id' => $productId,
+                            'description' => $itemData['description'],
+                            'quantity' => $itemData['quantity'],
+                            'unit_price' => $itemData['unit_price'],
+                            'unit' => $itemData['unit'] ?? 'Stk.',
+                            'tax_rate' => $itemData['tax_rate'] ?? $invoice->tax_rate, // Use item tax rate or fallback to invoice rate
+                            'discount_type' => $discountType,
+                            'discount_value' => $discountValue,
+                            'sort_order' => $index,
+                        ]);
+                        $item->calculateTotal();
+                        $item->save();
+                    }
+
+                    // Recalculate totals, then skonto (skonto depends on the final total)
+                    $invoice->calculateTotals();
+                    $invoice->calculateSkonto();
+                    $invoice->save();
+
+                    // Audit Log: Invoice created
+                    InvoiceAuditLog::log(
+                        $invoice->id,
+                        'created',
+                        null,
+                        'draft',
+                        null,
+                        'Rechnung erstellt mit '.count($validated['items']).' Positionen'
+                    );
+                });
             } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
                 $collision = true;
                 if (++$attempts >= 5) {
@@ -464,25 +459,25 @@ class InvoiceController extends Controller
                         ->first();
 
                     $copy = Invoice::create([
-                        'number'               => $this->generateTypedNumber($invoice->invoice_type ?? 'standard', $company),
-                        'company_id'           => $invoice->company_id,
-                        'customer_id'          => $invoice->customer_id,
-                        'user_id'              => request()->user()->id,
-                        'status'               => 'draft',
-                        'issue_date'           => now()->toDateString(),
-                        'due_date'             => now()->addDays((int) ($company->getSetting('payment_terms', 14)))->toDateString(),
-                        'service_date'         => $invoice->service_date,
+                        'number' => $this->generateTypedNumber($invoice->invoice_type ?? 'standard', $company),
+                        'company_id' => $invoice->company_id,
+                        'customer_id' => $invoice->customer_id,
+                        'user_id' => request()->user()->id,
+                        'status' => 'draft',
+                        'issue_date' => now()->toDateString(),
+                        'due_date' => now()->addDays((int) ($company->getSetting('payment_terms', 14)))->toDateString(),
+                        'service_date' => $invoice->service_date,
                         'service_period_start' => $invoice->service_period_start,
-                        'service_period_end'   => $invoice->service_period_end,
-                        'notes'                => $invoice->notes,
-                        'bauvorhaben'          => $invoice->bauvorhaben,
-                        'auftragsnummer'       => $invoice->auftragsnummer,
-                        'layout_id'            => $invoice->layout_id,
-                        'vat_regime'           => $invoice->vat_regime ?? 'standard',
-                        'tax_rate'             => $invoice->tax_rate,
-                        'invoice_type'         => $invoice->invoice_type ?? 'standard',
-                        'skonto_percent'       => $invoice->skonto_percent,
-                        'skonto_days'          => $invoice->skonto_days,
+                        'service_period_end' => $invoice->service_period_end,
+                        'notes' => $invoice->notes,
+                        'bauvorhaben' => $invoice->bauvorhaben,
+                        'auftragsnummer' => $invoice->auftragsnummer,
+                        'layout_id' => $invoice->layout_id,
+                        'vat_regime' => $invoice->vat_regime ?? 'standard',
+                        'tax_rate' => $invoice->tax_rate,
+                        'invoice_type' => $invoice->invoice_type ?? 'standard',
+                        'skonto_percent' => $invoice->skonto_percent,
+                        'skonto_days' => $invoice->skonto_days,
                         // abschlag_refs intentionally not copied — the duplicate is a
                         // fresh invoice; the user can link refs manually if needed.
                     ]);
@@ -492,17 +487,17 @@ class InvoiceController extends Controller
 
                     foreach ($invoice->items as $item) {
                         InvoiceItem::create([
-                            'invoice_id'     => $copy->id,
-                            'product_id'     => $item->product_id,
-                            'description'    => $item->description,
-                            'quantity'       => $item->quantity,
-                            'unit_price'     => $item->unit_price,
-                            'unit'           => $item->unit,
-                            'tax_rate'       => $item->tax_rate,
-                            'discount_type'  => $item->discount_type,
+                            'invoice_id' => $copy->id,
+                            'product_id' => $item->product_id,
+                            'description' => $item->description,
+                            'quantity' => $item->quantity,
+                            'unit_price' => $item->unit_price,
+                            'unit' => $item->unit,
+                            'tax_rate' => $item->tax_rate,
+                            'discount_type' => $item->discount_type,
                             'discount_value' => $item->discount_value,
-                            'total'          => $item->total,
-                            'sort_order'     => $item->sort_order,
+                            'total' => $item->total,
+                            'sort_order' => $item->sort_order,
                         ]);
                     }
 
@@ -539,23 +534,23 @@ class InvoiceController extends Controller
         //                 → this is not the latest in the chain, hide chain buttons
         // hasSchlussrechnung : a Schlussrechnung that references this invoice exists
         //                 → the chain is closed, hide chain buttons
-        $hasSuccessor       = false;
+        $hasSuccessor = false;
         $hasSchlussrechnung = false;
         if ($invoice->invoice_type === 'abschlagsrechnung') {
             $successors = Invoice::where('company_id', $invoice->company_id)
                 ->whereJsonContains('abschlag_refs', ['invoice_id' => $invoice->id])
                 ->get(['invoice_type', 'status']);
 
-            $hasSuccessor       = $successors->isNotEmpty();
+            $hasSuccessor = $successors->isNotEmpty();
             $hasSchlussrechnung = $successors->contains('invoice_type', 'schlussrechnung');
         }
 
         return Inertia::render('invoices/show', [
-            'invoice'            => $invoice,
-            'settings'           => $invoice->company->getDefaultSettings(),
-            'paidAmount'         => $paidAmount,
-            'remainingBalance'   => $remainingBalance,
-            'hasSuccessor'       => $hasSuccessor,
+            'invoice' => $invoice,
+            'settings' => $invoice->company->getDefaultSettings(),
+            'paidAmount' => $paidAmount,
+            'remainingBalance' => $remainingBalance,
+            'hasSuccessor' => $hasSuccessor,
             'hasSchlussrechnung' => $hasSchlussrechnung,
         ]);
     }
@@ -646,7 +641,25 @@ class InvoiceController extends Controller
             $validated['sequence_number'] = null;
         }
 
-        DB::transaction(function () use ($validated, $invoice) {
+        // Only super admins may change the invoice number (and only on drafts —
+        // the GoBD lock above already guarantees that). Anyone else's `number`
+        // input is silently ignored.
+        $newNumber = null;
+        if ($request->user()->hasPermissionTo('manage_companies') && $request->filled('number')) {
+            $newNumber = $request->validate([
+                'number' => [
+                    'string',
+                    'max:100',
+                    Rule::unique('invoices', 'number')
+                        ->where('company_id', $invoice->company_id)
+                        ->ignore($invoice->id),
+                ],
+            ], [
+                'number.unique' => 'Diese Rechnungsnummer ist bereits vergeben.',
+            ])['number'];
+        }
+
+        DB::transaction(function () use ($validated, $invoice, $newNumber) {
             $effectiveCompanyId = $this->getEffectiveCompanyId();
 
             // Track changes for audit log
@@ -677,9 +690,13 @@ class InvoiceController extends Controller
             if ($invoice->notes != $validated['notes']) {
                 $changes['notes'] = ['old' => $invoice->notes, 'new' => $validated['notes']];
             }
+            if ($newNumber !== null && $newNumber !== $invoice->number) {
+                $changes['number'] = ['old' => $invoice->number, 'new' => $newNumber];
+            }
 
             // Update invoice
             $invoice->update([
+                'number' => $newNumber ?? $invoice->number,
                 'customer_id' => $validated['customer_id'],
                 'issue_date' => $validated['issue_date'],
                 'service_date' => $validated['service_date'] ?? null,
@@ -766,12 +783,12 @@ class InvoiceController extends Controller
             ->with('success', 'Rechnung wurde erfolgreich aktualisiert.');
     }
 
-    public function destroy(Invoice $invoice)
+    public function destroy(Request $request, Invoice $invoice)
     {
         $this->authorize('delete', $invoice);
 
         // GoBD: once an invoice leaves draft status it must be retained.
-        // Only drafts may ever be removed, and even then we soft-delete and log.
+        // Only drafts may ever be removed.
         if (! $invoice->canBeEdited()) {
             return back()->with(
                 'error',
@@ -779,20 +796,19 @@ class InvoiceController extends Controller
             );
         }
 
-        DB::transaction(function () use ($invoice) {
-            InvoiceAuditLog::log(
-                $invoice->id,
-                'deleted',
-                $invoice->status,
-                null,
-                null,
-                'Entwurfsrechnung gelöscht (soft-delete)'
-            );
-            $invoice->delete();
-        });
+        // Deletes are permanent. The invoice_audit_logs rows cascade away with
+        // the invoice, so the surviving trace is the application log.
+        Log::warning('Draft invoice deleted', [
+            'invoice_id' => $invoice->id,
+            'number' => $invoice->number,
+            'company_id' => $invoice->company_id,
+            'deleted_by' => $request->user()->id,
+        ]);
+
+        $invoice->delete();
 
         return redirect()->route('invoices.index')
-            ->with('success', 'Rechnung wurde erfolgreich gelöscht.');
+            ->with('success', 'Rechnung wurde gelöscht. Die Rechnungsnummer ist wieder verfügbar.');
     }
 
     public function pdf(Invoice $invoice)
@@ -1539,24 +1555,24 @@ class InvoiceController extends Controller
                 ->first();
 
             $next = new Invoice;
-            $next->company_id      = $invoice->company_id;
-            $next->customer_id     = $invoice->customer_id;
-            $next->user_id         = request()->user()->id;
-            $next->status          = 'draft';
-            $next->issue_date      = now();
-            $next->due_date        = now()->addDays(
+            $next->company_id = $invoice->company_id;
+            $next->customer_id = $invoice->customer_id;
+            $next->user_id = request()->user()->id;
+            $next->status = 'draft';
+            $next->issue_date = now();
+            $next->due_date = now()->addDays(
                 (int) ($invoice->company->getSetting('payment_terms', 14))
             );
-            $next->tax_rate        = $invoice->tax_rate;
-            $next->vat_regime      = $invoice->vat_regime ?? 'standard';
-            $next->notes           = $invoice->notes;
-            $next->payment_terms   = $invoice->payment_terms;
-            $next->payment_method  = $invoice->payment_method;
-            $next->layout_id       = $invoice->layout_id;
-            $next->invoice_type    = 'abschlagsrechnung';
+            $next->tax_rate = $invoice->tax_rate;
+            $next->vat_regime = $invoice->vat_regime ?? 'standard';
+            $next->notes = $invoice->notes;
+            $next->payment_terms = $invoice->payment_terms;
+            $next->payment_method = $invoice->payment_method;
+            $next->layout_id = $invoice->layout_id;
+            $next->invoice_type = 'abschlagsrechnung';
             $next->sequence_number = ($invoice->sequence_number ?? 1) + 1;
-            $next->bauvorhaben     = $invoice->bauvorhaben;
-            $next->auftragsnummer  = $invoice->auftragsnummer;
+            $next->bauvorhaben = $invoice->bauvorhaben;
+            $next->auftragsnummer = $invoice->auftragsnummer;
 
             // Build the full deduction chain and refresh amounts from the DB so
             // that any edits made to prior Abschlags after chain creation are
@@ -1565,7 +1581,7 @@ class InvoiceController extends Controller
             //   Abschlag #2 (refs [#1]) → create #3 → refs = [#1, #2]
             //   Abschlag #3 (refs [#1,#2]) → create #4 → refs = [#1, #2, #3]
             $inheritedRefs = collect($invoice->abschlag_refs ?? [])
-                ->filter(fn ($r) => !empty($r['invoice_id']))
+                ->filter(fn ($r) => ! empty($r['invoice_id']))
                 ->values()
                 ->toArray();
 
@@ -1582,9 +1598,9 @@ class InvoiceController extends Controller
 
             $next->abschlag_refs = array_merge($inheritedRefs, [[
                 'invoice_id' => $invoice->id,
-                'number'     => $invoice->number,
-                'amount'     => (float) $invoice->total,
-                'date'       => $invoice->issue_date?->format('Y-m-d'),
+                'number' => $invoice->number,
+                'amount' => (float) $invoice->total,
+                'date' => $invoice->issue_date?->format('Y-m-d'),
             ]]);
 
             $next->number = $this->generateTypedNumber('abschlagsrechnung', $invoice->company);
@@ -1595,17 +1611,17 @@ class InvoiceController extends Controller
             // all prior positions + new ones, so the total grows with each phase).
             foreach ($invoice->items as $item) {
                 InvoiceItem::create([
-                    'invoice_id'     => $next->id,
-                    'product_id'     => $item->product_id,
-                    'description'    => $item->description,
-                    'quantity'       => $item->quantity,
-                    'unit_price'     => $item->unit_price,
-                    'unit'           => $item->unit,
-                    'tax_rate'       => $item->tax_rate,
-                    'discount_type'  => $item->discount_type,
+                    'invoice_id' => $next->id,
+                    'product_id' => $item->product_id,
+                    'description' => $item->description,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'unit' => $item->unit,
+                    'tax_rate' => $item->tax_rate,
+                    'discount_type' => $item->discount_type,
                     'discount_value' => $item->discount_value,
-                    'total'          => $item->total,
-                    'sort_order'     => $item->sort_order,
+                    'total' => $item->total,
+                    'sort_order' => $item->sort_order,
                 ]);
             }
 
@@ -1619,6 +1635,7 @@ class InvoiceController extends Controller
 
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return back()->with('error', 'Fehler beim Erstellen des nächsten Abschlags: '.$e->getMessage());
         }
     }
@@ -1652,28 +1669,28 @@ class InvoiceController extends Controller
                 ->first();
 
             $schluss = new Invoice;
-            $schluss->company_id      = $invoice->company_id;
-            $schluss->customer_id     = $invoice->customer_id;
-            $schluss->user_id         = request()->user()->id;
-            $schluss->status          = 'draft';
-            $schluss->issue_date      = now();
-            $schluss->due_date        = now()->addDays(
+            $schluss->company_id = $invoice->company_id;
+            $schluss->customer_id = $invoice->customer_id;
+            $schluss->user_id = request()->user()->id;
+            $schluss->status = 'draft';
+            $schluss->issue_date = now();
+            $schluss->due_date = now()->addDays(
                 (int) ($invoice->company->getSetting('payment_terms', 30))
             );
-            $schluss->tax_rate        = $invoice->tax_rate;
-            $schluss->vat_regime      = $invoice->vat_regime ?? 'standard';
-            $schluss->notes           = $invoice->notes;
-            $schluss->payment_terms   = $invoice->payment_terms;
-            $schluss->payment_method  = $invoice->payment_method;
-            $schluss->layout_id       = $invoice->layout_id;
-            $schluss->invoice_type    = 'schlussrechnung';
-            $schluss->bauvorhaben     = $invoice->bauvorhaben;
-            $schluss->auftragsnummer  = $invoice->auftragsnummer;
+            $schluss->tax_rate = $invoice->tax_rate;
+            $schluss->vat_regime = $invoice->vat_regime ?? 'standard';
+            $schluss->notes = $invoice->notes;
+            $schluss->payment_terms = $invoice->payment_terms;
+            $schluss->payment_method = $invoice->payment_method;
+            $schluss->layout_id = $invoice->layout_id;
+            $schluss->invoice_type = 'schlussrechnung';
+            $schluss->bauvorhaben = $invoice->bauvorhaben;
+            $schluss->auftragsnummer = $invoice->auftragsnummer;
 
             // Full deduction chain: all refs the source already carries + the source itself.
             // Refresh inherited amounts from live invoice totals.
             $inheritedRefs = collect($invoice->abschlag_refs ?? [])
-                ->filter(fn ($r) => !empty($r['invoice_id']))
+                ->filter(fn ($r) => ! empty($r['invoice_id']))
                 ->values()
                 ->toArray();
 
@@ -1689,9 +1706,9 @@ class InvoiceController extends Controller
 
             $schluss->abschlag_refs = array_merge($inheritedRefs, [[
                 'invoice_id' => $invoice->id,
-                'number'     => $invoice->number,
-                'amount'     => (float) $invoice->total,
-                'date'       => $invoice->issue_date?->format('Y-m-d'),
+                'number' => $invoice->number,
+                'amount' => (float) $invoice->total,
+                'date' => $invoice->issue_date?->format('Y-m-d'),
             ]]);
 
             $schluss->number = $this->generateTypedNumber('schlussrechnung', $invoice->company);
@@ -1702,17 +1719,17 @@ class InvoiceController extends Controller
             // positions on the edit page before finalising.
             foreach ($invoice->items as $item) {
                 InvoiceItem::create([
-                    'invoice_id'     => $schluss->id,
-                    'product_id'     => $item->product_id,
-                    'description'    => $item->description,
-                    'quantity'       => $item->quantity,
-                    'unit_price'     => $item->unit_price,
-                    'unit'           => $item->unit,
-                    'tax_rate'       => $item->tax_rate,
-                    'discount_type'  => $item->discount_type,
+                    'invoice_id' => $schluss->id,
+                    'product_id' => $item->product_id,
+                    'description' => $item->description,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'unit' => $item->unit,
+                    'tax_rate' => $item->tax_rate,
+                    'discount_type' => $item->discount_type,
                     'discount_value' => $item->discount_value,
-                    'total'          => $item->total,
-                    'sort_order'     => $item->sort_order,
+                    'total' => $item->total,
+                    'sort_order' => $item->sort_order,
                 ]);
             }
 
@@ -1722,11 +1739,13 @@ class InvoiceController extends Controller
             DB::commit();
 
             $abschlagCount = count($schluss->abschlag_refs);
+
             return redirect()->route('invoices.edit', $schluss->id)
                 ->with('success', "Schlussrechnung erstellt – {$abschlagCount} Abschlag(e) als Abzüge eingetragen. Positionen aus dem letzten Abschlag wurden übernommen – bitte fehlende Projektpositionen ergänzen und speichern.");
 
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return back()->with('error', 'Fehler beim Erstellen der Schlussrechnung: '.$e->getMessage());
         }
     }
@@ -1742,19 +1761,18 @@ class InvoiceController extends Controller
      */
     private function generateTypedNumber(string $invoiceType, \App\Modules\Company\Models\Company $company): string
     {
-        $svc        = new NumberFormatService;
+        $svc = new NumberFormatService;
         // sharedLock() forces a current read so concurrent transactions are visible.
-        // withTrashed(): soft-deleted invoices still occupy the unique index.
-        $allNumbers = Invoice::withTrashed()->where('company_id', $company->id)->sharedLock()->pluck('number');
+        $allNumbers = Invoice::where('company_id', $company->id)->sharedLock()->pluck('number');
 
         if ($invoiceType === 'abschlagsrechnung') {
-            $format     = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
+            $format = $svc->normaliseToFormat($company->getSetting('abschlag_number_format') ?? 'AR-{YYYY}-{####}');
             $minCounter = (int) ($company->getSetting('abschlag_next_counter') ?? 1);
         } elseif ($invoiceType === 'schlussrechnung') {
-            $format     = $svc->normaliseToFormat($company->getSetting('schluss_number_format') ?? 'SR-{YYYY}-{####}');
+            $format = $svc->normaliseToFormat($company->getSetting('schluss_number_format') ?? 'SR-{YYYY}-{####}');
             $minCounter = (int) ($company->getSetting('schluss_next_counter') ?? 1);
         } else {
-            $format     = $svc->normaliseToFormat(
+            $format = $svc->normaliseToFormat(
                 $company->getSetting('invoice_number_format')
                     ?? $company->getSetting('invoice_prefix', 'RE-')
             );
@@ -1779,10 +1797,10 @@ class InvoiceController extends Controller
      */
     public function selectableAbschlaege(Request $request)
     {
-        $companyId  = $this->getEffectiveCompanyId();
+        $companyId = $this->getEffectiveCompanyId();
         $customerId = $request->query('customer_id');
-        $excludeId  = $request->query('exclude_invoice_id');
-        $forType    = $request->query('for_type', 'schlussrechnung');
+        $excludeId = $request->query('exclude_invoice_id');
+        $forType = $request->query('for_type', 'schlussrechnung');
 
         $query = Invoice::forCompany($companyId)
             ->where('invoice_type', 'abschlagsrechnung')
@@ -1821,13 +1839,13 @@ class InvoiceController extends Controller
 
         return response()->json(
             $abschlaege->map(fn ($inv) => [
-                'id'              => $inv->id,
-                'number'          => $inv->number,
-                'amount'          => (float) $inv->total,
-                'date'            => $inv->issue_date?->format('Y-m-d'),
+                'id' => $inv->id,
+                'number' => $inv->number,
+                'amount' => (float) $inv->total,
+                'date' => $inv->issue_date?->format('Y-m-d'),
                 'sequence_number' => $inv->sequence_number,
-                'status'          => $inv->status,
-                'bauvorhaben'     => $inv->bauvorhaben,
+                'status' => $inv->status,
+                'bauvorhaben' => $inv->bauvorhaben,
                 'already_claimed' => $claimedIds->contains($inv->id),
             ])
         );

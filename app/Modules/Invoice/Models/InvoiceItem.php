@@ -50,7 +50,7 @@ class InvoiceItem extends Model
     {
         // Calculate base total
         $baseTotal = $this->quantity * $this->unit_price;
-        
+
         // Calculate discount amount
         $this->discount_amount = 0;
         if ($this->discount_type && $this->discount_value) {
@@ -61,7 +61,7 @@ class InvoiceItem extends Model
                 $this->discount_amount = min($this->discount_value, $baseTotal);
             }
         }
-        
+
         // Calculate total after discount
         $this->total = $baseTotal - $this->discount_amount;
     }
@@ -69,7 +69,7 @@ class InvoiceItem extends Model
     public function loadFromProduct(Product $product): void
     {
         $this->product_id = $product->id;
-        $this->description = $product->name . ($product->description ? "\n" . $product->description : '');
+        $this->description = $product->name.($product->description ? "\n".$product->description : '');
         $this->unit_price = $product->price;
         $this->unit = $product->unit;
         $this->tax_rate = $product->tax_rate ?? null; // Use product's tax rate if available

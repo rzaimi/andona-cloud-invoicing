@@ -75,12 +75,21 @@ interface InvoicesEditProps {
         decimal_separator: string
         thousands_separator: string
     }
+    auth?: {
+        user?: {
+            permissions?: string[]
+        }
+    }
 }
 
 export default function InvoicesEdit() {
     // @ts-ignore
-    const { invoice, customers, layouts, products, settings } = usePage().props as unknown as InvoicesEditProps
+    const { invoice, customers, layouts, products, settings, auth } = usePage().props as unknown as InvoicesEditProps
     const germanTaxRates = buildTaxRates(settings.tax_rate ?? 0.19, settings.reduced_tax_rate)
+
+    // Server-side check (manage_companies in update()) is the source of truth —
+    // this only decides whether the number field is shown and submitted.
+    const canEditNumber = !!auth?.user?.permissions?.includes("manage_companies")
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -89,6 +98,7 @@ export default function InvoicesEdit() {
     ]
 
     const { data, setData, put, processing, errors } = useForm<Record<string, any>>({
+        ...(canEditNumber ? { number: invoice.number } : {}),
         customer_id: invoice.customer_id.toString(),
         issue_date: invoice.issue_date?.split('T')[0] || invoice.issue_date,
         service_date: invoice.service_date?.split('T')[0] || invoice.service_date || "",
@@ -458,6 +468,21 @@ export default function InvoicesEdit() {
                             <CardDescription>Grundlegende Informationen zur Rechnung</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            {canEditNumber && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="number">Rechnungsnummer (Super-Admin)</Label>
+                                    <Input
+                                        id="number"
+                                        value={data.number ?? ""}
+                                        onChange={(e) => setData("number", e.target.value)}
+                                        disabled={!canEdit}
+                                    />
+                                    {errors.number && <p className="text-sm text-red-600">{errors.number}</p>}
+                                    <p className="text-xs text-gray-500">
+                                        Änderungen der Rechnungsnummer werden im Audit-Log protokolliert. Die Nummer muss eindeutig sein.
+                                    </p>
+                                </div>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="customer_id">Kunde *</Label>

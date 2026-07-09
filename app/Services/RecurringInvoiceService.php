@@ -136,9 +136,7 @@ class RecurringInvoiceService
         }
 
         $svc = new NumberFormatService;
-        // withTrashed(): soft-deleted invoices still occupy the (company_id, number)
-        // unique index, so they must be considered when generating the next number.
-        $allNumbers = Invoice::withTrashed()->where('company_id', $company->id)->pluck('number');
+        $allNumbers = Invoice::where('company_id', $company->id)->pluck('number');
         $format = $svc->normaliseToFormat(
             $company->getSetting('invoice_number_format')
                 ?? $company->getSetting('invoice_prefix', 'RE-')

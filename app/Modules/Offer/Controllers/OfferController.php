@@ -10,13 +10,13 @@ use App\Modules\Offer\Models\Offer;
 use App\Modules\Offer\Models\OfferItem;
 use App\Modules\Offer\Models\OfferLayout;
 use App\Services\NumberFormatService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Inertia\Inertia;
 
 class OfferController extends Controller
 {
@@ -26,12 +26,12 @@ class OfferController extends Controller
 
         $query = Offer::forCompany($companyId)
             ->with(['customer:id,name,email', 'user:id,name', 'convertedToInvoice:id,number']);
-        
+
         // Apply status filter
         if ($request->status && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
-        
+
         // Apply search filter
         if ($request->search) {
             $query->where(function ($q) use ($request) {
@@ -48,7 +48,7 @@ class OfferController extends Controller
         $direction = in_array($direction, ['asc', 'desc'], true) ? $direction : 'desc';
 
         $allowedSorts = ['number', 'issue_date', 'valid_until', 'total', 'status', 'customer'];
-        if (!in_array($sort, $allowedSorts, true)) {
+        if (! in_array($sort, $allowedSorts, true)) {
             $sort = 'issue_date';
         }
 
@@ -79,12 +79,12 @@ class OfferController extends Controller
             ->first();
 
         $stats = [
-            'total'    => (int) ($statusCounts->total    ?? 0),
-            'draft'    => (int) ($statusCounts->draft    ?? 0),
-            'sent'     => (int) ($statusCounts->sent     ?? 0),
+            'total' => (int) ($statusCounts->total ?? 0),
+            'draft' => (int) ($statusCounts->draft ?? 0),
+            'sent' => (int) ($statusCounts->sent ?? 0),
             'accepted' => (int) ($statusCounts->accepted ?? 0),
             'rejected' => (int) ($statusCounts->rejected ?? 0),
-            'expired'  => (int) ($statusCounts->expired  ?? 0),
+            'expired' => (int) ($statusCounts->expired ?? 0),
         ];
 
         return Inertia::render('offers/index', [
@@ -97,7 +97,7 @@ class OfferController extends Controller
     public function create()
     {
         $companyId = $this->getEffectiveCompanyId();
-        $company   = \App\Modules\Company\Models\Company::find($companyId);
+        $company = \App\Modules\Company\Models\Company::find($companyId);
 
         $customers = Customer::forCompany($companyId)
             ->active()
@@ -113,8 +113,8 @@ class OfferController extends Controller
             ->orderBy('name')
             ->get();
 
-        $svc        = new NumberFormatService();
-        $format     = $svc->normaliseToFormat(
+        $svc = new NumberFormatService;
+        $format = $svc->normaliseToFormat(
             $company->getSetting('offer_number_format')
                 ?? $company->getSetting('offer_prefix', 'AN-')
         );
@@ -122,11 +122,11 @@ class OfferController extends Controller
         $nextNumber = $svc->next($format, \App\Modules\Offer\Models\Offer::where('company_id', $companyId)->pluck('number'), null, $minCounter);
 
         return Inertia::render('offers/create', [
-            'customers'  => $customers,
-            'layouts'    => $layouts,
-            'products'   => $products,
+            'customers' => $customers,
+            'layouts' => $layouts,
+            'products' => $products,
             'nextNumber' => $nextNumber,
-            'settings'   => array_merge($company->getDefaultSettings(), [
+            'settings' => array_merge($company->getDefaultSettings(), [
                 'is_small_business' => (bool) ($company->is_small_business ?? false),
             ]),
         ]);
@@ -168,20 +168,20 @@ class OfferController extends Controller
 
             // Security: verify customer belongs to this company
             $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
-            if (!$customer) {
+            if (! $customer) {
                 abort(403, 'Customer does not belong to your company');
             }
 
             // Security: verify layout belongs to this company
-            if (!empty($validated['layout_id'])) {
+            if (! empty($validated['layout_id'])) {
                 $layout = OfferLayout::forCompany($effectiveCompanyId)->find($validated['layout_id']);
-                if (!$layout) {
+                if (! $layout) {
                     abort(403, 'Offer layout does not belong to your company');
                 }
             }
 
             // Generate offer number using dynamic format setting
-            $svc    = new NumberFormatService();
+            $svc = new NumberFormatService;
             $format = $svc->normaliseToFormat(
                 $company->getSetting('offer_number_format')
                     ?? $company->getSetting('offer_prefix', 'AN-')
@@ -209,28 +209,28 @@ class OfferController extends Controller
             // Save company snapshot
             $offer->company_snapshot = $offer->createCompanySnapshot();
             $offer->save();
-            
+
             // Create offer items
             foreach ($validated['items'] as $index => $itemData) {
                 $productId = null;
-                if (!empty($itemData['product_id'])) {
+                if (! empty($itemData['product_id'])) {
                     $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
                         ->where('id', $itemData['product_id'])
                         ->first();
-                    if (!$product) {
+                    if (! $product) {
                         abort(403, 'Product does not belong to your company');
                     }
                     $productId = $product->id;
                 }
 
                 // Handle discount fields - convert empty strings and 'none' to null
-                $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none' 
-                    ? $itemData['discount_type'] 
+                $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none'
+                    ? $itemData['discount_type']
                     : null;
                 $discountValue = isset($itemData['discount_value']) && $itemData['discount_value'] !== '' && $itemData['discount_value'] !== null
                     ? $itemData['discount_value']
                     : null;
-                
+
                 $item = new OfferItem([
                     'offer_id' => $offer->id,
                     'product_id' => $productId,
@@ -263,7 +263,7 @@ class OfferController extends Controller
         $offer->load(['customer', 'items.product', 'layout', 'user', 'convertedToInvoice:id,number']);
 
         $companyId = $this->getEffectiveCompanyId();
-        $company   = \App\Modules\Company\Models\Company::find($companyId) ?? $offer->company;
+        $company = \App\Modules\Company\Models\Company::find($companyId) ?? $offer->company;
 
         return Inertia::render('offers/show', [
             'offer' => $offer,
@@ -338,20 +338,20 @@ class OfferController extends Controller
 
             // Security: verify customer belongs to this company
             $customer = Customer::forCompany($effectiveCompanyId)->find($validated['customer_id']);
-            if (!$customer) {
+            if (! $customer) {
                 abort(403, 'Customer does not belong to your company');
             }
 
             // Security: verify layout belongs to this company
-            if (!empty($validated['layout_id'])) {
+            if (! empty($validated['layout_id'])) {
                 $layout = OfferLayout::forCompany($effectiveCompanyId)->find($validated['layout_id']);
-                if (!$layout) {
+                if (! $layout) {
                     abort(403, 'Offer layout does not belong to your company');
                 }
             }
 
             $vatRegime = $validated['vat_regime'] ?? 'standard';
-            $company   = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
+            $company = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
 
             // Update offer
             $offer->update([
@@ -372,24 +372,24 @@ class OfferController extends Controller
 
             foreach ($validated['items'] as $index => $itemData) {
                 $productId = null;
-                if (!empty($itemData['product_id'])) {
+                if (! empty($itemData['product_id'])) {
                     $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
                         ->where('id', $itemData['product_id'])
                         ->first();
-                    if (!$product) {
+                    if (! $product) {
                         abort(403, 'Product does not belong to your company');
                     }
                     $productId = $product->id;
                 }
 
                 // Handle discount fields - convert empty strings and 'none' to null
-                $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none' 
-                    ? $itemData['discount_type'] 
+                $discountType = isset($itemData['discount_type']) && $itemData['discount_type'] !== '' && $itemData['discount_type'] !== 'none'
+                    ? $itemData['discount_type']
                     : null;
                 $discountValue = isset($itemData['discount_value']) && $itemData['discount_value'] !== '' && $itemData['discount_value'] !== null
                     ? $itemData['discount_value']
                     : null;
-                
+
                 $item = new OfferItem([
                     'product_id' => $productId,
                     'description' => $itemData['description'],
@@ -406,7 +406,7 @@ class OfferController extends Controller
             }
 
             // Ensure company snapshot exists (only if missing, to preserve historical data)
-            if (!$offer->company_snapshot) {
+            if (! $offer->company_snapshot) {
                 $offer->company_snapshot = $offer->createCompanySnapshot();
             }
 
@@ -445,14 +445,12 @@ class OfferController extends Controller
                 ->first();
 
             // Generate invoice number using dynamic format setting
-            $svc    = new NumberFormatService();
+            $svc = new NumberFormatService;
             $format = $svc->normaliseToFormat(
                 $company->getSetting('invoice_number_format')
                     ?? $company->getSetting('invoice_prefix', 'RE-')
             );
-            // withTrashed(): soft-deleted invoices still occupy the (company_id, number)
-            // unique index, so they must be considered when generating the next number.
-            $invoiceNumber = $svc->next($format, Invoice::withTrashed()->where('company_id', $offer->company_id)->pluck('number'));
+            $invoiceNumber = $svc->next($format, Invoice::where('company_id', $offer->company_id)->pluck('number'));
 
             $vatRegime = $offer->vat_regime ?? 'standard';
             $isStandardVat = $vatRegime === 'standard';
@@ -481,17 +479,17 @@ class OfferController extends Controller
             // Copy offer items to invoice items (preserve product link, tax, discounts)
             foreach ($offer->items as $offerItem) {
                 InvoiceItem::create([
-                    'invoice_id'     => $invoice->id,
-                    'product_id'     => $offerItem->product_id,
-                    'description'    => $offerItem->description,
-                    'quantity'       => $offerItem->quantity,
-                    'unit_price'     => $offerItem->unit_price,
-                    'unit'           => $offerItem->unit,
-                    'tax_rate'       => $offerItem->tax_rate,
-                    'discount_type'  => $offerItem->discount_type,
+                    'invoice_id' => $invoice->id,
+                    'product_id' => $offerItem->product_id,
+                    'description' => $offerItem->description,
+                    'quantity' => $offerItem->quantity,
+                    'unit_price' => $offerItem->unit_price,
+                    'unit' => $offerItem->unit,
+                    'tax_rate' => $offerItem->tax_rate,
+                    'discount_type' => $offerItem->discount_type,
                     'discount_value' => $offerItem->discount_value,
-                    'total'          => $offerItem->total,
-                    'sort_order'     => $offerItem->sort_order,
+                    'total' => $offerItem->total,
+                    'sort_order' => $offerItem->sort_order,
                 ]);
             }
 
@@ -558,14 +556,14 @@ class OfferController extends Controller
         $pdf = Pdf::loadHTML($html)
             ->setPaper('a4')
             ->setOptions([
-                'defaultFont'              => 'DejaVu Sans',
+                'defaultFont' => 'DejaVu Sans',
                 // PHP enabled for page_script (page numbering). Remote/local
                 // file access stays disabled; logos are base64-inlined.
-                'isRemoteEnabled'          => false,
-                'isHtml5ParserEnabled'     => true,
+                'isRemoteEnabled' => false,
+                'isHtml5ParserEnabled' => true,
                 'enable-local-file-access' => false,
-                'isPhpEnabled'             => true,
-                'dpi'                      => 96,
+                'isPhpEnabled' => true,
+                'dpi' => 96,
             ]);
 
         return $pdf->download("Angebot-{$offer->number}.pdf");
@@ -610,12 +608,12 @@ class OfferController extends Controller
         $company = \App\Modules\Company\Models\Company::find($companyId);
 
         // Validate customer email exists
-        if (!$offer->customer || !$offer->customer->email) {
+        if (! $offer->customer || ! $offer->customer->email) {
             return back()->withErrors(['email' => 'Kunde hat keine E-Mail-Adresse hinterlegt.']);
         }
 
         // Check if SMTP is configured
-        if (!$company->smtp_host || !$company->smtp_username) {
+        if (! $company->smtp_host || ! $company->smtp_username) {
             return back()->withErrors(['email' => 'SMTP-Einstellungen sind nicht konfiguriert. Bitte konfigurieren Sie die E-Mail-Einstellungen.']);
         }
 
@@ -640,10 +638,10 @@ class OfferController extends Controller
                 'offer' => $offer,
                 'company' => $company,
                 'customMessage' => $validated['message'] ?? null,
-            ], function ($message) use ($validated, $offer, $pdf, $company, $replyTo) {
+            ], function ($message) use ($validated, $offer, $pdf, $replyTo) {
                 $message->to($validated['to']);
 
-                if (!empty($validated['cc'])) {
+                if (! empty($validated['cc'])) {
                     $message->cc($validated['cc']);
                 }
                 if ($replyTo) {
@@ -664,20 +662,21 @@ class OfferController extends Controller
             return redirect()->back()->with('success', 'Angebot wurde erfolgreich per E-Mail versendet.');
 
         } catch (\Exception $e) {
-            Log::error('Failed to send offer email: ' . $e->getMessage());
-            return back()->withErrors(['email' => 'E-Mail konnte nicht versendet werden: ' . $e->getMessage()]);
+            Log::error('Failed to send offer email: '.$e->getMessage());
+
+            return back()->withErrors(['email' => 'E-Mail konnte nicht versendet werden: '.$e->getMessage()]);
         }
     }
 
     private function generateOfferPdf(Offer $offer)
     {
         $offer->load(['items.product', 'customer', 'company', 'user']);
-        
+
         $layout = $offer->layout ?: OfferLayout::forCompany($offer->company_id)
             ->where('is_default', true)
             ->first();
 
-        if (!$layout) {
+        if (! $layout) {
             $layout = (object) [
                 'template' => 'minimal',
                 'settings' => [
@@ -740,4 +739,3 @@ class OfferController extends Controller
         ]);
     }
 }
-

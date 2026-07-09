@@ -119,7 +119,11 @@ export default function InvoicesShow() {
     }
 
     const handleDelete = () => {
-        if (confirm(`Möchten Sie die Rechnung "${invoice.number}" wirklich löschen?`)) {
+        if (
+            confirm(
+                `Rechnung "${invoice.number}" wirklich löschen?\n\nDie Rechnung wird unwiderruflich entfernt und die Rechnungsnummer wird wieder freigegeben.`,
+            )
+        ) {
             router.delete(`/invoices/${invoice.id}`)
         }
     }

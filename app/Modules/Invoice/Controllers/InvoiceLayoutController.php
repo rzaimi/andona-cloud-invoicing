@@ -66,7 +66,7 @@ class InvoiceLayoutController extends Controller
                 'name' => $company?->name,
             ],
             'layouts' => $layouts,
-            'templates' => $templates
+            'templates' => $templates,
         ]);
     }
 
@@ -108,7 +108,7 @@ class InvoiceLayoutController extends Controller
 
         // Check if this is the first layout for the company
         $companyId = $this->getEffectiveCompanyId();
-        $isFirstLayout = !InvoiceLayout::where('company_id', $companyId)->exists();
+        $isFirstLayout = ! InvoiceLayout::where('company_id', $companyId)->exists();
 
         $layout = InvoiceLayout::create([
             'company_id' => $companyId,
@@ -225,7 +225,7 @@ class InvoiceLayoutController extends Controller
         $this->authorize('update', $invoiceLayout);
 
         $duplicatedLayout = $invoiceLayout->replicate();
-        $duplicatedLayout->name = $invoiceLayout->name . ' (Kopie)';
+        $duplicatedLayout->name = $invoiceLayout->name.' (Kopie)';
         $duplicatedLayout->is_default = false;
         $duplicatedLayout->save();
 
@@ -305,7 +305,7 @@ class InvoiceLayoutController extends Controller
         $sampleInvoice->customer = $sampleCustomer;
 
         $sampleCompany = \App\Modules\Company\Models\Company::find($companyId);
-        
+
         // Use the same PDF view for preview
         return view('pdf.invoice', [
             'layout' => $invoiceLayout,
@@ -356,7 +356,7 @@ class InvoiceLayoutController extends Controller
         ]);
 
         // Build an in-memory layout (not persisted)
-        $layout = new InvoiceLayout();
+        $layout = new InvoiceLayout;
         $layout->company_id = $companyId;
         $layout->name = 'Live Preview';
         $layout->type = $request->type;
@@ -479,7 +479,7 @@ class InvoiceLayoutController extends Controller
             'settings.template_specific' => 'sometimes|array',
         ]);
 
-        $layout = new InvoiceLayout();
+        $layout = new InvoiceLayout;
         $layout->company_id = $companyId;
         $layout->name = 'Live Preview';
         $layout->type = $request->type;
@@ -555,6 +555,4 @@ class InvoiceLayoutController extends Controller
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ]);
     }
-
 }
-

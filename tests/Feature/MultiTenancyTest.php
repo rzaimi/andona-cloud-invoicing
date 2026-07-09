@@ -21,19 +21,33 @@ class MultiTenancyTest extends TestCase
     use RefreshDatabase;
 
     protected Company $company1;
+
     protected Company $company2;
+
     protected User $user1;
+
     protected User $user2;
+
     protected User $superAdmin;
+
     protected Customer $customer1;
+
     protected Customer $customer2;
+
     protected Invoice $invoice1;
+
     protected Invoice $invoice2;
+
     protected Product $product1;
+
     protected Product $product2;
+
     protected Offer $offer1;
+
     protected Offer $offer2;
+
     protected Payment $payment1;
+
     protected Payment $payment2;
 
     protected function setUp(): void
@@ -52,7 +66,7 @@ class MultiTenancyTest extends TestCase
             'email' => 'company1@example.com',
             'status' => 'active',
         ]);
-        
+
         $this->company2 = Company::create([
             'name' => 'Company 2',
             'email' => 'company2@example.com',
@@ -254,7 +268,7 @@ class MultiTenancyTest extends TestCase
             ->has('invoices.data', 1)
             ->where('invoices.data.0.id', $this->invoice1->id)
         );
-        
+
         // Verify invoice2 is not in the list
         $invoices = $response->viewData('page')['props']['invoices']['data'] ?? [];
         $this->assertCount(1, $invoices);
@@ -273,7 +287,7 @@ class MultiTenancyTest extends TestCase
             ->has('customers.data', 1)
             ->where('customers.data.0.id', $this->customer1->id)
         );
-        
+
         $customers = $response->viewData('page')['props']['customers']['data'] ?? [];
         $this->assertNotContains($this->customer2->id, collect($customers)->pluck('id')->toArray());
     }
@@ -290,7 +304,7 @@ class MultiTenancyTest extends TestCase
             ->has('products.data', 1)
             ->where('products.data.0.id', $this->product1->id)
         );
-        
+
         $products = $response->viewData('page')['props']['products']['data'] ?? [];
         $this->assertNotContains($this->product2->id, collect($products)->pluck('id')->toArray());
     }
@@ -307,7 +321,7 @@ class MultiTenancyTest extends TestCase
             ->has('offers.data', 1)
             ->where('offers.data.0.id', $this->offer1->id)
         );
-        
+
         $offers = $response->viewData('page')['props']['offers']['data'] ?? [];
         $this->assertNotContains($this->offer2->id, collect($offers)->pluck('id')->toArray());
     }
@@ -315,15 +329,15 @@ class MultiTenancyTest extends TestCase
     public function test_users_can_only_see_their_own_company_payments()
     {
         $this->actingAs($this->user1);
-        
+
         $response = $this->get('/payments');
 
         $response->assertOk();
-        
+
         // Get payments data from Inertia response
         $page = $response->viewData('page');
         $payments = $page['props']['payments']['data'] ?? [];
-        
+
         $this->assertCount(1, $payments);
         $this->assertEquals($this->payment1->id, $payments[0]['id']);
         $this->assertNotContains($this->payment2->id, collect($payments)->pluck('id')->toArray());
@@ -574,7 +588,7 @@ class MultiTenancyTest extends TestCase
             ->has('invoices.data', 1)
             ->where('invoices.data.0.id', $this->invoice2->id)
         );
-        
+
         $invoices = $response->viewData('page')['props']['invoices']['data'] ?? [];
         $this->assertNotContains($this->invoice1->id, collect($invoices)->pluck('id')->toArray());
     }
@@ -604,7 +618,7 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $invoice = Invoice::where('customer_id', $this->customer1->id)
             ->where('number', 'like', 'RE-%')
             ->where('status', 'draft')
@@ -627,7 +641,7 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $customer = Customer::where('email', 'newcustomer@example.com')->first();
 
         $this->assertNotNull($customer);
@@ -651,7 +665,7 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $product = Product::where('name', 'New Product')->first();
 
         $this->assertNotNull($product);
@@ -671,7 +685,7 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $payment = Payment::where('invoice_id', $this->invoice1->id)
             ->where('amount', 300.00)
             ->first();
@@ -713,6 +727,98 @@ class MultiTenancyTest extends TestCase
         $this->assertEquals('Updated notes', $this->invoice1->notes);
     }
 
+    /**
+     * Minimal valid payload for PUT /invoices/{id} against a draft invoice.
+     */
+    private function invoiceUpdatePayload(Invoice $invoice, array $overrides = []): array
+    {
+        return array_merge([
+            'customer_id' => $invoice->customer_id,
+            'issue_date' => $invoice->issue_date->format('Y-m-d'),
+            'due_date' => $invoice->due_date->format('Y-m-d'),
+            'status' => 'draft',
+            'layout_id' => null,
+            'vat_regime' => 'standard',
+            'notes' => $invoice->notes,
+            'items' => [
+                [
+                    'description' => 'Item',
+                    'quantity' => 1,
+                    'unit_price' => 100.00,
+                    'unit' => 'Stk.',
+                    'tax_rate' => 0.19,
+                ],
+            ],
+        ], $overrides);
+    }
+
+    public function test_super_admin_can_edit_invoice_number()
+    {
+        $this->actingAs($this->superAdmin);
+        Session::put('selected_company_id', $this->company1->id);
+
+        $this->invoice1->update(['status' => 'draft']);
+
+        $response = $this->put(
+            "/invoices/{$this->invoice1->id}",
+            $this->invoiceUpdatePayload($this->invoice1, ['number' => 'RE-2024-CUSTOM'])
+        );
+
+        $response->assertRedirect();
+        $this->invoice1->refresh();
+        $this->assertEquals('RE-2024-CUSTOM', $this->invoice1->number);
+    }
+
+    public function test_regular_users_cannot_edit_invoice_number()
+    {
+        $this->actingAs($this->user1);
+
+        $this->invoice1->update(['status' => 'draft']);
+        $originalNumber = $this->invoice1->number;
+
+        $response = $this->put(
+            "/invoices/{$this->invoice1->id}",
+            $this->invoiceUpdatePayload($this->invoice1, ['number' => 'RE-2024-HACKED'])
+        );
+
+        $response->assertRedirect();
+        $this->invoice1->refresh();
+        // The number input is silently ignored for non-super-admins.
+        $this->assertEquals($originalNumber, $this->invoice1->number);
+    }
+
+    public function test_edited_invoice_number_must_be_unique_within_company()
+    {
+        $this->actingAs($this->superAdmin);
+        Session::put('selected_company_id', $this->company1->id);
+
+        $this->invoice1->update(['status' => 'draft']);
+        $originalNumber = $this->invoice1->number;
+
+        $other = Invoice::create([
+            'company_id' => $this->company1->id,
+            'customer_id' => $this->customer1->id,
+            'user_id' => $this->user1->id,
+            'number' => 'RE-2024-TAKEN',
+            'status' => 'draft',
+            'issue_date' => now(),
+            'due_date' => now()->addDays(14),
+            'subtotal' => 100.00,
+            'tax_rate' => 0.19,
+            'tax_amount' => 19.00,
+            'total' => 119.00,
+        ]);
+
+        $response = $this->put(
+            "/invoices/{$this->invoice1->id}",
+            $this->invoiceUpdatePayload($this->invoice1, ['number' => 'RE-2024-TAKEN'])
+        );
+
+        $response->assertSessionHasErrors('number');
+        $this->invoice1->refresh();
+        $this->assertEquals($originalNumber, $this->invoice1->number);
+    }
+
     public function test_users_can_update_their_own_company_customer()
     {
         $this->actingAs($this->user1);
@@ -742,10 +848,7 @@ class MultiTenancyTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('error');
-        $this->assertDatabaseHas('invoices', [
-            'id'         => $this->invoice1->id,
-            'deleted_at' => null,
-        ]);
+        $this->assertDatabaseHas('invoices', ['id' => $this->invoice1->id]);
     }
 
     public function test_users_can_delete_their_own_draft_invoice()
@@ -769,9 +872,19 @@ class MultiTenancyTest extends TestCase
         $response = $this->delete("/invoices/{$draft->id}");
 
         $response->assertRedirect();
-        // Soft-deleted: row survives but deleted_at is set, so default scope
-        // hides it. `withTrashed()` is how we confirm retention.
-        $this->assertSoftDeleted('invoices', ['id' => $draft->id]);
+        // Deletes are permanent — the row is gone and the number is reusable.
+        $this->assertDatabaseMissing('invoices', ['id' => $draft->id]);
+    }
+
+    public function test_super_admin_cannot_delete_sent_invoice_per_gobd()
+    {
+        $this->actingAs($this->superAdmin);
+
+        $response = $this->delete("/invoices/{$this->invoice1->id}");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('invoices', ['id' => $this->invoice1->id]);
     }
 
     public function test_users_can_delete_their_own_company_customer()
@@ -827,7 +940,7 @@ class MultiTenancyTest extends TestCase
                 ->where('company_id', $this->company1->id) // Should be user's company
                 ->latest()
                 ->first();
-            
+
             // Verify invoice was created with user's company_id
             // This demonstrates that multi-tenancy is working - even if validation doesn't prevent
             // cross-company customer selection, the invoice is still scoped to the user's company
@@ -909,16 +1022,16 @@ class MultiTenancyTest extends TestCase
         // Check for validation errors
         if ($response->status() === 422) {
             $errors = $response->json();
-            $this->fail('Validation failed: ' . json_encode($errors));
+            $this->fail('Validation failed: '.json_encode($errors));
         }
-        
+
         // Check for server errors
         if ($response->status() === 500) {
             $this->fail('Server error occurred');
         }
-        
+
         $response->assertRedirect();
-        
+
         // Check if invoice was created
         $invoice = Invoice::where('company_id', $this->company1->id)
             ->where('customer_id', $this->customer1->id)
@@ -929,15 +1042,15 @@ class MultiTenancyTest extends TestCase
             ->first();
 
         $this->assertNotNull($invoice, 'Invoice should be created');
-        
+
         // Check if items exist in database directly
         $itemsCount = InvoiceItem::where('invoice_id', $invoice->id)->count();
         $this->assertEquals(1, $itemsCount, "Expected 1 item, found {$itemsCount}. Invoice ID: {$invoice->id}");
-        
+
         // Load items relationship
         $invoice->load('items');
         $this->assertCount(1, $invoice->items);
-        
+
         $item = $invoice->items->first();
         $this->assertEquals('percentage', $item->discount_type);
         $this->assertEquals(10, $item->discount_value);
@@ -970,7 +1083,7 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $invoice = Invoice::where('company_id', $this->company1->id)
             ->where('customer_id', $this->customer1->id)
             ->where('number', 'like', 'RE-%')
@@ -979,11 +1092,11 @@ class MultiTenancyTest extends TestCase
             ->first();
 
         $this->assertNotNull($invoice);
-        
+
         // Load items relationship
         $invoice->load('items');
         $this->assertCount(1, $invoice->items);
-        
+
         $item = $invoice->items->first();
         $this->assertEquals('fixed', $item->discount_type);
         $this->assertEquals(25.00, $item->discount_value);
@@ -1044,12 +1157,12 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $invoice->refresh();
         $invoice->load('items');
-        
+
         $this->assertCount(1, $invoice->items);
-        
+
         $item = $invoice->items->first();
         $this->assertEquals('percentage', $item->discount_type);
         $this->assertEquals(15, $item->discount_value);
@@ -1083,7 +1196,7 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $offer = Offer::where('company_id', $this->company1->id)
             ->where('customer_id', $this->customer1->id)
             ->where('number', 'like', 'AN-%')
@@ -1093,11 +1206,11 @@ class MultiTenancyTest extends TestCase
             ->first();
 
         $this->assertNotNull($offer);
-        
+
         // Load items relationship
         $offer->load('items');
         $this->assertCount(1, $offer->items);
-        
+
         $item = $offer->items->first();
         $this->assertEquals('percentage', $item->discount_type);
         $this->assertEquals(20, $item->discount_value);
@@ -1131,7 +1244,7 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $offer = Offer::where('company_id', $this->company1->id)
             ->where('customer_id', $this->customer1->id)
             ->where('number', 'like', 'AN-%')
@@ -1140,11 +1253,11 @@ class MultiTenancyTest extends TestCase
             ->first();
 
         $this->assertNotNull($offer);
-        
+
         // Load items relationship
         $offer->load('items');
         $this->assertCount(1, $offer->items);
-        
+
         $item = $offer->items->first();
         $this->assertEquals('fixed', $item->discount_type);
         $this->assertEquals(50.00, $item->discount_value);
@@ -1205,12 +1318,12 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $offer->refresh();
         $offer->load('items');
-        
+
         $this->assertCount(1, $offer->items);
-        
+
         $item = $offer->items->first();
         $this->assertEquals('fixed', $item->discount_type);
         $this->assertEquals(50.00, $item->discount_value);
@@ -1257,7 +1370,7 @@ class MultiTenancyTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $invoice = Invoice::where('company_id', $this->company1->id)
             ->where('customer_id', $this->customer1->id)
             ->where('number', 'like', 'RE-%')
@@ -1266,33 +1379,32 @@ class MultiTenancyTest extends TestCase
             ->first();
 
         $this->assertNotNull($invoice);
-        
+
         // Load items relationship
         $invoice->load('items');
         $this->assertCount(3, $invoice->items);
-        
+
         $items = $invoice->items->sortBy('sort_order');
-        
+
         // Item 1: No discount
         $item1 = $items->get(0);
         $this->assertNull($item1->discount_type);
         $this->assertEquals(200.00, $item1->total); // 2 * 100
-        
+
         // Item 2: 10% discount
         $item2 = $items->get(1);
         $this->assertEquals('percentage', $item2->discount_type);
         $this->assertEquals(20.00, $item2->discount_amount); // 200 * 0.1
         $this->assertEquals(180.00, $item2->total); // 200 - 20
-        
+
         // Item 3: Fixed discount
         $item3 = $items->get(2);
         $this->assertEquals('fixed', $item3->discount_type);
         $this->assertEquals(25.00, $item3->discount_amount);
         $this->assertEquals(125.00, $item3->total); // (3 * 50) - 25
-        
+
         // Total subtotal should be sum of all item totals
         $expectedSubtotal = 200.00 + 180.00 + 125.00; // 505.00
         $this->assertEquals($expectedSubtotal, $invoice->subtotal);
     }
 }
-

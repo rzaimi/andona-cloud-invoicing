@@ -11,11 +11,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
-    use HasFactory, HasUuids, SoftDeletes;
+    use HasFactory, HasUuids;
 
     // Reminder Level Constants
     const REMINDER_NONE = 0;
@@ -215,11 +214,11 @@ class Invoice extends Model
             // Snapshot the legal form + derived role label so historic PDFs
             // keep rendering the correct "Inhaber"/"Geschäftsführer" even if
             // the company later switches form.
-            'legal_form'       => $company->legal_form,
+            'legal_form' => $company->legal_form,
             'legal_form_label' => $company->getLegalFormLabel(),
-            'manager_title'    => $company->getManagerTitle(),
+            'manager_title' => $company->getManagerTitle(),
             // "Firma + Rechtsform" composite for headers / sender strips.
-            'display_name'     => $company->getDisplayName(),
+            'display_name' => $company->getDisplayName(),
             'website' => $company->website,
             'logo' => $company->logo,
             'bank_name' => $company->bank_name,
@@ -256,9 +255,9 @@ class Invoice extends Model
      */
     public function refreshCompanySnapshot(): array
     {
-        $fresh   = $this->createCompanySnapshot();
+        $fresh = $this->createCompanySnapshot();
         $current = $this->company_snapshot ?? [];
-        $filled  = [];
+        $filled = [];
 
         foreach ($fresh as $key => $value) {
             if ($key === 'snapshot_date') {
@@ -266,7 +265,7 @@ class Invoice extends Model
             }
 
             $existing = $current[$key] ?? null;
-            $isMissing = !array_key_exists($key, $current) || $existing === null || $existing === '';
+            $isMissing = ! array_key_exists($key, $current) || $existing === null || $existing === '';
 
             if ($isMissing && $value !== null && $value !== '') {
                 $current[$key] = $value;
@@ -274,7 +273,7 @@ class Invoice extends Model
             }
         }
 
-        if (!empty($filled)) {
+        if (! empty($filled)) {
             $this->company_snapshot = $current;
             $this->save();
         }
@@ -365,7 +364,7 @@ class Invoice extends Model
 
         if (in_array($this->invoice_type, ['abschlagsrechnung', 'schlussrechnung'])) {
             $refs = collect($this->abschlag_refs ?? [])
-                ->filter(fn ($r) => !empty($r['invoice_id']) && isset($r['amount']));
+                ->filter(fn ($r) => ! empty($r['invoice_id']) && isset($r['amount']));
 
             if ($refs->isNotEmpty()) {
                 $skontoBase = max(0.0, $skontoBase - (float) $refs->sum('amount'));
@@ -457,9 +456,7 @@ class Invoice extends Model
                 ?? $company->getSetting('invoice_prefix', 'RE-')
         );
         $minCounter = (int) ($company->getSetting('invoice_next_counter') ?? 1);
-        // withTrashed(): soft-deleted invoices still occupy the (company_id, number)
-        // unique index and must be counted to avoid regenerating a deleted number.
-        $numbers = static::withTrashed()->where('company_id', $this->company_id)->pluck('number');
+        $numbers = static::where('company_id', $this->company_id)->pluck('number');
 
         return $svc->next($format, $numbers, null, $minCounter);
     }
@@ -645,8 +642,7 @@ class Invoice extends Model
                 ?? 'STORNO-{YYYY}-{####}'
         );
         $minCounter = (int) ($company->getSetting('storno_next_counter') ?? 1);
-        // withTrashed(): soft-deleted invoices still occupy the unique index.
-        $numbers = static::withTrashed()->where('company_id', $this->company_id)->pluck('number');
+        $numbers = static::where('company_id', $this->company_id)->pluck('number');
 
         return $svc->next($stornoFormat, $numbers, null, $minCounter);
     }
