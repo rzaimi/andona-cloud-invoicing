@@ -441,7 +441,7 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                                                         id="quantity"
                                                         type="number"
                                                         min="0"
-                                                        step="0.01"
+                                                        step="any"
                                                         value={adjustStockData.quantity}
                                                         onChange={(e) => setAdjustStockData("quantity", parseFloat(e.target.value) || 0)}
                                                     />

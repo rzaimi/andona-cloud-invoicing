@@ -286,7 +286,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                                                 <Input
                                                     id="price"
                                                     type="number"
-                                                    step="0.01"
+                                                    step="any"
                                                     min="0"
                                                     value={data.price}
                                                     onChange={(e) => setData("price", Number.parseFloat(e.target.value) || 0)}
@@ -305,7 +305,7 @@ export default function ProductEdit({ user, product, categories }: ProductEditPr
                                                 <Input
                                                     id="cost_price"
                                                     type="number"
-                                                    step="0.01"
+                                                    step="any"
                                                     min="0"
                                                     value={data.cost_price}
                                                     onChange={(e) => setData("cost_price", Number.parseFloat(e.target.value) || 0)}

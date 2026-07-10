@@ -205,7 +205,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                             <Input
                                 id="reminder_mahnung1_fee"
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 min="0"
                                 max="100"
                                 value={data.reminder_mahnung1_fee}
@@ -219,7 +219,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                             <Input
                                 id="reminder_mahnung2_fee"
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 min="0"
                                 max="100"
                                 value={data.reminder_mahnung2_fee}
@@ -233,7 +233,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                             <Input
                                 id="reminder_mahnung3_fee"
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 min="0"
                                 max="100"
                                 value={data.reminder_mahnung3_fee}
@@ -248,7 +248,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                         <Input
                             id="reminder_interest_rate"
                             type="number"
-                            step="0.01"
+                            step="any"
                             min="0"
                             max="20"
                             value={data.reminder_interest_rate}

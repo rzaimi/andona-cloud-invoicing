@@ -176,7 +176,7 @@ export default function PaymentsCreate() {
                                             <Input
                                                 id="amount"
                                                 type="number"
-                                                step="0.01"
+                                                step="any"
                                                 min="0.01"
                                                 value={data.amount}
                                                 onChange={(e) => setData("amount", parseFloat(e.target.value) || 0)}

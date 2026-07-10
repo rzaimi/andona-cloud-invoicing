@@ -103,7 +103,7 @@ export default function Step4MahnungSettings({ data, setData, errors }: any) {
                             <Input
                                 id="reminder_mahnung1_fee"
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 min="0"
                                 value={ms.reminder_mahnung1_fee ?? 5.00}
                                 onChange={(e) => set('reminder_mahnung1_fee', parseFloat(e.target.value) || 0)}
@@ -118,7 +118,7 @@ export default function Step4MahnungSettings({ data, setData, errors }: any) {
                             <Input
                                 id="reminder_mahnung2_fee"
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 min="0"
                                 value={ms.reminder_mahnung2_fee ?? 10.00}
                                 onChange={(e) => set('reminder_mahnung2_fee', parseFloat(e.target.value) || 0)}
@@ -133,7 +133,7 @@ export default function Step4MahnungSettings({ data, setData, errors }: any) {
                             <Input
                                 id="reminder_mahnung3_fee"
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 min="0"
                                 value={ms.reminder_mahnung3_fee ?? 15.00}
                                 onChange={(e) => set('reminder_mahnung3_fee', parseFloat(e.target.value) || 0)}
@@ -152,7 +152,7 @@ export default function Step4MahnungSettings({ data, setData, errors }: any) {
                         <Input
                             id="reminder_interest_rate"
                             type="number"
-                            step="0.01"
+                            step="any"
                             min="0"
                             value={ms.reminder_interest_rate ?? 9.00}
                             onChange={(e) => set('reminder_interest_rate', parseFloat(e.target.value) || 0)}

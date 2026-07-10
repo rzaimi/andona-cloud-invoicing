@@ -706,10 +706,10 @@ export default function InvoicesCreate() {
                                         <TableRow>
                                             <TableHead className="w-[2%]" />
                                             <TableHead className="w-[12%]">Produkt-Nr.</TableHead>
-                                            <TableHead className="w-[24%]">Beschreibung</TableHead>
+                                            <TableHead className="w-[34%] min-w-[300px]">Beschreibung</TableHead>
                                             <TableHead className="w-[8%]">Menge</TableHead>
                                             <TableHead className="w-[8%]">Einheit</TableHead>
-                                            <TableHead className="w-[6%]">USt.</TableHead>
+                                            <TableHead className="w-[90px]">USt.</TableHead>
                                             <TableHead className="w-[12%]">Einzelpreis</TableHead>
                                             <TableHead className="w-[10%]">Rabatt</TableHead>
                                             <TableHead className="w-[10%]">Rabatt-Wert</TableHead>
@@ -747,7 +747,7 @@ export default function InvoicesCreate() {
                                                         value={item.description}
                                                         onChange={(e) => updateItem(item.id, "description", e.target.value)}
                                                         placeholder="Beschreibung der Leistung..."
-                                                        className="min-h-[100px] resize-y"
+                                                        className="min-h-[100px] min-w-[260px] resize-y"
                                                         rows={4}
                                                         required
                                                     />
@@ -759,7 +759,7 @@ export default function InvoicesCreate() {
                                                     <Input
                                                         type="number"
                                                         min="0.01"
-                                                        step="0.01"
+                                                        step="any"
                                                         value={item.quantity}
                                                         onChange={(e) => updateItem(item.id, "quantity", Number.parseFloat(e.target.value) || 0)}
                                                         required
@@ -795,7 +795,7 @@ export default function InvoicesCreate() {
                                                         disabled={data.vat_regime !== 'standard'}
                                                     >
                                                         <SelectTrigger>
-                                                            <SelectValue />
+                                                            <SelectValue>{Math.round((item.tax_rate ?? settings.tax_rate ?? 0.19) * 100)}%</SelectValue>
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {germanTaxRates.map((rate) => (
@@ -810,7 +810,7 @@ export default function InvoicesCreate() {
                                                     <Input
                                                         type="number"
                                                         min="0"
-                                                        step="0.01"
+                                                        step="any"
                                                         value={item.unit_price}
                                                         onChange={(e) => updateItem(item.id, "unit_price", Number.parseFloat(e.target.value) || 0)}
                                                         required
@@ -846,7 +846,7 @@ export default function InvoicesCreate() {
                                                         <Input
                                                             type="number"
                                                             min="0"
-                                                            step="0.01"
+                                                            step="any"
                                                             max={item.discount_type === 'percentage' ? "100" : undefined}
                                                             value={item.discount_value ?? ""}
                                                             onChange={(e) => updateItem(item.id, "discount_value", e.target.value ? Number.parseFloat(e.target.value) : null)}

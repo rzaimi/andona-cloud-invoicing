@@ -91,7 +91,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                             <Input
                                 id="reminder_mahnung1_fee"
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 min="0"
                                 value={formData.reminder_mahnung1_fee}
                                 onChange={(e) => handleChange("reminder_mahnung1_fee", parseFloat(e.target.value))}
@@ -125,7 +125,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                             <Input
                                 id="reminder_mahnung2_fee"
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 min="0"
                                 value={formData.reminder_mahnung2_fee}
                                 onChange={(e) => handleChange("reminder_mahnung2_fee", parseFloat(e.target.value))}
@@ -159,7 +159,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                             <Input
                                 id="reminder_mahnung3_fee"
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 min="0"
                                 value={formData.reminder_mahnung3_fee}
                                 onChange={(e) => handleChange("reminder_mahnung3_fee", parseFloat(e.target.value))}
@@ -200,7 +200,7 @@ export default function Step4MahnungSettings({ data, updateData }: Step4Props) {
                         <Input
                             id="reminder_interest_rate"
                             type="number"
-                            step="0.01"
+                            step="any"
                             min="0"
                             value={formData.reminder_interest_rate}
                             onChange={(e) => handleChange("reminder_interest_rate", parseFloat(e.target.value))}

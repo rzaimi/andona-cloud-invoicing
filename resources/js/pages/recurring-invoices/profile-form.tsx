@@ -500,7 +500,7 @@ export function RecurringProfileForm({
                                             <TableCell>
                                                 <Input
                                                     type="number"
-                                                    step="0.01"
+                                                    step="any"
                                                     value={it.quantity}
                                                     onChange={(e) =>
                                                         updateItem(i, { quantity: Number(e.target.value) || 0 })
@@ -516,7 +516,7 @@ export function RecurringProfileForm({
                                             <TableCell>
                                                 <Input
                                                     type="number"
-                                                    step="0.01"
+                                                    step="any"
                                                     value={it.unit_price}
                                                     onChange={(e) =>
                                                         updateItem(i, { unit_price: Number(e.target.value) || 0 })
