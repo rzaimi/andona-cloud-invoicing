@@ -91,6 +91,11 @@ trait ResizesCompanyLogo
 
     /**
      * Delete existing logo files and store a new one from a local path.
+     *
+     * The filename carries a unique suffix on every upload. Because the logo
+     * URL is derived from this path, a changed filename means the browser (and
+     * any CDN) fetches the new image instead of serving a stale cached copy of
+     * a fixed "logo.png" URL.
      */
     private function storeLogoFile(string $localPath, string $companyId): string
     {
@@ -99,10 +104,12 @@ trait ResizesCompanyLogo
             Storage::disk('public')->delete($f);
         }
 
+        $filename = 'logo-'.now()->format('YmdHis').'-'.substr(uniqid('', true), -6).'.png';
+
         return Storage::disk('public')->putFileAs(
             "tenants/{$companyId}/logo",
             new File($localPath),
-            'logo.png'
+            $filename
         );
     }
 

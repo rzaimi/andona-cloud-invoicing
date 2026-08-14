@@ -225,8 +225,15 @@
         $snapshot = [];
     }
 
-    if (empty($snapshot['logo'] ?? null) && isset($company) && !empty($company->logo ?? null)) {
-        $snapshot['logo'] = $company->logo;
+    // Fall back to the company's current logo when the snapshot has no logo, or when the
+    // snapshot references a logo file that no longer exists (each upload uses a unique
+    // filename and deletes the previous one), so historical documents still render a logo.
+    if (isset($company) && !empty($company->logo ?? null)) {
+        $snapLogo    = $snapshot['logo'] ?? null;
+        $snapLogoRel = $snapLogo ? ltrim(preg_replace('#^storage/#', '', (string) $snapLogo), '/') : null;
+        if (empty($snapLogoRel) || !\Storage::disk('public')->exists($snapLogoRel)) {
+            $snapshot['logo'] = $company->logo;
+        }
     }
 
     // ── Date helpers ──────────────────────────────────────────────────────────

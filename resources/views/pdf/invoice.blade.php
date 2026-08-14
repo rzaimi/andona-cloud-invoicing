@@ -175,8 +175,15 @@
     }
 
     // Backwards-compat: older stored snapshots may miss the logo even when the company has one.
-    if (empty($snapshot['logo'] ?? null) && isset($company) && !empty($company->logo ?? null)) {
-        $snapshot['logo'] = $company->logo;
+    // Each logo upload also uses a unique filename and deletes the previous file, so a snapshot
+    // may reference a logo path that no longer exists on disk — in that case fall back to the
+    // company's current logo so historical documents still render a logo.
+    if (isset($company) && !empty($company->logo ?? null)) {
+        $snapLogo    = $snapshot['logo'] ?? null;
+        $snapLogoRel = $snapLogo ? ltrim(preg_replace('#^storage/#', '', (string) $snapLogo), '/') : null;
+        if (empty($snapLogoRel) || !\Storage::disk('public')->exists($snapLogoRel)) {
+            $snapshot['logo'] = $company->logo;
+        }
     }
 
     // Get date format from settings or use default
