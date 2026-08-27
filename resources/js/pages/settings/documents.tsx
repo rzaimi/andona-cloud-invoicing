@@ -89,8 +89,8 @@ const CATEGORIES = [
     { value: 'custom', label: 'Sonstiges' },
 ]
 
-/** Upload/edit modal: payroll & customer stay out of Kategorie (use Verknüpfen mit for Kunde/Rechnung links); Rechnung category kept for invoice-related files. */
-const MODAL_CATEGORY_VALUES = ['employee', 'company', 'financial', 'custom', 'invoice'] as const
+/** Upload/edit modal Kategorie list — identical to the index filter, minus the "Alle Kategorien" filter-only option. */
+const MODAL_CATEGORIES = CATEGORIES.filter((c) => c.value !== 'all')
 
 const LINK_TYPES = [
     { value: 'all', label: 'Alle Typen' },
@@ -98,6 +98,9 @@ const LINK_TYPES = [
     { value: 'contract', label: 'Vertrag' },
     { value: 'receipt', label: 'Beleg' },
     { value: 'certificate', label: 'Zertifikat' },
+    { value: 'payroll', label: 'Lohnabrechnung' },
+    { value: 'id_document', label: 'Ausweisdokument' },
+    { value: 'warning', label: 'Abmahnung' },
     { value: 'other', label: 'Sonstiges' },
 ]
 
@@ -271,6 +274,7 @@ export default function DocumentsSettings() {
                                 <Label htmlFor="search">Suche</Label>
                                 <Input
                                     id="search"
+                                    key={`search-${filters.search ?? ''}`}
                                     placeholder="Name, Beschreibung..."
                                     defaultValue={filters.search}
                                     onKeyDown={(e) => {
@@ -286,7 +290,7 @@ export default function DocumentsSettings() {
                             <div>
                                 <Label htmlFor="category">Kategorie</Label>
                                 <Select
-                                    defaultValue={filters.category || 'all'}
+                                    value={filters.category || 'all'}
                                     onValueChange={(value) => {
                                         router.get(route('documents.index'), {
                                             ...filters,
@@ -309,7 +313,7 @@ export default function DocumentsSettings() {
                             <div>
                                 <Label htmlFor="link_type">Verknüpfungstyp</Label>
                                 <Select
-                                    defaultValue={filters.link_type || 'all'}
+                                    value={filters.link_type || 'all'}
                                     onValueChange={(value) => {
                                         router.get(route('documents.index'), {
                                             ...filters,
@@ -536,7 +540,7 @@ export default function DocumentsSettings() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {CATEGORIES.filter((c) => (MODAL_CATEGORY_VALUES as readonly string[]).includes(c.value)).map((cat) => (
+                                            {MODAL_CATEGORIES.map((cat) => (
                                                 <SelectItem key={cat.value} value={cat.value}>
                                                     {cat.label}
                                                 </SelectItem>
@@ -699,7 +703,7 @@ export default function DocumentsSettings() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {CATEGORIES.filter((c) => (MODAL_CATEGORY_VALUES as readonly string[]).includes(c.value)).map((cat) => (
+                                            {MODAL_CATEGORIES.map((cat) => (
                                                 <SelectItem key={cat.value} value={cat.value}>
                                                     {cat.label}
                                                 </SelectItem>
