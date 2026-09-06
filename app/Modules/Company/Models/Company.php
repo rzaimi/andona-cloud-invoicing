@@ -159,6 +159,7 @@ class Company extends Model
         'bank_name',
         'bank_iban',
         'bank_bic',
+        'bank_account_holder',
     ];
 
     protected static function boot()
@@ -372,6 +373,11 @@ class Company extends Model
         return $this->getSetting('bank_bic');
     }
 
+    public function getBankAccountHolderAttribute(): ?string
+    {
+        return $this->getSetting('bank_account_holder');
+    }
+
     /**
      * Mutator methods to save SMTP settings to company_settings
      */
@@ -438,6 +444,11 @@ class Company extends Model
         $this->setSetting('bank_bic', $value, 'string');
     }
 
+    public function setBankAccountHolderAttribute($value): void
+    {
+        $this->setSetting('bank_account_holder', $value, 'string');
+    }
+
     /**
      * Set SMTP settings from array
      */
@@ -457,7 +468,7 @@ class Company extends Model
     public function setBankSettings(array $settings): void
     {
         foreach ($settings as $key => $value) {
-            if (in_array($key, ['bank_name', 'bank_iban', 'bank_bic'])) {
+            if (in_array($key, ['bank_name', 'bank_iban', 'bank_bic', 'bank_account_holder'], true)) {
                 $this->setSetting($key, $value, 'string');
             }
         }

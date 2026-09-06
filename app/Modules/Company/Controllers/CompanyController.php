@@ -44,7 +44,7 @@ class CompanyController extends Controller
         $this->authorize('create', Company::class);
 
         // Redirect to wizard
-        return redirect()->route('companies.wizard');
+        return redirect()->route('companies.wizard.show');
     }
 
     public function createWizard(Request $request)
@@ -125,7 +125,7 @@ class CompanyController extends Controller
         $wizardData = $request->session()->get('company_wizard');
 
         if (!$wizardData) {
-            return redirect()->route('companies.wizard')
+            return redirect()->route('companies.wizard.show')
                 ->with('error', 'Wizard-Daten nicht gefunden. Bitte starten Sie erneut.');
         }
 
@@ -172,6 +172,7 @@ class CompanyController extends Controller
                     'bank_name' => $bankingInfo['bank_name'] ?? null,
                     'bank_iban' => $bankingInfo['iban'] ?? $bankingInfo['bank_iban'] ?? null,
                     'bank_bic' => $bankingInfo['bic'] ?? $bankingInfo['bank_bic'] ?? null,
+                    'bank_account_holder' => $bankingInfo['account_holder'] ?? $bankingInfo['bank_account_holder'] ?? null,
                 ]);
             }
 
@@ -249,6 +250,7 @@ class CompanyController extends Controller
             'bank_name' => 'nullable|string|max:255',
             'bank_iban' => 'nullable|string|max:50',
             'bank_bic' => 'nullable|string|max:20',
+            'bank_account_holder' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -258,8 +260,9 @@ class CompanyController extends Controller
             'bank_name' => $validated['bank_name'] ?? null,
             'bank_iban' => $validated['bank_iban'] ?? null,
             'bank_bic' => $validated['bank_bic'] ?? null,
+            'bank_account_holder' => $validated['bank_account_holder'] ?? null,
         ];
-        unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic']);
+        unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic'], $validated['bank_account_holder']);
 
         $validated['status'] = 'active';
 
@@ -336,6 +339,7 @@ class CompanyController extends Controller
             'bank_name' => 'nullable|string|max:255',
             'bank_iban' => 'nullable|string|max:50',
             'bank_bic' => 'nullable|string|max:20',
+            'bank_account_holder' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
             'status' => 'required|in:active,inactive',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -346,8 +350,9 @@ class CompanyController extends Controller
             'bank_name' => $validated['bank_name'] ?? null,
             'bank_iban' => $validated['bank_iban'] ?? null,
             'bank_bic' => $validated['bank_bic'] ?? null,
+            'bank_account_holder' => $validated['bank_account_holder'] ?? null,
         ];
-        unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic']);
+        unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic'], $validated['bank_account_holder']);
 
         // Handle logo: removal > upload > preserve (never let a missing file wipe an existing logo)
         if ($request->input('remove_logo') === '1' && !$request->hasFile('logo')) {

@@ -220,6 +220,7 @@
             'bank_name'           => $company->bank_name          ?? '',
             'bank_iban'           => $company->bank_iban          ?? '',
             'bank_bic'            => $company->bank_bic           ?? '',
+            'bank_account_holder' => $company->bank_account_holder ?? '',
         ];
     } else {
         $snapshot = [];

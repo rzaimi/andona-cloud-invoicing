@@ -45,6 +45,7 @@
     $bankIban = $snapshot['bank_iban'] ?? null;
     $bankBic  = $snapshot['bank_bic']  ?? null;
     $bankName = $snapshot['bank_name'] ?? null;
+    $bankHolder = $snapshot['bank_account_holder'] ?? null;
 
     // Items-table styling — flat with header underline only, primary
     // accent for the grand-total row
@@ -156,6 +157,7 @@
 @if(($ls['content']['show_bank_details'] ?? true) && ($bankIban || $bankBic))
 <div style="margin-top:8mm; padding:4mm 5mm; background:{{ $accent }}1a; border-left:1.2mm solid {{ $primary }}; font-size:{{ $fs - 1 }}px; color:{{ $ink }}; line-height:1.7;">
     <div style="color:{{ $primary }}; font-size:{{ $fs - 2 }}px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:1.5mm;">Zahlungsdetails</div>
+    @if($bankHolder)<span style="margin-right:6mm;"><span style="color:{{ $muted }};">Kontoinhaber</span> <strong>{{ $bankHolder }}</strong></span>@endif
     @if($bankIban)<span style="margin-right:6mm;"><span style="color:{{ $muted }};">IBAN</span> <strong>{{ $bankIban }}</strong></span>@endif
     @if($bankBic)<span style="margin-right:6mm;"><span style="color:{{ $muted }};">BIC</span> <strong>{{ $bankBic }}</strong></span>@endif
     @if($bankName)<span style="margin-right:6mm;"><span style="color:{{ $muted }};">Bank</span> <strong>{{ $bankName }}</strong></span>@endif

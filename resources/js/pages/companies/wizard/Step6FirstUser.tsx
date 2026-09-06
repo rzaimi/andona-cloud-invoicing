@@ -1,10 +1,13 @@
+import { useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { User } from "lucide-react"
+import { User, Eye, EyeOff } from "lucide-react"
 
 export default function Step6FirstUser({ data, setData, errors }: any) {
+    const [showPassword, setShowPassword] = useState(false)
     return (
         <div className="space-y-6">
             <Alert>
@@ -61,15 +64,29 @@ export default function Step6FirstUser({ data, setData, errors }: any) {
 
                     <div className="md:col-span-2">
                         <Label htmlFor="user_password">Passwort *</Label>
-                        <Input
-                            id="user_password"
-                            type="password"
-                            value={data.first_user?.password || ''}
-                            onChange={(e) => setData('first_user', { ...data.first_user, password: e.target.value })}
-                            placeholder="Mindestens 8 Zeichen"
-                        />
-                        {errors?.['first_user.password'] && (
-                            <p className="text-sm text-red-500 mt-1">{errors['first_user.password']}</p>
+                        <div className="relative">
+                            <Input
+                                id="user_password"
+                                type={showPassword ? "text" : "password"}
+                                value={data.first_user?.password || ""}
+                                onChange={(e) => setData("first_user", { ...data.first_user, password: e.target.value })}
+                                placeholder="Mindestens 8 Zeichen"
+                                className="pr-10"
+                                autoComplete="new-password"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-9 w-9 text-muted-foreground"
+                                onClick={() => setShowPassword((v) => !v)}
+                                aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                            >
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                        </div>
+                        {errors?.["first_user.password"] && (
+                            <p className="text-sm text-red-500 mt-1">{errors["first_user.password"]}</p>
                         )}
                     </div>
 

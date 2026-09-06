@@ -44,6 +44,7 @@ interface Company {
     bank_name?: string
     bank_iban?: string
     bank_bic?: string
+    bank_account_holder?: string
     smtp_host?: string
     smtp_port?: number
     smtp_username?: string
@@ -337,8 +338,18 @@ export default function Show({ auth, company, stats }: ShowProps) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    {company.bank_iban || company.bank_bic || company.bank_name ? (
+                                    {company.bank_iban || company.bank_bic || company.bank_name || company.bank_account_holder ? (
                                         <div className="space-y-3">
+                                            {company.bank_account_holder && (
+                                                <div className="flex items-start">
+                                                    <UserCircle className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
+                                                    <div>
+                                                        <div className="text-sm font-medium">Kontoinhaber</div>
+                                                        <div className="text-sm text-muted-foreground">{company.bank_account_holder}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             {company.bank_name && (
                                                 <div className="flex items-start">
                                                     <Landmark className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />

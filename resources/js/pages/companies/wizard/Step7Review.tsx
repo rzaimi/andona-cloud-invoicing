@@ -66,7 +66,9 @@ export default function Step7Review({ data, logoPreview }: any) {
                                     {INDUSTRY_LABELS[industry.slug] ?? industry.slug}
                                 </p>
                                 <p className="text-xs text-green-700 mt-0.5">
-                                    Produkte, Kategorien, Lager und Layouts werden automatisch angelegt.
+                                    {industry.initialize_data === false
+                                        ? "Branche merken, Paket nicht automatisch anlegen."
+                                        : "Produkte, Kategorien, Lager und Layouts werden automatisch angelegt."}
                                 </p>
                             </div>
                         </div>

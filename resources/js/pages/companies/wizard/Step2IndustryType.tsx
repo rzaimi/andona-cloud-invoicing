@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { CheckCircle2, Sprout, HardHat, Layers, Wrench, Package, ShoppingBag, Briefcase, X } from "lucide-react"
 
 interface Step2Props {
@@ -92,7 +93,10 @@ export default function Step2IndustryType({ data, setData }: Step2Props) {
     const current = data.industry_type || { slug: null, initialize_data: true }
 
     const select = (slug: string | null) => {
-        setData("industry_type", { slug, initialize_data: true })
+        setData("industry_type", {
+            slug,
+            initialize_data: slug ? (current.initialize_data !== false) : false,
+        })
     }
 
     return (
@@ -182,14 +186,32 @@ export default function Step2IndustryType({ data, setData }: Step2Props) {
             </button>
 
             {current.slug && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                    <p className="text-sm text-green-800">
-                        <strong>
-                            {INDUSTRY_TYPES.find((t) => t.slug === current.slug)?.label}
-                        </strong>{" "}
-                        ausgewählt — Branchenpaket wird nach der Erstellung automatisch eingerichtet.
-                    </p>
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5 pr-4">
+                            <Label className="text-base">Branchenpaket automatisch einrichten</Label>
+                            <p className="text-sm text-muted-foreground">
+                                Produkte, Kategorien, Lager und Layouts nach der Erstellung anlegen.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={current.initialize_data !== false}
+                            onCheckedChange={(checked) =>
+                                setData("industry_type", { ...current, initialize_data: checked })
+                            }
+                        />
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-3 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                        <p className="text-sm text-green-800 dark:text-green-300">
+                            <strong>
+                                {INDUSTRY_TYPES.find((t) => t.slug === current.slug)?.label}
+                            </strong>{" "}
+                            {current.initialize_data === false
+                                ? "ausgewählt — Branchenpaket wird nicht automatisch eingerichtet."
+                                : "ausgewählt — Branchenpaket wird nach der Erstellung automatisch eingerichtet."}
+                        </p>
+                    </div>
                 </div>
             )}
         </div>

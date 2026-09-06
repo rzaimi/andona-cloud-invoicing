@@ -21,6 +21,7 @@ export interface Company {
     bank_name?: string
     bank_iban?: string
     bank_bic?: string
+    bank_account_holder?: string
     website?: string
     logo?: string
     status: "active" | "inactive"

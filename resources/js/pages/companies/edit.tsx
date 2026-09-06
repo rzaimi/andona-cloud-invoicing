@@ -36,6 +36,7 @@ interface Company {
     bank_name?: string
     bank_iban?: string
     bank_bic?: string
+    bank_account_holder?: string
     website?: string
     logo?: string
     status: string
@@ -79,6 +80,7 @@ export default function Edit({ auth, company }: EditProps) {
         bank_name: company.bank_name || "",
         bank_iban: company.bank_iban || "",
         bank_bic: company.bank_bic || "",
+        bank_account_holder: company.bank_account_holder || "",
         website: company.website || "",
         status: company.status || "active",
         logo: null as File | null,
@@ -486,6 +488,17 @@ export default function Edit({ auth, company }: EditProps) {
                                     <CardDescription>Bankdaten für Rechnungen und Zahlungen</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="bank_account_holder">Kontoinhaber</Label>
+                                        <Input
+                                            id="bank_account_holder"
+                                            value={data.bank_account_holder}
+                                            onChange={(e) => setData("bank_account_holder", e.target.value)}
+                                            placeholder="Musterfirma GmbH"
+                                        />
+                                        {errors.bank_account_holder && <p className="text-sm text-red-500">{errors.bank_account_holder}</p>}
+                                    </div>
+
                                     <div className="space-y-2">
                                         <Label htmlFor="bank_name">Bankname</Label>
                                         <Input

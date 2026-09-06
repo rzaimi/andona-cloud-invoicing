@@ -28,6 +28,7 @@ export default function CompaniesCreate() {
         bank_name: "",
         bank_iban: "",
         bank_bic: "",
+        bank_account_holder: "",
         website: "",
         logo: null as File | null,
     })
@@ -286,7 +287,18 @@ export default function CompaniesCreate() {
                             <CardDescription>Bankinformationen für Zahlungen</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <Label htmlFor="bank_account_holder">Kontoinhaber</Label>
+                                    <Input
+                                        id="bank_account_holder"
+                                        value={data.bank_account_holder}
+                                        onChange={(e) => setData("bank_account_holder", e.target.value)}
+                                        placeholder="Musterfirma GmbH"
+                                        className={errors.bank_account_holder ? "border-red-500" : ""}
+                                    />
+                                    {errors.bank_account_holder && <p className="text-sm text-red-500 mt-1">{errors.bank_account_holder}</p>}
+                                </div>
                                 <div>
                                     <Label htmlFor="bank_name">Bankname</Label>
                                     <Input

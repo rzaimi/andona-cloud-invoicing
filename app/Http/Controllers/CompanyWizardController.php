@@ -8,11 +8,11 @@ use App\Services\SettingsService;
 use App\Traits\ResizesCompanyLogo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -27,9 +27,7 @@ class CompanyWizardController extends Controller
     }
 
     /**
-     * Redirect old "start" URL to the stable wizard URL.
-     * All wizard navigation happens at /companies/wizard; this avoids a URL
-     * change that would cause Inertia to re-initialize the React component.
+     * Old bookmark URL. Send visitors to the canonical wizard page.
      */
     public function start()
     {
@@ -62,11 +60,20 @@ class CompanyWizardController extends Controller
             $request->input('first_user.create_user', false),
             FILTER_VALIDATE_BOOLEAN
         );
+        $sendWelcomeEmail = filter_var(
+            $request->input('first_user.send_welcome_email', false),
+            FILTER_VALIDATE_BOOLEAN
+        );
+        $initializeIndustry = filter_var(
+            $request->input('industry_type.initialize_data', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
 
         $smtpRule    = $configureSmtp ? 'required' : 'nullable';
         $userRule    = $createUser    ? 'required' : 'nullable';
 
-        $validator = Validator::make($request->all(), [
+        // 422 (not a redirect) so Inertia keeps the client-side wizard state.
+        $request->validate([
             // Company basics
             'company_info.name'         => 'required|string|max:255',
             'company_info.email'        => 'required|email|max:255|unique:companies,email',
@@ -79,6 +86,9 @@ class CompanyWizardController extends Controller
             'company_info.vat_number'   => 'nullable|string|max:100',
             'company_info.website'      => 'nullable|url|max:255',
             'company_info.logo'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+
+            'industry_type.slug'             => 'nullable|in:gartenbau,bauunternehmen,raumausstattung,gebaudetechnik,logistik,handel,dienstleistung',
+            'industry_type.initialize_data'  => 'nullable|boolean',
 
             // Email / SMTP – all optional unless configure_smtp is on
             'email_settings.configure_smtp'     => 'nullable|boolean',
@@ -124,8 +134,8 @@ class CompanyWizardController extends Controller
 
             // Banking – all optional
             'banking_info.bank_name'       => 'nullable|string|max:255',
-            'banking_info.iban'            => 'nullable|string|max:34',
-            'banking_info.bic'             => 'nullable|string|max:11',
+            'banking_info.iban'            => 'nullable|string|max:42',
+            'banking_info.bic'             => 'nullable|string|max:15',
             'banking_info.account_holder'  => 'nullable|string|max:255',
 
             // First user – required only when create_user is on
@@ -135,11 +145,6 @@ class CompanyWizardController extends Controller
             'first_user.password'          => $userRule . '|string|min:8',
             'first_user.send_welcome_email' => 'nullable|boolean',
         ], $this->validationMessages(), $this->validationAttributes());
-
-        if ($validator->fails()) {
-            return redirect()->route('companies.wizard.show')
-                ->withErrors($validator);
-        }
 
         try {
             DB::beginTransaction();
@@ -182,11 +187,16 @@ class CompanyWizardController extends Controller
 
             // ── Banking ──────────────────────────────────────────────────────
             $bank = $request->input('banking_info', []);
-            if (!empty($bank['iban']) || !empty($bank['bic'])) {
+            $iban = $this->normalizeIban($bank['iban'] ?? null);
+            $bic  = $this->normalizeBic($bank['bic'] ?? null);
+            $holder = trim((string) ($bank['account_holder'] ?? ''));
+            $bankName = trim((string) ($bank['bank_name'] ?? ''));
+            if ($iban || $bic || $holder !== '' || $bankName !== '') {
                 $company->setBankSettings([
-                    'bank_name' => $bank['bank_name'] ?? null,
-                    'bank_iban' => $bank['iban'] ?? null,
-                    'bank_bic'  => $bank['bic'] ?? null,
+                    'bank_name'           => $bankName !== '' ? $bankName : null,
+                    'bank_iban'           => $iban,
+                    'bank_bic'            => $bic,
+                    'bank_account_holder' => $holder !== '' ? $holder : null,
                 ]);
             }
 
@@ -242,19 +252,23 @@ class CompanyWizardController extends Controller
             }
 
             // ── First user ───────────────────────────────────────────────────
+            $createdUser = null;
+            $plainPassword = null;
             if ($createUser && !empty($request->input('first_user.email'))) {
-                $fu   = $request->input('first_user', []);
-                $user = User::create([
+                $fu = $request->input('first_user', []);
+                $plainPassword = (string) $fu['password'];
+                // User model hashes via the `hashed` cast — pass the plain value.
+                $createdUser = User::create([
                     'id'                => Str::uuid(),
                     'name'              => $fu['name'],
                     'email'             => $fu['email'],
-                    'password'          => Hash::make($fu['password']),
+                    'password'          => $plainPassword,
                     'company_id'        => $company->id,
                     'role'              => 'admin',
                     'status'            => 'active',
                     'email_verified_at' => now(),
                 ]);
-                $user->assignRole('admin');
+                $createdUser->assignRole('admin');
             }
 
             DB::commit();
@@ -262,7 +276,7 @@ class CompanyWizardController extends Controller
             // Run industry initialisation after commit (non-blocking, non-fatal)
             $industrySlug = $request->input('industry_type.slug');
             $validSlugs   = ['gartenbau', 'bauunternehmen', 'raumausstattung', 'gebaudetechnik', 'logistik', 'handel', 'dienstleistung'];
-            if ($industrySlug && in_array($industrySlug, $validSlugs, true)) {
+            if ($initializeIndustry && $industrySlug && in_array($industrySlug, $validSlugs, true)) {
                 try {
                     Artisan::call('company:init', [
                         'company_id' => $company->id,
@@ -273,14 +287,27 @@ class CompanyWizardController extends Controller
                 }
             }
 
-            return Inertia::location(route('companies.index'));
+            $welcomeFailed = false;
+            if ($createdUser && $sendWelcomeEmail && $plainPassword) {
+                $welcomeFailed = ! $this->sendWelcomeEmail($createdUser, $company, $plainPassword);
+            }
 
+            $message = 'Firma "'.$company->name.'" wurde erfolgreich erstellt.';
+            if ($welcomeFailed) {
+                $message .= ' Die Willkommens-E-Mail konnte nicht gesendet werden.';
+            }
+
+            return redirect()->route('companies.index')->with('success', $message);
+
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Company wizard failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            Log::error('Company wizard failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
 
-            return redirect()->route('companies.wizard.show')
-                ->withErrors(['general' => 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
+            throw ValidationException::withMessages([
+                'general' => 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
+            ]);
         }
     }
 
@@ -293,6 +320,85 @@ class CompanyWizardController extends Controller
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    protected function normalizeIban(?string $iban): ?string
+    {
+        $iban = strtoupper(preg_replace('/\s+/', '', (string) $iban) ?? '');
+
+        return $iban !== '' ? $iban : null;
+    }
+
+    protected function normalizeBic(?string $bic): ?string
+    {
+        $bic = strtoupper(preg_replace('/\s+/', '', (string) $bic) ?? '');
+
+        return $bic !== '' ? $bic : null;
+    }
+
+    protected function sendWelcomeEmail(User $user, Company $company, string $plainPassword): bool
+    {
+        $subject = "Willkommen bei AndoBill – Zugang für {$company->name}";
+        $loginUrl = url('/login');
+
+        try {
+            if ($company->smtp_host && $company->smtp_username) {
+                Config::set('mail.default', 'smtp');
+                Config::set('mail.mailers.smtp.host', $company->smtp_host);
+                Config::set('mail.mailers.smtp.port', $company->smtp_port);
+                Config::set('mail.mailers.smtp.username', $company->smtp_username);
+                Config::set('mail.mailers.smtp.password', $company->smtp_password);
+                Config::set('mail.mailers.smtp.encryption', $company->smtp_encryption ?: 'tls');
+                Config::set('mail.from.address', $company->smtp_from_address ?: $company->email);
+                Config::set('mail.from.name', $company->smtp_from_name ?: $company->name);
+            }
+
+            $companyName = $this->e($company->name);
+            $userName = $this->e($user->name);
+            $userEmail = $this->e($user->email);
+            $safePassword = $this->e($plainPassword);
+            $safeLoginUrl = $this->e($loginUrl);
+
+            $html = <<<HTML
+<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="UTF-8"><title>Willkommen bei AndoBill</title></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.7;color:#1a1a1a;max-width:600px;margin:0 auto;padding:40px 20px;">
+  <p style="font-size:14px;font-weight:600;letter-spacing:0.3px;text-transform:uppercase;margin:0 0 8px;">Willkommen bei AndoBill</p>
+  <p style="font-size:13px;color:#666;margin:0 0 32px;">{$companyName}</p>
+  <p>Hallo {$userName},</p>
+  <p>für Sie wurde ein Administratorkonto bei <strong>{$companyName}</strong> eingerichtet. Mit diesen Zugangsdaten können Sie sich anmelden:</p>
+  <table style="width:100%;border-collapse:collapse;margin:24px 0;">
+    <tr><td style="padding:12px 0;border-bottom:1px solid #f0f0f0;color:#666;">Firma</td><td style="padding:12px 0;border-bottom:1px solid #f0f0f0;text-align:right;">{$companyName}</td></tr>
+    <tr><td style="padding:12px 0;border-bottom:1px solid #f0f0f0;color:#666;">E-Mail</td><td style="padding:12px 0;border-bottom:1px solid #f0f0f0;text-align:right;">{$userEmail}</td></tr>
+    <tr><td style="padding:12px 0;color:#666;">Passwort</td><td style="padding:12px 0;text-align:right;">{$safePassword}</td></tr>
+  </table>
+  <p><a href="{$safeLoginUrl}" style="display:inline-block;padding:12px 24px;background:#111827;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">Jetzt anmelden</a></p>
+  <p>Bitte ändern Sie das Passwort nach der ersten Anmeldung unter <strong>Einstellungen → Profil</strong>.</p>
+  <p>Mit freundlichen Grüßen<br>AndoBill</p>
+</body>
+</html>
+HTML;
+
+            Mail::to($user->email, $user->name)->send(
+                (new \Illuminate\Mail\Mailable)->subject($subject)->html($html)
+            );
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('Welcome email failed', [
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    protected function e(?string $value): string
+    {
+        return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+    }
 
     protected function settingType(mixed $value): string
     {
@@ -336,6 +442,9 @@ class CompanyWizardController extends Controller
             'company_info.vat_number'   => 'USt-IdNr.',
             'company_info.website'      => 'Webseite',
             'company_info.logo'         => 'Firmenlogo',
+
+            'industry_type.slug'            => 'Branchenpaket',
+            'industry_type.initialize_data' => 'Branchenpaket einrichten',
 
             'email_settings.smtp_host'         => 'SMTP Host',
             'email_settings.smtp_port'         => 'SMTP Port',

@@ -1,6 +1,6 @@
 import AppLayout from "@/layouts/app-layout"
 import { BreadcrumbItem } from "@/types"
-import { usePage, router } from "@inertiajs/react"
+import { Head, usePage, router } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -91,6 +91,17 @@ type WizardFormData = typeof defaultData
 
 // ─── Client-side validation per step ─────────────────────────────────────────
 
+function stepForErrorKey(key: string): number {
+    if (key.startsWith("company_info")) return 1
+    if (key.startsWith("industry_type")) return 2
+    if (key.startsWith("email_settings")) return 3
+    if (key.startsWith("invoice_settings")) return 4
+    if (key.startsWith("mahnung_settings")) return 5
+    if (key.startsWith("banking_info")) return 6
+    if (key.startsWith("first_user")) return 7
+    return 8
+}
+
 function validateStep(step: number, data: WizardFormData): Record<string, string> {
     const e: Record<string, string> = {}
     const ci = data.company_info
@@ -121,6 +132,17 @@ function validateStep(step: number, data: WizardFormData): Record<string, string
             e["email_settings.smtp_from_address"] = "Bitte geben Sie eine gültige E-Mail-Adresse ein."
         if (!es.smtp_from_name?.trim())
             e["email_settings.smtp_from_name"] = "Das Feld Absender Name ist erforderlich."
+    }
+
+    if (step === 6) {
+        const iban = (data.banking_info?.iban || "").replace(/\s+/g, "")
+        if (iban && !/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/i.test(iban)) {
+            e["banking_info.iban"] = "Bitte geben Sie eine gültige IBAN ein."
+        }
+        const bic = (data.banking_info?.bic || "").replace(/\s+/g, "")
+        if (bic && !/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/i.test(bic)) {
+            e["banking_info.bic"] = "Bitte geben Sie einen gültigen BIC ein."
+        }
     }
 
     if (step === 7 && fu.create_user) {
@@ -200,7 +222,42 @@ export default function CompanyWizard() {
         window.scrollTo({ top: 0, behavior: "smooth" })
     }
 
+    const handleGoToStep = (n: number) => {
+        if (n === currentStep || processing) return
+        if (n < currentStep) {
+            setLocalErrors({})
+            setCurrentStep(n)
+            window.scrollTo({ top: 0, behavior: "smooth" })
+            return
+        }
+        for (let s = currentStep; s < n; s++) {
+            const stepErrors = validateStep(s, formData)
+            if (Object.keys(stepErrors).length > 0) {
+                setLocalErrors(stepErrors)
+                setCurrentStep(s)
+                window.scrollTo({ top: 0, behavior: "smooth" })
+                return
+            }
+        }
+        setLocalErrors({})
+        setCurrentStep(n)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
     const handleComplete = () => {
+        const reviewErrors = {
+            ...validateStep(1, formData),
+            ...validateStep(3, formData),
+            ...validateStep(6, formData),
+            ...validateStep(7, formData),
+        }
+        if (Object.keys(reviewErrors).length > 0) {
+            setLocalErrors(reviewErrors)
+            setCurrentStep(stepForErrorKey(Object.keys(reviewErrors)[0]))
+            window.scrollTo({ top: 0, behavior: "smooth" })
+            return
+        }
+
         setProcessing(true)
         const payload: Record<string, any> = { ...formData }
         if (logoFileRef.current) {
@@ -208,10 +265,15 @@ export default function CompanyWizard() {
         }
         router.post(route("companies.wizard.complete"), payload, {
             forceFormData: true,
+            preserveState: true,
+            preserveScroll: true,
             onFinish: () => setProcessing(false),
             onError: (errs) => {
-                // onError fires for 422 responses; also show via serverErrors for redirects
                 setLocalErrors(errs)
+                const firstKey = Object.keys(errs)[0]
+                if (firstKey) {
+                    setCurrentStep(stepForErrorKey(firstKey))
+                }
                 window.scrollTo({ top: 0, behavior: "smooth" })
             },
         })
@@ -229,7 +291,8 @@ export default function CompanyWizard() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <div className="max-w-5xl mx-auto space-y-6">
+            <Head title="Neue Firma erstellen" />
+            <div className="flex flex-1 flex-col gap-6">
                 <div>
                     <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Neue Firma erstellen</h1>
                     <p className="text-muted-foreground">
@@ -275,23 +338,26 @@ export default function CompanyWizard() {
                                 const isActive = currentStep === step.number
                                 const isCompleted = currentStep > step.number
                                 return (
-                                    <div
+                                    <button
+                                        type="button"
                                         key={step.number}
-                                        className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                                        onClick={() => handleGoToStep(step.number)}
+                                        disabled={processing}
+                                        className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all text-left ${
                                             isActive
                                                 ? "border-primary bg-primary/5"
                                                 : isCompleted
-                                                ? "border-green-500 bg-green-50"
-                                                : "border-gray-200 bg-gray-50"
+                                                ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                                                : "border-border bg-muted/40 hover:border-muted-foreground/40"
                                         }`}
                                     >
                                         <div
                                             className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
                                                 isActive
-                                                    ? "bg-primary text-white"
+                                                    ? "bg-primary text-primary-foreground"
                                                     : isCompleted
                                                     ? "bg-green-500 text-white"
-                                                    : "bg-gray-300 text-gray-600"
+                                                    : "bg-muted text-muted-foreground"
                                             }`}
                                         >
                                             {isCompleted ? (
@@ -300,10 +366,13 @@ export default function CompanyWizard() {
                                                 <Icon className="h-5 w-5" />
                                             )}
                                         </div>
-                                        <span className="text-xs font-medium text-center leading-tight">
+                                        <span className="text-xs font-medium text-center leading-tight hidden sm:block">
                                             {step.title}
                                         </span>
-                                    </div>
+                                        <span className="text-xs font-medium text-center sm:hidden">
+                                            {step.number}
+                                        </span>
+                                    </button>
                                 )
                             })}
                         </div>

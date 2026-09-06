@@ -28,7 +28,14 @@ export default function Step2EmailSettings({ data, setData, errors }: any) {
                 </div>
                 <Switch
                     checked={configureSmtp}
-                    onCheckedChange={(checked) => set("configure_smtp", checked)}
+                    onCheckedChange={(checked) =>
+                        setData("email_settings", {
+                            ...es,
+                            configure_smtp: checked,
+                            smtp_from_address: es.smtp_from_address || data.company_info?.email || "",
+                            smtp_from_name: es.smtp_from_name || data.company_info?.name || "",
+                        })
+                    }
                 />
             </div>
 

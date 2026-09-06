@@ -45,6 +45,7 @@
     $bankIban  = $snapshot['bank_iban'] ?? null;
     $bankBic   = $snapshot['bank_bic']  ?? null;
     $bankName  = $snapshot['bank_name'] ?? null;
+    $bankHolder = $snapshot['bank_account_holder'] ?? null;
 
     // Logo position
     $logoPos  = $ls['branding']['logo_position'] ?? 'top-left';
@@ -165,6 +166,7 @@
 {{-- Bank info (single compact row) --}}
 @if(($ls['content']['show_bank_details'] ?? true) && ($bankIban || $bankBic))
 <div style="margin-top:7mm; padding-top:3mm; border-top:0.2mm solid {{ $border }}; font-size:{{ $fs - 1 }}px; color:{{ $soft }}; line-height:1.8;">
+    @if($bankHolder)<span style="margin-right:5mm;"><strong style="color:{{ $primary }}; font-weight:500;">Kontoinhaber</strong> {{ $bankHolder }}</span>@endif
     @if($bankIban)<span style="margin-right:5mm;"><strong style="color:{{ $primary }}; font-weight:500;">IBAN</strong> {{ $bankIban }}</span>@endif
     @if($bankBic)<span style="margin-right:5mm;"><strong style="color:{{ $primary }}; font-weight:500;">BIC</strong> {{ $bankBic }}</span>@endif
     @if($bankName)<span><strong style="color:{{ $primary }}; font-weight:500;">Bank</strong> {{ $bankName }}</span>@endif

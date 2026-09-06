@@ -70,6 +70,9 @@
             @if($showBank)
             <td style="width:26%; vertical-align:top; padding-right:1mm;">
                 <div style="font-weight:bold; color:#111827;">Bankverbindung:</div>
+                @if($snapshot['bank_account_holder'] ?? null)
+                    <div>{{ $snapshot['bank_account_holder'] }}</div>
+                @endif
                 @if($snapshot['bank_name'] ?? null)
                     <div>{{ $snapshot['bank_name'] }}</div>
                 @endif

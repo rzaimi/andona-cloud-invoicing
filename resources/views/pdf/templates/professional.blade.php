@@ -43,6 +43,7 @@
     $bankIban = $snapshot['bank_iban'] ?? null;
     $bankBic  = $snapshot['bank_bic']  ?? null;
     $bankName = $snapshot['bank_name'] ?? null;
+    $bankHolder = $snapshot['bank_account_holder'] ?? null;
 
     // Items-table styling — solid navy header, subtle row tint, navy total
     $tableHeaderBg        = $primary;
@@ -159,6 +160,7 @@
 <tr><td style="background:{{ $accent }}; padding:3mm 4mm; font-size:{{ $fs - 1 }}px; line-height:1.7;">
     <table style="width:100%; border-collapse:collapse;">
     <tr>
+        @if($bankHolder)<td style="vertical-align:top; padding-right:4mm;"><div style="color:{{ $muted }}; font-size:{{ $fs - 2 }}px; text-transform:uppercase; letter-spacing:0.4px;">Kontoinhaber</div><div style="font-weight:700;">{{ $bankHolder }}</div></td>@endif
         @if($bankIban)<td style="vertical-align:top; padding-right:4mm;"><div style="color:{{ $muted }}; font-size:{{ $fs - 2 }}px; text-transform:uppercase; letter-spacing:0.4px;">IBAN</div><div style="font-weight:700;">{{ $bankIban }}</div></td>@endif
         @if($bankBic)<td style="vertical-align:top; padding-right:4mm; width:24%;"><div style="color:{{ $muted }}; font-size:{{ $fs - 2 }}px; text-transform:uppercase; letter-spacing:0.4px;">BIC</div><div style="font-weight:700;">{{ $bankBic }}</div></td>@endif
         @if($bankName)<td style="vertical-align:top; padding-right:4mm;"><div style="color:{{ $muted }}; font-size:{{ $fs - 2 }}px; text-transform:uppercase; letter-spacing:0.4px;">Bank</div><div style="font-weight:700;">{{ $bankName }}</div></td>@endif
