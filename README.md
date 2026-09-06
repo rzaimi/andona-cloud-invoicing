@@ -1,6 +1,6 @@
 # AndoBill - Multi-Tenant Invoicing System
 
-A comprehensive, modern invoicing and billing system built with Laravel 12 and React 19. Designed for multi-tenant use with role-based access control, supporting invoices, offers, customers, products, and more.
+A comprehensive, modern invoicing and billing system built with Laravel 13 and React 19. Designed for multi-tenant use with role-based access control, supporting invoices, offers, customers, products, and more.
 
 ## 🌟 Features
 
@@ -32,8 +32,8 @@ A comprehensive, modern invoicing and billing system built with Laravel 12 and R
 ## 🛠 Technology Stack
 
 ### Backend
-- **Laravel 12** - PHP framework
-- **PHP 8.2+** - Programming language
+- **Laravel 13** - PHP framework
+- **PHP 8.3+** - Programming language
 - **SQLite/MySQL** - Database
 - **Spatie Laravel Permission** - Role and permission management
 - **DomPDF** - PDF generation
@@ -49,9 +49,9 @@ A comprehensive, modern invoicing and billing system built with Laravel 12 and R
 
 ## 📋 Requirements
 
-- PHP 8.2 or higher
+- PHP 8.3 or higher
 - Composer
-- Node.js 18+ and npm
+- Node.js 22+ and npm
 - SQLite (default) or MySQL/MariaDB
 - Web server (Apache/Nginx) or PHP built-in server
 
@@ -305,6 +305,11 @@ This comprehensive documentation includes:
 ## 🚀 Deployment
 
 For detailed deployment instructions, especially for hosting environments with Node.js version constraints, see [COMPLETE_DOCUMENTATION.md](COMPLETE_DOCUMENTATION.md).
+
+After the Laravel 13 upgrade:
+- Production PHP must be **8.3+** (CI uses 8.4).
+- Pin `SESSION_COOKIE`, `CACHE_PREFIX`, and `REDIS_PREFIX` in `.env` so Laravel 13's hyphenated defaults do not drop existing sessions or cache keys. See `.env.example`.
+- Deploy frontend assets with `npm run build:ssr` (client + SSR bundle).
 
 ## 🆘 Support
 
