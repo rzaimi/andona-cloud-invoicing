@@ -18,7 +18,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw, GitBranch, Loader2, FlagTriangleRight, Copy, MoreHorizontal } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw, GitBranch, Loader2, FlagTriangleRight, Copy, MoreHorizontal, Bell } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -270,6 +270,29 @@ export default function InvoicesShow() {
                             <FileText className="mr-2 h-4 w-4" />
                             PDF
                         </Button>
+                        {(invoice.status === "overdue" || invoice.status === "sent") && (
+                            <>
+                                <Button variant="outline" asChild>
+                                    <Link href={route("mahnungen.show", invoice.id)}>
+                                        <Bell className="mr-2 h-4 w-4" />
+                                        Mahnwesen
+                                    </Link>
+                                </Button>
+                                {(invoice.reminder_level ?? 0) < 5 && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            if (confirm(`Nächste Mahnung für ${invoice.number} jetzt versenden?`)) {
+                                                router.post(route("mahnungen.store", invoice.id))
+                                            }
+                                        }}
+                                    >
+                                        <Send className="mr-2 h-4 w-4" />
+                                        Mahnung versenden
+                                    </Button>
+                                )}
+                            </>
+                        )}
 
                         {/* More actions dropdown */}
                         <DropdownMenu>
@@ -529,13 +552,13 @@ export default function InvoicesShow() {
                                         )}
                                         {(Number(invoice.reminder_fee) || 0) > 0 && (
                                             <div className="flex justify-between text-orange-600">
-                                                <span>Mahngebühr</span>
+                                                <span>davon Mahngebühr (bereits enthalten)</span>
                                                 <span className="font-medium">{formatCurrency(invoice.reminder_fee)}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between pt-2 border-t text-lg font-bold">
                                             <span>Rechnungsbetrag</span>
-                                            <span>{formatCurrency((Number(invoice.total) || 0) + (Number(invoice.reminder_fee) || 0))}</span>
+                                            <span>{formatCurrency(Number(invoice.total) || 0)}</span>
                                         </div>
 
                                         {/* Abschlag deductions – shown for both Abschlagsrechnung (chain) and Schlussrechnung */}
@@ -640,7 +663,7 @@ export default function InvoicesShow() {
                             <CardContent className="space-y-4">
                                 <div>
                                     <div className="text-sm text-gray-600">Rechnungsbetrag</div>
-                                    <div className="text-2xl font-bold">{formatCurrency((Number(invoice.total) || 0) + (Number(invoice.reminder_fee) || 0))}</div>
+                                    <div className="text-2xl font-bold">{formatCurrency(Number(invoice.total) || 0)}</div>
                                 </div>
                                 <div>
                                     <div className="text-sm text-gray-600">Bereits gezahlt</div>

@@ -120,6 +120,7 @@ interface Stats {
         this_year: number
         last_year: number
     }
+    mahnungen_due?: number
 }
 
 interface Company {
@@ -596,6 +597,19 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
                                         {stats?.invoices?.draft && stats.invoices.draft > 0 && (
                                             <Badge variant="secondary" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
                                                 {stats.invoices.draft}
+                                            </Badge>
+                                        )}
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isActive("/mahnungen")}>
+                                    <Link href="/mahnungen" className="flex items-center min-w-0">
+                                        <Bell className="shrink-0" />
+                                        <span className="truncate">Mahnwesen</span>
+                                        {stats?.mahnungen_due && stats.mahnungen_due > 0 && (
+                                            <Badge variant="destructive" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
+                                                {stats.mahnungen_due}
                                             </Badge>
                                         )}
                                     </Link>

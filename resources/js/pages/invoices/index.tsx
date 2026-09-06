@@ -143,7 +143,7 @@ export default function InvoicesIndex() {
 
     const handleSendReminder = (invoice: Invoice) => {
         if (confirm(`Möchten Sie die nächste Mahnung für Rechnung "${invoice.number}" versenden?`)) {
-            router.post(route("invoices.send-reminder", invoice.id))
+            router.post(route("mahnungen.store", invoice.id))
         }
     }
 
@@ -474,11 +474,6 @@ export default function InvoicesIndex() {
                                         <TableCell>{new Date(invoice.due_date).toLocaleDateString("de-DE")}</TableCell>
                                         <TableCell className="font-medium">
                                             {formatCurrency(invoice.total)}
-                                            {Number(invoice.reminder_fee ?? 0) > 0 && (
-                                                <div className="text-xs text-orange-600">
-                                                    + {formatCurrency(Number(invoice.reminder_fee))} Gebühr
-                                                </div>
-                                            )}
                                         </TableCell>
                                         <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                                         <TableCell>
@@ -489,10 +484,12 @@ export default function InvoicesIndex() {
                                                         variant="ghost"
                                                         size="sm"
                                                         className="h-6 px-2 text-xs"
-                                                        onClick={() => fetchReminderHistory(invoice)}
+                                                        asChild
                                                     >
-                                                        <History className="h-3 w-3 mr-1" />
-                                                        Historie
+                                                        <Link href={route("mahnungen.show", invoice.id)}>
+                                                            <History className="h-3 w-3 mr-1" />
+                                                            Historie
+                                                        </Link>
                                                     </Button>
                                                 )}
                                             </div>
