@@ -55,7 +55,7 @@ export default function CompaniesIndex({ companies, search: initialSearch }: Pro
                     </div>
 
                     <Button asChild>
-                        <Link href={route("companies.wizard.start")}>
+                        <Link href={route("companies.wizard.show")}>
                             <Plus className="mr-2 h-4 w-4" />
                             Neue Firma erstellen
                         </Link>

@@ -8,7 +8,23 @@ import { initializeZiggy } from './plugins/ziggy';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+function readInitialPage(): Record<string, unknown> | undefined {
+    const script = document.querySelector('script[data-page="app"][type="application/json"]');
+    if (script?.textContent) {
+        return JSON.parse(script.textContent) as Record<string, unknown>;
+    }
+
+    // Fallback for stale compiled Blade views that still use Inertia v2 markup.
+    const el = document.getElementById('app');
+    if (el?.dataset.page) {
+        return JSON.parse(el.dataset.page) as Record<string, unknown>;
+    }
+
+    return undefined;
+}
+
 createInertiaApp({
+    page: readInitialPage(),
     title: (title) => title ? `${title} - ${appName}` : appName,
     resolve: (name) =>
         resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx')) as Promise<never>,
