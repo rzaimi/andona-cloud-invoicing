@@ -96,7 +96,10 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 60,
+            // Self-service reset is disabled (see routes/auth.php); tokens are
+            // only minted for admin-initiated welcome emails, whose setup link
+            // must survive a weekend inbox — hence 72h instead of the usual 60m.
+            'expire' => 4320,
             'throttle' => 60,
         ],
     ],

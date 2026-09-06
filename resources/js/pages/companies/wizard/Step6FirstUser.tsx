@@ -95,7 +95,7 @@ export default function Step6FirstUser({ data, setData, errors }: any) {
                             <div className="space-y-0.5">
                                 <Label>Willkommens-E-Mail senden</Label>
                                 <p className="text-xs text-muted-foreground">
-                                    Dem Benutzer eine E-Mail mit Zugangsdaten senden
+                                    Dem Benutzer eine E-Mail mit einem Link zum Festlegen des Passworts senden
                                 </p>
                             </div>
                             <Switch

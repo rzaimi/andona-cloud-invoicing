@@ -3,9 +3,9 @@
 namespace Tests\Feature\Auth;
 
 use App\Modules\User\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
@@ -20,25 +20,51 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_password_link_screen_can_be_rendered()
     {
-        // Password reset is disabled - routes are commented out
-        $this->markTestSkipped('Password reset routes are disabled in this application');
+        // Self-service reset stays disabled — only admin-initiated setup
+        // links (welcome email) mint tokens. See routes/auth.php.
+        $this->markTestSkipped('Forgot-password routes are disabled in this application');
     }
 
     public function test_reset_password_link_can_be_requested()
     {
-        // Password reset is disabled - routes are commented out
-        $this->markTestSkipped('Password reset routes are disabled in this application');
+        $this->markTestSkipped('Forgot-password routes are disabled in this application');
     }
 
     public function test_reset_password_screen_can_be_rendered()
     {
-        // Password reset is disabled - routes are commented out
-        $this->markTestSkipped('Password reset routes are disabled in this application');
+        $user = User::factory()->create();
+        $token = Password::createToken($user);
+
+        $this->get(route('password.reset', ['token' => $token, 'email' => $user->email]))
+            ->assertOk();
     }
 
-    public function test_password_can_be_reset_with_valid_token()
+    public function test_password_can_be_set_with_valid_token()
     {
-        // Password reset is disabled - routes are commented out
-        $this->markTestSkipped('Password reset routes are disabled in this application');
+        $user = User::factory()->create();
+        $token = Password::createToken($user);
+
+        $this->post(route('password.store'), [
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'neues-passwort-123',
+            'password_confirmation' => 'neues-passwort-123',
+        ])->assertRedirect(route('login'));
+
+        $this->assertTrue(Hash::check('neues-passwort-123', $user->fresh()->password));
+    }
+
+    public function test_password_cannot_be_set_with_invalid_token()
+    {
+        $user = User::factory()->create(['password' => 'original-passwort']);
+
+        $this->post(route('password.store'), [
+            'token' => 'invalid-token',
+            'email' => $user->email,
+            'password' => 'neues-passwort-123',
+            'password_confirmation' => 'neues-passwort-123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertTrue(Hash::check('original-passwort', $user->fresh()->password));
     }
 }

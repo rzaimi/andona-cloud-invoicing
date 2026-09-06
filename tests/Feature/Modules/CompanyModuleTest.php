@@ -5,6 +5,7 @@ namespace Tests\Feature\Modules;
 use App\Modules\Company\Models\Company;
 use App\Modules\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\Models\Permission;
@@ -231,6 +232,15 @@ class CompanyModuleTest extends TestCase
         $this->assertTrue($admin->hasRole('admin'));
 
         Mail::assertSentCount(1);
+
+        // The welcome email carries a password-setup link — never the password.
+        $this->assertDatabaseHas('password_reset_tokens', ['email' => 'anna@gartenbau-nord.test']);
+        Mail::assertSent(Mailable::class, function ($mail) {
+            $html = $mail->render();
+
+            return str_contains($html, 'reset-password')
+                && ! str_contains($html, 'secret123');
+        });
     }
 
     public function test_wizard_does_not_send_welcome_email_when_disabled()
@@ -259,4 +269,3 @@ class CompanyModuleTest extends TestCase
         Mail::assertNothingSent();
     }
 }
-
