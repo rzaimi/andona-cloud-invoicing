@@ -3,9 +3,11 @@
 namespace App\Modules\Settings\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\SettingsService;
-use App\Modules\Invoice\Models\InvoiceLayout;
+use App\Models\EmailLog;
+use App\Modules\Company\Models\Company;
 use App\Modules\Company\Models\CompanySetting;
+use App\Modules\Invoice\Models\InvoiceLayout;
+use App\Services\SettingsService;
 use App\Traits\ResizesCompanyLogo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +18,7 @@ use Inertia\Inertia;
 class SettingsController extends Controller
 {
     use ResizesCompanyLogo;
+
     protected $settingsService;
 
     public function __construct(SettingsService $settingsService)
@@ -27,8 +30,8 @@ class SettingsController extends Controller
     {
         try {
             $companyId = $this->getEffectiveCompanyId();
-            
-            if (!$companyId) {
+
+            if (! $companyId) {
                 Log::error('SettingsController::index - No company ID found for user', [
                     'user_id' => $request->user()?->id,
                     'user_email' => $request->user()?->email,
@@ -36,9 +39,9 @@ class SettingsController extends Controller
                 abort(404, 'Company not found. Please ensure your account is associated with a company.');
             }
 
-            $company = \App\Modules\Company\Models\Company::find($companyId);
+            $company = Company::find($companyId);
 
-            if (!$company) {
+            if (! $company) {
                 Log::error('SettingsController::index - Company not found', [
                     'company_id' => $companyId,
                     'user_id' => $request->user()?->id,
@@ -73,7 +76,7 @@ class SettingsController extends Controller
                     'created_at' => optional($s->created_at)->toISOString(),
                 ];
             });
-        
+
         // Get active tab from request
         $activeTab = $request->get('tab', 'company-info');
 
@@ -99,7 +102,18 @@ class SettingsController extends Controller
             'reminder_mahnung2_fee' => $settings['reminder_mahnung2_fee'] ?? 10.00,
             'reminder_mahnung3_fee' => $settings['reminder_mahnung3_fee'] ?? 15.00,
             'reminder_interest_rate' => $settings['reminder_interest_rate'] ?? 9.00,
+            'reminder_inkasso_fee' => $settings['reminder_inkasso_fee'] ?? 50.00,
             'reminder_auto_send' => $settings['reminder_auto_send'] ?? true,
+        ];
+
+        $notificationSettings = [
+            'notify_on_invoice_created' => $settings['notify_on_invoice_created'] ?? false,
+            'notify_on_invoice_sent' => $settings['notify_on_invoice_sent'] ?? true,
+            'notify_on_payment_received' => $settings['notify_on_payment_received'] ?? true,
+            'notify_on_offer_created' => $settings['notify_on_offer_created'] ?? false,
+            'notify_on_offer_accepted' => $settings['notify_on_offer_accepted'] ?? true,
+            'notify_on_offer_rejected' => $settings['notify_on_offer_rejected'] ?? false,
+            'email_notifications_enabled' => $settings['email_notifications_enabled'] ?? true,
         ];
 
         $erechnungSettings = [
@@ -131,7 +145,7 @@ class SettingsController extends Controller
         $emailLogsStats = null;
         $emailLogsFilters = null;
         if ($activeTab === 'email-logs') {
-            $query = \App\Models\EmailLog::forCompany($companyId)
+            $query = EmailLog::forCompany($companyId)
                 ->with(['customer:id,name,email'])
                 ->orderBy('sent_at', 'desc');
 
@@ -152,40 +166,44 @@ class SettingsController extends Controller
             }
 
             $emailLogs = $query->paginate(20)->withQueryString();
-            
+
             // Calculate statistics
             $emailLogsStats = [
-                'total' => \App\Models\EmailLog::forCompany($companyId)->count(),
-                'invoice' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'invoice')->count(),
-                'offer' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'offer')->count(),
-                'mahnung' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'mahnung')->count(),
-                'failed' => \App\Models\EmailLog::forCompany($companyId)->where('status', 'failed')->count(),
+                'total' => EmailLog::forCompany($companyId)->count(),
+                'invoice' => EmailLog::forCompany($companyId)->where('type', 'invoice')->count(),
+                'offer' => EmailLog::forCompany($companyId)->where('type', 'offer')->count(),
+                'mahnung' => EmailLog::forCompany($companyId)->where('type', 'mahnung')->count(),
+                'failed' => EmailLog::forCompany($companyId)->where('status', 'failed')->count(),
             ];
-            
+
             $emailLogsFilters = $request->only(['type', 'status', 'search']);
         }
 
         return Inertia::render('settings/index', [
             'company' => [
-                'id'                  => $company->id,
-                'name'                => $company->name,
-                'email'               => $company->email,
-                'phone'               => $company->phone,
-                'fax'                 => $company->fax,
-                'address'             => $company->address,
-                'postal_code'         => $company->postal_code,
-                'city'                => $company->city,
-                'country'             => $company->country,
-                'tax_number'          => $company->tax_number,
-                'tax_office'          => $company->tax_office,
-                'vat_number'          => $company->vat_number,
-                'is_small_business'   => $company->is_small_business,
-                'commercial_register'    => $company->commercial_register,
-                'managing_director'      => $company->managing_director,
-                'legal_form'             => $company->legal_form,
+                'id' => $company->id,
+                'name' => $company->name,
+                'email' => $company->email,
+                'phone' => $company->phone,
+                'fax' => $company->fax,
+                'address' => $company->address,
+                'postal_code' => $company->postal_code,
+                'city' => $company->city,
+                'country' => $company->country,
+                'tax_number' => $company->tax_number,
+                'tax_office' => $company->tax_office,
+                'vat_number' => $company->vat_number,
+                'is_small_business' => $company->is_small_business,
+                'commercial_register' => $company->commercial_register,
+                'managing_director' => $company->managing_director,
+                'legal_form' => $company->legal_form,
                 'manager_title_override' => $company->manager_title_override,
-                'website'                => $company->website,
-                'logo'                => $company->logo ? \Storage::url($company->logo) : null,
+                'website' => $company->website,
+                'logo' => $company->logo ? \Storage::url($company->logo) : null,
+                'bank_name' => $company->bank_name,
+                'bank_iban' => $company->bank_iban,
+                'bank_bic' => $company->bank_bic,
+                'bank_account_holder' => $company->bank_account_holder,
             ],
             'settings' => $settings,
             'companySettings' => $companySettings,
@@ -194,6 +212,7 @@ class SettingsController extends Controller
             'erechnungSettings' => $erechnungSettings,
             'paymentMethodSettings' => $paymentMethodSettings,
             'datevSettings' => $datevSettings,
+            'notificationSettings' => $notificationSettings,
             'emailLogs' => $emailLogs,
             'emailLogsStats' => $emailLogsStats,
             'emailLogsFilters' => $emailLogsFilters,
@@ -205,29 +224,29 @@ class SettingsController extends Controller
     public function update(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        
+
         $validated = $request->validate([
             'currency' => 'required|string|in:USD,EUR,GBP,JPY,CHF',
             'tax_rate' => 'required|numeric|min:0|max:1',
             'reduced_tax_rate' => 'nullable|numeric|min:0|max:1',
             // Dynamic number format strings – validated to contain the {#} counter token
-            'invoice_number_format'  => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
-            'invoice_next_counter'   => 'required|integer|min:1|max:999999',
-            'storno_number_format'   => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
-            'storno_next_counter'    => 'required|integer|min:1|max:999999',
-            'offer_number_format'    => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
-            'offer_next_counter'     => 'required|integer|min:1|max:999999',
+            'invoice_number_format' => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'invoice_next_counter' => 'required|integer|min:1|max:999999',
+            'storno_number_format' => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'storno_next_counter' => 'required|integer|min:1|max:999999',
+            'offer_number_format' => ['required', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'offer_next_counter' => 'required|integer|min:1|max:999999',
             'customer_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
-            'customer_next_counter'  => 'nullable|integer|min:1|max:999999',
-            'product_number_format'  => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
-            'product_next_counter'   => 'nullable|integer|min:1|max:999999',
+            'customer_next_counter' => 'nullable|integer|min:1|max:999999',
+            'product_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'product_next_counter' => 'nullable|integer|min:1|max:999999',
             'abschlag_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
-            'abschlag_next_counter'  => 'nullable|integer|min:1|max:999999',
-            'schluss_number_format'  => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
-            'schluss_next_counter'   => 'nullable|integer|min:1|max:999999',
+            'abschlag_next_counter' => 'nullable|integer|min:1|max:999999',
+            'schluss_number_format' => ['nullable', 'string', 'max:60', 'regex:/\{#+\}/'],
+            'schluss_next_counter' => 'nullable|integer|min:1|max:999999',
             'date_format' => 'required|string|in:Y-m-d,d.m.Y,d/m/Y,m/d/Y',
             'payment_terms' => 'required|integer|min:1|max:365',
-            'decimal_separator'   => ['required', 'string', Rule::in(['.', ','])],
+            'decimal_separator' => ['required', 'string', Rule::in(['.', ','])],
             'thousands_separator' => ['required', 'string', Rule::in(['.', ',', ' ', ''])],
             'invoice_footer' => 'nullable|string|max:500',
             'invoice_tax_note' => 'nullable|string|max:500',
@@ -328,13 +347,13 @@ class SettingsController extends Controller
     protected function normalizeSettingValue(string $type, $value)
     {
         if ($type === 'boolean') {
-            return (bool)$value;
+            return (bool) $value;
         }
         if ($type === 'integer') {
-            return $value === null || $value === '' ? null : (int)$value;
+            return $value === null || $value === '' ? null : (int) $value;
         }
         if ($type === 'decimal') {
-            return $value === null || $value === '' ? null : (float)$value;
+            return $value === null || $value === '' ? null : (float) $value;
         }
         if ($type === 'json') {
             if ($value === null || $value === '') {
@@ -343,16 +362,18 @@ class SettingsController extends Controller
             if (is_array($value)) {
                 return $value;
             }
-            $decoded = json_decode((string)$value, true);
+            $decoded = json_decode((string) $value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw ValidationException::withMessages([
                     'value' => 'Ungültiges JSON. Bitte geben Sie gültiges JSON ein.',
                 ]);
             }
+
             return $decoded;
         }
+
         // string
-        return $value === null ? null : (string)$value;
+        return $value === null ? null : (string) $value;
     }
 
     protected function getCompanySettingValueRules(string $type): array
@@ -380,6 +401,7 @@ class SettingsController extends Controller
         if (is_array($value)) {
             return 'json';
         }
+
         return 'string';
     }
 
@@ -398,10 +420,10 @@ class SettingsController extends Controller
     public function notifications(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        
+
         // Get notification settings (if any exist)
         $settings = $this->settingsService->getAll($companyId);
-        
+
         return Inertia::render('settings/notifications', [
             'settings' => [
                 'notify_on_invoice_created' => $settings['notify_on_invoice_created'] ?? false,
@@ -418,10 +440,10 @@ class SettingsController extends Controller
     public function paymentMethods(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        
+
         // Get payment methods settings
         $settings = $this->settingsService->getAll($companyId);
-        
+
         return Inertia::render('settings/payment-methods', [
             'payment_methods' => $settings['payment_methods'] ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
             'settings' => [
@@ -434,8 +456,8 @@ class SettingsController extends Controller
     public function email(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::find($companyId);
-        
+        $company = Company::find($companyId);
+
         return Inertia::render('settings/email', [
             'settings' => [
                 'smtp_host' => $company->smtp_host ?? '',
@@ -453,8 +475,8 @@ class SettingsController extends Controller
     public function updateEmail(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::find($companyId);
-        
+        $company = Company::find($companyId);
+
         $validated = $request->validate([
             'smtp_host' => 'required|string|max:255',
             'smtp_port' => 'required|integer|min:1|max:65535',
@@ -487,7 +509,7 @@ class SettingsController extends Controller
     {
         $companyId = $this->getEffectiveCompanyId();
         $settings = $this->settingsService->getAll($companyId);
-        
+
         return Inertia::render('settings/reminders', [
             'settings' => [
                 'reminder_friendly_days' => $settings['reminder_friendly_days'] ?? 7,
@@ -507,7 +529,7 @@ class SettingsController extends Controller
     public function updateReminders(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        
+
         $validated = $request->validate([
             'reminder_friendly_days' => 'required|integer|min:1|max:90',
             'reminder_mahnung1_days' => 'required|integer|min:1|max:90',
@@ -518,6 +540,7 @@ class SettingsController extends Controller
             'reminder_mahnung2_fee' => 'required|numeric|min:0|max:100',
             'reminder_mahnung3_fee' => 'required|numeric|min:0|max:100',
             'reminder_interest_rate' => 'required|numeric|min:0|max:20',
+            'reminder_inkasso_fee' => 'required|numeric|min:0|max:500',
             'reminder_auto_send' => 'required|boolean',
         ]);
 
@@ -537,8 +560,8 @@ class SettingsController extends Controller
     public function emailLogs(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        
-        $query = \App\Models\EmailLog::forCompany($companyId)
+
+        $query = EmailLog::forCompany($companyId)
             ->with(['customer:id,name,email'])
             ->orderBy('sent_at', 'desc');
 
@@ -565,11 +588,11 @@ class SettingsController extends Controller
 
         // Calculate statistics
         $stats = [
-            'total' => \App\Models\EmailLog::forCompany($companyId)->count(),
-            'invoice' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'invoice')->count(),
-            'offer' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'offer')->count(),
-            'mahnung' => \App\Models\EmailLog::forCompany($companyId)->where('type', 'mahnung')->count(),
-            'failed' => \App\Models\EmailLog::forCompany($companyId)->where('status', 'failed')->count(),
+            'total' => EmailLog::forCompany($companyId)->count(),
+            'invoice' => EmailLog::forCompany($companyId)->where('type', 'invoice')->count(),
+            'offer' => EmailLog::forCompany($companyId)->where('type', 'offer')->count(),
+            'mahnung' => EmailLog::forCompany($companyId)->where('type', 'mahnung')->count(),
+            'failed' => EmailLog::forCompany($companyId)->where('status', 'failed')->count(),
         ];
 
         return Inertia::render('settings/email-logs', [
@@ -585,7 +608,7 @@ class SettingsController extends Controller
     public function erechnung(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        
+
         $settings = [
             'erechnung_enabled' => $this->settingsService->get('erechnung_enabled', $companyId, false),
             'xrechnung_enabled' => $this->settingsService->get('xrechnung_enabled', $companyId, true),
@@ -635,7 +658,7 @@ class SettingsController extends Controller
     public function updateNotifications(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        
+
         $validated = $request->validate([
             'notify_on_invoice_created' => 'boolean',
             'notify_on_invoice_sent' => 'boolean',
@@ -664,7 +687,7 @@ class SettingsController extends Controller
     public function updatePaymentMethods(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        
+
         $validated = $request->validate([
             'payment_methods' => 'required|array|min:1',
             'payment_methods.*' => 'required|string|max:255',
@@ -672,7 +695,7 @@ class SettingsController extends Controller
         ]);
 
         // Ensure default_payment_method is in the payment_methods array
-        if (!in_array($validated['default_payment_method'], $validated['payment_methods'])) {
+        if (! in_array($validated['default_payment_method'], $validated['payment_methods'])) {
             return redirect()->back()
                 ->withErrors(['default_payment_method' => 'Die Standard-Zahlungsmethode muss in der Liste der verfügbaren Zahlungsmethoden enthalten sein.'])
                 ->withInput();
@@ -695,13 +718,13 @@ class SettingsController extends Controller
     public function updateCompanyInfo(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::findOrFail($companyId);
-        
+        $company = Company::findOrFail($companyId);
+
         // Super admins (manage_companies) can edit any company via session selection.
         // Regular admins may only edit their own company.
         $user = $request->user();
         $canManageAll = method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('manage_companies');
-        if (!$canManageAll && $user->company_id !== $company->id) {
+        if (! $canManageAll && $user->company_id !== $company->id) {
             abort(403, 'Sie können nur Ihre eigene Firma bearbeiten.');
         }
 
@@ -724,10 +747,22 @@ class SettingsController extends Controller
             'manager_title_override' => 'nullable|string|max:64',
             'website' => 'nullable|url|max:255',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_iban' => 'nullable|string|max:50',
+            'bank_bic' => 'nullable|string|max:20',
+            'bank_account_holder' => 'nullable|string|max:255',
         ]);
 
+        $bankSettings = [
+            'bank_name' => $validated['bank_name'] ?? null,
+            'bank_iban' => $validated['bank_iban'] ?? null,
+            'bank_bic' => $validated['bank_bic'] ?? null,
+            'bank_account_holder' => $validated['bank_account_holder'] ?? null,
+        ];
+        unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic'], $validated['bank_account_holder']);
+
         // Handle logo: removal > upload > preserve (never let a missing file wipe an existing logo)
-        if ($request->input('remove_logo') === '1' && !$request->hasFile('logo')) {
+        if ($request->input('remove_logo') === '1' && ! $request->hasFile('logo')) {
             if ($company->logo && \Storage::disk('public')->exists($company->logo)) {
                 \Storage::disk('public')->delete($company->logo);
             }
@@ -739,8 +774,8 @@ class SettingsController extends Controller
             unset($validated['logo']);
         }
 
-        // Update company
         $company->update($validated);
+        $company->setBankSettings($bankSettings);
 
         return redirect()->route('settings.index', ['tab' => 'company-info'])
             ->with('success', 'Firmendaten wurden erfolgreich aktualisiert.');
@@ -749,7 +784,7 @@ class SettingsController extends Controller
     public function updateCompanyLogo(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::findOrFail($companyId);
+        $company = Company::findOrFail($companyId);
 
         $request->validate([
             'logo' => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',

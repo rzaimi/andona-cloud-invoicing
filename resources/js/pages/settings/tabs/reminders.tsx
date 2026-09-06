@@ -28,6 +28,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
         reminder_mahnung2_fee: reminderSettings?.reminder_mahnung2_fee || 10.00,
         reminder_mahnung3_fee: reminderSettings?.reminder_mahnung3_fee || 15.00,
         reminder_interest_rate: reminderSettings?.reminder_interest_rate || 9.00,
+        reminder_inkasso_fee: reminderSettings?.reminder_inkasso_fee || 50.00,
         reminder_auto_send: reminderSettings?.reminder_auto_send ?? true,
     })
 
@@ -243,18 +244,36 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                         </div>
                     </div>
 
-                    <div>
-                        <Label htmlFor="reminder_interest_rate">Verzugszinsen (%)</Label>
-                        <Input
-                            id="reminder_interest_rate"
-                            type="number"
-                            step="any"
-                            min="0"
-                            max="20"
-                            value={data.reminder_interest_rate}
-                            onChange={(e) => setData("reminder_interest_rate", parseFloat(e.target.value))}
-                        />
-                        {errors.reminder_interest_rate && <p className="text-sm text-red-500">{errors.reminder_interest_rate}</p>}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <Label htmlFor="reminder_interest_rate">Verzugszinsen (%)</Label>
+                            <Input
+                                id="reminder_interest_rate"
+                                type="number"
+                                step="any"
+                                min="0"
+                                max="20"
+                                value={data.reminder_interest_rate}
+                                onChange={(e) => setData("reminder_interest_rate", parseFloat(e.target.value))}
+                            />
+                            {errors.reminder_interest_rate && <p className="text-sm text-red-500">{errors.reminder_interest_rate}</p>}
+                        </div>
+                        <div>
+                            <Label htmlFor="reminder_inkasso_fee">Inkasso-Zusatzgebühr (€)</Label>
+                            <Input
+                                id="reminder_inkasso_fee"
+                                type="number"
+                                step="any"
+                                min="0"
+                                max="500"
+                                value={data.reminder_inkasso_fee}
+                                onChange={(e) => setData("reminder_inkasso_fee", parseFloat(e.target.value))}
+                            />
+                            {errors.reminder_inkasso_fee && <p className="text-sm text-red-500">{errors.reminder_inkasso_fee}</p>}
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Wird in der Inkasso-Mail ausgewiesen, nicht automatisch als Rechnungsposition.
+                            </p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

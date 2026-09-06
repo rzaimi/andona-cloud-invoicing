@@ -36,6 +36,10 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
         manager_title_override: company?.manager_title_override || '',
         website: company?.website || '',
         logo: null as File | null,
+        bank_name: company?.bank_name || '',
+        bank_iban: company?.bank_iban || '',
+        bank_bic: company?.bank_bic || '',
+        bank_account_holder: company?.bank_account_holder || '',
     })
 
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -377,6 +381,53 @@ export default function CompanyInfoTab({ company }: CompanyInfoTabProps) {
                         <Label htmlFor="is_small_business" className="cursor-pointer">
                             Kleinunternehmer (§19 UStG)
                         </Label>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Bankverbindung</CardTitle>
+                    <CardDescription>Erscheint auf Rechnungen und im Mahnwesen</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="bank_account_holder">Kontoinhaber</Label>
+                        <Input
+                            id="bank_account_holder"
+                            value={data.bank_account_holder}
+                            onChange={(e) => setData("bank_account_holder", e.target.value)}
+                        />
+                        {errors.bank_account_holder && <p className="text-red-600 text-sm">{errors.bank_account_holder}</p>}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="bank_name">Bankname</Label>
+                        <Input
+                            id="bank_name"
+                            value={data.bank_name}
+                            onChange={(e) => setData("bank_name", e.target.value)}
+                        />
+                        {errors.bank_name && <p className="text-red-600 text-sm">{errors.bank_name}</p>}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="bank_iban">IBAN</Label>
+                        <Input
+                            id="bank_iban"
+                            value={data.bank_iban}
+                            onChange={(e) => setData("bank_iban", e.target.value.toUpperCase())}
+                            className="font-mono"
+                        />
+                        {errors.bank_iban && <p className="text-red-600 text-sm">{errors.bank_iban}</p>}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="bank_bic">BIC</Label>
+                        <Input
+                            id="bank_bic"
+                            value={data.bank_bic}
+                            onChange={(e) => setData("bank_bic", e.target.value.toUpperCase())}
+                            className="font-mono"
+                        />
+                        {errors.bank_bic && <p className="text-red-600 text-sm">{errors.bank_bic}</p>}
                     </div>
                 </CardContent>
             </Card>
