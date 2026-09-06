@@ -143,7 +143,7 @@ export default function InvoicesIndex() {
 
     const handleSendReminder = (invoice: Invoice) => {
         if (confirm(`Möchten Sie die nächste Mahnung für Rechnung "${invoice.number}" versenden?`)) {
-            router.post(route("mahnungen.store", invoice.id))
+            router.post(route("dunning.store", invoice.id))
         }
     }
 
@@ -486,7 +486,7 @@ export default function InvoicesIndex() {
                                                         className="h-6 px-2 text-xs"
                                                         asChild
                                                     >
-                                                        <Link href={route("mahnungen.show", invoice.id)}>
+                                                        <Link href={route("dunning.show", invoice.id)}>
                                                             <History className="h-3 w-3 mr-1" />
                                                             Historie
                                                         </Link>

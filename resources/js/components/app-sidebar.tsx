@@ -58,7 +58,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { router, usePage } from "@inertiajs/react"
@@ -79,46 +78,6 @@ interface User {
     permissions?: string[]
 }
 
-interface Stats {
-    customers: {
-        total: number
-        active: number
-        new_this_month: number
-    }
-    invoices: {
-        total: number
-        draft: number
-        sent: number
-        paid: number
-        overdue: number
-        total_amount: number
-        paid_amount: number
-        outstanding_amount: number
-    }
-    offers: {
-        total: number
-        draft: number
-        sent: number
-        accepted: number
-        rejected: number
-        expired: number
-        total_amount: number
-    }
-    products: {
-        total: number
-        active: number
-        low_stock: number
-        out_of_stock: number
-    }
-    revenue: {
-        this_month: number
-        last_month: number
-        this_year: number
-        last_year: number
-    }
-    mahnungen_due?: number
-}
-
 interface Company {
     id: string
     name: string
@@ -126,11 +85,10 @@ interface Company {
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     user?: User
-    stats?: Stats
     available_companies?: Company[]
 }
 
-export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps) {
+export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
     const { url, props: pageProps } = usePage<PageProps>()
     const user = userProp ?? (pageProps.auth?.user as User | null | undefined)
     const availableCompanies = pageProps.auth?.available_companies || []
@@ -234,7 +192,6 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
             url: "/invoices",
             icon: ReceiptText,
             isActive: isActive("/invoices"),
-            badge: stats?.invoices?.draft && stats.invoices.draft > 0 ? stats.invoices.draft : null,
         },
         {
             title: "Neue Rechnung",
@@ -247,8 +204,6 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
             url: "/invoices?status=overdue",
             icon: AlertTriangle,
             isActive: url === "/invoices?status=overdue",
-            badge: stats?.invoices?.overdue && stats.invoices.overdue > 0 ? stats.invoices.overdue : null,
-            badgeVariant: "destructive" as const,
         },
     ]
 
@@ -258,7 +213,6 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
             url: "/offers",
             icon: FileText,
             isActive: isActive("/offers"),
-            badge: stats?.offers?.draft && stats.offers.draft > 0 ? stats.offers.draft : null,
         },
         {
             title: "Neues Angebot",
@@ -319,8 +273,6 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
             url: "/products",
             icon: Package,
             isActive: isActive("/products"),
-            badge: stats?.products?.low_stock && stats.products.low_stock > 0 ? stats.products.low_stock : null,
-            badgeVariant: "destructive" as const,
         },
         {
             title: "Kategorien",
@@ -333,8 +285,6 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
             url: "/warehouses",
             icon: Warehouse,
             isActive: isActive("/warehouses"),
-            badge: stats?.products?.out_of_stock && stats.products.out_of_stock > 0 ? stats.products.out_of_stock : null,
-            badgeVariant: "destructive" as const,
         },
     ]
 
@@ -590,24 +540,14 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
                                     <Link href="/invoices" className="flex items-center min-w-0">
                                         <ReceiptText className="shrink-0" />
                                         <span className="truncate">Rechnungen</span>
-                                        {stats?.invoices?.draft && stats.invoices.draft > 0 && (
-                                            <Badge variant="secondary" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
-                                                {stats.invoices.draft}
-                                            </Badge>
-                                        )}
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={isActive("/mahnungen")}>
-                                    <Link href="/mahnungen" className="flex items-center min-w-0">
+                                <SidebarMenuButton asChild isActive={isActive("/dunning")}>
+                                    <Link href="/dunning" className="flex items-center min-w-0">
                                         <Bell className="shrink-0" />
                                         <span className="truncate">Mahnwesen</span>
-                                        {stats?.mahnungen_due && stats.mahnungen_due > 0 && (
-                                            <Badge variant="destructive" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
-                                                {stats.mahnungen_due}
-                                            </Badge>
-                                        )}
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -624,11 +564,6 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
                                     <Link href="/offers" className="flex items-center min-w-0">
                                         <FileText className="shrink-0" />
                                         <span className="truncate">Angebote</span>
-                                        {stats?.offers?.draft && stats.offers.draft > 0 && (
-                                            <Badge variant="secondary" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
-                                                {stats.offers.draft}
-                                            </Badge>
-                                        )}
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -677,11 +612,6 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
                                         <SidebarMenuButton isActive={isActive("/products")} className="flex items-center min-w-0">
                                             <Package className="shrink-0" />
                                             <span className="truncate">Produkte</span>
-                                            {stats?.products?.low_stock && stats.products.low_stock > 0 && (
-                                                <Badge variant="destructive" className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
-                                                    {stats.products.low_stock}
-                                                </Badge>
-                                            )}
                                             <ChevronDown className="ml-auto" />
                                         </SidebarMenuButton>
                                     </DropdownMenuTrigger>
@@ -693,11 +623,6 @@ export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps)
                                                 <Link href={item.url} className="flex items-center">
                                                     <item.icon className="mr-2 h-4 w-4" />
                                                     {item.title}
-                                                    {item.badge && (
-                                                        <Badge variant={item.badgeVariant || "default"} className="ml-auto h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
-                                                            {item.badge}
-                                                        </Badge>
-                                                    )}
                                                 </Link>
                                             </DropdownMenuItem>
                                         ))}

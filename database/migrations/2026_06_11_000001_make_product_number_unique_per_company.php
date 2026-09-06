@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -38,13 +39,27 @@ return new class extends Migration
         $hasCompositeUnique = $this->hasIndexOnColumns(['company_id', 'number'], true);
         $hasGlobalUnique = $this->hasIndexOnColumns(['number'], true);
 
-        Schema::table('products', function (Blueprint $table) use ($hasCompositeUnique, $hasGlobalUnique) {
+        Schema::table('products', function (Blueprint $table) use ($hasCompositeUnique) {
             if ($hasCompositeUnique) {
                 $table->dropUnique('products_company_number_unique');
             }
-            if (! $hasGlobalUnique) {
-                $table->unique('number');
-            }
+        });
+
+        // The old global unique on `number` cannot be restored once two
+        // companies share the same product number (the reason this
+        // migration exists). Skip it so migrate:refresh can roll back.
+        $hasDuplicateNumbers = DB::table('products')
+            ->select('number')
+            ->groupBy('number')
+            ->havingRaw('COUNT(*) > 1')
+            ->exists();
+
+        if ($hasGlobalUnique || $hasDuplicateNumbers) {
+            return;
+        }
+
+        Schema::table('products', function (Blueprint $table) {
+            $table->unique('number');
         });
     }
 

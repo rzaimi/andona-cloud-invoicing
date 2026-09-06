@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             AddStornorechnungPermissionSeeder::class, // GoBD compliance permission
             CompanySeeder::class,
             CompanySettingsSeeder::class,
+            MahnungSettingsSeeder::class,
             UserSeeder::class,
             CustomerSeeder::class,
             CategorySeeder::class,

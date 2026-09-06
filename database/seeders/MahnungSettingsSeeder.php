@@ -29,6 +29,7 @@ class MahnungSettingsSeeder extends Seeder
             'reminder_mahnung1_fee' => 5.00,  // €5 fee for 1. Mahnung
             'reminder_mahnung2_fee' => 10.00, // €10 fee for 2. Mahnung
             'reminder_mahnung3_fee' => 15.00, // €15 fee for 3. Mahnung
+            'reminder_inkasso_fee' => 50.00,  // €50 additional Inkasso fee
 
             // Interest rate (percentage per year)
             'reminder_interest_rate' => 9.00, // 9% annual interest

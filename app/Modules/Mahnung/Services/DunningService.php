@@ -2,15 +2,18 @@
 
 namespace App\Modules\Mahnung\Services;
 
+use App\Models\EmailLog;
 use App\Modules\Company\Models\Company;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Modules\Invoice\Models\InvoiceLayout;
 use App\Services\FormattingService;
+use App\Services\GirocodeService;
 use App\Services\SettingsService;
 use App\Traits\ConfiguresCompanySmtp;
 use App\Traits\LogsEmails;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -21,9 +24,12 @@ class DunningService
     use ConfiguresCompanySmtp;
     use LogsEmails;
 
+    /** @var array<string, array> settings() issues 11 queries — cache per company */
+    private array $settingsCache = [];
+
     public function settings(Company $company): array
     {
-        return [
+        return $this->settingsCache[$company->id] ??= [
             'reminder_friendly_days' => (int) $company->getSetting('reminder_friendly_days', 7),
             'reminder_mahnung1_days' => (int) $company->getSetting('reminder_mahnung1_days', 14),
             'reminder_mahnung2_days' => (int) $company->getSetting('reminder_mahnung2_days', 21),
@@ -36,6 +42,11 @@ class DunningService
             'reminder_interest_rate' => (float) $company->getSetting('reminder_interest_rate', 9.00),
             'reminder_auto_send' => (bool) $company->getSetting('reminder_auto_send', true),
         ];
+    }
+
+    public function flushSettingsCache(): void
+    {
+        $this->settingsCache = [];
     }
 
     public function feeForLevel(Company $company, int $level): float
@@ -53,7 +64,47 @@ class DunningService
 
     public function canSendManually(Invoice $invoice): bool
     {
-        return $invoice->canSendNextReminder();
+        return $invoice->canSendNextReminder() && ! $invoice->isFullyPaid();
+    }
+
+    public function pause(Invoice $invoice, CarbonInterface $until): void
+    {
+        $invoice->update(['dunning_paused_until' => $until->toDateString()]);
+
+        InvoiceAuditLog::log(
+            $invoice->id,
+            'dunning_paused',
+            $invoice->status,
+            $invoice->status,
+            ['dunning_paused_until' => $until->toDateString()],
+            'Mahnlauf pausiert bis '.$until->format('d.m.Y')
+        );
+    }
+
+    public function resume(Invoice $invoice): void
+    {
+        $previous = $invoice->dunning_paused_until?->toDateString();
+        $invoice->update(['dunning_paused_until' => null]);
+
+        InvoiceAuditLog::log(
+            $invoice->id,
+            'dunning_resumed',
+            $invoice->status,
+            $invoice->status,
+            ['dunning_paused_until' => ['old' => $previous, 'new' => null]],
+            'Mahnlauf fortgesetzt'
+        );
+    }
+
+    public function isPaused(Invoice $invoice): bool
+    {
+        return $invoice->dunning_paused_until !== null
+            && $invoice->dunning_paused_until->endOfDay()->isFuture();
+    }
+
+    public function openBalance(Invoice $invoice): float
+    {
+        return $invoice->getRemainingBalance();
     }
 
     /**
@@ -61,6 +112,17 @@ class DunningService
      */
     public function nextDueLevel(Invoice $invoice, Company $company): ?array
     {
+        // Settled invoices are never due — payments beat a stale status column.
+        if ($invoice->isFullyPaid()) {
+            return null;
+        }
+
+        // Mahnsperre: automatic escalation is suspended while a pause date is
+        // set ("Kunde zahlt Freitag"). Manual sends remain possible.
+        if ($this->isPaused($invoice)) {
+            return null;
+        }
+
         // Max one automatic escalation per invoice per day. Without this, a
         // long-overdue invoice can jump two Mahnstufen on the same day when
         // the daily command runs twice or a queue backlog drains late —
@@ -101,7 +163,13 @@ class DunningService
     {
         $invoice->loadMissing(['customer', 'company', 'items.product', 'user', 'layout']);
 
-        if (! $this->canSendManually($invoice)) {
+        // Never dun a settled invoice: payments are the source of truth, even
+        // when the status column has not caught up yet.
+        if ($invoice->isFullyPaid()) {
+            return ['ok' => false, 'error' => 'Rechnung ist bereits vollständig bezahlt.'];
+        }
+
+        if (! $invoice->canSendNextReminder()) {
             return ['ok' => false, 'error' => 'Diese Rechnung kann keine weiteren Mahnungen erhalten.'];
         }
 
@@ -137,6 +205,22 @@ class DunningService
                 'invoice_id' => $invoice->id,
                 'level' => $level,
             ]);
+
+            // Failed dunning mails are legally relevant (Zugang der Mahnung) —
+            // record them so the workspace can surface and retry them.
+            $this->logEmail(
+                companyId: $company->id,
+                recipientEmail: $invoice->customer->email,
+                subject: $invoice->getReminderLevelNameForLevel($level).' - Rechnung '.$invoice->number,
+                type: 'mahnung',
+                customerId: $invoice->customer_id,
+                recipientName: $invoice->customer->name,
+                relatedType: 'Invoice',
+                relatedId: $invoice->id,
+                metadata: ['reminder_level' => $level],
+                status: 'failed',
+                errorMessage: $e->getMessage(),
+            );
 
             return ['ok' => false, 'error' => 'Fehler beim Versenden der Mahnung: '.$e->getMessage()];
         }
@@ -179,9 +263,9 @@ class DunningService
     /**
      * @return Collection<int, Invoice>
      */
-    public function invoicesDueForEscalation(Company $company): Collection
+    public function invoicesDueForEscalation(Company $company, bool $requireAutoSend = true): Collection
     {
-        if (! $this->settings($company)['reminder_auto_send']) {
+        if ($requireAutoSend && ! $this->settings($company)['reminder_auto_send']) {
             return collect();
         }
 
@@ -191,7 +275,8 @@ class DunningService
 
         return $this->openDunningQuery($company->id)
             ->get()
-            ->filter(fn (Invoice $invoice) => $invoice->customer?->email && $this->nextDueLevel($invoice, $company) !== null)
+            ->filter(fn (Invoice $invoice) => $invoice->customer?->email
+                && $this->nextDueLevel($invoice, $company) !== null)
             ->values();
     }
 
@@ -206,10 +291,9 @@ class DunningService
             return 0;
         }
 
-        return $this->openDunningQuery($company->id)
-            ->get()
-            ->filter(fn (Invoice $invoice) => $this->nextDueLevel($invoice, $company) !== null)
-            ->count();
+        // Must count exactly what the bulk "Alle jetzt versenden" action would
+        // queue — same filters (customer email, SMTP), auto-send toggle ignored.
+        return $this->invoicesDueForEscalation($company, requireAutoSend: false)->count();
     }
 
     public function openDunningQuery(?string $companyId)
@@ -218,6 +302,8 @@ class DunningService
             ->whereIn('status', ['sent', 'overdue'])
             ->where('reminder_level', '<', Invoice::REMINDER_INKASSO)
             ->whereDate('due_date', '<', now()->toDateString())
+            ->unsettled()
+            ->withSum(['payments as completed_payments_sum' => fn ($q) => $q->where('status', 'completed')], 'amount')
             ->with(['customer:id,name,email', 'company']);
     }
 
@@ -228,7 +314,9 @@ class DunningService
                 $q->whereIn('status', ['sent', 'overdue'])
                     ->orWhere('reminder_level', '>', Invoice::REMINDER_NONE);
             })
-            ->whereNotIn('status', ['draft', 'cancelled'])
+            ->whereNotIn('status', ['draft', 'cancelled', 'paid'])
+            ->unsettled()
+            ->withSum(['payments as completed_payments_sum' => fn ($q) => $q->where('status', 'completed')], 'amount')
             ->with(['customer:id,name,email', 'company'])
             ->orderByRaw('CASE WHEN due_date < ? AND status IN (?, ?) THEN 0 ELSE 1 END', [now()->toDateString(), 'sent', 'overdue'])
             ->orderBy('due_date')
@@ -243,13 +331,15 @@ class DunningService
         return [
             'reminder_level' => $invoice->reminder_level,
             'reminder_level_name' => $invoice->reminder_level_name,
+            'dunning_paused_until' => $invoice->dunning_paused_until?->toDateString(),
+            'is_paused' => $this->isPaused($invoice),
             'last_reminder_sent_at' => $invoice->last_reminder_sent_at,
             'reminder_fee' => $invoice->reminder_fee,
             'reminder_history' => $invoice->reminder_history ?? [],
             'days_overdue' => $invoice->getDaysOverdue(),
-            'can_send_next' => $this->canSendManually($invoice),
-            'next_level' => $this->canSendManually($invoice) ? $invoice->getNextReminderLevel() : null,
-            'next_level_name' => $this->canSendManually($invoice)
+            'can_send_next' => $canSend = $this->canSendManually($invoice),
+            'next_level' => $canSend ? $invoice->getNextReminderLevel() : null,
+            'next_level_name' => $canSend
                 ? $invoice->getReminderLevelNameForLevel($invoice->getNextReminderLevel())
                 : null,
             'next_auto_due' => $due !== null,
@@ -280,10 +370,31 @@ class DunningService
 
         $settings = $this->settings($company);
         $inkassoFee = $level === Invoice::REMINDER_INKASSO ? $settings['reminder_inkasso_fee'] : 0;
+
+        // Dun the open balance, not the invoice total: partial payments are
+        // deducted, and Verzugszinsen accrue on the open amount only.
+        $paidAmount = $invoice->getPaidAmount();
+        $openAmount = $invoice->getRemainingBalance();
+
+        // Fees are folded into the total as items; after a partial payment the
+        // open amount can be smaller than the accumulated fees, so the
+        // "davon Mahngebühren" line must never exceed what is actually open.
+        $feesIncluded = min((float) $invoice->reminder_fee, $openAmount);
+
         $interestRate = $settings['reminder_interest_rate'] / 100;
         $delayInterest = $level === Invoice::REMINDER_INKASSO
-            ? $invoice->total * $interestRate * ($invoice->getDaysOverdue() / 365)
+            ? $openAmount * $interestRate * ($invoice->getDaysOverdue() / 365)
             : 0;
+
+        // Girocode (EPC-QR) over the Gesamtbetrag of this Mahnstufe — scan to
+        // pre-fill recipient, amount and reference in any banking app.
+        $qrAmount = $openAmount + $fee + $delayInterest + $inkassoFee;
+        $girocodePng = app(GirocodeService::class)->png(
+            (string) ($company->bank_account_holder ?: $company->name),
+            (string) $company->bank_iban,
+            round($qrAmount, 2),
+            'Rechnung '.$invoice->number,
+        );
 
         $pdf = app()->runningUnitTests() ? null : $this->renderInvoicePdf($invoice);
         $replyTo = $company->smtp_reply_to ?: null;
@@ -294,6 +405,10 @@ class DunningService
             'fee' => $fee,
             'inkassoFee' => $inkassoFee,
             'delayInterest' => $delayInterest,
+            'openAmount' => $openAmount,
+            'paidAmount' => $paidAmount,
+            'feesIncluded' => $feesIncluded,
+            'girocodePng' => $girocodePng,
         ], function ($message) use ($invoice, $pdf, $subject, $replyTo) {
             $message->to($invoice->customer->email);
             if ($replyTo) {
@@ -321,11 +436,103 @@ class DunningService
                 'reminder_level_name' => $invoice->getReminderLevelNameForLevel($level),
                 'invoice_number' => $invoice->number,
                 'invoice_total' => $invoice->total,
+                'open_amount' => round($openAmount, 2),
+                'paid_amount' => round($paidAmount, 2),
                 'reminder_fee' => $fee,
                 'days_overdue' => $invoice->getDaysOverdue(),
                 'has_pdf_attachment' => true,
             ]
         );
+    }
+
+    /**
+     * Inkasso-Übergabedossier: ein ZIP mit Rechnungs-PDF, Mahnhistorie,
+     * E-Mail-Protokoll und Forderungsübersicht für das Inkassobüro.
+     * Returns the path of a temp file; the caller deletes it after sending.
+     */
+    public function buildDossier(Invoice $invoice): string
+    {
+        $invoice->loadMissing(['customer', 'company', 'items.product', 'user', 'layout']);
+
+        $path = tempnam(sys_get_temp_dir(), 'dossier');
+        $zip = new \ZipArchive;
+        if ($zip->open($path, \ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('Inkasso-Dossier konnte nicht erstellt werden (ZIP-Fehler).');
+        }
+
+        if (! app()->runningUnitTests()) {
+            $zip->addFromString('Rechnung_'.$invoice->number.'.pdf', $this->renderInvoicePdf($invoice)->output());
+        }
+
+        $bom = "\xEF\xBB\xBF";
+
+        $rows = [$this->csvLine(['Stufe', 'Bezeichnung', 'Versendet am', 'Tage ueberfaellig', 'Gebuehr (EUR)'])];
+        foreach ($invoice->reminder_history ?? [] as $entry) {
+            $rows[] = $this->csvLine([
+                $entry['level'] ?? '',
+                $entry['level_name'] ?? '',
+                $entry['sent_at'] ?? '',
+                $entry['days_overdue'] ?? '',
+                number_format((float) ($entry['fee'] ?? 0), 2, ',', ''),
+            ]);
+        }
+        $zip->addFromString('Mahnhistorie.csv', $bom.implode("\r\n", $rows));
+
+        $logs = EmailLog::forCompany($invoice->company_id)
+            ->where('related_type', 'Invoice')
+            ->where('related_id', $invoice->id)
+            ->orderBy('created_at')
+            ->get();
+        $rows = [$this->csvLine(['Datum', 'Empfaenger', 'Betreff', 'Typ', 'Status'])];
+        foreach ($logs as $log) {
+            $rows[] = $this->csvLine([
+                optional($log->sent_at ?? $log->created_at)->format('d.m.Y H:i'),
+                $log->recipient_email,
+                (string) $log->subject,
+                $log->type,
+                $log->status,
+            ]);
+        }
+        $zip->addFromString('E-Mail-Protokoll.csv', $bom.implode("\r\n", $rows));
+
+        $paid = $invoice->getPaidAmount();
+        $open = $invoice->getRemainingBalance();
+        $customer = $invoice->customer;
+        $zip->addFromString('Forderungsuebersicht.txt', implode("\n", [
+            'FORDERUNGSÜBERGABE — Rechnung '.$invoice->number,
+            str_repeat('=', 50),
+            '',
+            'Gläubiger:      '.$invoice->company?->name,
+            '',
+            'Schuldner:      '.($customer?->name ?? '—'),
+            'E-Mail:         '.($customer?->email ?? '—'),
+            'Adresse:        '.trim(($customer?->address ?? '').', '.($customer?->postal_code ?? '').' '.($customer?->city ?? ''), ', '),
+            '',
+            'Rechnungsdatum: '.$invoice->issue_date?->format('d.m.Y'),
+            'Fällig seit:    '.$invoice->due_date?->format('d.m.Y').' ('.$invoice->getDaysOverdue().' Tage überfällig)',
+            'Rechnungsbetrag: '.number_format((float) $invoice->total, 2, ',', '.').' EUR (inkl. Mahngebühren '.number_format((float) $invoice->reminder_fee, 2, ',', '.').' EUR)',
+            'Bereits gezahlt: '.number_format($paid, 2, ',', '.').' EUR',
+            'Offene Forderung: '.number_format($open, 2, ',', '.').' EUR',
+            'Mahnstufe:      '.$invoice->reminder_level_name,
+            '',
+            'Erstellt am '.now()->format('d.m.Y H:i').' mit AndoBill.',
+        ]));
+
+        $zip->close();
+
+        return $path;
+    }
+
+    /**
+     * RFC-4180-style CSV line with ';' separator: fields are quoted, quotes
+     * doubled, so semicolons/newlines in subjects or names cannot shift columns.
+     */
+    private function csvLine(array $fields): string
+    {
+        return implode(';', array_map(
+            fn ($field) => '"'.str_replace('"', '""', (string) $field).'"',
+            $fields
+        ));
     }
 
     private function renderInvoicePdf(Invoice $invoice)

@@ -1,9 +1,12 @@
-import { Head, Link, router } from "@inertiajs/react"
+import { Head, Link, router, usePage } from "@inertiajs/react"
+import { useState } from "react"
 import AppLayout from "@/layouts/app-layout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Send } from "lucide-react"
+import { ArrowLeft, Send, PauseCircle, PlayCircle, FolderDown } from "lucide-react"
+import { PauseDunningDialog } from "@/components/pause-dunning-dialog"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 import type { BreadcrumbItem } from "@/types"
 import { route } from "ziggy-js"
 
@@ -27,6 +30,8 @@ interface Props {
     dunning: {
         reminder_level: number
         reminder_level_name: string
+        dunning_paused_until: string | null
+        is_paused: boolean
         last_reminder_sent_at: string | null
         reminder_fee: number | string
         reminder_history: HistoryEntry[]
@@ -38,14 +43,13 @@ interface Props {
     }
 }
 
-function formatCurrency(value: number | string) {
-    return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(Number(value) || 0)
-}
-
 export default function MahnungShow({ invoice, dunning }: Props) {
+    const [pauseOpen, setPauseOpen] = useState(false)
+    const { auth } = usePage().props as any
+    const formatCurrency = (value: number | string) => formatCurrencyUtil(Number(value), auth?.user?.company?.settings)
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
-        { title: "Mahnwesen", href: "/mahnungen" },
+        { title: "Mahnwesen", href: "/dunning" },
         { title: invoice.number },
     ]
 
@@ -53,7 +57,11 @@ export default function MahnungShow({ invoice, dunning }: Props) {
         if (!confirm(`Nächste Stufe (${dunning.next_level_name}) für ${invoice.number} jetzt versenden?`)) {
             return
         }
-        router.post(route("mahnungen.store", invoice.id))
+        router.post(route("dunning.store", invoice.id))
+    }
+
+    const resume = () => {
+        router.post(route("dunning.resume", invoice.id), {}, { preserveScroll: true })
     }
 
     return (
@@ -63,7 +71,7 @@ export default function MahnungShow({ invoice, dunning }: Props) {
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <Button variant="ghost" size="sm" asChild className="mb-2 -ml-2">
-                            <Link href={route("mahnungen.index")}>
+                            <Link href={route("dunning.index")}>
                                 <ArrowLeft className="h-4 w-4 mr-1" />
                                 Zurück
                             </Link>
@@ -73,10 +81,27 @@ export default function MahnungShow({ invoice, dunning }: Props) {
                             {invoice.customer?.name ?? "Kunde"} · {formatCurrency(invoice.total)}
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <Button variant="outline" asChild>
                             <Link href={route("invoices.show", invoice.id)}>Rechnung</Link>
                         </Button>
+                        <Button variant="outline" asChild>
+                            <a href={route("dunning.dossier", invoice.id)}>
+                                <FolderDown className="h-4 w-4 mr-2" />
+                                Inkasso-Dossier
+                            </a>
+                        </Button>
+                        {dunning.is_paused ? (
+                            <Button variant="outline" onClick={resume}>
+                                <PlayCircle className="h-4 w-4 mr-2" />
+                                Fortsetzen
+                            </Button>
+                        ) : (
+                            <Button variant="outline" onClick={() => setPauseOpen(true)}>
+                                <PauseCircle className="h-4 w-4 mr-2" />
+                                Pausieren
+                            </Button>
+                        )}
                         {dunning.can_send_next && (
                             <Button onClick={send}>
                                 <Send className="h-4 w-4 mr-2" />
@@ -122,6 +147,12 @@ export default function MahnungShow({ invoice, dunning }: Props) {
                     </Card>
                 </div>
 
+                {dunning.is_paused && dunning.dunning_paused_until && (
+                    <p className="text-sm rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+                        Mahnlauf pausiert bis {new Date(dunning.dunning_paused_until).toLocaleDateString("de-DE")} —
+                        automatische Mahnungen sind ausgesetzt, manueller Versand bleibt möglich.
+                    </p>
+                )}
                 {dunning.next_auto_due && (
                     <p className="text-sm text-orange-700">
                         Die nächste Stufe ist nach Intervall automatisch fällig.
@@ -156,6 +187,12 @@ export default function MahnungShow({ invoice, dunning }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            <PauseDunningDialog
+                invoiceId={pauseOpen ? invoice.id : null}
+                invoiceNumber={invoice.number}
+                onClose={() => setPauseOpen(false)}
+            />
         </AppLayout>
     )
 }

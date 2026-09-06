@@ -7,11 +7,14 @@ use App\Modules\Company\Models\Company;
 use App\Modules\Mahnung\Services\DunningService;
 use Illuminate\Console\Command;
 
-class SendDailyMahnungen extends Command
+class SendDailyDunning extends Command
 {
-    protected $signature = 'mahnungen:send
+    protected $signature = 'dunning:send
                             {--dry-run : Run without actually sending emails}
                             {--company= : Send reminders for a specific company only}';
+
+    /** Old command name kept as an alias for external crontabs/runbooks. */
+    protected $aliases = ['mahnungen:send'];
 
     protected $description = 'Escalate overdue invoices one Mahnstufe (German dunning)';
 

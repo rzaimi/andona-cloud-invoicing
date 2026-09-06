@@ -177,14 +177,20 @@
             </table>
 
             <div class="amount-section">
+                @if(($paidAmount ?? 0) > 0)
                 <div class="amount-row">
-                    <span class="amount-label">Ursprünglicher Rechnungsbetrag</span>
-                    <span class="amount-value">{{ number_format($invoice->total, 2, ',', '.') }} €</span>
+                    <span class="amount-label">Bereits gezahlt</span>
+                    <span class="amount-value">&minus; {{ number_format($paidAmount, 2, ',', '.') }} €</span>
                 </div>
-                @if($invoice->reminder_fee > 0)
+                @endif
                 <div class="amount-row">
-                    <span class="amount-label">Mahngebühren</span>
-                    <span class="amount-value">{{ number_format($invoice->reminder_fee, 2, ',', '.') }} €</span>
+                    <span class="amount-label">Offene Forderung</span>
+                    <span class="amount-value">{{ number_format($openAmount ?? $invoice->total, 2, ',', '.') }} €</span>
+                </div>
+                @if(($feesIncluded ?? $invoice->reminder_fee) > 0)
+                <div class="amount-row">
+                    <span class="amount-label">davon Mahngebühren</span>
+                    <span class="amount-value">{{ number_format($feesIncluded ?? $invoice->reminder_fee, 2, ',', '.') }} €</span>
                 </div>
                 @endif
                 <div class="amount-row">
@@ -197,7 +203,7 @@
                 </div>
                 <div class="amount-row total">
                     <span class="amount-label">Gesamtforderung</span>
-                    <span class="amount-value">{{ number_format(($invoice->total + $invoice->reminder_fee + ($delayInterest ?? 0) + ($inkassoFee ?? 0)), 2, ',', '.') }} €</span>
+                    <span class="amount-value">{{ number_format(($openAmount ?? $invoice->total) + ($delayInterest ?? 0) + ($inkassoFee ?? 0), 2, ',', '.') }} €</span>
                 </div>
             </div>
         </div>
@@ -230,7 +236,9 @@
         <strong>{{ $company->name }}</strong></p>
     </div>
 
-    <div class="footer">
+    @include('emails.reminders.partials.girocode')
+
+        <div class="footer">
         <div><strong>{{ $company->name }}</strong></div>
         <div>{{ $company->address }}</div>
         <div>Tel: {{ $company->phone }} | E-Mail: {{ $company->email }}</div>

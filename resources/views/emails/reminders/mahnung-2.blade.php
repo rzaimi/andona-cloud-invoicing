@@ -160,14 +160,20 @@
             </table>
 
             <div class="amount-section">
+                @if(($paidAmount ?? 0) > 0)
                 <div class="amount-row">
-                    <span class="amount-label">Rechnungsbetrag</span>
-                    <span class="amount-value">{{ number_format($invoice->total, 2, ',', '.') }} €</span>
+                    <span class="amount-label">Bereits gezahlt</span>
+                    <span class="amount-value">&minus; {{ number_format($paidAmount, 2, ',', '.') }} €</span>
                 </div>
-                @if($invoice->reminder_fee > 0)
+                @endif
                 <div class="amount-row">
-                    <span class="amount-label">Bisherige Mahngebühren</span>
-                    <span class="amount-value">{{ number_format($invoice->reminder_fee, 2, ',', '.') }} €</span>
+                    <span class="amount-label">Offener Betrag</span>
+                    <span class="amount-value">{{ number_format($openAmount ?? $invoice->total, 2, ',', '.') }} €</span>
+                </div>
+                @if(($feesIncluded ?? $invoice->reminder_fee) > 0)
+                <div class="amount-row">
+                    <span class="amount-label">davon bisherige Mahngebühren</span>
+                    <span class="amount-value">{{ number_format($feesIncluded ?? $invoice->reminder_fee, 2, ',', '.') }} €</span>
                 </div>
                 @endif
                 @if($fee > 0)
@@ -178,7 +184,7 @@
                 @endif
                 <div class="amount-row total">
                     <span class="amount-label">Gesamtbetrag</span>
-                    <span class="amount-value">{{ number_format($invoice->total + $invoice->reminder_fee + $fee, 2, ',', '.') }} €</span>
+                    <span class="amount-value">{{ number_format(($openAmount ?? $invoice->total) + $fee, 2, ',', '.') }} €</span>
                 </div>
             </div>
         </div>
@@ -201,7 +207,9 @@
         <strong>{{ $company->name }}</strong></p>
     </div>
 
-    <div class="footer">
+    @include('emails.reminders.partials.girocode')
+
+        <div class="footer">
         <div>{{ $company->name }}</div>
         <div>{{ $company->address }}</div>
         <div>Tel: {{ $company->phone }} | E-Mail: {{ $company->email }}</div>

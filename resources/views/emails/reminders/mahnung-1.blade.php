@@ -160,9 +160,15 @@
             </table>
 
             <div class="amount-section">
+                @if(($paidAmount ?? 0) > 0)
                 <div class="amount-row">
-                    <span class="amount-label">Rechnungsbetrag</span>
-                    <span class="amount-value">{{ number_format($invoice->total, 2, ',', '.') }} €</span>
+                    <span class="amount-label">Bereits gezahlt</span>
+                    <span class="amount-value">&minus; {{ number_format($paidAmount, 2, ',', '.') }} €</span>
+                </div>
+                @endif
+                <div class="amount-row">
+                    <span class="amount-label">Offener Rechnungsbetrag</span>
+                    <span class="amount-value">{{ number_format($openAmount ?? $invoice->total, 2, ',', '.') }} €</span>
                 </div>
                 @if($fee > 0)
                 <div class="amount-row">
@@ -172,7 +178,7 @@
                 @endif
                 <div class="amount-row total">
                     <span class="amount-label">Gesamtbetrag</span>
-                    <span class="amount-value">{{ number_format($invoice->total + $fee, 2, ',', '.') }} €</span>
+                    <span class="amount-value">{{ number_format(($openAmount ?? $invoice->total) + $fee, 2, ',', '.') }} €</span>
                 </div>
             </div>
         </div>
@@ -197,7 +203,9 @@
         <strong>{{ $company->name }}</strong></p>
     </div>
 
-    <div class="footer">
+    @include('emails.reminders.partials.girocode')
+
+        <div class="footer">
         <div>{{ $company->name }}</div>
         <div>{{ $company->address }}</div>
         <div>Tel: {{ $company->phone }} | E-Mail: {{ $company->email }}</div>

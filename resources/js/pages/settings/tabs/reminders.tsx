@@ -290,7 +290,7 @@ export default function RemindersSettingsTab({ reminderSettings }: RemindersSett
                         <div className="space-y-0.5">
                             <Label htmlFor="reminder_auto_send">Automatisches Versenden</Label>
                             <p className="text-sm text-muted-foreground">
-                                Mahnungen werden automatisch nach den konfigurierten Intervallen versendet
+                                Mahnungen werden automatisch nach den konfigurierten Intervallen versendet. Deaktiviert: fällige Mahnungen erscheinen im Mahnwesen und werden erst nach Ihrer Freigabe („Alle jetzt versenden“) verschickt.
                             </p>
                         </div>
                         <Switch

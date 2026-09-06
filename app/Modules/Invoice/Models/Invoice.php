@@ -82,6 +82,7 @@ class Invoice extends Model
         'last_reminder_sent_at',
         'reminder_fee',
         'reminder_history',
+        'dunning_paused_until',
         'is_correction',
         'corrects_invoice_id',
         'corrected_by_invoice_id',
@@ -105,6 +106,7 @@ class Invoice extends Model
         'reminder_fee' => 'decimal:2',
         'last_reminder_sent_at' => 'datetime',
         'reminder_history' => 'array',
+        'dunning_paused_until' => 'date',
         'company_snapshot' => 'array',
         'abschlag_refs' => 'array',
         'is_correction' => 'boolean',
@@ -503,7 +505,7 @@ class Invoice extends Model
             return 0;
         }
 
-        return abs($this->due_date->diffInDays(now()));
+        return (int) abs($this->due_date->diffInDays(now()));
     }
 
     /**
@@ -659,9 +661,27 @@ class Invoice extends Model
      */
     public function getPaidAmount(): float
     {
-        return $this->payments()
+        // List queries preload the aggregate via withSum(...) as
+        // completed_payments_sum — use it to avoid an N+1 query per row.
+        if ($this->hasAttribute('completed_payments_sum')) {
+            return (float) ($this->getAttribute('completed_payments_sum') ?? 0);
+        }
+
+        return (float) $this->payments()
             ->where('status', 'completed')
             ->sum('amount');
+    }
+
+    /**
+     * Only invoices whose completed payments do NOT cover the total.
+     * Single SQL definition of "settled" — keep in sync with getPaidAmount().
+     */
+    public function scopeUnsettled($query)
+    {
+        return $query->whereRaw(
+            '(select coalesce(sum(amount), 0) from payments where payments.invoice_id = invoices.id and payments.status = ?) < invoices.total',
+            ['completed']
+        );
     }
 
     /**

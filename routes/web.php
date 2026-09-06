@@ -31,7 +31,7 @@ Route::middleware(['auth', 'session.timeout', 'employee.portal.only'])->group(fu
     require __DIR__.'/modules/customers.php';
     require __DIR__.'/modules/products.php';
     require __DIR__.'/modules/invoices.php';
-    require __DIR__.'/modules/mahnungen.php';
+    require __DIR__.'/modules/dunning.php';
     require __DIR__.'/modules/offers.php';
     require __DIR__.'/modules/payments.php';
     require __DIR__.'/modules/expenses.php';

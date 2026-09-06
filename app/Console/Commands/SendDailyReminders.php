@@ -24,7 +24,7 @@ class SendDailyReminders extends Command
      *
      * @var string
      */
-    protected $description = 'Send daily Mahnungen (via mahnungen:send) and expiring-offer reminders';
+    protected $description = 'Send daily Mahnungen (via dunning:send) and expiring-offer reminders';
 
     /**
      * Execute the console command.
@@ -39,7 +39,16 @@ class SendDailyReminders extends Command
             $params['--company'] = $this->option('company');
         }
 
-        $this->call('mahnungen:send', $params);
+        // Keep the status column honest before escalating: sent + past due
+        // date becomes overdue, so status-based counts match the Mahnwesen.
+        if (! $this->option('dry-run')) {
+            $this->call('invoices:mark-overdue', array_filter([
+                '--company' => $this->option('company'),
+            ]));
+            $this->newLine();
+        }
+
+        $this->call('dunning:send', $params);
         $this->newLine();
         $this->sendOfferReminders((bool) $this->option('dry-run'), $this->option('company'));
 

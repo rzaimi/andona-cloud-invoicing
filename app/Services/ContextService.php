@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
-use App\Modules\Mahnung\Services\DunningService;
 use App\Modules\Offer\Models\Offer;
 use App\Modules\Product\Models\Product;
 use App\Modules\User\Models\User;
@@ -114,7 +113,6 @@ class ContextService
                         ->whereIn('status', ['sent', 'overdue'])
                         ->sum('total') ?? 0,
                 ],
-                'mahnungen_due' => app(DunningService::class)->countDueForNextStep($companyId),
                 'offers' => [
                     'total' => Offer::where('company_id', $companyId)->count(),
                     'draft' => Offer::where('company_id', $companyId)->where('status', 'draft')->count(),
@@ -274,7 +272,6 @@ class ContextService
             ],
             'products' => ['total' => 0, 'active' => 0, 'low_stock' => 0, 'out_of_stock' => 0],
             'revenue' => ['this_month' => 0, 'last_month' => 0, 'this_year' => 0, 'last_year' => 0],
-            'mahnungen_due' => 0,
         ];
     }
 

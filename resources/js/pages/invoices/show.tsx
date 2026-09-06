@@ -273,7 +273,7 @@ export default function InvoicesShow() {
                         {(invoice.status === "overdue" || invoice.status === "sent") && (
                             <>
                                 <Button variant="outline" asChild>
-                                    <Link href={route("mahnungen.show", invoice.id)}>
+                                    <Link href={route("dunning.show", invoice.id)}>
                                         <Bell className="mr-2 h-4 w-4" />
                                         Mahnwesen
                                     </Link>
@@ -283,7 +283,7 @@ export default function InvoicesShow() {
                                         variant="outline"
                                         onClick={() => {
                                             if (confirm(`Nächste Mahnung für ${invoice.number} jetzt versenden?`)) {
-                                                router.post(route("mahnungen.store", invoice.id))
+                                                router.post(route("dunning.store", invoice.id))
                                             }
                                         }}
                                     >

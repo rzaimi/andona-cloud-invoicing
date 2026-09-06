@@ -138,7 +138,10 @@
 
             <div class="amount-section">
                 <div class="amount-label">Offener Betrag</div>
-                <div class="amount">{{ number_format($invoice->total, 2, ',', '.') }} €</div>
+                <div class="amount">{{ number_format($openAmount ?? $invoice->total, 2, ',', '.') }} €</div>
+                @if(($paidAmount ?? 0) > 0)
+                <div style="font-size: 12px; color: #666; margin-top: 4px;">Rechnungsbetrag {{ number_format($invoice->total, 2, ',', '.') }} € abzüglich bereits gezahlter {{ number_format($paidAmount, 2, ',', '.') }} €</div>
+                @endif
             </div>
         </div>
 
@@ -158,7 +161,9 @@
         <strong>{{ $company->name }}</strong></p>
     </div>
 
-    <div class="footer">
+    @include('emails.reminders.partials.girocode')
+
+        <div class="footer">
         <div>{{ $company->name }}</div>
         <div>{{ $company->address }}</div>
         <div>Tel: {{ $company->phone }} | E-Mail: {{ $company->email }}</div>
