@@ -11,18 +11,16 @@ createServer((page) =>
         page,
         render: ReactDOMServer.renderToString,
         title: (title) => title ? `${title} - ${appName}` : appName,
-        resolve: (name) => resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx')),
+        resolve: (name) =>
+            resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx')) as Promise<never>,
         setup: ({ App, props }) => {
-            /* eslint-disable */
-            // @ts-expect-error
-            global.route<RouteName> = (name, params, absolute) =>
-                route(name, params as any, absolute, {
-                    // @ts-expect-error
-                    ...page.props.ziggy,
-                    // @ts-expect-error
-                    location: new URL(page.props.ziggy.location),
+            // Provide a global Ziggy `route()` helper during SSR so page
+            // components can resolve named routes on the server.
+            (globalThis as any).route = (name: RouteName, params?: unknown, absolute?: boolean) =>
+                route(name, params as never, absolute, {
+                    ...(page.props as any).ziggy,
+                    location: new URL((page.props as any).ziggy.location),
                 });
-            /* eslint-enable */
 
             return <App {...props} />;
         },
