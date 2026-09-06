@@ -3,14 +3,21 @@
 namespace App\Modules\Invoice\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendInvoiceEmail;
+use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Invoice\Models\InvoiceLayout;
+use App\Modules\Product\Models\Product;
+use App\Services\ERechnungService;
+use App\Services\FormattingService;
 use App\Services\NumberFormatService;
+use App\Services\SettingsService;
 use App\Traits\LogsEmails;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -209,7 +216,7 @@ class InvoiceController extends Controller
     public function create()
     {
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::find($companyId);
+        $company = Company::find($companyId);
 
         $customers = Customer::forCompany($companyId)
             ->active()
@@ -219,7 +226,7 @@ class InvoiceController extends Controller
         $layouts = InvoiceLayout::forCompany($companyId)
             ->get();
 
-        $products = \App\Modules\Product\Models\Product::where('company_id', $companyId)
+        $products = Product::where('company_id', $companyId)
             ->where('status', 'active')
             ->select('id', 'name', 'description', 'price', 'unit', 'tax_rate', 'sku', 'number')
             ->orderBy('name')
@@ -313,7 +320,7 @@ class InvoiceController extends Controller
                     // number generation per company by taking a pessimistic lock on the
                     // company row for the duration of the transaction. Concurrent stores
                     // will wait here instead of racing on `next($numbers)`.
-                    $company = \App\Modules\Company\Models\Company::whereKey($effectiveCompanyId)
+                    $company = Company::whereKey($effectiveCompanyId)
                         ->lockForUpdate()
                         ->first();
 
@@ -383,7 +390,7 @@ class InvoiceController extends Controller
                     foreach ($validated['items'] as $index => $itemData) {
                         $productId = null;
                         if (! empty($itemData['product_id'])) {
-                            $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
+                            $product = Product::where('company_id', $effectiveCompanyId)
                                 ->where('id', $itemData['product_id'])
                                 ->first();
                             if (! $product) {
@@ -431,7 +438,7 @@ class InvoiceController extends Controller
                         'Rechnung erstellt mit '.count($validated['items']).' Positionen'
                     );
                 });
-            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            } catch (UniqueConstraintViolationException $e) {
                 $collision = true;
                 if (++$attempts >= 5) {
                     throw $e;
@@ -454,7 +461,7 @@ class InvoiceController extends Controller
             $collision = false;
             try {
                 DB::transaction(function () use ($invoice) {
-                    $company = \App\Modules\Company\Models\Company::whereKey($invoice->company_id)
+                    $company = Company::whereKey($invoice->company_id)
                         ->lockForUpdate()
                         ->first();
 
@@ -505,7 +512,7 @@ class InvoiceController extends Controller
                     $copy->calculateSkonto();
                     $copy->save();
                 });
-            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            } catch (UniqueConstraintViolationException $e) {
                 $collision = true;
                 if (++$attempts >= 5) {
                     return back()->with('error', 'Fehler beim Duplizieren: Rechnungsnummer konnte nicht generiert werden.');
@@ -567,7 +574,7 @@ class InvoiceController extends Controller
         $layouts = InvoiceLayout::forCompany($invoice->company_id)
             ->get();
 
-        $products = \App\Modules\Product\Models\Product::where('company_id', $invoice->company_id)
+        $products = Product::where('company_id', $invoice->company_id)
             ->where('status', 'active')
             ->select('id', 'name', 'description', 'price', 'unit', 'tax_rate', 'sku', 'number')
             ->orderBy('name')
@@ -725,7 +732,7 @@ class InvoiceController extends Controller
             foreach ($validated['items'] as $index => $itemData) {
                 $productId = null;
                 if (! empty($itemData['product_id'])) {
-                    $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
+                    $product = Product::where('company_id', $effectiveCompanyId)
                         ->where('id', $itemData['product_id'])
                         ->first();
                     if (! $product) {
@@ -876,9 +883,9 @@ class InvoiceController extends Controller
         }
 
         // Get company settings for formatting
-        $settingsService = app(\App\Services\SettingsService::class);
+        $settingsService = app(SettingsService::class);
         $settings = $settingsService->getAll($invoice->company_id);
-        $formattingService = app(\App\Services\FormattingService::class);
+        $formattingService = app(FormattingService::class);
 
         $html = view('pdf.invoice', [
             'layout' => $layout,
@@ -998,7 +1005,7 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function send(Request $request, Invoice $invoice, \App\Services\InvoiceMailer $mailer)
+    public function send(Request $request, Invoice $invoice)
     {
         $this->authorize('send', $invoice);
 
@@ -1009,25 +1016,28 @@ class InvoiceController extends Controller
             'message' => 'nullable|string|max:2000',
         ]);
 
+        $invoice->loadMissing(['customer', 'company']);
+
         if (! $invoice->customer || ! $invoice->customer->email) {
             return back()->withErrors(['email' => 'Kunde hat keine E-Mail-Adresse hinterlegt.']);
         }
 
-        $result = $mailer->send(
-            invoice: $invoice,
+        $company = $invoice->company;
+        if (! $company || ! $company->smtp_host || ! $company->smtp_username) {
+            return back()->withErrors([
+                'email' => 'SMTP-Einstellungen sind nicht konfiguriert.',
+            ]);
+        }
+
+        SendInvoiceEmail::dispatch(
+            invoiceId: $invoice->id,
             to: $validated['to'],
             subject: $validated['subject'] ?: "Rechnung {$invoice->number}",
             customMessage: $validated['message'] ?? null,
             cc: $validated['cc'] ?? null,
         );
 
-        if (! $result['ok']) {
-            return back()->withErrors([
-                'email' => 'E-Mail konnte nicht versendet werden: '.($result['error'] ?? 'Unbekannter Fehler'),
-            ]);
-        }
-
-        return redirect()->back()->with('success', 'Rechnung wurde erfolgreich per E-Mail versendet.');
+        return redirect()->back()->with('success', 'Rechnung wird per E-Mail versendet.');
     }
 
     private function generateInvoicePdf(Invoice $invoice)
@@ -1097,9 +1107,9 @@ class InvoiceController extends Controller
         }
 
         // Get company settings for formatting
-        $settingsService = app(\App\Services\SettingsService::class);
+        $settingsService = app(SettingsService::class);
         $settings = $settingsService->getAll($invoice->company_id);
-        $formattingService = app(\App\Services\FormattingService::class);
+        $formattingService = app(FormattingService::class);
 
         return Pdf::loadView('pdf.invoice', [
             'layout' => $layout,
@@ -1136,7 +1146,7 @@ class InvoiceController extends Controller
         }
 
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::find($companyId);
+        $company = Company::find($companyId);
 
         // Check if company has SMTP configured
         if (! $company->smtp_host || ! $company->smtp_username) {
@@ -1332,7 +1342,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $eRechnungService = app(\App\Services\ERechnungService::class);
+        $eRechnungService = app(ERechnungService::class);
         $result = $eRechnungService->downloadXRechnung($invoice);
 
         return response($result['content'], 200, [
@@ -1348,7 +1358,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $eRechnungService = app(\App\Services\ERechnungService::class);
+        $eRechnungService = app(ERechnungService::class);
         $result = $eRechnungService->downloadZugferd($invoice);
 
         return response($result['content'], 200, [
@@ -1385,7 +1395,7 @@ class InvoiceController extends Controller
             // GoBD: serialise Stornorechnung numbering alongside the normal
             // invoice counter by locking the company row for the duration of
             // the transaction (same pattern as store()).
-            \App\Modules\Company\Models\Company::whereKey($invoice->company_id)
+            Company::whereKey($invoice->company_id)
                 ->lockForUpdate()
                 ->first();
 
@@ -1550,7 +1560,7 @@ class InvoiceController extends Controller
             DB::beginTransaction();
 
             // Lock the company row for serialised number generation (same pattern as store())
-            \App\Modules\Company\Models\Company::whereKey($invoice->company_id)
+            Company::whereKey($invoice->company_id)
                 ->lockForUpdate()
                 ->first();
 
@@ -1664,7 +1674,7 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
 
-            \App\Modules\Company\Models\Company::whereKey($invoice->company_id)
+            Company::whereKey($invoice->company_id)
                 ->lockForUpdate()
                 ->first();
 
@@ -1759,7 +1769,7 @@ class InvoiceController extends Controller
      *   schlussrechnung   → schluss_number_format   / schluss_next_counter
      *   everything else   → invoice_number_format   / invoice_next_counter
      */
-    private function generateTypedNumber(string $invoiceType, \App\Modules\Company\Models\Company $company): string
+    private function generateTypedNumber(string $invoiceType, Company $company): string
     {
         $svc = new NumberFormatService;
         // sharedLock() forces a current read so concurrent transactions are visible.
