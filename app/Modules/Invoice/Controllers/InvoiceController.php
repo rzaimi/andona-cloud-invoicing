@@ -10,6 +10,7 @@ use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Invoice\Models\InvoiceLayout;
+use App\Modules\Mahnung\Services\DunningService;
 use App\Modules\Product\Models\Product;
 use App\Services\ERechnungService;
 use App\Services\FormattingService;
@@ -1134,151 +1135,20 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Manually send next reminder for an invoice (Mahnung)
+     * Thin alias so the invoice-index shortcut keeps working.
+     * Escalation, fees, mail, and history live in DunningService.
      */
-    public function sendReminder(Request $request, Invoice $invoice)
+    public function sendReminder(Request $request, Invoice $invoice, DunningService $dunning)
     {
-        $this->authorize('update', $invoice);
+        $this->authorize('sendReminder', $invoice);
 
-        // Check if invoice can receive another reminder
-        if (! $invoice->canSendNextReminder()) {
-            return redirect()->back()->with('error', 'Diese Rechnung kann keine weiteren Mahnungen erhalten.');
+        $result = $dunning->sendNext($invoice, respectThresholds: false);
+
+        if (! $result['ok']) {
+            return redirect()->back()->with('error', $result['error']);
         }
 
-        $companyId = $this->getEffectiveCompanyId();
-        $company = Company::find($companyId);
-
-        // Check if company has SMTP configured
-        if (! $company->smtp_host || ! $company->smtp_username) {
-            return redirect()->back()->with('error', 'E-Mail Einstellungen sind nicht konfiguriert.');
-        }
-
-        // Check if customer has email
-        if (! $invoice->customer || ! $invoice->customer->email) {
-            return redirect()->back()->with('error', 'Kunde hat keine E-Mail-Adresse.');
-        }
-
-        try {
-            // Configure SMTP
-            Config::set('mail.default', 'smtp');
-            Config::set('mail.mailers.smtp.host', $company->smtp_host);
-            Config::set('mail.mailers.smtp.port', $company->smtp_port);
-            Config::set('mail.mailers.smtp.username', $company->smtp_username);
-            Config::set('mail.mailers.smtp.password', $company->smtp_password);
-            Config::set('mail.mailers.smtp.encryption', $company->smtp_encryption ?: 'tls');
-            Config::set('mail.from.address', $company->smtp_from_address ?: $company->email);
-            Config::set('mail.from.name', $company->smtp_from_name ?: $company->name);
-
-            // Get next reminder level and fee
-            $nextLevel = $invoice->getNextReminderLevel();
-            $fee = $this->getReminderFee($nextLevel, $company);
-
-            // Send the reminder email
-            $this->sendMahnungEmail($invoice, $company, $nextLevel, $fee);
-
-            // Update invoice
-            $invoice->addReminderToHistory($nextLevel, $fee);
-            if ($nextLevel > Invoice::REMINDER_FRIENDLY) {
-                $invoice->status = 'overdue';
-            }
-            $invoice->save();
-
-            $levelName = $invoice->getReminderLevelNameForLevel($nextLevel);
-
-            return redirect()->back()->with('success', "{$levelName} wurde erfolgreich versendet.");
-
-        } catch (\Exception $e) {
-            Log::error("Manual reminder failed: {$e->getMessage()}", [
-                'invoice_id' => $invoice->id,
-            ]);
-
-            return redirect()->back()->with('error', 'Fehler beim Versenden der Mahnung: '.$e->getMessage());
-        }
-    }
-
-    /**
-     * Get reminder fee for a specific level
-     */
-    private function getReminderFee(int $level, $company): float
-    {
-        return match ($level) {
-            Invoice::REMINDER_MAHNUNG_1 => (float) $company->getSetting('reminder_mahnung1_fee', 5.00),
-            Invoice::REMINDER_MAHNUNG_2 => (float) $company->getSetting('reminder_mahnung2_fee', 10.00),
-            Invoice::REMINDER_MAHNUNG_3 => (float) $company->getSetting('reminder_mahnung3_fee', 15.00),
-            default => 0.00,
-        };
-    }
-
-    /**
-     * Send Mahnung email (same as in SendDailyReminders command)
-     */
-    private function sendMahnungEmail(Invoice $invoice, $company, int $level, float $fee)
-    {
-        $invoice->load(['items.product', 'customer', 'company', 'user']);
-
-        // Determine which email template to use
-        $template = match ($level) {
-            Invoice::REMINDER_FRIENDLY => 'emails.reminders.friendly',
-            Invoice::REMINDER_MAHNUNG_1 => 'emails.reminders.mahnung-1',
-            Invoice::REMINDER_MAHNUNG_2 => 'emails.reminders.mahnung-2',
-            Invoice::REMINDER_MAHNUNG_3 => 'emails.reminders.mahnung-3',
-            Invoice::REMINDER_INKASSO => 'emails.reminders.inkasso',
-            default => 'emails.reminders.friendly',
-        };
-
-        // Determine subject
-        $subject = match ($level) {
-            Invoice::REMINDER_FRIENDLY => "Freundliche Zahlungserinnerung - Rechnung {$invoice->number}",
-            Invoice::REMINDER_MAHNUNG_1 => "1. Mahnung - Rechnung {$invoice->number}",
-            Invoice::REMINDER_MAHNUNG_2 => "2. Mahnung - Rechnung {$invoice->number}",
-            Invoice::REMINDER_MAHNUNG_3 => "3. und LETZTE Mahnung - Rechnung {$invoice->number}",
-            Invoice::REMINDER_INKASSO => "Inkassoankündigung - Rechnung {$invoice->number}",
-            default => "Zahlungserinnerung - Rechnung {$invoice->number}",
-        };
-
-        // Generate PDF
-        $pdf = $this->generateInvoicePdf($invoice);
-
-        // Calculate additional data for Inkasso level
-        $inkassoFee = $level == Invoice::REMINDER_INKASSO ? 50.00 : 0;
-        $delayInterest = $level == Invoice::REMINDER_INKASSO
-            ? $invoice->total * 0.09 * ($invoice->getDaysOverdue() / 365)
-            : 0;
-
-        Mail::send($template, [
-            'invoice' => $invoice,
-            'company' => $company,
-            'fee' => $fee,
-            'inkassoFee' => $inkassoFee,
-            'delayInterest' => $delayInterest,
-        ], function ($message) use ($invoice, $pdf, $subject) {
-            $message->to($invoice->customer->email);
-            $message->subject($subject);
-            $message->attachData($pdf->output(), "Rechnung_{$invoice->number}.pdf", [
-                'mime' => 'application/pdf',
-            ]);
-        });
-
-        // Log the mahnung email
-        $this->logEmail(
-            companyId: $company->id,
-            recipientEmail: $invoice->customer->email,
-            subject: $subject,
-            type: 'mahnung',
-            customerId: $invoice->customer_id,
-            recipientName: $invoice->customer->name,
-            relatedType: 'Invoice',
-            relatedId: $invoice->id,
-            metadata: [
-                'reminder_level' => $level,
-                'reminder_level_name' => $invoice->getReminderLevelNameForLevel($level),
-                'invoice_number' => $invoice->number,
-                'invoice_total' => $invoice->total,
-                'reminder_fee' => $fee,
-                'days_overdue' => $invoice->getDaysOverdue(),
-                'has_pdf_attachment' => true,
-            ]
-        );
+        return redirect()->back()->with('success', $result['level_name'].' wurde erfolgreich versendet.');
     }
 
     /**
@@ -1316,23 +1186,11 @@ class InvoiceController extends Controller
     /**
      * View reminder history for an invoice
      */
-    public function reminderHistory(Invoice $invoice)
+    public function reminderHistory(Invoice $invoice, DunningService $dunning)
     {
         $this->authorize('view', $invoice);
 
-        return response()->json([
-            'reminder_level' => $invoice->reminder_level,
-            'reminder_level_name' => $invoice->reminder_level_name,
-            'last_reminder_sent_at' => $invoice->last_reminder_sent_at,
-            'reminder_fee' => $invoice->reminder_fee,
-            'reminder_history' => $invoice->reminder_history ?? [],
-            'days_overdue' => $invoice->getDaysOverdue(),
-            'can_send_next' => $invoice->canSendNextReminder(),
-            'next_level' => $invoice->canSendNextReminder() ? $invoice->getNextReminderLevel() : null,
-            'next_level_name' => $invoice->canSendNextReminder()
-                ? $invoice->getReminderLevelNameForLevel($invoice->getNextReminderLevel())
-                : null,
-        ]);
+        return response()->json($dunning->historyPayload($invoice));
     }
 
     /**

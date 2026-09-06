@@ -5,9 +5,11 @@ namespace App\Services;
 use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
+use App\Modules\Mahnung\Services\DunningService;
 use App\Modules\Offer\Models\Offer;
 use App\Modules\Product\Models\Product;
 use App\Modules\User\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
@@ -21,7 +23,7 @@ class ContextService
     {
         $user = $user ?? Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return $this->getGuestContext();
         }
 
@@ -47,7 +49,7 @@ class ContextService
      */
     public function getCompanyContext(?Company $company = null): ?array
     {
-        if (!$company) {
+        if (! $company) {
             return null;
         }
 
@@ -82,7 +84,7 @@ class ContextService
     {
         $user = $user ?? Auth::user();
 
-        if (!$user || !$user->company_id) {
+        if (! $user || ! $user->company_id) {
             return $this->getEmptyStats();
         }
 
@@ -109,9 +111,10 @@ class ContextService
                     'total_amount' => Invoice::where('company_id', $companyId)->sum('total') ?? 0,
                     'paid_amount' => Invoice::where('company_id', $companyId)->where('status', 'paid')->sum('total') ?? 0,
                     'outstanding_amount' => Invoice::where('company_id', $companyId)
-                            ->whereIn('status', ['sent', 'overdue'])
-                            ->sum('total') ?? 0,
+                        ->whereIn('status', ['sent', 'overdue'])
+                        ->sum('total') ?? 0,
                 ],
+                'mahnungen_due' => app(DunningService::class)->countDueForNextStep($companyId),
                 'offers' => [
                     'total' => Offer::where('company_id', $companyId)->count(),
                     'draft' => Offer::where('company_id', $companyId)->where('status', 'draft')->count(),
@@ -135,23 +138,23 @@ class ContextService
                 ],
                 'revenue' => [
                     'this_month' => Invoice::where('company_id', $companyId)
-                            ->where('status', 'paid')
-                            ->whereMonth('issue_date', now()->month)
-                            ->whereYear('issue_date', now()->year)
-                            ->sum('total') ?? 0,
+                        ->where('status', 'paid')
+                        ->whereMonth('issue_date', now()->month)
+                        ->whereYear('issue_date', now()->year)
+                        ->sum('total') ?? 0,
                     'last_month' => Invoice::where('company_id', $companyId)
-                            ->where('status', 'paid')
-                            ->whereMonth('issue_date', now()->subMonth()->month)
-                            ->whereYear('issue_date', now()->subMonth()->year)
-                            ->sum('total') ?? 0,
+                        ->where('status', 'paid')
+                        ->whereMonth('issue_date', now()->subMonth()->month)
+                        ->whereYear('issue_date', now()->subMonth()->year)
+                        ->sum('total') ?? 0,
                     'this_year' => Invoice::where('company_id', $companyId)
-                            ->where('status', 'paid')
-                            ->whereYear('issue_date', now()->year)
-                            ->sum('total') ?? 0,
+                        ->where('status', 'paid')
+                        ->whereYear('issue_date', now()->year)
+                        ->sum('total') ?? 0,
                     'last_year' => Invoice::where('company_id', $companyId)
-                            ->where('status', 'paid')
-                            ->whereYear('issue_date', now()->subYear()->year)
-                            ->sum('total') ?? 0,
+                        ->where('status', 'paid')
+                        ->whereYear('issue_date', now()->subYear()->year)
+                        ->sum('total') ?? 0,
                 ],
             ];
         });
@@ -263,14 +266,15 @@ class ContextService
             'customers' => ['total' => 0, 'active' => 0, 'new_this_month' => 0],
             'invoices' => [
                 'total' => 0, 'draft' => 0, 'sent' => 0, 'paid' => 0, 'overdue' => 0,
-                'total_amount' => 0, 'paid_amount' => 0, 'outstanding_amount' => 0
+                'total_amount' => 0, 'paid_amount' => 0, 'outstanding_amount' => 0,
             ],
             'offers' => [
                 'total' => 0, 'draft' => 0, 'sent' => 0, 'accepted' => 0,
-                'rejected' => 0, 'expired' => 0, 'total_amount' => 0
+                'rejected' => 0, 'expired' => 0, 'total_amount' => 0,
             ],
             'products' => ['total' => 0, 'active' => 0, 'low_stock' => 0, 'out_of_stock' => 0],
             'revenue' => ['this_month' => 0, 'last_month' => 0, 'this_year' => 0, 'last_year' => 0],
+            'mahnungen_due' => 0,
         ];
     }
 
@@ -298,7 +302,7 @@ class ContextService
         // If user has manage_companies permission and has selected a company in session, use that
         if (method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('manage_companies')) {
             $selectedCompanyId = Session::get('selected_company_id');
-            
+
             // Validate that the selected company still exists and is active
             if ($selectedCompanyId) {
                 $selectedCompany = Company::find($selectedCompanyId);
@@ -309,12 +313,13 @@ class ContextService
                     Session::forget('selected_company_id');
                 }
             }
-            
+
             // If no valid session company, try to get default company first
             $defaultCompany = Company::getDefault();
             if ($defaultCompany) {
                 // Auto-select default company for consistency
                 Session::put('selected_company_id', $defaultCompany->id);
+
                 return $defaultCompany->id;
             } else {
                 // Fallback to first available company if no default
@@ -323,11 +328,12 @@ class ContextService
                     ->first();
                 if ($firstCompany) {
                     Session::put('selected_company_id', $firstCompany->id);
+
                     return $firstCompany->id;
                 }
             }
         }
-        
+
         // Fallback to user's own company
         return $user->company_id;
     }
@@ -353,7 +359,7 @@ class ContextService
      */
     public function formatCurrency(float $amount, string $currency = 'EUR'): string
     {
-        return number_format($amount, 2, ',', '.') . ' ' . $currency;
+        return number_format($amount, 2, ',', '.').' '.$currency;
     }
 
     /**
@@ -361,7 +367,7 @@ class ContextService
      */
     public function formatDate(string $date, string $format = 'd.m.Y'): string
     {
-        return \Carbon\Carbon::parse($date)->format($format);
+        return Carbon::parse($date)->format($format);
     }
 
     /**
@@ -369,6 +375,6 @@ class ContextService
      */
     public function formatDateTime(string $dateTime, string $format = 'd.m.Y H:i'): string
     {
-        return \Carbon\Carbon::parse($dateTime)->format($format);
+        return Carbon::parse($dateTime)->format($format);
     }
 }

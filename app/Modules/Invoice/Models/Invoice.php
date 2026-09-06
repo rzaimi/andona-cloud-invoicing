@@ -4,13 +4,18 @@ namespace App\Modules\Invoice\Models;
 
 use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
+use App\Modules\Document\Models\Document;
+use App\Modules\Payment\Models\Payment;
+use App\Modules\RecurringInvoice\Models\RecurringInvoiceProfile;
 use App\Modules\User\Models\User;
 use App\Services\NumberFormatService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Invoice extends Model
 {
@@ -137,7 +142,7 @@ class Invoice extends Model
     public function recurringProfile(): BelongsTo
     {
         return $this->belongsTo(
-            \App\Modules\RecurringInvoice\Models\RecurringInvoiceProfile::class,
+            RecurringInvoiceProfile::class,
             'recurring_profile_id'
         );
     }
@@ -161,9 +166,9 @@ class Invoice extends Model
     /**
      * Documents linked to this invoice
      */
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
-        return $this->morphMany(\App\Modules\Document\Models\Document::class, 'linkable');
+        return $this->morphMany(Document::class, 'linkable');
     }
 
     /**
@@ -171,7 +176,7 @@ class Invoice extends Model
      */
     public function payments(): HasMany
     {
-        return $this->hasMany(\App\Modules\Payment\Models\Payment::class);
+        return $this->hasMany(Payment::class);
     }
 
     /**
@@ -374,7 +379,7 @@ class Invoice extends Model
 
         $this->skonto_amount = round($skontoBase * ((float) $this->skonto_percent / 100), 2);
         $baseDate = $this->issue_date ?? now()->toDateObject();
-        $this->skonto_due_date = \Carbon\Carbon::instance($baseDate)->addDays((int) $this->skonto_days);
+        $this->skonto_due_date = Carbon::instance($baseDate)->addDays((int) $this->skonto_days);
     }
 
     public function calculateTotals(): void
@@ -607,7 +612,8 @@ class Invoice extends Model
      */
     public function getTotalWithFeesAttribute(): float
     {
-        return $this->total + ($this->reminder_fee ?? 0);
+        // Fees are already booked as invoice line items and included in total.
+        return (float) $this->total;
     }
 
     /**

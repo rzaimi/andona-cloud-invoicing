@@ -1,8 +1,10 @@
 <?php
 
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\ContactController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Tighten\Ziggy\Ziggy;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -11,14 +13,14 @@ Route::get('/', function () {
 });
 
 // Contact routes (public) — throttled to 10 requests per minute per IP
-Route::post('/contact/demo', [App\Http\Controllers\ContactController::class, 'demo'])
+Route::post('/contact/demo', [ContactController::class, 'demo'])
     ->middleware('throttle:10,1')
     ->name('contact.demo');
 
 // API endpoint to load Ziggy routes dynamically (hides routes from HTML source)
-Route::get('/api/routes', function (\Illuminate\Http\Request $request) {
+Route::get('/api/routes', function (Request $request) {
     return response()->json([
-        ...(new \Tighten\Ziggy\Ziggy)->toArray(),
+        ...(new Ziggy)->toArray(),
         'location' => $request->url(),
     ]);
 })->middleware('auth');
@@ -29,6 +31,7 @@ Route::middleware(['auth', 'session.timeout', 'employee.portal.only'])->group(fu
     require __DIR__.'/modules/customers.php';
     require __DIR__.'/modules/products.php';
     require __DIR__.'/modules/invoices.php';
+    require __DIR__.'/modules/mahnungen.php';
     require __DIR__.'/modules/offers.php';
     require __DIR__.'/modules/payments.php';
     require __DIR__.'/modules/expenses.php';
