@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Warehouse as WarehouseIcon, Plus, Search, Filter, Edit, Eye, Trash2, Package, TrendingUp, AlertTriangle } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { PaginatedResponse, BreadcrumbItem } from "@/types"
+import type { PaginatedResponse, BreadcrumbItem, PageProps } from "@/types"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface Warehouse {
@@ -28,7 +28,7 @@ interface Warehouse {
     updated_at: string
 }
 
-interface WarehousesIndexProps {
+interface WarehousesIndexProps extends PageProps {
     warehouses: PaginatedResponse<Warehouse>
     stats: {
         total_warehouses: number

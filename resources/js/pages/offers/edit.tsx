@@ -17,7 +17,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from "@dnd-kit/utilities"
 import AppLayout from "@/layouts/app-layout"
 import { useUnits } from "@/hooks/use-units"
-import type { BreadcrumbItem, Customer } from "@/types"
+import type { BreadcrumbItem, Customer, PageProps } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { route } from "ziggy-js"
 
@@ -76,7 +76,7 @@ interface Product {
     number?: string
 }
 
-interface OffersEditProps {
+interface OffersEditProps extends PageProps {
     offer: Offer
     customers: Customer[]
     layouts: any[]
@@ -111,7 +111,7 @@ export default function OffersEdit() {
         layout_id: offer.layout_id?.toString() || "",
         status: offer.status,
         vat_regime: offer.vat_regime || "standard",
-        items: offer.items.map((item) => ({
+        items: offer.items.map((item): OfferItem => ({
             id: item.id,
             product_id: (item as any).product_id,
             product_sku: (item as any).product?.sku,
@@ -143,11 +143,11 @@ export default function OffersEdit() {
         const itemsWithTotals = data.items.map((item) => {
             const baseTotal = item.quantity * item.unit_price
             let discountAmount = 0
-            if (item.discount_type && item.discount_value !== null) {
+            if (item.discount_type && item.discount_value != null) {
                 if (item.discount_type === 'percentage') {
-                    discountAmount = baseTotal * (item.discount_value / 100)
+                    discountAmount = baseTotal * (Number(item.discount_value) / 100)
                 } else {
-                    discountAmount = Math.min(item.discount_value, baseTotal)
+                    discountAmount = Math.min(Number(item.discount_value), baseTotal)
                 }
             }
             return {
@@ -225,11 +225,11 @@ export default function OffersEdit() {
                 if (field === "quantity" || field === "unit_price" || field === "discount_type" || field === "discount_value") {
                     const baseTotal = Number(updatedItem.quantity) * Number(updatedItem.unit_price)
                     let discountAmount = 0
-                    if (updatedItem.discount_type && updatedItem.discount_value !== null) {
+                    if (updatedItem.discount_type && updatedItem.discount_value != null) {
                         if (updatedItem.discount_type === 'percentage') {
-                            discountAmount = baseTotal * (updatedItem.discount_value / 100)
+                            discountAmount = baseTotal * (Number(updatedItem.discount_value) / 100)
                         } else {
-                            discountAmount = Math.min(updatedItem.discount_value, baseTotal)
+                            discountAmount = Math.min(Number(updatedItem.discount_value), baseTotal)
                         }
                     }
                     updatedItem.discount_amount = discountAmount

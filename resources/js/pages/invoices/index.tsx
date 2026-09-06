@@ -37,11 +37,11 @@ import AppLayout from "@/layouts/app-layout"
 import { SendEmailDialog } from "@/components/send-email-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import type { BreadcrumbItem, Invoice } from "@/types"
+import type { BreadcrumbItem, Invoice, PageProps } from "@/types"
 import { route } from "ziggy-js"
 import { Pagination } from "@/components/pagination"
 
-interface InvoicesIndexProps {
+interface InvoicesIndexProps extends PageProps {
     invoices: {
         data: Invoice[]
         links: any[]
@@ -474,9 +474,9 @@ export default function InvoicesIndex() {
                                         <TableCell>{new Date(invoice.due_date).toLocaleDateString("de-DE")}</TableCell>
                                         <TableCell className="font-medium">
                                             {formatCurrency(invoice.total)}
-                                            {invoice.reminder_fee > 0 && (
+                                            {Number(invoice.reminder_fee ?? 0) > 0 && (
                                                 <div className="text-xs text-orange-600">
-                                                    + {formatCurrency(invoice.reminder_fee)} Gebühr
+                                                    + {formatCurrency(Number(invoice.reminder_fee))} Gebühr
                                                 </div>
                                             )}
                                         </TableCell>
@@ -484,7 +484,7 @@ export default function InvoicesIndex() {
                                         <TableCell>
                                             <div className="flex flex-col gap-1">
                                                 {getReminderBadge(invoice)}
-                                                {invoice.reminder_level > 0 && (
+                                                {(invoice.reminder_level ?? 0) > 0 && (
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
@@ -577,7 +577,7 @@ export default function InvoicesIndex() {
                                                             </DropdownMenuItem>
                                                         )}
 
-                                                        {(invoice.status === "overdue" || invoice.status === "sent") && invoice.reminder_level < 5 && (
+                                                        {(invoice.status === "overdue" || invoice.status === "sent") && (invoice.reminder_level ?? 0) < 5 && (
                                                             <DropdownMenuItem onClick={() => handleSendReminder(invoice)}>
                                                                 <Bell className="mr-2 h-4 w-4" />
                                                                 Mahnung versenden

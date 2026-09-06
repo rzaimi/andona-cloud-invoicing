@@ -1,3 +1,5 @@
+import type { LucideIcon } from "lucide-react"
+
 export interface Company {
     id: string
     name: string
@@ -31,9 +33,13 @@ export interface User {
     id: string
     name: string
     email: string
+    email_verified_at?: string | null
+    avatar?: string
     company_id?: string
-    role: "admin" | "user"
+    role: "admin" | "user" | "employee"
     status: "active" | "inactive"
+    roles?: string[]
+    permissions?: string[]
     company?: Company
     created_at: string
     updated_at: string
@@ -212,7 +218,6 @@ export interface Invoice {
     tax_amount: number
     total: number
     vat_regime?: string
-    service_date?: string
     service_period_start?: string
     service_period_end?: string
     bauvorhaben?: string
@@ -239,15 +244,33 @@ export interface Invoice {
     buyer_vat_id?: string
     vat_exemption_type?: "none" | "eu_intracommunity" | "export" | "other"
     vat_exemption_reason?: string
+    reminder_level?: number
+    reminder_fee?: number | string
     correctsInvoice?: Invoice
     correctedByInvoice?: Invoice
     company?: Company
     customer?: Customer
     user?: User
     items?: InvoiceItem[]
+    payments?: Payment[]
     layout?: InvoiceLayout
     created_at: string
     updated_at: string
+}
+
+export interface Payment {
+    id: string
+    company_id?: string
+    invoice_id?: string
+    amount: number | string
+    status: string
+    payment_date?: string
+    payment_method?: string
+    reference?: string
+    notes?: string
+    invoice?: Invoice
+    created_at?: string
+    updated_at?: string
 }
 
 export interface OfferItem {
@@ -329,6 +352,7 @@ export interface RecurringInvoiceProfile {
     notes?: string | null
     bauvorhaben?: string | null
     auftragsnummer?: string | null
+    service_period_full_month?: boolean
     interval_unit: "day" | "week" | "month" | "quarter" | "year"
     interval_count: number
     day_of_month?: number | null
@@ -401,6 +425,11 @@ export interface PaginatedResponse<T> {
     total: number
     from: number
     to: number
+    path?: string
+    first_page_url?: string | null
+    last_page_url?: string | null
+    prev_page_url?: string | null
+    next_page_url?: string | null
     links: Array<{
         url: string | null
         label: string
@@ -440,4 +469,50 @@ export interface ApiResponse<T = any> {
     message?: string
     errors?: FormErrors
     success: boolean
+}
+
+export interface Auth {
+    user: User | null
+    available_companies?: Array<{ id: string; name: string }>
+}
+
+export interface FlashMessages {
+    success?: string | null
+    error?: string | null
+    upload_errors?: Record<string, string> | string[] | null
+    [key: string]: unknown
+}
+
+/**
+ * Props shared with every Inertia page by HandleInertiaRequests.
+ */
+export interface SharedData {
+    name: string
+    quote: { message: string; author: string }
+    csrf_token?: string
+    csrfToken?: string
+    flash: FlashMessages
+    auth: Auth
+    available_companies?: Array<{ id: string; name: string }>
+    sidebarOpen?: boolean
+    [key: string]: unknown
+}
+
+/**
+ * Base type for a page's props. Page-specific prop interfaces should
+ * `extends PageProps` so `usePage<T>()` (Inertia v3 requires an index
+ * signature on the generic) type-checks.
+ */
+export interface PageProps {
+    auth: Auth
+    flash?: FlashMessages
+    [key: string]: unknown
+}
+
+export interface NavItem {
+    title: string
+    href: string
+    icon?: LucideIcon | null
+    isActive?: boolean
+    adminOnly?: boolean
 }

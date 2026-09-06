@@ -17,7 +17,7 @@ import { CSS } from "@dnd-kit/utilities"
 import axios from "axios"
 import AppLayout from "@/layouts/app-layout"
 import { useUnits } from "@/hooks/use-units"
-import type { BreadcrumbItem, Customer } from "@/types"
+import type { BreadcrumbItem, Customer, PageProps } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { AbschlagSelectionDialog } from "@/components/abschlag-selection-dialog"
 import type { AbschlagRef, SelectableAbschlag } from "@/components/abschlag-selection-dialog"
@@ -51,7 +51,7 @@ interface Product {
     number?: string
 }
 
-interface InvoicesCreateProps {
+interface InvoicesCreateProps extends PageProps {
     customers: Customer[]
     layouts: any[]
     products: Product[]

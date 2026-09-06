@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Building2, User, FileText, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { BreadcrumbItem, Customer } from "@/types"
+import type { BreadcrumbItem, Customer, PageProps } from "@/types"
 
 interface Document {
     id: string
@@ -26,7 +26,7 @@ interface Document {
     created_at: string
 }
 
-interface CustomersEditProps {
+interface CustomersEditProps extends PageProps {
     customer: Customer & { documents?: Document[] }
 }
 

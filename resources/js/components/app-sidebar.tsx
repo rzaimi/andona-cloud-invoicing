@@ -2,6 +2,7 @@
 
 import type * as React from "react"
 import { Link } from "@inertiajs/react"
+import type { PageProps } from "@/types"
 import {
     Building2,
     Users,
@@ -127,18 +128,23 @@ interface Company {
 }
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-    user: User
+    user?: User
     stats?: Stats
     available_companies?: Company[]
 }
 
-export function AppSidebar({ user, stats, ...props }: AppSidebarProps) {
-    const { url, props: pageProps } = usePage<{ auth?: { available_companies?: Company[] } }>()
+export function AppSidebar({ user: userProp, stats, ...props }: AppSidebarProps) {
+    const { url, props: pageProps } = usePage<PageProps>()
+    const user = userProp ?? (pageProps.auth?.user as User | null | undefined)
     const availableCompanies = pageProps.auth?.available_companies || []
-    const canSwitchCompany = availableCompanies.length > 0 && user.permissions?.includes("manage_companies")
-    const [selectedCompanyId, setSelectedCompanyId] = useState<string>(user.company?.id || "")
+    const canSwitchCompany = availableCompanies.length > 0 && !!user?.permissions?.includes("manage_companies")
+    const [selectedCompanyId, setSelectedCompanyId] = useState<string>(user?.company?.id || "")
     const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false)
     const [companySearch, setCompanySearch] = useState("")
+
+    if (!user) {
+        return null
+    }
 
     const filteredCompanies = availableCompanies.filter((c) =>
         c.name.toLowerCase().includes(companySearch.toLowerCase())

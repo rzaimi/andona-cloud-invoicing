@@ -3,10 +3,10 @@
 import { Head, useForm, usePage } from "@inertiajs/react"
 import AppLayout from "@/layouts/app-layout"
 import { RecurringProfileForm, type RecurringFormData } from "./profile-form"
-import type { BreadcrumbItem, Customer } from "@/types"
+import type { BreadcrumbItem, Customer, PageProps } from "@/types"
 import { route } from "ziggy-js"
 
-interface CreateProps {
+interface CreateProps extends PageProps {
     customers: Customer[]
     layouts: Array<{ id: string; name: string; is_default?: boolean }>
     products: Array<{

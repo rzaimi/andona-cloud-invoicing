@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Package, Plus, Search, Filter, Edit, Eye, Trash2, AlertTriangle, TrendingUp, TrendingDown, Download } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { Product, Category, PaginatedResponse, BreadcrumbItem } from "@/types"
+import type { Product, Category, PaginatedResponse, BreadcrumbItem, User, PageProps } from "@/types"
 import { route } from "ziggy-js"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 

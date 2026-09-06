@@ -11,10 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Plus, Edit, Trash2, Search, Building2, User, Eye, Download } from 'lucide-react';
 import AppLayout from "@/layouts/app-layout"
-import type { BreadcrumbItem, Customer } from "@/types"
+import type { BreadcrumbItem, Customer, PageProps } from "@/types"
 import { route } from "ziggy-js"
 
-interface CustomersIndexProps {
+interface CustomersIndexProps extends PageProps {
     customers: {
         data: Customer[]
         links: any[]

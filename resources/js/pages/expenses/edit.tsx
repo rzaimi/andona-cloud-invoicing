@@ -88,7 +88,7 @@ export default function ExpensesEdit() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         // Convert "none" to null before submitting
-        setData("category_id", data.category_id === "none" ? null : data.category_id)
+        setData("category_id", data.category_id === "none" ? "" : data.category_id)
         // Use POST + method spoofing for reliable file uploads across browsers/servers
         transform((data) => ({ ...data, _method: "PUT" }))
         post(`/expenses/${expense.id}`, {

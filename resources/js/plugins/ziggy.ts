@@ -23,12 +23,12 @@ export function initializeZiggy() {
     (window as any).Ziggy = ziggyConfig;
     
     // Make route function available globally
-    (window as any).route = (name: RouteName, params?: RouteParams, absolute?: boolean) => 
+    (window as any).route = (name: RouteName, params?: RouteParams<RouteName>, absolute?: boolean) => 
         ziggyRoute(name, params, absolute, ziggyConfig);
 }
 
 // Export a function to get route (synchronous now since routes are loaded from file)
-export function getRoute(name: RouteName, params?: RouteParams, absolute?: boolean): string {
+export function getRoute(name: RouteName, params?: RouteParams<RouteName>, absolute?: boolean): string {
     if (!ziggyConfig) {
         initializeZiggy();
     }
@@ -36,7 +36,7 @@ export function getRoute(name: RouteName, params?: RouteParams, absolute?: boole
 }
 
 // Make route function available synchronously
-export function route(name: RouteName, params?: RouteParams, absolute?: boolean): string {
+export function route(name: RouteName, params?: RouteParams<RouteName>, absolute?: boolean): string {
     if (!ziggyConfig) {
         initializeZiggy();
     }

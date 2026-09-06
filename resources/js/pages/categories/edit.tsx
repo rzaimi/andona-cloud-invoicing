@@ -25,18 +25,18 @@ interface CategoryFormData {
     description: string
     color: string
     icon: string
-    parent_id: string | null
+    parent_id: string
     sort_order: number
     is_active: boolean
 }
 
 export default function CategoryEdit({ user, category, parentCategories }: CategoryEditProps) {
-    const { data, setData, put, processing, errors } = useForm<CategoryFormData>({
+    const { data, setData, put, processing, errors, transform } = useForm<CategoryFormData>({
         name: category.name,
         description: category.description || "",
         color: category.color || "#3b82f6",
-        icon: category.icon || null,
-        parent_id: category.parent_id || null,
+        icon: category.icon || "none",
+        parent_id: category.parent_id || "none",
         sort_order: category.sort_order || 0,
         is_active: category.is_active,
     })
@@ -44,24 +44,20 @@ export default function CategoryEdit({ user, category, parentCategories }: Categ
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
 
-        // Transform data before sending
-        const submitData = {
-            ...data,
-            parent_id: data.parent_id === "none" ? null : data.parent_id,
-            icon: data.icon === "none" ? null : data.icon,
-        }
-
-        put(`/categories/${category.id}`, {
-            data: submitData,
-        })
+        transform((form) => ({
+            ...form,
+            parent_id: form.parent_id === "none" ? null : form.parent_id,
+            icon: form.icon === "none" ? null : form.icon,
+        }))
+        put(`/categories/${category.id}`)
     }
 
     const handleParentChange = (value: string) => {
-        setData("parent_id", value === "none" ? null : value)
+        setData("parent_id", value)
     }
 
     const handleIconChange = (value: string) => {
-        setData("icon", value === "none" ? null : value)
+        setData("icon", value)
     }
 
     const deleteCategory = () => {

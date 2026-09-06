@@ -12,10 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Play, Pause, RotateCw, Edit, Trash2, Repeat } from "lucide-react"
 import { route } from "ziggy-js"
-import type { BreadcrumbItem, RecurringInvoiceProfile } from "@/types"
+import type { BreadcrumbItem, RecurringInvoiceProfile, PageProps } from "@/types"
 import { Pagination } from "@/components/pagination"
 
-interface IndexProps {
+interface IndexProps extends PageProps {
     profiles: {
         data: (RecurringInvoiceProfile & { generated_invoices_count: number })[]
         links: any[]

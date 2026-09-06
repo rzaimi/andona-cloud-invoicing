@@ -181,8 +181,8 @@ export default function CustomerReports({ customerStats }: CustomerReportsProps)
                                         width={150}
                                     />
                                     <Tooltip 
-                                        formatter={(value: number, name: string) => [
-                                            name === "umsatz" ? formatCurrency(value) : value,
+                                        formatter={(value, name) => [
+                                            name === "umsatz" ? formatCurrency(Number(value ?? 0)) : Number(value ?? 0),
                                             name === "umsatz" ? "Umsatz" : "Rechnungen"
                                         ]}
                                         contentStyle={{ backgroundColor: "white", border: "1px solid #e5e7eb" }}

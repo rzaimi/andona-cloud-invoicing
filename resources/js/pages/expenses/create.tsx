@@ -10,10 +10,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { BreadcrumbItem } from "@/types"
+import type { BreadcrumbItem, PageProps } from "@/types"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
-interface ExpenseCreateProps {
+interface ExpenseCreateProps extends PageProps {
     categories: Array<{
         id: string
         name: string
@@ -65,7 +65,7 @@ export default function ExpensesCreate() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         // Convert "none" to null before submitting
-        setData("category_id", data.category_id === "none" ? null : data.category_id)
+        setData("category_id", data.category_id === "none" ? "" : data.category_id)
         post("/expenses", {
             forceFormData: true,
             onBefore: () => {

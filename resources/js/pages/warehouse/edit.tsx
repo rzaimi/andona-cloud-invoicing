@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft, Save, AlertCircle } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
+import type { PageProps } from "@/types"
 
 interface Warehouse {
     id: string
@@ -29,7 +30,7 @@ interface Warehouse {
     is_active: boolean
 }
 
-interface WarehouseEditProps {
+interface WarehouseEditProps extends PageProps {
     warehouse: Warehouse
 }
 

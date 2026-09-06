@@ -33,7 +33,7 @@ import {
     Database
 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { BreadcrumbItem } from "@/types"
+import type { BreadcrumbItem, PageProps } from "@/types"
 import { route } from "ziggy-js"
 
 // Import existing components
@@ -50,7 +50,7 @@ import AppearanceSettingsTab from "./tabs/appearance"
 import DatevSettingsTab from "./tabs/datev"
 import CompanySettingsAdminTab from "./tabs/company-settings"
 
-interface SettingsPageProps {
+interface SettingsPageProps extends PageProps {
     company: any
     settings: any
     companySettings?: any

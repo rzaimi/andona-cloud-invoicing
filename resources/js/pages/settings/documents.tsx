@@ -26,7 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Upload, Download, FileText, Edit, Trash2, Search, Filter, X, Tag, Link2, CheckCircle, AlertCircle, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import { Pagination } from "@/components/pagination"
-import type { User } from "@/types"
+import type { User, PageProps } from "@/types"
 import { route } from "ziggy-js"
 import { useState } from "react"
 
@@ -55,7 +55,7 @@ interface Document {
     formatted_size?: string
 }
 
-interface DocumentsProps {
+interface DocumentsProps extends PageProps {
     user: User
     documents: {
         data: Document[]

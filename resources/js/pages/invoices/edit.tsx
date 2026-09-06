@@ -20,7 +20,7 @@ import AppLayout from "@/layouts/app-layout"
 import { AbschlagSelectionDialog } from "@/components/abschlag-selection-dialog"
 import type { AbschlagRef, SelectableAbschlag } from "@/components/abschlag-selection-dialog"
 import { useUnits } from "@/hooks/use-units"
-import type { BreadcrumbItem, Customer, Invoice, InvoiceItem } from "@/types"
+import type { BreadcrumbItem, Customer, Invoice, InvoiceItem, PageProps } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { InvoiceCorrectionDialog } from "@/components/invoice-correction-dialog"
 import { InvoiceAuditLogDialog } from "@/components/invoice-audit-log-dialog"
@@ -63,7 +63,7 @@ interface Document {
     created_at: string
 }
 
-interface InvoicesEditProps {
+interface InvoicesEditProps extends PageProps {
     invoice: Invoice & { items: InvoiceItem[]; documents?: Document[] }
     customers: Customer[]
     layouts: any[]
@@ -74,11 +74,6 @@ interface InvoicesEditProps {
         reduced_tax_rate?: number
         decimal_separator: string
         thousands_separator: string
-    }
-    auth?: {
-        user?: {
-            permissions?: string[]
-        }
     }
 }
 

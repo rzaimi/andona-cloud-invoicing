@@ -155,7 +155,7 @@ export default function ExpensesReports({ expenses, totals, filters }: ExpensesR
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="name" />
                                     <YAxis />
-                                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                                    <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} />
                                     <Legend />
                                     <Bar dataKey="Netto" fill="#8884d8" />
                                     <Bar dataKey="MwSt" fill="#82ca9d" />

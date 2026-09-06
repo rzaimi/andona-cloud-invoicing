@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, LayoutGrid, List, Plus } from "lucide-react"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
-import type { BreadcrumbItem } from "@/types"
+import type { BreadcrumbItem, PageProps } from "@/types"
 
 type InvoiceCard = {
     id: string
@@ -24,7 +24,7 @@ type InvoiceCard = {
 
 type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled"
 
-interface BoardProps {
+interface BoardProps extends PageProps {
     columns: Record<InvoiceStatus, InvoiceCard[]>
     perColumn: number
 }

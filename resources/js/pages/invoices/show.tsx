@@ -27,7 +27,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import AppLayout from "@/layouts/app-layout"
-import type { BreadcrumbItem, Invoice, InvoiceItem } from "@/types"
+import type { BreadcrumbItem, Invoice, InvoiceItem, PageProps } from "@/types"
 import { route } from "ziggy-js"
 import { toast } from "sonner"
 
@@ -46,7 +46,7 @@ interface Payment {
     created_at: string
 }
 
-interface InvoicesShowProps {
+interface InvoicesShowProps extends PageProps {
     invoice: Invoice & {
         items: InvoiceItem[]
         payments?: Payment[]
@@ -114,7 +114,8 @@ export default function InvoicesShow() {
         }).format(numAmount)
     }
 
-    const formatDate = (date: string) => {
+    const formatDate = (date?: string | null) => {
+        if (!date) return "—"
         return new Date(date).toLocaleDateString("de-DE")
     }
 

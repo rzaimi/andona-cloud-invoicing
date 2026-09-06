@@ -167,7 +167,7 @@ export default function VatReports({ vat, months, filters }: VatReportsProps) {
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="Monat" />
                                     <YAxis />
-                                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                                    <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} />
                                     <Legend />
                                     <Bar dataKey="Ausgangs-MwSt." fill="#3b82f6" />
                                     <Bar dataKey="Eingangs-MwSt." fill="#22c55e" />

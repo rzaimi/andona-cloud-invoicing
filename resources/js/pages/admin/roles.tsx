@@ -110,11 +110,12 @@ export default function RolesIndex({ roles, permissions }: Props) {
         perm: string,
     ) => {
         const current = form.data.permissions
-        form.setData("permissions",
-            current.includes(perm)
+        form.setData({
+            ...form.data,
+            permissions: current.includes(perm)
                 ? current.filter((p) => p !== perm)
                 : [...current, perm],
-        )
+        })
     }
 
     // ── stats ─────────────────────────────────────────────────────────────

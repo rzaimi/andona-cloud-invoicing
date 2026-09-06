@@ -190,7 +190,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                                     tickFormatter={(value) => formatCurrency(value)}
                                 />
                                 <Tooltip 
-                                    formatter={(value: number) => formatCurrency(value)}
+                                    formatter={(value) => formatCurrency(Number(value ?? 0))}
                                     contentStyle={{ backgroundColor: "white", border: "1px solid #e5e7eb" }}
                                 />
                                 <Legend />
@@ -222,7 +222,7 @@ export default function RevenueReports({ period, revenueData }: RevenueReportsPr
                                     tickFormatter={(value) => formatCurrency(value)}
                                 />
                                 <Tooltip 
-                                    formatter={(value: number) => formatCurrency(value)}
+                                    formatter={(value) => formatCurrency(Number(value ?? 0))}
                                     contentStyle={{ backgroundColor: "white", border: "1px solid #e5e7eb" }}
                                 />
                                 <Legend />

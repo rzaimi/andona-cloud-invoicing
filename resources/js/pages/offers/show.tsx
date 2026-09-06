@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CheckCircle, XCircle, Clock, Eye } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { BreadcrumbItem } from "@/types"
+import type { BreadcrumbItem, PageProps } from "@/types"
 import { route } from "ziggy-js"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
@@ -22,6 +22,7 @@ interface OfferItem {
     discount_type?: "percentage" | "fixed" | null
     discount_value?: number | null
     discount_amount?: number
+    product?: { number?: string; sku?: string }
 }
 
 interface Offer {
@@ -56,7 +57,7 @@ interface Offer {
     created_at: string
 }
 
-interface OffersShowProps {
+interface OffersShowProps extends PageProps {
     offer: Offer
     settings: any
 }

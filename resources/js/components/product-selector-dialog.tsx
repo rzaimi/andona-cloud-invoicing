@@ -27,6 +27,7 @@ interface ProductSelectorDialogProps {
         quantity: number
         unit_price: number
         unit: string
+        tax_rate?: number
         product_id?: string
         product_sku?: string
         product_number?: string
@@ -60,6 +61,7 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
             quantity: 1,
             unit_price: Number(product.price),
             unit: product.unit,
+            tax_rate: product.tax_rate,
             product_id: product.id,
             product_sku: product.sku,
             product_number: product.number,

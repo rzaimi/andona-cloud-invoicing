@@ -37,7 +37,7 @@ import {
     Clock,
 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { Product, Category, BreadcrumbItem } from "@/types"
+import type { Product, Category, BreadcrumbItem, User } from "@/types"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface ProductShowProps {
@@ -563,17 +563,17 @@ export default function ProductShow({ product, warehouses = [], stock_movements 
                                     <p className="text-xl font-bold">{formatCurrency(product.price * (1 + product.tax_rate / 100))}</p>
                                 </div>
 
-                                {product.cost_price > 0 && (
+                                {(product.cost_price ?? 0) > 0 && (
                                     <>
                                         <div className="border-t pt-2">
                                             <label className="text-sm font-medium text-muted-foreground">Einkaufspreis</label>
-                                            <p className="font-medium">{formatCurrency(product.cost_price)}</p>
+                                            <p className="font-medium">{formatCurrency(product.cost_price ?? 0)}</p>
                                         </div>
 
                                         <div>
                                             <label className="text-sm font-medium text-muted-foreground">Gewinnmarge</label>
                                             <p className="font-medium text-green-600">
-                                                {formatCurrency(product.price - product.cost_price)} ({Math.round(profitMargin)}%)
+                                                {formatCurrency(product.price - (product.cost_price ?? 0))} ({Math.round(profitMargin)}%)
                                             </p>
                                         </div>
                                     </>

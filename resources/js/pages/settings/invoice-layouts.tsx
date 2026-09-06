@@ -33,7 +33,7 @@ interface InvoiceLayoutSettings {
         secondary: string
         accent: string
         text: string
-        skonto: string
+        skonto?: string
     }
     fonts: {
         heading: string
@@ -497,10 +497,13 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
             }
         }
 
+        // `settings` is a nested serializable object; Inertia v3 types the payload
+        // as FormDataConvertible, so cast (it is JSON-encoded on the wire).
+        const payload = submitData as unknown as Record<string, never>
         if (editingLayout) {
-            router.put(route("invoice-layouts.update", editingLayout.id), submitData, { onSuccess, onError })
+            router.put(route("invoice-layouts.update", editingLayout.id), payload, { onSuccess, onError })
         } else {
-            router.post(route("invoice-layouts.store"), submitData, { onSuccess, onError })
+            router.post(route("invoice-layouts.store"), payload, { onSuccess, onError })
         }
     }
 

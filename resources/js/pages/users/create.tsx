@@ -27,6 +27,9 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
         password_confirmation: "",
         role: "user",
         company_id: current_company_id,
+        staff_number: "",
+        department: "",
+        job_title: "",
     })
 
     const handleSubmit = (e: React.FormEvent) => {

@@ -29,9 +29,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import AppLayout from "@/layouts/app-layout"
-import type { Customer, Invoice, Offer, BreadcrumbItem } from "@/types"
+import type { Customer, Invoice, Offer, BreadcrumbItem, PageProps } from "@/types"
 
-interface CustomerShowProps {
+interface CustomerShowProps extends PageProps {
     customer: Customer & {
         invoices: Invoice[]
         offers: Offer[]
@@ -91,7 +91,7 @@ export default function CustomerShow() {
         const Icon = config.icon
 
         return (
-            <Badge variant={config.variant} className={config.className}>
+            <Badge variant={config.variant} className={(config as { className?: string }).className}>
                 <Icon className="w-3 h-3 mr-1" />
                 {config.text}
             </Badge>

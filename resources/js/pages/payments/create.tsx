@@ -11,9 +11,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { BreadcrumbItem, Invoice } from "@/types"
+import type { BreadcrumbItem, Invoice, PageProps } from "@/types"
 
-interface PaymentCreateProps {
+interface PaymentCreateProps extends PageProps {
     invoices: Invoice[]
     selectedInvoice?: Invoice & {
         payments?: Array<{

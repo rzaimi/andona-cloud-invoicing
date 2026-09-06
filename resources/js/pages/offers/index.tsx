@@ -30,11 +30,11 @@ import {
 import { route } from "ziggy-js"
 import AppLayout from "@/layouts/app-layout"
 import { SendEmailDialog } from "@/components/send-email-dialog"
-import type { BreadcrumbItem, Offer, PaginatedData } from "@/types"
+import type { BreadcrumbItem, Offer, PaginatedResponse, PageProps } from "@/types"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
-interface OffersIndexProps {
-    offers: PaginatedData<Offer>
+interface OffersIndexProps extends PageProps {
+    offers: PaginatedResponse<Offer>
     filters: {
         search?: string
         status?: string
@@ -375,7 +375,7 @@ export default function OffersIndex() {
                                                             {offer.number}
                                                         </Link>
                                                     </TableCell>
-                                                    <TableCell className="py-2 text-sm">{offer.customer.name}</TableCell>
+                                                    <TableCell className="py-2 text-sm">{offer.customer?.name}</TableCell>
                                                     <TableCell className="py-2 text-sm">{formatDate(offer.issue_date)}</TableCell>
                                                     <TableCell className="py-2 text-sm">
                                                         <div className={`${isExpired ? "text-red-600" : isExpiringSoon ? "text-orange-600" : ""}`}>

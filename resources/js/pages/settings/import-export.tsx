@@ -8,11 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Upload, Download, FileText, CheckCircle, AlertTriangle, Info } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { User } from "@/types"
+import type { User, PageProps } from "@/types"
 import { route } from "ziggy-js"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-interface ImportExportProps {
+interface ImportExportProps extends PageProps {
     user: User
 }
 

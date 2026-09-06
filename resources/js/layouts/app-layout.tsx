@@ -28,10 +28,12 @@ import { Link, usePage } from "@inertiajs/react"
 import AppearanceToggleDropdown from "@/components/appearance-dropdown"
 import { FlashToaster } from "@/components/flash-toaster"
 import { CommandPalette } from "@/components/command-palette"
+import type { User } from "@/types"
 
 interface AppLayoutProps {
     children: React.ReactNode
     breadcrumbs?: { title: string; href?: string }[]
+    user?: User
 }
 
 export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps) {

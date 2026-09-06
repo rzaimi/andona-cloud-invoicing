@@ -166,7 +166,7 @@ export default function ProfitReports({ profit, months, filters }: ProfitReports
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="Monat" />
                                     <YAxis />
-                                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                                    <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} />
                                     <Legend />
                                     <Line type="monotone" dataKey="Einnahmen" stroke="#22c55e" strokeWidth={2} />
                                     <Line type="monotone" dataKey="Ausgaben" stroke="#ef4444" strokeWidth={2} />

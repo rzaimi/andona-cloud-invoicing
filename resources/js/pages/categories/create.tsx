@@ -24,18 +24,18 @@ interface CategoryFormData {
     description: string
     color: string
     icon: string
-    parent_id: string | null
+    parent_id: string
     sort_order: number
     is_active: boolean
 }
 
 export default function CategoryCreate({ user, parentCategories }: CategoryCreateProps) {
-    const { data, setData, post, processing, errors } = useForm<CategoryFormData>({
+        const { data, setData, post, processing, errors, transform } = useForm<CategoryFormData>({
         name: "",
         description: "",
         color: "#3b82f6",
         icon: "none",
-        parent_id: null,
+        parent_id: "none",
         sort_order: 0,
         is_active: true,
     })
@@ -43,24 +43,20 @@ export default function CategoryCreate({ user, parentCategories }: CategoryCreat
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
 
-        // Transform data before sending
-        const submitData = {
-            ...data,
-            parent_id: data.parent_id === "none" ? null : data.parent_id,
-            icon: data.icon === "none" ? null : data.icon,
-        }
-
-        post("/categories", {
-            data: submitData,
-        })
+        transform((form) => ({
+            ...form,
+            parent_id: form.parent_id === "none" ? null : form.parent_id,
+            icon: form.icon === "none" ? null : form.icon,
+        }))
+        post("/categories")
     }
 
     const handleParentChange = (value: string) => {
-        setData("parent_id", value === "none" ? null : value)
+        setData("parent_id", value)
     }
 
     const handleIconChange = (value: string) => {
-        setData("icon", value === "none" ? null : value)
+        setData("icon", value)
     }
 
     // Check if there are any errors

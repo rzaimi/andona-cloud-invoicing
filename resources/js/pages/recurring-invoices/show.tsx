@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Edit, Play, Pause, RotateCw, Trash2, ArrowLeft } from "lucide-react"
 import { route } from "ziggy-js"
-import type { BreadcrumbItem, Invoice, RecurringInvoiceProfile } from "@/types"
+import type { BreadcrumbItem, Invoice, RecurringInvoiceProfile, PageProps } from "@/types"
 
-interface ShowProps {
+interface ShowProps extends PageProps {
     profile: RecurringInvoiceProfile & { generated_invoices?: Invoice[] }
     nextRuns: string[]
     scheduleLabel: string

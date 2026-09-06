@@ -20,7 +20,7 @@ import {
     ReceiptText,
 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { BreadcrumbItem, User, Customer, Invoice, Offer, Product } from "@/types"
+import type { BreadcrumbItem, User, Customer, Invoice, Offer, Product, PageProps } from "@/types"
 import { Head, Link, usePage } from "@inertiajs/react"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
@@ -69,7 +69,7 @@ interface GrowthData {
     customer_growth: number
 }
 
-interface DashboardProps {
+interface DashboardProps extends PageProps {
     stats: DashboardStats
     growth: GrowthData
     recent: {

@@ -49,7 +49,7 @@ interface OfferLayoutSettings {
     }
     branding: {
         logo_position: string
-        logo_size: string
+        logo_size?: string
         show_logo?: boolean
         company_info_position?: string
     }
@@ -486,10 +486,13 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
             }
         }
 
+        // `settings` is a nested serializable object; Inertia v3 types the payload
+        // as FormDataConvertible, so cast (it is JSON-encoded on the wire).
+        const payload = submitData as unknown as Record<string, never>
         if (editingLayout) {
-            router.put(route("offer-layouts.update", editingLayout.id), submitData, { onSuccess, onError })
+            router.put(route("offer-layouts.update", editingLayout.id), payload, { onSuccess, onError })
         } else {
-            router.post(route("offer-layouts.store"), submitData, { onSuccess, onError })
+            router.post(route("offer-layouts.store"), payload, { onSuccess, onError })
         }
     }
 

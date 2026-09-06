@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowLeft, Edit, Package, TrendingUp, AlertTriangle, CheckCircle, XCircle, Warehouse as WarehouseIcon } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
-import type { BreadcrumbItem } from "@/types"
+import type { BreadcrumbItem, PageProps } from "@/types"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
 
 interface Warehouse {
@@ -59,7 +59,7 @@ interface StockMovement {
     }
 }
 
-interface WarehouseShowProps {
+interface WarehouseShowProps extends PageProps {
     warehouse: Warehouse
     stats: {
         total_products: number

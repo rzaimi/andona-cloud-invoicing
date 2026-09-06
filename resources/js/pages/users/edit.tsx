@@ -153,7 +153,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                     <Label htmlFor="role">
                                         Rolle <span className="text-red-500">*</span>
                                     </Label>
-                                    <Select value={data.role} onValueChange={(value) => setData("role", value)}>
+                                    <Select value={data.role} onValueChange={(value) => setData("role", value as typeof data.role)}>
                                         <SelectTrigger className={errors.role ? "border-red-500" : ""}>
                                             <SelectValue placeholder="Rolle auswählen" />
                                         </SelectTrigger>
@@ -175,7 +175,7 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                     <Label htmlFor="status">
                                         Status <span className="text-red-500">*</span>
                                     </Label>
-                                    <Select value={data.status} onValueChange={(value) => setData("status", value)}>
+                                    <Select value={data.status} onValueChange={(value) => setData("status", value as typeof data.status)}>
                                         <SelectTrigger className={errors.status ? "border-red-500" : ""}>
                                             <SelectValue placeholder="Status auswählen" />
                                         </SelectTrigger>
