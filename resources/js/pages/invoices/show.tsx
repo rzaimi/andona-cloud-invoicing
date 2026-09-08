@@ -76,7 +76,7 @@ export default function InvoicesShow() {
         auth?.user?.roles?.includes("admin")
     )
 
-    const canDeleteInvoice = !!auth?.user?.permissions?.includes("manage_companies")
+    const canDeleteInvoice = !!auth?.user?.is_super_admin
 
     const handleRefreshSnapshot = () => {
         if (!confirm("Fehlende Firmendaten-Felder ergänzen? Bereits erfasste Werte werden nicht überschrieben (GoBD-sicher).")) return

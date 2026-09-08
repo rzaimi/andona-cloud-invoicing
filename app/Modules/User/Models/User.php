@@ -6,18 +6,19 @@ use App\Modules\Company\Models\Company;
 use App\Modules\Document\Models\Document;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Offer\Models\Offer;
-use Spatie\Permission\Traits\HasRoles;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Database\Factories\UserFactory;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasUuids, HasRoles;
+    use HasFactory, HasRoles, HasUuids, Notifiable;
 
     /**
      * Create a new factory instance for the model.
@@ -72,6 +73,15 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    /**
+     * Platform super-admin (Spatie role). Distinct from company admins, who
+     * use the `admin` role and the legacy users.role = 'admin' column.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(['super_admin', 'super-admin']);
+    }
+
     public function isEmployee(): bool
     {
         return $this->role === 'employee';
@@ -82,7 +92,7 @@ class User extends Authenticatable
         return $this->isAdmin();
     }
 
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'linkable');
     }

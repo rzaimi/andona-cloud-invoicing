@@ -60,7 +60,7 @@ class HandleInertiaRequests extends Middleware
                     $permissions = [];
                     
                     if (method_exists($user, 'getRoleNames')) {
-                        $roles = $user->getRoleNames();
+                        $roles = $user->getRoleNames()->values()->all();
                     }
                     
                     if (method_exists($user, 'getAllPermissions')) {
@@ -83,6 +83,9 @@ class HandleInertiaRequests extends Middleware
                         'status' => $user->status ?? 'active',
                         'roles' => $roles,
                         'permissions' => $permissions,
+                        'is_super_admin' => method_exists($user, 'isSuperAdmin')
+                            ? $user->isSuperAdmin()
+                            : false,
                     ];
                     
                     // Ensure user always has a company selected

@@ -7,6 +7,7 @@ use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Offer\Models\Offer;
+use App\Modules\Offer\Models\OfferItem;
 use App\Modules\Payment\Models\Payment;
 use App\Modules\Product\Models\Product;
 use App\Modules\User\Models\User;
@@ -893,6 +894,31 @@ class MultiTenancyTest extends TestCase
         $this->assertDatabaseHas('invoices', ['id' => $draft->id]);
     }
 
+    public function test_manage_companies_without_super_admin_role_cannot_delete_invoice()
+    {
+        $admin = User::factory()->create(['company_id' => $this->company1->id]);
+        $admin->assignRole('admin');
+        $admin->givePermissionTo('manage_companies');
+        $this->actingAs($admin);
+
+        $draft = Invoice::create([
+            'company_id' => $this->company1->id,
+            'customer_id' => $this->customer1->id,
+            'user_id' => $admin->id,
+            'number' => 'RE-2024-DRAFT-PERM',
+            'status' => 'draft',
+            'issue_date' => now(),
+            'due_date' => now()->addDays(14),
+            'subtotal' => 100.00,
+            'tax_rate' => 0.19,
+            'tax_amount' => 19.00,
+            'total' => 119.00,
+        ]);
+
+        $this->delete("/invoices/{$draft->id}")->assertForbidden();
+        $this->assertDatabaseHas('invoices', ['id' => $draft->id]);
+    }
+
     public function test_super_admin_can_delete_draft_invoice()
     {
         $this->actingAs($this->superAdmin);
@@ -1324,7 +1350,7 @@ class MultiTenancyTest extends TestCase
             'total' => 119.00,
         ]);
 
-        \App\Modules\Offer\Models\OfferItem::create([
+        OfferItem::create([
             'offer_id' => $offer->id,
             'description' => 'Original Offer Item',
             'quantity' => 1,

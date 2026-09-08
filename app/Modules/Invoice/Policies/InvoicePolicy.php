@@ -34,7 +34,7 @@ class InvoicePolicy
 
     public function delete(User $user, Invoice $invoice): bool
     {
-        return $user->hasPermissionTo('manage_companies');
+        return $user->isSuperAdmin();
     }
 
     /**

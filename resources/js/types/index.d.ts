@@ -41,6 +41,7 @@ export interface User {
     status: "active" | "inactive"
     roles?: string[]
     permissions?: string[]
+    is_super_admin?: boolean
     company?: Company
     created_at: string
     updated_at: string

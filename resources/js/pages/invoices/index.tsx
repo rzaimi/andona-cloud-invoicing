@@ -75,7 +75,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" 
 export default function InvoicesIndex() {
     // @ts-ignore
     const { invoices, filters, stats, auth } = usePage<InvoicesIndexProps>().props
-    const canDeleteInvoice = !!auth?.user?.permissions?.includes("manage_companies")
+    const canDeleteInvoice = !!auth?.user?.is_super_admin
     const [search, setSearch] = useState(filters.search || "")
     const [status, setStatus] = useState(filters.status || "all")
     const [sendDialogOpen, setSendDialogOpen] = useState(false)
