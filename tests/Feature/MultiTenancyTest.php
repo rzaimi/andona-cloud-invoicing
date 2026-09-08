@@ -839,19 +839,15 @@ class MultiTenancyTest extends TestCase
 
     public function test_users_cannot_delete_sent_invoices_per_gobd()
     {
-        // GoBD: finalised (sent/paid/overdue/cancelled) invoices must be
-        // retained. The controller redirects back with a flash error rather
-        // than 403 so the user sees *why* the action was blocked.
         $this->actingAs($this->user1);
 
         $response = $this->delete("/invoices/{$this->invoice1->id}");
 
-        $response->assertRedirect();
-        $response->assertSessionHas('error');
+        $response->assertForbidden();
         $this->assertDatabaseHas('invoices', ['id' => $this->invoice1->id]);
     }
 
-    public function test_users_can_delete_their_own_draft_invoice()
+    public function test_company_users_cannot_delete_draft_invoices()
     {
         $this->actingAs($this->user1);
 
@@ -869,10 +865,53 @@ class MultiTenancyTest extends TestCase
             'total' => 119.00,
         ]);
 
-        $response = $this->delete("/invoices/{$draft->id}");
+        $this->delete("/invoices/{$draft->id}")->assertForbidden();
+        $this->assertDatabaseHas('invoices', ['id' => $draft->id]);
+    }
 
-        $response->assertRedirect();
-        // Deletes are permanent — the row is gone and the number is reusable.
+    public function test_company_admin_cannot_delete_draft_invoice()
+    {
+        $admin = User::factory()->create(['company_id' => $this->company1->id]);
+        $admin->assignRole('admin');
+        $this->actingAs($admin);
+
+        $draft = Invoice::create([
+            'company_id' => $this->company1->id,
+            'customer_id' => $this->customer1->id,
+            'user_id' => $admin->id,
+            'number' => 'RE-2024-DRAFT-ADMIN',
+            'status' => 'draft',
+            'issue_date' => now(),
+            'due_date' => now()->addDays(14),
+            'subtotal' => 100.00,
+            'tax_rate' => 0.19,
+            'tax_amount' => 19.00,
+            'total' => 119.00,
+        ]);
+
+        $this->delete("/invoices/{$draft->id}")->assertForbidden();
+        $this->assertDatabaseHas('invoices', ['id' => $draft->id]);
+    }
+
+    public function test_super_admin_can_delete_draft_invoice()
+    {
+        $this->actingAs($this->superAdmin);
+
+        $draft = Invoice::create([
+            'company_id' => $this->company1->id,
+            'customer_id' => $this->customer1->id,
+            'user_id' => $this->user1->id,
+            'number' => 'RE-2024-DRAFT-2',
+            'status' => 'draft',
+            'issue_date' => now(),
+            'due_date' => now()->addDays(14),
+            'subtotal' => 100.00,
+            'tax_rate' => 0.19,
+            'tax_amount' => 19.00,
+            'total' => 119.00,
+        ]);
+
+        $this->delete("/invoices/{$draft->id}")->assertRedirect();
         $this->assertDatabaseMissing('invoices', ['id' => $draft->id]);
     }
 

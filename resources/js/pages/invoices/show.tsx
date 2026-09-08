@@ -76,6 +76,8 @@ export default function InvoicesShow() {
         auth?.user?.roles?.includes("admin")
     )
 
+    const canDeleteInvoice = !!auth?.user?.permissions?.includes("manage_companies")
+
     const handleRefreshSnapshot = () => {
         if (!confirm("Fehlende Firmendaten-Felder ergänzen? Bereits erfasste Werte werden nicht überschrieben (GoBD-sicher).")) return
         router.post(`/invoices/${invoice.id}/refresh-snapshot`, {}, { preserveScroll: true })
@@ -349,10 +351,12 @@ export default function InvoicesShow() {
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        <Button variant="destructive" onClick={handleDelete}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Löschen
-                        </Button>
+                        {canDeleteInvoice && (
+                            <Button variant="destructive" onClick={handleDelete}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Löschen
+                            </Button>
+                        )}
                     </div>
                 </div>
 

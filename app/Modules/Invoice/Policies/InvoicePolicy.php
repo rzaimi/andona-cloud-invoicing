@@ -34,7 +34,7 @@ class InvoicePolicy
 
     public function delete(User $user, Invoice $invoice): bool
     {
-        return $this->belongsToSameCompany($user, $invoice);
+        return $user->hasPermissionTo('manage_companies');
     }
 
     /**

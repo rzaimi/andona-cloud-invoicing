@@ -74,7 +74,8 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" 
 
 export default function InvoicesIndex() {
     // @ts-ignore
-    const { invoices, filters, stats } = usePage<InvoicesIndexProps>().props
+    const { invoices, filters, stats, auth } = usePage<InvoicesIndexProps>().props
+    const canDeleteInvoice = !!auth?.user?.permissions?.includes("manage_companies")
     const [search, setSearch] = useState(filters.search || "")
     const [status, setStatus] = useState(filters.status || "all")
     const [sendDialogOpen, setSendDialogOpen] = useState(false)
@@ -581,13 +582,15 @@ export default function InvoicesIndex() {
                                                             </DropdownMenuItem>
                                                         )}
 
-                                                        <DropdownMenuItem
-                                                            className="text-red-600 focus:text-red-600"
-                                                            onClick={() => handleDelete(invoice)}
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Löschen
-                                                        </DropdownMenuItem>
+                                                        {canDeleteInvoice && (
+                                                            <DropdownMenuItem
+                                                                className="text-red-600 focus:text-red-600"
+                                                                onClick={() => handleDelete(invoice)}
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                Löschen
+                                                            </DropdownMenuItem>
+                                                        )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </div>
