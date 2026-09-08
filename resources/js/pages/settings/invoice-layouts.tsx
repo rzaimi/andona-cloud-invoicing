@@ -55,6 +55,7 @@ interface InvoiceLayoutSettings {
         show_unit_column: boolean
         show_notes: boolean
         show_bank_details: boolean
+        show_payment_qr: boolean
         show_company_registration: boolean
         show_payment_terms: boolean
         show_item_codes: boolean
@@ -124,6 +125,7 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         show_unit_column: true,
         show_notes: true,
         show_bank_details: true,
+                show_payment_qr: true,
         show_company_registration: true,
         show_payment_terms: true,
         show_item_codes: true,
@@ -174,6 +176,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_unit_column: true,
                 show_notes: true,
                 show_bank_details: true,
+                show_payment_qr: true,
                 show_company_registration: true,
                 show_payment_terms: true,
                 show_item_codes: true,
@@ -202,6 +205,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_unit_column: true,
                 show_notes: true,
                 show_bank_details: true,
+                show_payment_qr: true,
                 show_company_registration: true,
                 show_payment_terms: true,
                 show_item_codes: true,
@@ -230,6 +234,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_unit_column: true,
                 show_notes: true,
                 show_bank_details: false,
+                show_payment_qr: false,
                 show_company_registration: false,
                 show_payment_terms: true,
                 show_item_codes: false,
@@ -258,6 +263,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_unit_column: true,
                 show_notes: true,
                 show_bank_details: true,
+                show_payment_qr: true,
                 show_company_registration: true,
                 show_payment_terms: true,
                 show_item_codes: true,
@@ -286,6 +292,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_unit_column: true,
                 show_notes: true,
                 show_bank_details: true,
+                show_payment_qr: true,
                 show_company_registration: true,
                 show_payment_terms: true,
                 show_item_codes: true,
@@ -335,6 +342,7 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
             show_unit_column: settings.content?.show_unit_column ?? defaults.content.show_unit_column,
             show_notes: settings.content?.show_notes ?? defaults.content.show_notes,
             show_bank_details: settings.content?.show_bank_details ?? defaults.content.show_bank_details,
+            show_payment_qr: settings.content?.show_payment_qr ?? defaults.content.show_payment_qr,
             show_company_registration: settings.content?.show_company_registration ?? defaults.content.show_company_registration,
             show_payment_terms: settings.content?.show_payment_terms ?? defaults.content.show_payment_terms,
             show_item_codes: settings.content?.show_item_codes ?? defaults.content.show_item_codes,
@@ -379,8 +387,9 @@ const CONTENT_TOGGLES: Array<{ key: "show_company_address" | "show_bauvorhaben" 
     { key: "show_notes",           label: "Notizen" },
 ]
 
-const FOOTER_TOGGLES: Array<{ key: "show_bank_details" | "show_company_registration" | "show_payment_terms"; label: string }> = [
+const FOOTER_TOGGLES: Array<{ key: "show_bank_details" | "show_payment_qr" | "show_company_registration" | "show_payment_terms"; label: string }> = [
     { key: "show_bank_details",         label: "Bankverbindung" },
+    { key: "show_payment_qr",           label: "Girocode (QR-Zahlung)" },
     { key: "show_company_registration", label: "Handelsregister" },
     { key: "show_payment_terms",        label: "Zahlungsbedingungen" },
 ]

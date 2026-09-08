@@ -173,6 +173,8 @@
     <span style="margin-left:5mm;"><strong style="color:{{ $primary }}; font-weight:500;">VWZ</strong> {{ $doc->number }}</span>
 </div>
 @endif
+
+@include('pdf.partials.girocode')
 @endif
 
 {{-- Notes --}}

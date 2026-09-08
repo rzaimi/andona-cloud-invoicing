@@ -171,6 +171,8 @@
 </table>
 @endif
 
+@include('pdf.partials.girocode')
+
 {{-- Payment terms --}}
 @if($ls['content']['show_payment_terms'] ?? true)
 <div style="margin-top:5mm; font-size:{{ $fs - 1 }}px; color:{{ $muted }}; line-height:1.7; page-break-inside:avoid;">

@@ -102,6 +102,7 @@ class InvoiceLayoutController extends Controller
             'settings.content.show_customer_number' => 'required|boolean',
             'settings.content.show_tax_breakdown' => 'required|boolean',
             'settings.content.show_payment_terms' => 'required|boolean',
+            'settings.content.show_payment_qr' => 'sometimes|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
             'settings.template_specific' => 'sometimes|array',
         ]);
@@ -162,6 +163,7 @@ class InvoiceLayoutController extends Controller
             'settings.content.show_customer_number' => 'required|boolean',
             'settings.content.show_tax_breakdown' => 'required|boolean',
             'settings.content.show_payment_terms' => 'required|boolean',
+            'settings.content.show_payment_qr' => 'sometimes|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
             'settings.template_specific' => 'sometimes|array',
         ]);
@@ -304,7 +306,7 @@ class InvoiceLayoutController extends Controller
         // Attach customer to invoice (as the view expects $invoice->customer)
         $sampleInvoice->customer = $sampleCustomer;
 
-        $sampleCompany = \App\Modules\Company\Models\Company::find($companyId);
+        $sampleCompany = Company::find($companyId);
 
         // Use the same PDF view for preview
         return view('pdf.invoice', [
@@ -351,6 +353,7 @@ class InvoiceLayoutController extends Controller
             'settings.content.show_customer_number' => 'required|boolean',
             'settings.content.show_tax_breakdown' => 'required|boolean',
             'settings.content.show_payment_terms' => 'required|boolean',
+            'settings.content.show_payment_qr' => 'sometimes|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
             'settings.template_specific' => 'sometimes|array',
         ]);
@@ -475,6 +478,7 @@ class InvoiceLayoutController extends Controller
             'settings.content.show_customer_number' => 'required|boolean',
             'settings.content.show_tax_breakdown' => 'required|boolean',
             'settings.content.show_payment_terms' => 'required|boolean',
+            'settings.content.show_payment_qr' => 'sometimes|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
             'settings.template_specific' => 'sometimes|array',
         ]);
