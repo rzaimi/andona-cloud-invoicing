@@ -41,6 +41,12 @@ php artisan migrate --force
 echo "  ✓ Migrations done."
 echo ""
 
+# Roles/permissions must exist in the DB or policies silently deny everything.
+echo "→ [3b/5] Syncing roles and permissions..."
+php artisan roles:sync
+echo "  ✓ Roles synced."
+echo ""
+
 # ── Step 4: Clear all caches ──────────────────────────────────────────────────
 echo "→ [4/5] Clearing caches..."
 php artisan config:clear
