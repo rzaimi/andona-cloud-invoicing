@@ -46,23 +46,35 @@ class InvoiceItem extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function isAbzug(): bool
+    {
+        return (float) $this->unit_price < 0;
+    }
+
     public function calculateTotal(): void
     {
-        // Calculate base total
         $baseTotal = $this->quantity * $this->unit_price;
 
-        // Calculate discount amount
+        // Abzug lines are already negative; a line discount on top would
+        // invert the math (fixed min() against a negative base).
+        if ($this->isAbzug()) {
+            $this->discount_type = null;
+            $this->discount_value = null;
+            $this->discount_amount = 0;
+            $this->total = $baseTotal;
+
+            return;
+        }
+
         $this->discount_amount = 0;
         if ($this->discount_type && $this->discount_value) {
             if ($this->discount_type === 'percentage') {
                 $this->discount_amount = $baseTotal * ($this->discount_value / 100);
             } else {
-                // Fixed amount
                 $this->discount_amount = min($this->discount_value, $baseTotal);
             }
         }
 
-        // Calculate total after discount
         $this->total = $baseTotal - $this->discount_amount;
     }
 

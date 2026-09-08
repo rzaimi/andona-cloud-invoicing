@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class InvoiceController extends Controller
@@ -290,7 +291,7 @@ class InvoiceController extends Controller
             'items.*.product_id' => 'nullable|uuid|exists:products,id',
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.unit_price' => 'required|numeric',
             'items.*.unit' => 'required|string|max:50',
             'items.*.tax_rate' => 'nullable|numeric|min:0|max:1',
             'items.*.discount_type' => 'nullable|in:percentage,fixed',
@@ -299,6 +300,8 @@ class InvoiceController extends Controller
             'items.*.unit.required' => 'Bitte wählen Sie für jede Position eine Einheit aus.',
             'items.*.unit.max' => 'Die Einheit darf maximal 50 Zeichen lang sein.',
         ]);
+
+        $this->assertNoDiscountOnAbzugLines($validated['items']);
 
         // Business rule: Abschlagsrechnung requires sequence_number; others must not have one
         if (($validated['invoice_type'] ?? 'standard') === 'abschlagsrechnung') {
@@ -408,6 +411,11 @@ class InvoiceController extends Controller
                             ? $itemData['discount_value']
                             : null;
 
+                        if ((float) $itemData['unit_price'] < 0) {
+                            $discountType = null;
+                            $discountValue = null;
+                        }
+
                         $item = new InvoiceItem([
                             'invoice_id' => $invoice->id,
                             'product_id' => $productId,
@@ -426,6 +434,7 @@ class InvoiceController extends Controller
 
                     // Recalculate totals, then skonto (skonto depends on the final total)
                     $invoice->calculateTotals();
+                    $this->assertNonNegativeInvoiceTotal($invoice);
                     $invoice->calculateSkonto();
                     $invoice->save();
 
@@ -633,7 +642,7 @@ class InvoiceController extends Controller
             'items.*.product_id' => 'nullable|uuid|exists:products,id',
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.unit_price' => 'required|numeric',
             'items.*.unit' => 'required|string|max:50',
             'items.*.tax_rate' => 'nullable|numeric|min:0|max:1',
             'items.*.discount_type' => 'nullable|in:percentage,fixed',
@@ -642,6 +651,8 @@ class InvoiceController extends Controller
             'items.*.unit.required' => 'Bitte wählen Sie für jede Position eine Einheit aus.',
             'items.*.unit.max' => 'Die Einheit darf maximal 50 Zeichen lang sein.',
         ]);
+
+        $this->assertNoDiscountOnAbzugLines($validated['items']);
 
         if (($validated['invoice_type'] ?? 'standard') === 'abschlagsrechnung') {
             $request->validate(['sequence_number' => 'required|integer|between:1,20']);
@@ -750,6 +761,11 @@ class InvoiceController extends Controller
                     ? $itemData['discount_value']
                     : null;
 
+                if ((float) $itemData['unit_price'] < 0) {
+                    $discountType = null;
+                    $discountValue = null;
+                }
+
                 $item = new InvoiceItem([
                     'product_id' => $productId,
                     'description' => $itemData['description'],
@@ -772,6 +788,7 @@ class InvoiceController extends Controller
 
             // Recalculate totals, then skonto
             $invoice->calculateTotals();
+            $this->assertNonNegativeInvoiceTotal($invoice);
             $invoice->calculateSkonto();
             $invoice->save();
 
@@ -1717,5 +1734,46 @@ class InvoiceController extends Controller
                 'already_claimed' => $claimedIds->contains($inv->id),
             ])
         );
+    }
+
+    /**
+     * Abzug lines (negative unit price) must not carry a position discount.
+     */
+    private function assertNoDiscountOnAbzugLines(array $items): void
+    {
+        foreach ($items as $index => $item) {
+            if ((float) ($item['unit_price'] ?? 0) >= 0) {
+                continue;
+            }
+
+            $hasDiscount = ! empty($item['discount_type'])
+                && $item['discount_type'] !== 'none'
+                && isset($item['discount_value'])
+                && $item['discount_value'] !== ''
+                && $item['discount_value'] !== null;
+
+            if ($hasDiscount) {
+                throw ValidationException::withMessages([
+                    "items.{$index}.discount_type" => 'Abzugspositionen können keinen Positionsrabatt haben.',
+                ]);
+            }
+        }
+    }
+
+    /**
+     * A negative invoice total is a credit note / Storno, not a Rechnung.
+     * Stornorechnungen are created via createCorrection() and skip this check.
+     */
+    private function assertNonNegativeInvoiceTotal(Invoice $invoice): void
+    {
+        if ($invoice->is_correction) {
+            return;
+        }
+
+        if ((float) $invoice->total < 0) {
+            throw ValidationException::withMessages([
+                'items' => 'Der Rechnungsbetrag darf nicht negativ sein. Für eine Gutschrift verwenden Sie eine Stornorechnung.',
+            ]);
+        }
     }
 }

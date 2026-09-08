@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use App\Modules\Invoice\Models\Invoice;
+use App\Modules\Invoice\Models\InvoiceLayout;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use horstoeko\zugferd\codelists\ZugferdCountryCodes;
+use horstoeko\zugferd\codelists\ZugferdDutyTaxFeeCategories;
 use horstoeko\zugferd\ZugferdDocumentBuilder;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use horstoeko\zugferd\ZugferdProfiles;
-use horstoeko\zugferd\codelists\ZugferdCountryCodes;
-use horstoeko\zugferd\codelists\ZugferdDutyTaxFeeCategories;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class ERechnungService
 {
@@ -30,27 +31,27 @@ class ERechnungService
 
         return $xml;
     }
-    
+
     /**
      * Generate ZUGFeRD (PDF with embedded XML) for an invoice
      */
     public function generateZugferd(Invoice $invoice): string
     {
         $invoice->load(['customer', 'company', 'company.settings', 'items', 'layout', 'user']);
-        
+
         // Get layout - either assigned to invoice or company default
         $layout = $invoice->layout;
-        if (!$layout) {
-            $layout = \App\Modules\Invoice\Models\InvoiceLayout::forCompany($invoice->company_id)
+        if (! $layout) {
+            $layout = InvoiceLayout::forCompany($invoice->company_id)
                 ->where('is_default', true)
                 ->first();
         }
-        
+
         // If no layout exists, create a minimal default layout
-        if (!$layout) {
+        if (! $layout) {
             $layout = $this->getDefaultLayout();
         }
-        
+
         // Generate the PDF first using the same view as regular invoice PDFs
         $html = view('pdf.invoice', [
             'layout' => $layout,
@@ -58,7 +59,7 @@ class ERechnungService
             'company' => $invoice->company,
             'customer' => $invoice->customer,
         ])->render();
-        
+
         $pdf = PDF::loadHTML($html)
             ->setPaper('a4')
             ->setOptions([
@@ -66,23 +67,23 @@ class ERechnungService
                 'isRemoteEnabled' => false, // Prevent SSRF via attacker-controlled URLs in HTML
                 'isHtml5ParserEnabled' => true,
             ]);
-        
+
         $pdfContent = $pdf->output();
-        
+
         // Generate XML
         $profile = $this->resolveProfile($invoice);
         $document = ZugferdDocumentBuilder::CreateNew($profile);
         $this->buildDocument($document, $invoice);
         $xml = $document->getContent();
-        
+
         // Merge PDF and XML using ZUGFeRD library
         $pdfMerger = new ZugferdDocumentPdfMerger($xml, $pdfContent);
         $pdfMerger->generateDocument();
         $zugferdPdf = $pdfMerger->downloadString();
-        
+
         return $zugferdPdf;
     }
-    
+
     /**
      * Build the ZUGFeRD/XRechnung document
      */
@@ -91,33 +92,33 @@ class ERechnungService
         $company = $invoice->company;
         $customer = $invoice->customer;
         $settings = $company->settings;
-        
+
         // Document header
         $document->setDocumentInformation(
-            $invoice->number ?? 'DRAFT-' . $invoice->id,
+            $invoice->number ?? 'DRAFT-'.$invoice->id,
             '380', // Invoice type code
-            $invoice->issue_date ?? new \DateTime(),
+            $invoice->issue_date ?? new \DateTime,
             $settings->currency ?? 'EUR'
         );
 
         // BT-10 Buyer Reference / Routing ID. Mandatory for XRechnung to
         // German public-sector customers (Leitweg-ID). Populated from the
         // customer record when present.
-        if (!empty($customer->leitweg_id)) {
+        if (! empty($customer->leitweg_id)) {
             $document->setDocumentBuyerReference($customer->leitweg_id);
         }
-        
+
         // Seller (Company) information
         $document->setDocumentSeller(
             $company->name,
             $company->commercial_register ?? null
         );
-        
+
         $document->addDocumentSellerGlobalId(
             $company->vat_number ?? '',
             '0088' // VAT registration number scheme
         );
-        
+
         $document->setDocumentSellerAddress(
             $company->address ?? '',
             '',
@@ -126,7 +127,7 @@ class ERechnungService
             $company->city ?? '',
             $this->getCountryCode($company->country ?? 'Deutschland')
         );
-        
+
         $document->setDocumentSellerContact(
             '',
             '',
@@ -134,20 +135,20 @@ class ERechnungService
             '',
             $company->email ?? ''
         );
-        
+
         // Buyer (Customer) information
         $document->setDocumentBuyer(
             $customer->company_name ?? $customer->name,
             $customer->commercial_register ?? null
         );
-        
+
         if ($customer->vat_number) {
             $document->addDocumentBuyerGlobalId(
                 $customer->vat_number,
                 '0088'
             );
         }
-        
+
         $document->setDocumentBuyerAddress(
             $customer->address ?? '',
             '',
@@ -156,7 +157,7 @@ class ERechnungService
             $customer->city ?? '',
             $this->getCountryCode($customer->country ?? 'Deutschland')
         );
-        
+
         $document->setDocumentBuyerContact(
             '',
             '',
@@ -164,39 +165,71 @@ class ERechnungService
             '',
             $customer->email ?? ''
         );
-        
+
         // Payment terms
         if ($invoice->due_date) {
             $document->addDocumentPaymentTerm(
-                'Zahlbar bis ' . $invoice->due_date->format('d.m.Y'),
+                'Zahlbar bis '.$invoice->due_date->format('d.m.Y'),
                 $invoice->due_date
             );
         }
-        
-        // Line items
+
+        // Line items. Abzug lines (negative net) are EN 16931 document
+        // allowances (BG-20), not negative product quantities.
+        $allowanceTotal = 0.0;
+        $lineTotalSum = 0.0;
+        $position = 0;
+
         foreach ($invoice->items as $index => $item) {
+            $itemNet = (float) ($item->total ?? ($item->quantity * $item->unit_price));
+            $isAbzug = (float) $item->unit_price < 0 || $itemNet < 0;
+
+            if ($isAbzug) {
+                $amount = abs($itemNet);
+                $allowanceTotal += $amount;
+                $description = $item->description ?? 'Nachlass';
+                $reason = explode("\n", $description, 2)[0];
+
+                $document->addDocumentAllowanceCharge(
+                    $amount,
+                    false,
+                    ZugferdDutyTaxFeeCategories::STANDARD_RATE,
+                    'VAT',
+                    $this->taxPercent($item->tax_rate ?? $invoice->tax_rate),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    '95',
+                    $reason
+                );
+
+                continue;
+            }
+
+            $position++;
             $lineTotal = $item->quantity * $item->unit_price;
-            
-            // Extract name and description from the description field
-            $description = $item->description ?? 'Position ' . ($index + 1);
+            $lineTotalSum += $lineTotal;
+
+            $description = $item->description ?? 'Position '.($index + 1);
             $lines = explode("\n", $description, 2);
             $itemName = $lines[0];
             $itemDescription = $lines[1] ?? '';
-            
-            $document->addNewPosition(($index + 1) . '');
+
+            $document->addNewPosition($position.'');
             $document->setDocumentPositionProductDetails(
                 $itemName,
                 $itemDescription,
                 $item->product_id ?? null
             );
-            
+
             $document->setDocumentPositionGrossPrice($item->unit_price ?? 0);
             $document->setDocumentPositionNetPrice($item->unit_price ?? 0);
-            $document->setDocumentPositionQuantity($item->quantity ?? 1, 'C62'); // Unit code: piece
-            
+            $document->setDocumentPositionQuantity($item->quantity ?? 1, 'C62');
+
             $document->setDocumentPositionLineSummation($lineTotal);
-            
-            // Add tax for line item
+
             $taxRate = $item->tax_rate ?? 19.0;
             $document->addDocumentPositionTax(
                 ZugferdDutyTaxFeeCategories::STANDARD_RATE,
@@ -204,24 +237,23 @@ class ERechnungService
                 $taxRate
             );
         }
-        
-        // Summation
+
         $subtotal = $invoice->subtotal ?? 0;
         $taxAmount = $invoice->tax_amount ?? 0;
         $total = $invoice->total ?? 0;
-        
+
         $document->setDocumentSummation(
-            $total,      // Grand total
-            $total,      // Due payable amount
-            $subtotal,   // Line total
-            0.0,         // Charge total
-            0.0,         // Allowance total
-            $subtotal,   // Tax basis total
-            $taxAmount,  // Tax total
-            0.0,         // Rounding amount
-            0.0          // Prepaid amount
+            $total,
+            $total,
+            $lineTotalSum,
+            0.0,
+            $allowanceTotal,
+            $subtotal,
+            $taxAmount,
+            0.0,
+            0.0
         );
-        
+
         // Add tax breakdown
         $vatBreakdown = $invoice->getVatBreakdown();
         if (count($vatBreakdown) > 0) {
@@ -245,15 +277,15 @@ class ERechnungService
             );
         } else {
             // Special regimes (tax exempt or reverse charge)
-            $category = match($invoice->vat_regime) {
-                'reverse_charge'          => ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE,
+            $category = match ($invoice->vat_regime) {
+                'reverse_charge' => ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE,
                 'reverse_charge_domestic' => ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE,
-                'intra_community'         => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_FOR_EEA_INTRACOMMUNITY_SUPPLY_OF_GOODS_AND_SERVICES,
-                'export'                  => ZugferdDutyTaxFeeCategories::FREE_EXPORT_ITEM_TAX_NOT_CHARGED,
-                'small_business'          => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
-                default                   => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
+                'intra_community' => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_FOR_EEA_INTRACOMMUNITY_SUPPLY_OF_GOODS_AND_SERVICES,
+                'export' => ZugferdDutyTaxFeeCategories::FREE_EXPORT_ITEM_TAX_NOT_CHARGED,
+                'small_business' => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
+                default => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
             };
-            
+
             $document->addDocumentTax(
                 $category,
                 'VAT',
@@ -262,7 +294,7 @@ class ERechnungService
                 0
             );
         }
-        
+
         // Payment means (if bank details available)
         if ($company->bank_iban) {
             $document->addDocumentPaymentMean(
@@ -278,7 +310,7 @@ class ERechnungService
             );
         }
     }
-    
+
     /**
      * Resolve the ZUGFeRD/XRechnung profile to use for this invoice.
      *
@@ -288,7 +320,7 @@ class ERechnungService
      */
     private function resolveProfile(Invoice $invoice): int
     {
-        if (!empty($invoice->customer?->leitweg_id)) {
+        if (! empty($invoice->customer?->leitweg_id)) {
             return ZugferdProfiles::PROFILE_XRECHNUNG;
         }
 
@@ -297,21 +329,21 @@ class ERechnungService
         $profile = $invoice->company?->getSetting('zugferd_profile') ?? 'EN16931';
 
         return match ($profile) {
-            'MINIMUM'   => ZugferdProfiles::PROFILE_MINIMUM,
-            'BASIC'     => ZugferdProfiles::PROFILE_BASICWL,
-            'EN16931'   => ZugferdProfiles::PROFILE_EN16931,
-            'EXTENDED'  => ZugferdProfiles::PROFILE_EXTENDED,
+            'MINIMUM' => ZugferdProfiles::PROFILE_MINIMUM,
+            'BASIC' => ZugferdProfiles::PROFILE_BASICWL,
+            'EN16931' => ZugferdProfiles::PROFILE_EN16931,
+            'EXTENDED' => ZugferdProfiles::PROFILE_EXTENDED,
             'XRECHNUNG' => ZugferdProfiles::PROFILE_XRECHNUNG,
-            default     => ZugferdProfiles::PROFILE_EN16931,
+            default => ZugferdProfiles::PROFILE_EN16931,
         };
     }
-    
+
     /**
      * Get country code from country name
      */
     private function getCountryCode(string $country): string
     {
-        return match(strtolower($country)) {
+        return match (strtolower($country)) {
             'deutschland', 'germany' => ZugferdCountryCodes::GERMANY,
             'österreich', 'austria' => ZugferdCountryCodes::AUSTRIA,
             'schweiz', 'switzerland' => ZugferdCountryCodes::SWITZERLAND,
@@ -319,7 +351,7 @@ class ERechnungService
             default => ZugferdCountryCodes::GERMANY,
         };
     }
-    
+
     /**
      * Get default layout settings
      */
@@ -371,35 +403,45 @@ class ERechnungService
             ],
         ];
     }
-    
+
     /**
      * Download XRechnung as XML file
      */
     public function downloadXRechnung(Invoice $invoice): array
     {
         $xml = $this->generateXRechnung($invoice);
-        $filename = 'XRechnung_' . ($invoice->number ?? 'DRAFT-' . $invoice->id) . '.xml';
-        
+        $filename = 'XRechnung_'.($invoice->number ?? 'DRAFT-'.$invoice->id).'.xml';
+
         return [
             'content' => $xml,
             'filename' => $filename,
             'mime_type' => 'application/xml',
         ];
     }
-    
+
     /**
      * Download ZUGFeRD as PDF file
      */
     public function downloadZugferd(Invoice $invoice): array
     {
         $pdf = $this->generateZugferd($invoice);
-        $filename = 'ZUGFeRD_' . ($invoice->number ?? 'DRAFT-' . $invoice->id) . '.pdf';
-        
+        $filename = 'ZUGFeRD_'.($invoice->number ?? 'DRAFT-'.$invoice->id).'.pdf';
+
         return [
             'content' => $pdf,
             'filename' => $filename,
             'mime_type' => 'application/pdf',
         ];
     }
-}
 
+    /**
+     * EN 16931 tax rates are percentages (19), while invoice items store
+     * fractions (0.19).
+     */
+    private function taxPercent(?float $rate): float
+    {
+        $rate = (float) ($rate ?? 0.19);
+
+        return $rate <= 1 ? $rate * 100 : $rate;
+    }
+}

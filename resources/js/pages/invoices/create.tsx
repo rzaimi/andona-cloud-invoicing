@@ -168,8 +168,9 @@ export default function InvoicesCreate() {
         // Calculate each item's total with discount
         const itemsWithTotals = (data.items as InvoiceItem[]).map((item: InvoiceItem) => {
             const baseTotal = item.quantity * item.unit_price
+            const isAbzug = Number(item.unit_price) < 0
             let discountAmount = 0
-            if (item.discount_type && item.discount_value !== null) {
+            if (!isAbzug && item.discount_type && item.discount_value !== null) {
                 const dv = typeof item.discount_value === "number" ? item.discount_value : 0
                 if (item.discount_type === 'percentage') {
                     discountAmount = baseTotal * (dv / 100)
@@ -253,9 +254,14 @@ export default function InvoicesCreate() {
                 const updatedItem = { ...item, [field]: value }
                 // Recalculate total when quantity, unit_price, or discount changes
                 if (field === "quantity" || field === "unit_price" || field === "discount_type" || field === "discount_value") {
+                    if (field === "unit_price" && Number(updatedItem.unit_price) < 0) {
+                        updatedItem.discount_type = null
+                        updatedItem.discount_value = null
+                    }
+                    const isAbzug = Number(updatedItem.unit_price) < 0
                     const baseTotal = Number(updatedItem.quantity) * Number(updatedItem.unit_price)
                     let discountAmount = 0
-                    if (updatedItem.discount_type && updatedItem.discount_value !== null) {
+                    if (!isAbzug && updatedItem.discount_type && updatedItem.discount_value !== null) {
                         const dv = typeof updatedItem.discount_value === "number" ? updatedItem.discount_value : 0
                         if (updatedItem.discount_type === 'percentage') {
                             discountAmount = baseTotal * (dv / 100)
@@ -746,7 +752,7 @@ export default function InvoicesCreate() {
                                                     <Textarea
                                                         value={item.description}
                                                         onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                                                        placeholder="Beschreibung der Leistung..."
+                                                        placeholder={Number(item.unit_price) < 0 ? "Nachlass / Abzug lt. Rechnung …" : "Beschreibung der Leistung..."}
                                                         className="min-h-[100px] min-w-[260px] resize-y"
                                                         rows={4}
                                                         required
@@ -809,10 +815,12 @@ export default function InvoicesCreate() {
                                                 <TableCell>
                                                     <Input
                                                         type="number"
-                                                        min="0"
                                                         step="any"
                                                         value={item.unit_price}
-                                                        onChange={(e) => updateItem(item.id, "unit_price", Number.parseFloat(e.target.value) || 0)}
+                                                        onChange={(e) => {
+                                                            const parsed = Number.parseFloat(e.target.value)
+                                                            updateItem(item.id, "unit_price", Number.isNaN(parsed) ? 0 : parsed)
+                                                        }}
                                                         required
                                                     />
                                                     {formErrors[`items.${index}.unit_price`] && (
@@ -820,6 +828,9 @@ export default function InvoicesCreate() {
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
+                                                    {Number(item.unit_price) < 0 ? (
+                                                        <span className="text-xs text-muted-foreground">Abzug</span>
+                                                    ) : (
                                                     <Select 
                                                         value={item.discount_type || "none"} 
                                                         onValueChange={(value) => {
@@ -840,9 +851,10 @@ export default function InvoicesCreate() {
                                                             <SelectItem value="fixed">€</SelectItem>
                                                         </SelectContent>
                                                     </Select>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {item.discount_type && (
+                                                    {Number(item.unit_price) < 0 ? null : item.discount_type && (
                                                         <Input
                                                             type="number"
                                                             min="0"
@@ -856,7 +868,7 @@ export default function InvoicesCreate() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="space-y-1">
-                                                        <div className="font-medium">{formatCurrency(item.total)}</div>
+                                                        <div className={Number(item.total) < 0 ? "font-medium text-red-600" : "font-medium"}>{formatCurrency(item.total)}</div>
                                                         {item.discount_amount && item.discount_amount > 0 && (
                                                             <div className="text-xs text-muted-foreground">
                                                                 Rabatt: -{formatCurrency(item.discount_amount)}
