@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
@@ -29,7 +29,7 @@ class RoleController extends Controller
         $permissions = Permission::withCount('roles')->orderBy('name')->get();
 
         return Inertia::render('admin/roles', [
-            'roles'       => $roles,
+            'roles' => $roles,
             'permissions' => $permissions,
         ]);
     }
@@ -43,7 +43,7 @@ class RoleController extends Controller
         ]);
 
         $role = Role::create(['name' => $data['name']]);
-        if (!empty($data['permissions'])) {
+        if (! empty($data['permissions'])) {
             // Never allow assigning platform-level permission through the role UI
             $safe = array_values(array_diff($data['permissions'], ['manage_companies']));
             $role->syncPermissions($safe);
@@ -55,7 +55,7 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
+            'name' => 'required|string|max:255|unique:roles,name,'.$role->id,
             'permissions' => 'array',
             'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
@@ -78,8 +78,7 @@ class RoleController extends Controller
             return back()->with('error', 'Super Admin kann nicht gelöscht werden');
         }
         $role->delete();
+
         return back()->with('success', 'Rolle gelöscht');
     }
 }
-
-

@@ -14,9 +14,9 @@ class PermissionController extends Controller
         $permissions = Permission::with('roles')->orderBy('name')->get();
 
         return Inertia::render('admin/permissions', [
-            'permissions' => $permissions->map(fn($p) => [
-                'id'    => $p->id,
-                'name'  => $p->name,
+            'permissions' => $permissions->map(fn ($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
                 'roles' => $p->roles->pluck('name'),
             ]),
         ]);
@@ -29,14 +29,14 @@ class PermissionController extends Controller
         ]);
 
         Permission::create(['name' => $data['name']]);
+
         return back()->with('success', 'Berechtigung erstellt');
     }
 
     public function destroy(Permission $permission)
     {
         $permission->delete();
+
         return back()->with('success', 'Berechtigung gelöscht');
     }
 }
-
-

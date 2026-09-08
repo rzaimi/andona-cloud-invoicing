@@ -16,43 +16,36 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Save, User as UserIcon, Shield, Key, FileText } from "lucide-react"
 import type { Company, User } from "@/types"
 
-const PERMISSION_LABELS: Record<string, string> = {
-    manage_users: "Benutzer verwalten",
-    manage_companies: "Firmen verwalten",
-    manage_settings: "Einstellungen verwalten",
-    manage_invoices: "Rechnungen verwalten",
-    manage_offers: "Angebote verwalten",
-    manage_products: "Produkte verwalten",
-    view_reports: "Berichte anzeigen",
-    create_stornorechnung: "Stornorechnungen erstellen",
+interface RoleOption {
+    name: string
+    label: string
+    description: string
 }
 
-const ROLE_LABELS: Record<string, string> = {
-    super_admin: "Super Admin",
-    admin: "Administrator",
-    user: "Benutzer",
+interface PermissionGroup {
+    group: string
+    items: Array<{ name: string; label: string }>
 }
 
 interface Props {
     user: User & { company?: Company }
     companies: Company[]
     is_super_admin: boolean
-    available_roles: string[]
-    available_permissions: string[]
-    assigned_roles: string[]
+    role_options: RoleOption[]
+    permission_groups: PermissionGroup[]
+    current_role: string
     assigned_permissions: string[]
 }
 
-export default function EditUser({ user, companies, is_super_admin, available_roles, available_permissions, assigned_roles, assigned_permissions }: Props) {
+export default function EditUser({ user, companies, is_super_admin, role_options, permission_groups, current_role, assigned_permissions }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         name: user.name || "",
         email: user.email || "",
-        role: user.role || "user",
+        role: current_role || "user",
         status: user.status || "active",
         company_id: user.company?.id || user.company_id || "",
         password: "",
         password_confirmation: "",
-        roles: assigned_roles || [],
         permissions: assigned_permissions || [],
         staff_number: (user as any).staff_number || "",
         department: (user as any).department || "",
@@ -148,28 +141,6 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                     )}
                                 </div>
 
-                                {/* Role */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="role">
-                                        Rolle <span className="text-red-500">*</span>
-                                    </Label>
-                                    <Select value={data.role} onValueChange={(value) => setData("role", value as typeof data.role)}>
-                                        <SelectTrigger className={errors.role ? "border-red-500" : ""}>
-                                            <SelectValue placeholder="Rolle auswählen" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="user">Benutzer</SelectItem>
-                                            <SelectItem value="admin">Administrator</SelectItem>
-                                            <SelectItem value="employee">Mitarbeiter</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.role && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{errors.role}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-
                                 {/* Status */}
                                 <div className="space-y-2">
                                     <Label htmlFor="status">
@@ -254,64 +225,93 @@ export default function EditUser({ user, companies, is_super_admin, available_ro
                                 </div>
                             </div>
 
-                            {/* Roles */}
+                            {/* Role — exactly one, restricted to what the editor may assign */}
                             <div className="col-span-2 space-y-3">
                                 <Separator />
                                 <div className="flex items-center gap-2">
                                     <Shield className="h-4 w-4 text-muted-foreground" />
-                                    <Label className="text-base font-semibold">Spatie-Rollen</Label>
-                                    <span className="text-xs text-muted-foreground">(bestimmt die Basis-Berechtigungen)</span>
+                                    <Label className="text-base font-semibold">
+                                        Rolle <span className="text-red-500">*</span>
+                                    </Label>
+                                    <span className="text-xs text-muted-foreground">bestimmt die Grundberechtigungen</span>
                                 </div>
-                                <div className="grid gap-3 sm:grid-cols-3">
-                                    {available_roles.map((r) => {
-                                        const checked = data.roles.includes(r)
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {role_options.map((option) => {
+                                        const selected = data.role === option.name
                                         return (
-                                            <div key={r} className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id={`role-${r}`}
-                                                    checked={checked}
-                                                    onCheckedChange={(val) => {
-                                                        if (val) setData("roles", [...data.roles, r])
-                                                        else setData("roles", data.roles.filter((x: string) => x !== r))
-                                                    }}
-                                                />
-                                                <label htmlFor={`role-${r}`} className="text-sm font-medium cursor-pointer">
-                                                    {ROLE_LABELS[r] ?? r}
-                                                </label>
-                                            </div>
+                                            <button
+                                                key={option.name}
+                                                type="button"
+                                                onClick={() => setData("role", option.name)}
+                                                aria-pressed={selected}
+                                                className={
+                                                    "rounded-lg border p-3 text-left transition-colors " +
+                                                    (selected
+                                                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                                        : "hover:border-muted-foreground/40")
+                                                }
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span
+                                                        className={
+                                                            "h-3.5 w-3.5 shrink-0 rounded-full border " +
+                                                            (selected ? "border-primary bg-primary" : "border-muted-foreground/40")
+                                                        }
+                                                    />
+                                                    <span className="text-sm font-medium">{option.label}</span>
+                                                </div>
+                                                <p className="mt-1 text-xs text-muted-foreground">{option.description}</p>
+                                            </button>
                                         )
                                     })}
                                 </div>
+                                {errors.role && (
+                                    <Alert variant="destructive">
+                                        <AlertDescription>{errors.role}</AlertDescription>
+                                    </Alert>
+                                )}
                             </div>
 
-                            {/* Permissions */}
-                            <div className="col-span-2 space-y-3">
+                            {/* Additional permissions — grouped, on top of the role */}
+                            <div className="col-span-2 space-y-4">
                                 <Separator />
                                 <div className="flex items-center gap-2">
                                     <Key className="h-4 w-4 text-muted-foreground" />
                                     <Label className="text-base font-semibold">Zusätzliche Berechtigungen</Label>
-                                    <span className="text-xs text-muted-foreground">(überschreibt Rollen-Berechtigungen)</span>
+                                    <span className="text-xs text-muted-foreground">ergänzen die Rolle für einzelne Bereiche</span>
                                 </div>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    {available_permissions.map((p) => {
-                                        const checked = data.permissions.includes(p)
-                                        return (
-                                            <div key={p} className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id={`perm-${p}`}
-                                                    checked={checked}
-                                                    onCheckedChange={(val) => {
-                                                        if (val) setData("permissions", [...data.permissions, p])
-                                                        else setData("permissions", data.permissions.filter((x: string) => x !== p))
-                                                    }}
-                                                />
-                                                <label htmlFor={`perm-${p}`} className="text-sm cursor-pointer">
-                                                    {PERMISSION_LABELS[p] ?? p}
-                                                </label>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
+                                {permission_groups.map((group) => (
+                                    <div key={group.group} className="space-y-2">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                            {group.group}
+                                        </p>
+                                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                            {group.items.map((perm) => {
+                                                const checked = data.permissions.includes(perm.name)
+                                                return (
+                                                    <div key={perm.name} className="flex items-center space-x-2">
+                                                        <Checkbox
+                                                            id={`perm-${perm.name}`}
+                                                            checked={checked}
+                                                            onCheckedChange={(val) => {
+                                                                if (val) setData("permissions", [...data.permissions, perm.name])
+                                                                else setData("permissions", data.permissions.filter((x: string) => x !== perm.name))
+                                                            }}
+                                                        />
+                                                        <label htmlFor={`perm-${perm.name}`} className="text-sm cursor-pointer">
+                                                            {perm.label}
+                                                        </label>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                                {(errors as Record<string, string>)["permissions.0"] && (
+                                    <Alert variant="destructive">
+                                        <AlertDescription>{(errors as Record<string, string>)["permissions.0"]}</AlertDescription>
+                                    </Alert>
+                                )}
                             </div>
 
                             {/* Employee profile fields */}

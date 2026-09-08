@@ -14,7 +14,7 @@ class CompanyContextController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->hasPermissionTo('manage_companies')) {
+        if (! $user || ! $user->hasPermissionTo('manage_companies')) {
             abort(403);
         }
 
@@ -33,7 +33,7 @@ class CompanyContextController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->hasPermissionTo('manage_companies')) {
+        if (! $user || ! $user->hasPermissionTo('manage_companies')) {
             return back();
         }
 

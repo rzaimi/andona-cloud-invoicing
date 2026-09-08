@@ -13,13 +13,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft, Save, User } from "lucide-react"
 import type { Company } from "@/types"
 
+interface RoleOption {
+    name: string
+    label: string
+    description: string
+}
+
 interface Props {
+    role_options: RoleOption[]
     companies: Company[]
     current_company_id: string
     is_super_admin: boolean
 }
 
-export default function CreateUser({ companies, current_company_id, is_super_admin }: Props) {
+export default function CreateUser({ companies, current_company_id, is_super_admin, role_options }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         name: "",
         email: "",
@@ -163,9 +170,11 @@ export default function CreateUser({ companies, current_company_id, is_super_adm
                                             <SelectValue placeholder="Rolle auswählen" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="user">Benutzer</SelectItem>
-                                            <SelectItem value="admin">Administrator</SelectItem>
-                                            <SelectItem value="employee">Mitarbeiter</SelectItem>
+                                            {role_options.map((option) => (
+                                                <SelectItem key={option.name} value={option.name}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                     {errors.role && (

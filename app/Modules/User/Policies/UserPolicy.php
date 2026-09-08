@@ -33,11 +33,17 @@ class UserPolicy
             return true;
         }
 
+        // Nobody below super admin may touch a super admin — editing their
+        // password/email or stripping their role would be privilege escalation.
+        if ($this->isProtected($targetUser)) {
+            return false;
+        }
+
         // Admin with manage_users can edit non-admin users in same company (and themselves)
         if ($currentUser->hasPermissionTo('manage_users')
             && $targetUser->company_id === $currentUser->company_id
         ) {
-            return !$targetUser->hasRole('admin') || $targetUser->id === $currentUser->id;
+            return ! $targetUser->hasRole('admin') || $targetUser->id === $currentUser->id;
         }
 
         // Users can only edit themselves
@@ -56,13 +62,22 @@ class UserPolicy
             return true;
         }
 
+        if ($this->isProtected($targetUser)) {
+            return false;
+        }
+
         // Admin with manage_users can delete non-admin users in same company
         if ($currentUser->hasPermissionTo('manage_users')
             && $targetUser->company_id === $currentUser->company_id
         ) {
-            return !$targetUser->hasRole('admin');
+            return ! $targetUser->hasRole('admin');
         }
 
         return false;
+    }
+
+    private function isProtected(User $user): bool
+    {
+        return $user->hasRole('super_admin') || $user->hasDirectPermission('manage_companies');
     }
 }
