@@ -57,8 +57,10 @@ echo "  ✓ Caches cleared."
 echo ""
 
 # ── Step 5: Rebuild caches for performance ────────────────────────────────────
+# Do not run config:cache on this Plesk host. It freezes storage_path() from
+# whichever PHP ran deploy (full vhost vs chroot), and queue:work then cannot
+# write storage/logs.
 echo "→ [5/5] Rebuilding caches..."
-php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 echo "  ✓ Caches rebuilt."
