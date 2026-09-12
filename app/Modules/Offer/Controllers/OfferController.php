@@ -3,13 +3,17 @@
 namespace App\Modules\Offer\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Offer\Models\Offer;
 use App\Modules\Offer\Models\OfferItem;
 use App\Modules\Offer\Models\OfferLayout;
+use App\Modules\Product\Models\Product;
+use App\Services\FormattingService;
 use App\Services\NumberFormatService;
+use App\Services\SettingsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -97,7 +101,7 @@ class OfferController extends Controller
     public function create()
     {
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::find($companyId);
+        $company = Company::find($companyId);
 
         $customers = Customer::forCompany($companyId)
             ->active()
@@ -107,7 +111,7 @@ class OfferController extends Controller
         $layouts = OfferLayout::forCompany($companyId)
             ->get();
 
-        $products = \App\Modules\Product\Models\Product::where('company_id', $companyId)
+        $products = Product::where('company_id', $companyId)
             ->where('status', 'active')
             ->select('id', 'name', 'description', 'price', 'unit', 'tax_rate', 'sku', 'number')
             ->orderBy('name')
@@ -119,7 +123,7 @@ class OfferController extends Controller
                 ?? $company->getSetting('offer_prefix', 'AN-')
         );
         $minCounter = (int) ($company->getSetting('offer_next_counter') ?? 1);
-        $nextNumber = $svc->next($format, \App\Modules\Offer\Models\Offer::where('company_id', $companyId)->pluck('number'), null, $minCounter);
+        $nextNumber = $svc->next($format, Offer::where('company_id', $companyId)->pluck('number'), null, $minCounter);
 
         return Inertia::render('offers/create', [
             'customers' => $customers,
@@ -162,7 +166,7 @@ class OfferController extends Controller
             // Serialise offer-number generation per company (same pattern as
             // InvoiceController::store — prevents concurrent requests from
             // computing the same next sequence).
-            $company = \App\Modules\Company\Models\Company::whereKey($effectiveCompanyId)
+            $company = Company::whereKey($effectiveCompanyId)
                 ->lockForUpdate()
                 ->first();
 
@@ -214,7 +218,7 @@ class OfferController extends Controller
             foreach ($validated['items'] as $index => $itemData) {
                 $productId = null;
                 if (! empty($itemData['product_id'])) {
-                    $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
+                    $product = Product::where('company_id', $effectiveCompanyId)
                         ->where('id', $itemData['product_id'])
                         ->first();
                     if (! $product) {
@@ -263,7 +267,7 @@ class OfferController extends Controller
         $offer->load(['customer', 'items.product', 'layout', 'user', 'convertedToInvoice:id,number']);
 
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::find($companyId) ?? $offer->company;
+        $company = Company::find($companyId) ?? $offer->company;
 
         return Inertia::render('offers/show', [
             'offer' => $offer,
@@ -286,7 +290,7 @@ class OfferController extends Controller
         $layouts = OfferLayout::forCompany($companyId)
             ->get();
 
-        $products = \App\Modules\Product\Models\Product::where('company_id', $companyId)
+        $products = Product::where('company_id', $companyId)
             ->where('status', 'active')
             ->select('id', 'name', 'description', 'price', 'unit', 'tax_rate', 'sku', 'number')
             ->orderBy('name')
@@ -294,7 +298,7 @@ class OfferController extends Controller
 
         $offer->load('items');
 
-        $company = \App\Modules\Company\Models\Company::find($companyId);
+        $company = Company::find($companyId);
 
         return Inertia::render('offers/edit', [
             'offer' => $offer,
@@ -351,7 +355,7 @@ class OfferController extends Controller
             }
 
             $vatRegime = $validated['vat_regime'] ?? 'standard';
-            $company = \App\Modules\Company\Models\Company::find($effectiveCompanyId);
+            $company = Company::find($effectiveCompanyId);
 
             // Update offer
             $offer->update([
@@ -373,7 +377,7 @@ class OfferController extends Controller
             foreach ($validated['items'] as $index => $itemData) {
                 $productId = null;
                 if (! empty($itemData['product_id'])) {
-                    $product = \App\Modules\Product\Models\Product::where('company_id', $effectiveCompanyId)
+                    $product = Product::where('company_id', $effectiveCompanyId)
                         ->where('id', $itemData['product_id'])
                         ->first();
                     if (! $product) {
@@ -440,7 +444,7 @@ class OfferController extends Controller
 
         DB::transaction(function () use ($offer) {
             // Serialise invoice-number generation per company.
-            $company = \App\Modules\Company\Models\Company::whereKey($offer->company_id)
+            $company = Company::whereKey($offer->company_id)
                 ->lockForUpdate()
                 ->first();
 
@@ -540,9 +544,9 @@ class OfferController extends Controller
         $layout = $offer->layout ?? $offer->company->defaultOfferLayout;
 
         // Get company settings for formatting
-        $settingsService = app(\App\Services\SettingsService::class);
+        $settingsService = app(SettingsService::class);
         $settings = $settingsService->getAll($offer->company_id);
-        $formattingService = app(\App\Services\FormattingService::class);
+        $formattingService = app(FormattingService::class);
 
         $html = view('pdf.offer', [
             'layout' => $layout,
@@ -578,9 +582,9 @@ class OfferController extends Controller
         $layout = $offer->layout ?? $offer->company->defaultOfferLayout;
 
         // Get company settings for formatting
-        $settingsService = app(\App\Services\SettingsService::class);
+        $settingsService = app(SettingsService::class);
         $settings = $settingsService->getAll($offer->company_id);
-        $formattingService = app(\App\Services\FormattingService::class);
+        $formattingService = app(FormattingService::class);
 
         return view('pdf.offer', [
             'layout' => $layout,
@@ -595,7 +599,7 @@ class OfferController extends Controller
 
     public function send(Request $request, Offer $offer)
     {
-        $this->authorize('update', $offer);
+        $this->authorize('send', $offer);
 
         $validated = $request->validate([
             'to' => 'required|email',
@@ -605,15 +609,10 @@ class OfferController extends Controller
         ]);
 
         $companyId = $this->getEffectiveCompanyId();
-        $company = \App\Modules\Company\Models\Company::find($companyId);
-
-        // Validate customer email exists
-        if (! $offer->customer || ! $offer->customer->email) {
-            return back()->withErrors(['email' => 'Kunde hat keine E-Mail-Adresse hinterlegt.']);
-        }
+        $company = Company::find($companyId);
 
         // Check if SMTP is configured
-        if (! $company->smtp_host || ! $company->smtp_username) {
+        if (! $company || ! $company->smtp_host || ! $company->smtp_username) {
             return back()->withErrors(['email' => 'SMTP-Einstellungen sind nicht konfiguriert. Bitte konfigurieren Sie die E-Mail-Einstellungen.']);
         }
 
@@ -725,9 +724,9 @@ class OfferController extends Controller
         }
 
         // Get company settings for formatting
-        $settingsService = app(\App\Services\SettingsService::class);
+        $settingsService = app(SettingsService::class);
         $settings = $settingsService->getAll($offer->company_id);
-        $formattingService = app(\App\Services\FormattingService::class);
+        $formattingService = app(FormattingService::class);
 
         return Pdf::loadView('pdf.offer', [
             'layout' => $layout,

@@ -457,17 +457,15 @@ export default function OffersIndex() {
                                                                         PDF öffnen
                                                                     </DropdownMenuItem>
 
-                                                                    {offer.status === "draft" && (
-                                                                        <DropdownMenuItem
-                                                                            onClick={() => {
-                                                                                setSelectedOffer(offer)
-                                                                                setSendDialogOpen(true)
-                                                                            }}
-                                                                        >
-                                                                            <Send className="mr-2 h-4 w-4" />
-                                                                            Versenden
-                                                                        </DropdownMenuItem>
-                                                                    )}
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => {
+                                                                            setSelectedOffer(offer)
+                                                                            setSendDialogOpen(true)
+                                                                        }}
+                                                                    >
+                                                                        <Send className="mr-2 h-4 w-4" />
+                                                                        {offer.status === "draft" ? "Versenden" : "Erneut senden"}
+                                                                    </DropdownMenuItem>
 
                                                                     {offer.status === "accepted" && !offer.converted_to_invoice_id && (
                                                                         <DropdownMenuItem onClick={() => handleConvertToInvoice(offer)}>
@@ -516,6 +514,7 @@ export default function OffersIndex() {
 
             {selectedOffer && (
                 <SendEmailDialog
+                    key={`${selectedOffer.id}-${selectedOffer.status}`}
                     open={sendDialogOpen}
                     onOpenChange={setSendDialogOpen}
                     type="offer"
@@ -525,6 +524,7 @@ export default function OffersIndex() {
                     customerName={selectedOffer.customer?.name}
                     issueDate={selectedOffer.issue_date}
                     validUntil={selectedOffer.valid_until}
+                    isResend={selectedOffer.status !== "draft"}
                     onSuccess={() => {
                         router.reload()
                     }}

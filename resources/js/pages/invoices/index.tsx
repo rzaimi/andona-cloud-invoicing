@@ -563,7 +563,7 @@ export default function InvoicesIndex() {
                                                             ZUGFeRD (PDF+XML)
                                                         </DropdownMenuItem>
 
-                                                        {invoice.status === "draft" && (
+                                                        {invoice.status !== "cancelled" && (
                                                             <DropdownMenuItem
                                                                 onClick={() => {
                                                                     setSelectedInvoice(invoice)
@@ -571,7 +571,7 @@ export default function InvoicesIndex() {
                                                                 }}
                                                             >
                                                                 <Send className="mr-2 h-4 w-4" />
-                                                                Versenden
+                                                                {invoice.status === "draft" ? "Versenden" : "Erneut senden"}
                                                             </DropdownMenuItem>
                                                         )}
 
@@ -624,6 +624,7 @@ export default function InvoicesIndex() {
 
             {selectedInvoice && (
                 <SendEmailDialog
+                    key={`${selectedInvoice.id}-${selectedInvoice.status}`}
                     open={sendDialogOpen}
                     onOpenChange={setSendDialogOpen}
                     type="invoice"
@@ -633,6 +634,7 @@ export default function InvoicesIndex() {
                     customerName={selectedInvoice.customer?.name}
                     issueDate={selectedInvoice.issue_date}
                     dueDate={selectedInvoice.due_date}
+                    isResend={selectedInvoice.status !== "draft"}
                     onSuccess={() => {
                         router.reload()
                     }}

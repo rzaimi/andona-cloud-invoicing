@@ -105,6 +105,15 @@ class InvoiceMailer
                     ['email' => $to],
                     'Rechnung per E-Mail versendet an '.$to
                 );
+            } else {
+                InvoiceAuditLog::log(
+                    $invoice->id,
+                    'resent',
+                    $invoice->status,
+                    $invoice->status,
+                    ['email' => $to],
+                    'Rechnung erneut per E-Mail versendet an '.$to
+                );
             }
 
             return ['ok' => true];

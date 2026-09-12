@@ -1036,10 +1036,6 @@ class InvoiceController extends Controller
 
         $invoice->loadMissing(['customer', 'company']);
 
-        if (! $invoice->customer || ! $invoice->customer->email) {
-            return back()->withErrors(['email' => 'Kunde hat keine E-Mail-Adresse hinterlegt.']);
-        }
-
         $company = $invoice->company;
         if (! $company || ! $company->smtp_host || ! $company->smtp_username) {
             return back()->withErrors([

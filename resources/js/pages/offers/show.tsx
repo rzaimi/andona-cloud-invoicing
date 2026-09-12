@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CheckCircle, XCircle, Clock, Eye } from "lucide-react"
+import { useState } from "react"
 import AppLayout from "@/layouts/app-layout"
+import { SendEmailDialog } from "@/components/send-email-dialog"
 import type { BreadcrumbItem, PageProps } from "@/types"
 import { route } from "ziggy-js"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/formatting"
@@ -65,6 +67,7 @@ interface OffersShowProps extends PageProps {
 export default function OffersShow() {
     const { offer } = usePage<OffersShowProps>().props
     const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
+    const [sendDialogOpen, setSendDialogOpen] = useState(false)
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: "Dashboard", href: "/dashboard" },
@@ -125,7 +128,7 @@ export default function OffersShow() {
     }
 
     const handleSend = () => {
-        router.post(route("offers.send", offer.id))
+        setSendDialogOpen(true)
     }
 
     const isExpired = new Date(offer.valid_until) < new Date() && offer.status !== "accepted"
@@ -197,12 +200,10 @@ export default function OffersShow() {
                             <FileText className="mr-2 h-4 w-4" />
                             PDF
                         </Button>
-                        {offer.status === "draft" && (
-                            <Button variant="outline" onClick={handleSend}>
-                                <Send className="mr-2 h-4 w-4" />
-                                Versenden
-                            </Button>
-                        )}
+                        <Button variant="outline" onClick={handleSend}>
+                            <Send className="mr-2 h-4 w-4" />
+                            {offer.status === "draft" ? "Versenden" : "Erneut senden"}
+                        </Button>
                         <Button variant="destructive" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Löschen
@@ -430,16 +431,14 @@ export default function OffersShow() {
                                     <Download className="mr-2 h-4 w-4" />
                                     PDF herunterladen
                                 </Button>
-                                {offer.status === "draft" && (
-                                    <Button
-                                        variant="outline"
-                                        className="w-full justify-start"
-                                        onClick={handleSend}
-                                    >
-                                        <Send className="mr-2 h-4 w-4" />
-                                        Angebot versenden
-                                    </Button>
-                                )}
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-start"
+                                    onClick={handleSend}
+                                >
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {offer.status === "draft" ? "Angebot versenden" : "Erneut senden"}
+                                </Button>
                                 {offer.status === "accepted" && !offer.converted_to_invoice_id && (
                                     <Button
                                         className="w-full justify-start"
@@ -506,6 +505,20 @@ export default function OffersShow() {
                     </div>
                 </div>
             </div>
+
+            <SendEmailDialog
+                key={`${offer.id}-${offer.status}`}
+                open={sendDialogOpen}
+                onOpenChange={setSendDialogOpen}
+                type="offer"
+                documentId={offer.id}
+                documentNumber={offer.number}
+                customerEmail={offer.customer?.email}
+                customerName={offer.customer?.name}
+                issueDate={offer.issue_date}
+                validUntil={offer.valid_until}
+                isResend={offer.status !== "draft"}
+            />
         </AppLayout>
     )
 }

@@ -31,5 +31,14 @@ class OfferPolicy
     {
         return $user->company_id === $offer->company_id || $user->hasPermissionTo('manage_companies');
     }
-}
 
+    /**
+     * Sending / resending the offer by email. Allowed on any status —
+     * updated offers and lost copies are both legitimate resends.
+     */
+    public function send(User $user, Offer $offer): bool
+    {
+        return $user->company_id === $offer->company_id
+            || $user->hasPermissionTo('manage_companies');
+    }
+}

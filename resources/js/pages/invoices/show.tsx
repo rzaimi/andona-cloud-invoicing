@@ -186,7 +186,9 @@ export default function InvoicesShow() {
         const defaultMessage = [
             greeting,
             "",
-            `anbei erhalten Sie die Rechnung ${invoice.number}${invoice.issue_date ? ` vom ${fmt(invoice.issue_date)}` : ""}.`,
+            invoice.status === "draft"
+                ? `anbei erhalten Sie die Rechnung ${invoice.number}${invoice.issue_date ? ` vom ${fmt(invoice.issue_date)}` : ""}.`
+                : `anbei erhalten Sie erneut die Rechnung ${invoice.number}${invoice.issue_date ? ` vom ${fmt(invoice.issue_date)}` : ""}.`,
             "",
             "Die Rechnung als PDF-Datei finden Sie im Anhang dieser E-Mail.",
             ...(invoice.due_date
@@ -201,7 +203,9 @@ export default function InvoicesShow() {
         setSendForm({
             to: invoice.customer?.email || "",
             cc: "",
-            subject: `Rechnung ${invoice.number}`,
+            subject: invoice.status === "draft"
+                ? `Rechnung ${invoice.number}`
+                : `Rechnung ${invoice.number} – erneute Zusendung`,
             message: defaultMessage,
         })
         setIsSendDialogOpen(true)
@@ -272,6 +276,12 @@ export default function InvoicesShow() {
                             <FileText className="mr-2 h-4 w-4" />
                             PDF
                         </Button>
+                        {invoice.status !== "cancelled" && (
+                            <Button variant="outline" onClick={handleOpenSendDialog}>
+                                <Send className="mr-2 h-4 w-4" />
+                                {invoice.status === "draft" ? "Versenden" : "Erneut senden"}
+                            </Button>
+                        )}
                         {(invoice.status === "overdue" || invoice.status === "sent") && (
                             <>
                                 <Button variant="outline" asChild>
@@ -706,14 +716,14 @@ export default function InvoicesShow() {
                                     <Download className="mr-2 h-4 w-4" />
                                     PDF herunterladen
                                 </Button>
-                                {invoice.status === "draft" && (
+                                {invoice.status !== "cancelled" && (
                                     <Button
                                         variant="outline"
                                         className="w-full justify-start"
                                         onClick={handleOpenSendDialog}
                                     >
                                         <Send className="mr-2 h-4 w-4" />
-                                        Rechnung versenden
+                                        {invoice.status === "draft" ? "Rechnung versenden" : "Erneut senden"}
                                     </Button>
                                 )}
                             </CardContent>
@@ -746,9 +756,11 @@ export default function InvoicesShow() {
             <Dialog open={isSendDialogOpen} onOpenChange={setIsSendDialogOpen}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Rechnung versenden</DialogTitle>
+                        <DialogTitle>{invoice.status === "draft" ? "Rechnung versenden" : "Rechnung erneut senden"}</DialogTitle>
                         <DialogDescription>
-                            Rechnung {invoice.number} per E-Mail an den Kunden senden. Die PDF wird automatisch angehängt.
+                            {invoice.status === "draft"
+                                ? `Rechnung ${invoice.number} per E-Mail an den Kunden senden. Die PDF wird automatisch angehängt.`
+                                : `Senden Sie die Rechnung ${invoice.number} erneut als PDF. Sie können eine andere Empfängeradresse eintragen.`}
                         </DialogDescription>
                     </DialogHeader>
 

@@ -26,7 +26,16 @@ interface SendEmailDialogProps {
     issueDate?: string
     dueDate?: string
     validUntil?: string
+    isResend?: boolean
     onSuccess?: () => void
+}
+
+function buildDefaultSubject(type: "invoice" | "offer", documentNumber: string, isResend?: boolean): string {
+    if (type === "invoice") {
+        return isResend ? `Rechnung ${documentNumber} – erneute Zusendung` : `Rechnung ${documentNumber}`
+    }
+
+    return isResend ? `Angebot ${documentNumber} – aktualisierte Fassung` : `Angebot ${documentNumber}`
 }
 
 function buildDefaultMessage(
@@ -36,6 +45,7 @@ function buildDefaultMessage(
     issueDate?: string,
     dueDate?: string,
     validUntil?: string,
+    isResend?: boolean,
 ): string {
     const greeting = customerName
         ? `Sehr geehrte Damen und Herren von ${customerName},`
@@ -48,7 +58,9 @@ function buildDefaultMessage(
         const lines = [
             greeting,
             "",
-            `anbei erhalten Sie die Rechnung ${documentNumber}${issueDate ? ` vom ${fmt(issueDate)}` : ""}.`,
+            isResend
+                ? `anbei erhalten Sie erneut die Rechnung ${documentNumber}${issueDate ? ` vom ${fmt(issueDate)}` : ""}.`
+                : `anbei erhalten Sie die Rechnung ${documentNumber}${issueDate ? ` vom ${fmt(issueDate)}` : ""}.`,
             "",
             "Die Rechnung als PDF-Datei finden Sie im Anhang dieser E-Mail.",
         ]
@@ -61,7 +73,9 @@ function buildDefaultMessage(
         const lines = [
             greeting,
             "",
-            `vielen Dank für Ihr Interesse. Gerne unterbreiten wir Ihnen das Angebot ${documentNumber}${issueDate ? ` vom ${fmt(issueDate)}` : ""}.`,
+            isResend
+                ? `anbei erhalten Sie das aktualisierte Angebot ${documentNumber}${issueDate ? ` vom ${fmt(issueDate)}` : ""}.`
+                : `vielen Dank für Ihr Interesse. Gerne unterbreiten wir Ihnen das Angebot ${documentNumber}${issueDate ? ` vom ${fmt(issueDate)}` : ""}.`,
             "",
             "Das vollständige Angebot finden Sie als PDF-Datei im Anhang dieser E-Mail.",
         ]
@@ -84,6 +98,7 @@ export function SendEmailDialog({
     issueDate,
     dueDate,
     validUntil,
+    isResend = false,
     onSuccess,
 }: SendEmailDialogProps) {
     const [errors, setErrors] = useState<Record<string, string>>({})
@@ -91,10 +106,8 @@ export function SendEmailDialog({
     const { data, setData, post, processing, reset } = useForm({
         to: customerEmail || "",
         cc: "",
-        subject: type === "invoice"
-            ? `Rechnung ${documentNumber}`
-            : `Angebot ${documentNumber}`,
-        message: buildDefaultMessage(type, documentNumber, customerName, issueDate, dueDate, validUntil),
+        subject: buildDefaultSubject(type, documentNumber, isResend),
+        message: buildDefaultMessage(type, documentNumber, customerName, issueDate, dueDate, validUntil, isResend),
     })
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -132,10 +145,14 @@ export function SendEmailDialog({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Mail className="h-5 w-5" />
-                        {type === "invoice" ? "Rechnung" : "Angebot"} per E-Mail versenden
+                        {isResend
+                            ? `${type === "invoice" ? "Rechnung" : "Angebot"} erneut senden`
+                            : `${type === "invoice" ? "Rechnung" : "Angebot"} per E-Mail versenden`}
                     </DialogTitle>
                     <DialogDescription>
-                        Versenden Sie {type === "invoice" ? "die Rechnung" : "das Angebot"} {documentNumber} als PDF per E-Mail an Ihren Kunden.
+                        {isResend
+                            ? `Senden Sie ${type === "invoice" ? "die Rechnung" : "das Angebot"} ${documentNumber} erneut als PDF. Sie können eine andere Empfängeradresse eintragen.`
+                            : `Versenden Sie ${type === "invoice" ? "die Rechnung" : "das Angebot"} ${documentNumber} als PDF per E-Mail an Ihren Kunden.`}
                     </DialogDescription>
                 </DialogHeader>
 
