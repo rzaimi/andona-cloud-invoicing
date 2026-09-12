@@ -23,7 +23,7 @@ import {
     DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Settings, Users, Building2, HelpCircle, Calendar, LayoutTemplate, Activity, Terminal, Shield, ShieldCheck } from "lucide-react"
+import { Settings, Users, Building2, HelpCircle, Calendar, LayoutTemplate, Activity, Terminal, Shield, ShieldCheck, ListTodo } from "lucide-react"
 import { Link, usePage } from "@inertiajs/react"
 import AppearanceToggleDropdown from "@/components/appearance-dropdown"
 import { UserAccountCard } from "@/components/user-account-card"
@@ -81,8 +81,16 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
             title: "System Gesundheit",
             url: "/system-health",
             icon: Activity,
-            isActive: isActive("/system-health"),
+            isActive: isActive("/system-health") && !isActive("/system-health/queue"),
             adminOnly: true,
+        },
+        {
+            title: "Warteschlange",
+            url: "/system-health/queue",
+            icon: ListTodo,
+            isActive: isActive("/system-health/queue"),
+            adminOnly: true,
+            superAdminOnly: true,
         },
         {
             title: "Firma initialisieren",
@@ -177,6 +185,9 @@ export default function AppLayout({ children, breadcrumbs = [] }: AppLayoutProps
                                             {adminNavigation
                                                 .filter((item) => {
                                                     if (item.adminOnly && !user.permissions?.includes("manage_companies") && !user.roles?.includes("super_admin")) {
+                                                        return false
+                                                    }
+                                                    if (item.superAdminOnly && !user.is_super_admin && !user.roles?.includes("super_admin")) {
                                                         return false
                                                     }
                                                     return true

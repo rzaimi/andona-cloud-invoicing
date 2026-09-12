@@ -1,10 +1,14 @@
 <?php
 
-use App\Modules\User\Controllers\UserController;
-use App\Modules\Company\Controllers\CompanyController;
-use App\Modules\User\Controllers\RoleController;
-use App\Modules\User\Controllers\PermissionController;
 use App\Http\Controllers\CompanyInitController;
+use App\Http\Controllers\CompanyWizardController;
+use App\Http\Controllers\QueueMonitorController;
+use App\Http\Controllers\SystemHealthController;
+use App\Modules\Company\Controllers\CompanyController;
+use App\Modules\User\Controllers\CompanyContextController;
+use App\Modules\User\Controllers\PermissionController;
+use App\Modules\User\Controllers\RoleController;
+use App\Modules\User\Controllers\UserController;
 
 Route::middleware('can:manage_users')->group(function () {
     Route::get('users', [UserController::class, 'index'])->name('users.index');
@@ -29,27 +33,34 @@ Route::middleware('can:manage_companies')->group(function () {
 
     Route::get('companies', [CompanyController::class, 'index'])->name('companies.index');
     Route::get('companies/create', [CompanyController::class, 'create'])->name('companies.create');
-    
+
     // Wizard Routes (must be before resource routes to avoid conflicts)
-    Route::get('companies/wizard', [\App\Http\Controllers\CompanyWizardController::class, 'show'])->name('companies.wizard.show');
-    Route::get('companies/wizard/start', [\App\Http\Controllers\CompanyWizardController::class, 'start'])->name('companies.wizard.start');
-    Route::post('companies/wizard/complete', [\App\Http\Controllers\CompanyWizardController::class, 'complete'])->name('companies.wizard.complete');
-    Route::post('companies/wizard/cancel', [\App\Http\Controllers\CompanyWizardController::class, 'cancel'])->name('companies.wizard.cancel');
-    
+    Route::get('companies/wizard', [CompanyWizardController::class, 'show'])->name('companies.wizard.show');
+    Route::get('companies/wizard/start', [CompanyWizardController::class, 'start'])->name('companies.wizard.start');
+    Route::post('companies/wizard/complete', [CompanyWizardController::class, 'complete'])->name('companies.wizard.complete');
+    Route::post('companies/wizard/cancel', [CompanyWizardController::class, 'cancel'])->name('companies.wizard.cancel');
+
     Route::post('companies', [CompanyController::class, 'store'])->name('companies.store');
     Route::get('companies/{company}', [CompanyController::class, 'show'])->name('companies.show');
     Route::get('companies/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
     Route::put('companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
     Route::delete('companies/{company}', [CompanyController::class, 'destroy'])->name('companies.destroy');
-    
+
     // Company context switching for super admins
-    Route::post('company-context/switch', [\App\Modules\User\Controllers\CompanyContextController::class, 'switch'])->name('company-context.switch');
-    Route::get('company-context/current', [\App\Modules\User\Controllers\CompanyContextController::class, 'getCurrent'])->name('company-context.current');
-    
+    Route::post('company-context/switch', [CompanyContextController::class, 'switch'])->name('company-context.switch');
+    Route::get('company-context/current', [CompanyContextController::class, 'getCurrent'])->name('company-context.current');
+
     // System Health (super admin only)
-    Route::get('system-health', [\App\Http\Controllers\SystemHealthController::class, 'index'])->name('system-health.index');
-    Route::post('system-health/run-command', [\App\Http\Controllers\SystemHealthController::class, 'runCommand'])->name('system-health.run-command');
-    Route::get('system-health/logs', [\App\Http\Controllers\SystemHealthController::class, 'getLogs'])->name('system-health.logs');
+    Route::get('system-health', [SystemHealthController::class, 'index'])->name('system-health.index');
+    Route::post('system-health/run-command', [SystemHealthController::class, 'runCommand'])->name('system-health.run-command');
+    Route::get('system-health/logs', [SystemHealthController::class, 'getLogs'])->name('system-health.logs');
+
+    Route::get('system-health/queue', [QueueMonitorController::class, 'index'])->name('system-health.queue');
+    Route::post('system-health/queue/retry-all', [QueueMonitorController::class, 'retryAll'])->name('system-health.queue.retry-all');
+    Route::post('system-health/queue/flush-failed', [QueueMonitorController::class, 'flushFailed'])->name('system-health.queue.flush-failed');
+    Route::post('system-health/queue/clear-pending', [QueueMonitorController::class, 'clearPending'])->name('system-health.queue.clear-pending');
+    Route::post('system-health/queue/{uuid}/retry', [QueueMonitorController::class, 'retry'])->name('system-health.queue.retry');
+    Route::delete('system-health/queue/{uuid}', [QueueMonitorController::class, 'forget'])->name('system-health.queue.forget');
 
     // Company Initialisation (super admin only)
     Route::get('company-init', [CompanyInitController::class, 'index'])->name('company-init.index');

@@ -367,7 +367,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
             title: "System Gesundheit",
             url: "/system-health",
             icon: Activity,
-            isActive: isActive("/system-health"),
+            isActive: isActive("/system-health") && !isActive("/system-health/queue"),
             adminOnly: true,
         },
     ]

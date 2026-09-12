@@ -1,6 +1,6 @@
 "use client"
 
-import { Head, router, usePage } from "@inertiajs/react"
+import { Head, Link, router, usePage } from "@inertiajs/react"
 import AppLayout from "@/layouts/app-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +26,8 @@ import {
     Wrench,
     PlayCircle,
     FileText,
-    Clock
+    Clock,
+    ListTodo
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { route } from "@/plugins/ziggy"
@@ -303,6 +304,12 @@ export default function SystemHealth({ health }: Props) {
                     <p className="text-muted-foreground mt-2">
                         Überwachung und Status des Systems
                     </p>
+                    <Button asChild variant="outline" className="mt-4">
+                        <Link href={route('system-health.queue')}>
+                            <ListTodo className="mr-2 h-4 w-4" />
+                            Warteschlange verwalten
+                        </Link>
+                    </Button>
                 </div>
 
                 {message && (
@@ -438,6 +445,9 @@ export default function SystemHealth({ health }: Props) {
                                             <div>
                                                 <p className="text-sm font-medium text-muted-foreground">Queue</p>
                                                 <p className="text-lg font-semibold">{health.laravel.drivers.queue}</p>
+                                                <Link href={route('system-health.queue')} className="text-sm text-primary hover:underline">
+                                                    Aufträge anzeigen
+                                                </Link>
                                             </div>
                                             <div>
                                                 <p className="text-sm font-medium text-muted-foreground">Session</p>
