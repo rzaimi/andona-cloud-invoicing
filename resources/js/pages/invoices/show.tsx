@@ -79,8 +79,18 @@ export default function InvoicesShow() {
     const canDeleteInvoice = !!auth?.user?.is_super_admin
 
     const handleRefreshSnapshot = () => {
-        if (!confirm("Fehlende Firmendaten-Felder ergänzen? Bereits erfasste Werte werden nicht überschrieben (GoBD-sicher).")) return
-        router.post(`/invoices/${invoice.id}/refresh-snapshot`, {}, { preserveScroll: true })
+        const isDraft = invoice.status === "draft"
+        const confirmed = confirm(
+            isDraft
+                ? "Aktuelle Firmendaten auf diesen Entwurf übernehmen? Alle Firmendaten auf der Rechnung werden überschrieben."
+                : "Nur fehlende Felder ergänzen? Bereits gespeicherte Firmendaten bleiben unverändert (GoBD). Geänderte Stammdaten gelten nicht für versendete Rechnungen.",
+        )
+        if (!confirmed) return
+
+        router.post(`/invoices/${invoice.id}/refresh-snapshot`, {}, {
+            preserveScroll: true,
+            onError: () => toast.error("Firmendaten konnten nicht aktualisiert werden."),
+        })
     }
 
     const getStatusBadge = (status: string) => {

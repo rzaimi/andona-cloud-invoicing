@@ -250,22 +250,50 @@ class Invoice extends Model
     }
 
     /**
-     * Backfill snapshot fields that are missing today — for invoices created
-     * before a field was added to the snapshot schema (e.g. `legal_form_label`,
-     * `manager_title`, `display_name`).
+     * Refresh the stored company snapshot from live company data.
      *
-     * GoBD-safe by design: we ONLY fill fields that are currently null/empty
-     * in the stored snapshot. Values already captured at invoice time
-     * (managing_director, address, totals, etc.) stay frozen.
+     * Drafts ($overwriteExisting = true): replace the whole snapshot so
+     * stammdaten edits (name, address, legal form, logo, …) show on the PDF
+     * before the invoice is issued.
      *
-     * Returns the list of field names that were actually filled. Caller is
-     * responsible for writing the audit-log entry.
+     * Issued invoices: only fill keys that are currently null/empty
+     * (e.g. legal_form_label added after the invoice was created). Values
+     * already captured at issue time stay frozen (GoBD).
+     *
+     * Returns the list of field names that actually changed. Caller writes
+     * the audit-log entry.
      */
-    public function refreshCompanySnapshot(): array
+    public function refreshCompanySnapshot(bool $overwriteExisting = false): array
     {
+        $this->loadMissing('company');
+
+        if (! $this->company) {
+            return [];
+        }
+
         $fresh = $this->createCompanySnapshot();
         $current = $this->company_snapshot ?? [];
-        $filled = [];
+        $changed = [];
+
+        if ($overwriteExisting) {
+            foreach ($fresh as $key => $value) {
+                if ($key === 'snapshot_date') {
+                    continue;
+                }
+
+                if (($current[$key] ?? null) !== $value) {
+                    $changed[] = $key;
+                }
+            }
+
+            if ($changed === [] && $current !== []) {
+                return [];
+            }
+
+            $this->forceFill(['company_snapshot' => $fresh])->save();
+
+            return $changed;
+        }
 
         foreach ($fresh as $key => $value) {
             if ($key === 'snapshot_date') {
@@ -277,16 +305,15 @@ class Invoice extends Model
 
             if ($isMissing && $value !== null && $value !== '') {
                 $current[$key] = $value;
-                $filled[] = $key;
+                $changed[] = $key;
             }
         }
 
-        if (! empty($filled)) {
-            $this->company_snapshot = $current;
-            $this->save();
+        if ($changed !== []) {
+            $this->forceFill(['company_snapshot' => $current])->save();
         }
 
-        return $filled;
+        return $changed;
     }
 
     public function scopeForCompany($query, $companyId)

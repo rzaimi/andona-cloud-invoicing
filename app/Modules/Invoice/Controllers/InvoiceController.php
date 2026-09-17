@@ -182,22 +182,27 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Backfill any company-snapshot fields that were missing on the invoice
-     * — typically because the field (e.g. legal_form_label, manager_title,
-     * display_name) was added to the schema after the invoice was issued.
+     * Refresh the invoice company snapshot from current stammdaten.
      *
-     * GoBD-safe: the underlying Invoice::refreshCompanySnapshot() only fills
-     * null/empty fields. Existing values stay frozen. Every refresh writes
-     * an audit-log entry with the list of fields that changed.
+     * Drafts: overwrite the whole snapshot so address/legal-form/logo edits
+     * appear on the PDF before the invoice is issued.
+     *
+     * Issued invoices: only fill keys that are still empty (schema additions
+     * such as legal_form_label). Existing values stay frozen (GoBD).
      */
     public function refreshSnapshot(Invoice $invoice)
     {
         $this->authorize('refreshSnapshot', $invoice);
 
-        $filled = $invoice->refreshCompanySnapshot();
+        $isDraft = $invoice->status === 'draft';
+        $filled = $invoice->refreshCompanySnapshot($isDraft);
 
         if (empty($filled)) {
-            return back()->with('success', 'Firmendaten sind bereits aktuell.');
+            $message = $isDraft
+                ? 'Firmendaten sind bereits identisch mit den Stammdaten. PDF neu öffnen, um das aktuelle Layout zu sehen.'
+                : 'Keine Änderung. Bereits gespeicherte Firmendaten bleiben unverändert (GoBD). Neue Stammdaten gelten nur für Entwürfe.';
+
+            return back()->with('success', $message);
         }
 
         InvoiceAuditLog::log(
@@ -205,13 +210,17 @@ class InvoiceController extends Controller
             'snapshot_refreshed',
             $invoice->status,
             $invoice->status,
-            ['filled_fields' => $filled],
-            'Fehlende Firmendaten-Felder ergänzt: '.implode(', ', $filled)
+            ['filled_fields' => $filled, 'overwritten' => $isDraft],
+            ($isDraft ? 'Firmendaten übernommen: ' : 'Fehlende Firmendaten-Felder ergänzt: ').implode(', ', $filled)
         );
+
+        $prefix = $isDraft
+            ? 'Firmendaten übernommen'
+            : (count($filled).' Feld(er) ergänzt');
 
         return back()->with(
             'success',
-            count($filled).' Feld(er) ergänzt: '.implode(', ', $filled)
+            $prefix.': '.implode(', ', $filled).'. PDF neu öffnen, um die Änderung zu sehen.'
         );
     }
 
