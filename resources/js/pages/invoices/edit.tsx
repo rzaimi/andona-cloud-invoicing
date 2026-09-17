@@ -377,7 +377,7 @@ export default function InvoicesEdit() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => window.open(`/invoices/${invoice.id}/pdf`, "_blank")}
+                                onClick={() => window.open(`/invoices/${invoice.id}/pdf?t=${Date.now()}`, "_blank")}
                             >
                                 <FileText className="mr-2 h-4 w-4" />
                                 PDF

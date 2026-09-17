@@ -514,7 +514,7 @@ export default function InvoicesIndex() {
                                                         size="icon"
                                                         className="h-9 w-9"
                                                         title="PDF öffnen"
-                                                        onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}
+                                                        onClick={() => window.open(`${route("invoices.pdf", invoice.id)}?t=${Date.now()}`, "_blank")}
                                                     >
                                                         <FileText className="h-4 w-4" />
                                                     </Button>
@@ -550,7 +550,7 @@ export default function InvoicesIndex() {
                                                             Duplizieren
                                                         </DropdownMenuItem>
 
-                                                        <DropdownMenuItem onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}>
+                                                        <DropdownMenuItem onClick={() => window.open(`${route("invoices.pdf", invoice.id)}?t=${Date.now()}`, "_blank")}>
                                                             <FileText className="mr-2 h-4 w-4" />
                                                             PDF öffnen
                                                         </DropdownMenuItem>

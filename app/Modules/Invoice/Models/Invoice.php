@@ -237,16 +237,38 @@ class Invoice extends Model
     }
 
     /**
-     * Get company snapshot or fallback to current company data
+     * Snapshot used on the PDF. Drafts always read live stammdaten
+     * (including bank details stored in company_settings) so footer/IBAN
+     * stay current before the invoice is issued. Issued invoices keep the
+     * frozen row captured at send time.
      */
     public function getCompanySnapshot(): array
     {
+        $this->loadMissing('company');
+
+        if ($this->status === 'draft' && $this->company) {
+            return $this->createCompanySnapshot();
+        }
+
         if ($this->company_snapshot) {
             return $this->company_snapshot;
         }
 
-        // Fallback: create snapshot from current company (for old invoices)
-        return $this->createCompanySnapshot();
+        return $this->company ? $this->createCompanySnapshot() : [];
+    }
+
+    /**
+     * Capture live stammdaten onto the invoice (called when leaving draft).
+     */
+    public function freezeCompanySnapshot(): void
+    {
+        $this->loadMissing('company');
+
+        if (! $this->company) {
+            return;
+        }
+
+        $this->forceFill(['company_snapshot' => $this->createCompanySnapshot()])->save();
     }
 
     /**

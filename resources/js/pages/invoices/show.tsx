@@ -78,18 +78,23 @@ export default function InvoicesShow() {
 
     const canDeleteInvoice = !!auth?.user?.is_super_admin
 
+    const openInvoicePdf = () => {
+        window.open(`${route("invoices.pdf", invoice.id)}?t=${Date.now()}`, "_blank")
+    }
+
     const handleRefreshSnapshot = () => {
         const isDraft = invoice.status === "draft"
         const confirmed = confirm(
             isDraft
-                ? "Aktuelle Firmendaten auf diesen Entwurf übernehmen? Alle Firmendaten auf der Rechnung werden überschrieben."
-                : "Nur fehlende Felder ergänzen? Bereits gespeicherte Firmendaten bleiben unverändert (GoBD). Geänderte Stammdaten gelten nicht für versendete Rechnungen.",
+                ? "Aktuelle Firmendaten (inkl. Bankverbindung) auf diesen Entwurf übernehmen?"
+                : "Firmendaten inkl. Bankverbindung auf dieser bereits ausgegebenen Rechnung überschreiben? Der Vorgang wird im Audit-Log festgehalten.",
         )
         if (!confirmed) return
 
         router.post(`/invoices/${invoice.id}/refresh-snapshot`, {}, {
             preserveScroll: true,
             onError: () => toast.error("Firmendaten konnten nicht aktualisiert werden."),
+            onSuccess: () => openInvoicePdf(),
         })
     }
 
@@ -281,7 +286,7 @@ export default function InvoicesShow() {
                         </Link>
                         <Button
                             variant="outline"
-                            onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}
+                            onClick={openInvoicePdf}
                         >
                             <FileText className="mr-2 h-4 w-4" />
                             PDF
@@ -721,7 +726,7 @@ export default function InvoicesShow() {
                                 <Button
                                     variant="outline"
                                     className="w-full justify-start"
-                                    onClick={() => window.open(route("invoices.pdf", invoice.id), "_blank")}
+                                    onClick={openInvoicePdf}
                                 >
                                     <Download className="mr-2 h-4 w-4" />
                                     PDF herunterladen

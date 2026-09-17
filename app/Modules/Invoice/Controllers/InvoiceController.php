@@ -165,6 +165,10 @@ class InvoiceController extends Controller
         }
 
         DB::transaction(function () use ($invoice, $from, $to) {
+            if ($from === 'draft' && $to === 'sent') {
+                $invoice->freezeCompanySnapshot();
+            }
+
             $invoice->status = $to;
             $invoice->save();
 
@@ -182,27 +186,24 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Refresh the invoice company snapshot from current stammdaten.
+     * Replace the stored company snapshot with current stammdaten.
      *
-     * Drafts: overwrite the whole snapshot so address/legal-form/logo edits
-     * appear on the PDF before the invoice is issued.
-     *
-     * Issued invoices: only fill keys that are still empty (schema additions
-     * such as legal_form_label). Existing values stay frozen (GoBD).
+     * This is an explicit admin action (confirm + audit log). It overwrites
+     * existing values — including bank details in company_settings — so the
+     * PDF footer can pick up a new IBAN. Draft PDFs already render live
+     * data; this mainly updates issued invoices after a confirmed click.
      */
     public function refreshSnapshot(Invoice $invoice)
     {
         $this->authorize('refreshSnapshot', $invoice);
 
-        $isDraft = $invoice->status === 'draft';
-        $filled = $invoice->refreshCompanySnapshot($isDraft);
+        $filled = $invoice->refreshCompanySnapshot(true);
 
         if (empty($filled)) {
-            $message = $isDraft
-                ? 'Firmendaten sind bereits identisch mit den Stammdaten. PDF neu öffnen, um das aktuelle Layout zu sehen.'
-                : 'Keine Änderung. Bereits gespeicherte Firmendaten bleiben unverändert (GoBD). Neue Stammdaten gelten nur für Entwürfe.';
-
-            return back()->with('success', $message);
+            return back()->with(
+                'success',
+                'Firmendaten sind bereits identisch mit den Stammdaten. PDF neu öffnen (nicht aus dem Browser-Cache).'
+            );
         }
 
         InvoiceAuditLog::log(
@@ -210,17 +211,13 @@ class InvoiceController extends Controller
             'snapshot_refreshed',
             $invoice->status,
             $invoice->status,
-            ['filled_fields' => $filled, 'overwritten' => $isDraft],
-            ($isDraft ? 'Firmendaten übernommen: ' : 'Fehlende Firmendaten-Felder ergänzt: ').implode(', ', $filled)
+            ['filled_fields' => $filled, 'overwritten' => true],
+            'Firmendaten übernommen: '.implode(', ', $filled)
         );
-
-        $prefix = $isDraft
-            ? 'Firmendaten übernommen'
-            : (count($filled).' Feld(er) ergänzt');
 
         return back()->with(
             'success',
-            $prefix.': '.implode(', ', $filled).'. PDF neu öffnen, um die Änderung zu sehen.'
+            'Firmendaten übernommen: '.implode(', ', $filled).'. PDF neu öffnen, um die Änderung zu sehen.'
         );
     }
 
@@ -938,7 +935,9 @@ class InvoiceController extends Controller
                 'dpi' => 96,
             ]);
 
-        return $pdf->download("Rechnung-{$invoice->number}.pdf");
+        return $pdf->download("Rechnung-{$invoice->number}.pdf")
+            ->header('Cache-Control', 'private, no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 
     public function preview(Invoice $invoice)

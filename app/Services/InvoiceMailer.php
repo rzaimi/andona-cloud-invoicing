@@ -95,6 +95,7 @@ class InvoiceMailer
 
             if ($invoice->status === 'draft') {
                 $oldStatus = $invoice->status;
+                $invoice->freezeCompanySnapshot();
                 $invoice->update(['status' => 'sent']);
 
                 InvoiceAuditLog::log(

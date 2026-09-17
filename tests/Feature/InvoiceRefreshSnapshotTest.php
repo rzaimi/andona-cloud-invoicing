@@ -6,6 +6,8 @@ use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\User\Models\User;
+use App\Services\FormattingService;
+use App\Services\SettingsService;
 use Tests\TestCase;
 
 class InvoiceRefreshSnapshotTest extends TestCase
@@ -31,6 +33,12 @@ class InvoiceRefreshSnapshotTest extends TestCase
             'status' => 'active',
             'legal_form' => Company::LEGAL_FORM_GMBH,
         ]);
+        $this->company->setBankSettings([
+            'bank_name' => 'Alte Bank',
+            'bank_iban' => 'DE11111111111111111111',
+            'bank_bic' => 'ALTEDEFFXXX',
+            'bank_account_holder' => 'Alte Firma',
+        ]);
 
         $this->admin = User::factory()->create([
             'company_id' => $this->company->id,
@@ -53,11 +61,18 @@ class InvoiceRefreshSnapshotTest extends TestCase
             'name' => 'Alte Firma',
             'address' => 'Altstrasse 1',
             'display_name' => 'Alte Firma GmbH',
+            'bank_iban' => 'DE11111111111111111111',
         ]);
 
         $this->company->update([
             'name' => 'Neue Firma',
             'address' => 'Neustrasse 9',
+        ]);
+        $this->company->setBankSettings([
+            'bank_name' => 'Neue Bank',
+            'bank_iban' => 'DE22222222222222222222',
+            'bank_bic' => 'NEUEDEFFXXX',
+            'bank_account_holder' => 'Neue Firma',
         ]);
 
         $this->actingAs($this->admin)
@@ -70,18 +85,24 @@ class InvoiceRefreshSnapshotTest extends TestCase
         $this->assertSame('Neue Firma', $snapshot['name']);
         $this->assertSame('Neustrasse 9', $snapshot['address']);
         $this->assertSame('Neue Firma GmbH', $snapshot['display_name']);
+        $this->assertSame('DE22222222222222222222', $snapshot['bank_iban']);
+        $this->assertSame('Neue Bank', $snapshot['bank_name']);
     }
 
-    public function test_sent_invoice_does_not_overwrite_existing_snapshot_fields(): void
+    public function test_sent_invoice_button_overwrites_bank_snapshot_fields(): void
     {
         $invoice = $this->makeInvoice('sent', [
             'name' => 'Alte Firma',
             'address' => 'Altstrasse 1',
+            'bank_iban' => 'DE11111111111111111111',
+            'bank_name' => 'Alte Bank',
         ]);
 
-        $this->company->update([
-            'name' => 'Neue Firma',
-            'address' => 'Neustrasse 9',
+        $this->company->setBankSettings([
+            'bank_name' => 'Neue Bank',
+            'bank_iban' => 'DE22222222222222222222',
+            'bank_bic' => 'NEUEDEFFXXX',
+            'bank_account_holder' => 'Neue Firma',
         ]);
 
         $this->actingAs($this->admin)
@@ -91,28 +112,60 @@ class InvoiceRefreshSnapshotTest extends TestCase
 
         $snapshot = $invoice->fresh()->company_snapshot;
 
-        $this->assertSame('Alte Firma', $snapshot['name']);
-        $this->assertSame('Altstrasse 1', $snapshot['address']);
+        $this->assertSame('DE22222222222222222222', $snapshot['bank_iban']);
+        $this->assertSame('Neue Bank', $snapshot['bank_name']);
     }
 
-    public function test_sent_invoice_fills_missing_snapshot_fields(): void
+    public function test_fill_only_refresh_does_not_overwrite_existing_bank_fields(): void
     {
         $invoice = $this->makeInvoice('sent', [
             'name' => 'Alte Firma',
-            'address' => 'Altstrasse 1',
+            'bank_iban' => 'DE11111111111111111111',
+            'bank_name' => 'Alte Bank',
         ]);
 
-        $this->actingAs($this->admin)
-            ->post("/invoices/{$invoice->id}/refresh-snapshot")
-            ->assertRedirect()
-            ->assertSessionHas('success');
+        $this->company->setBankSettings([
+            'bank_name' => 'Neue Bank',
+            'bank_iban' => 'DE22222222222222222222',
+            'bank_bic' => 'NEUEDEFFXXX',
+            'bank_account_holder' => 'Neue Firma',
+        ]);
 
-        $snapshot = $invoice->fresh()->company_snapshot;
+        $filled = $invoice->refreshCompanySnapshot(false);
 
-        $this->assertSame('Alte Firma', $snapshot['name']);
-        $this->assertSame(Company::LEGAL_FORM_GMBH, $snapshot['legal_form']);
-        $this->assertSame('GmbH', $snapshot['legal_form_label']);
-        $this->assertNotEmpty($snapshot['display_name']);
+        $this->assertNotContains('bank_iban', $filled);
+        $this->assertSame('DE11111111111111111111', $invoice->fresh()->company_snapshot['bank_iban']);
+    }
+
+    public function test_draft_pdf_footer_uses_live_bank_settings_without_refresh(): void
+    {
+        $invoice = $this->makeInvoice('draft', [
+            'name' => 'Alte Firma',
+            'bank_iban' => 'DE11111111111111111111',
+            'bank_name' => 'Alte Bank',
+        ]);
+
+        $this->company->setBankSettings([
+            'bank_name' => 'Neue Bank',
+            'bank_iban' => 'DE22222222222222222222',
+            'bank_bic' => 'NEUEDEFFXXX',
+            'bank_account_holder' => 'Neue Firma',
+        ]);
+
+        $html = view('pdf.invoice', [
+            'layout' => (object) [
+                'template' => 'minimal',
+                'settings' => ['content' => ['show_bank_details' => true]],
+            ],
+            'invoice' => $invoice->fresh()->load(['customer', 'company', 'user']),
+            'company' => $this->company->fresh(),
+            'customer' => $this->customer,
+            'settings' => app(SettingsService::class)->getAll($this->company->id),
+            'formattingService' => app(FormattingService::class),
+        ])->render();
+
+        $this->assertStringContainsString('DE22222222222222222222', $html);
+        $this->assertStringNotContainsString('DE11111111111111111111', $html);
     }
 
     /**
@@ -124,7 +177,7 @@ class InvoiceRefreshSnapshotTest extends TestCase
             'company_id' => $this->company->id,
             'customer_id' => $this->customer->id,
             'user_id' => $this->admin->id,
-            'number' => 'RE-2026-SNAP-'.$status,
+            'number' => 'RE-2026-SNAP-'.$status.'-'.substr(uniqid(), -6),
             'status' => $status,
             'issue_date' => now(),
             'due_date' => now()->addDays(14),
