@@ -23,4 +23,22 @@ class RebaseCachedStoragePathsTest extends TestCase
         $this->assertSame($expected, config('logging.channels.single.path'));
         $this->assertSame($expected, config('logging.channels.emergency.path'));
     }
+
+    public function test_it_replaces_baked_view_paths_so_invoice_pdf_resolves(): void
+    {
+        config([
+            'view.paths' => ['/var/www/vhosts/host.example/src/resources/views'],
+            'view.compiled' => '/var/www/vhosts/host.example/src/storage/framework/views',
+        ]);
+
+        RebaseCachedStoragePaths::apply();
+
+        $this->app->forgetInstance('view');
+        $this->app->forgetInstance('blade.compiler');
+
+        $path = $this->app->make('view.finder')->find('pdf.invoice');
+
+        $this->assertSame(resource_path('views/pdf/invoice.blade.php'), $path);
+        $this->assertSame(storage_path('framework/views'), config('view.compiled'));
+    }
 }
