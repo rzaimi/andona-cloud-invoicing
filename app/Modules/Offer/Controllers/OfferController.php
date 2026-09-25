@@ -7,6 +7,7 @@ use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceItem;
+use App\Modules\Invoice\Models\InvoiceLayout;
 use App\Modules\Offer\Models\Offer;
 use App\Modules\Offer\Models\OfferItem;
 use App\Modules\Offer\Models\OfferLayout;
@@ -459,6 +460,12 @@ class OfferController extends Controller
             $vatRegime = $offer->vat_regime ?? 'standard';
             $isStandardVat = $vatRegime === 'standard';
 
+            // Offer layouts and invoice layouts are separate tables. Copying
+            // the offer layout id violates the invoices.layout_id foreign key.
+            $invoiceLayoutId = InvoiceLayout::forCompany($offer->company_id)
+                ->where('is_default', true)
+                ->value('id');
+
             // Create invoice from offer
             $invoice = Invoice::create([
                 'number' => $invoiceNumber,
@@ -466,14 +473,15 @@ class OfferController extends Controller
                 'customer_id' => $offer->customer_id,
                 'user_id' => $offer->user_id,
                 'issue_date' => now()->toDateString(),
-                'due_date' => now()->addDays($company->getSetting('payment_terms', 14))->toDateString(),
+                'due_date' => now()->addDays((int) $company->getSetting('payment_terms', 14))->toDateString(),
                 'subtotal' => $offer->subtotal,
                 'tax_rate' => $isStandardVat ? $offer->tax_rate : 0,
                 'tax_amount' => $isStandardVat ? $offer->tax_amount : 0,
                 'total' => $isStandardVat ? $offer->total : $offer->subtotal,
                 'vat_regime' => $vatRegime,
                 'notes' => $offer->notes,
-                'layout_id' => $offer->layout_id,
+                'bauvorhaben' => $offer->bauvorhaben,
+                'layout_id' => $invoiceLayoutId,
             ]);
 
             // Save company snapshot for the new invoice
