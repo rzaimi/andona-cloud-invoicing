@@ -3,6 +3,7 @@
 namespace Tests\Unit\Support;
 
 use App\Support\RebaseCachedStoragePaths;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class RebaseCachedStoragePathsTest extends TestCase
@@ -40,5 +41,22 @@ class RebaseCachedStoragePathsTest extends TestCase
 
         $this->assertSame(resource_path('views/pdf/invoice.blade.php'), $path);
         $this->assertSame(storage_path('framework/views'), config('view.compiled'));
+    }
+
+    public function test_it_replaces_baked_public_disk_root_with_the_live_storage_path(): void
+    {
+        config([
+            'filesystems.disks.public.root' => '/var/www/vhosts/host.example/src/storage/app/public',
+        ]);
+
+        RebaseCachedStoragePaths::apply();
+
+        $this->app->forgetInstance('filesystem');
+
+        $this->assertSame(storage_path('app/public'), config('filesystems.disks.public.root'));
+        $this->assertStringStartsWith(
+            storage_path('app/public'),
+            Storage::disk('public')->path('')
+        );
     }
 }
