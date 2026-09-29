@@ -2,8 +2,9 @@
 
 namespace Tests;
 
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use App\Modules\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -15,13 +16,12 @@ abstract class TestCase extends BaseTestCase
      * RefreshDatabase uses database transactions by default in SQLite
      * This ensures all changes are automatically rolled back after each test
      */
-
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Set the correct user model for authentication
-        $this->app['config']->set('auth.providers.users.model', \App\Modules\User\Models\User::class);
+        $this->app['config']->set('auth.providers.users.model', User::class);
     }
 
     /**
@@ -31,7 +31,7 @@ abstract class TestCase extends BaseTestCase
     protected function seedRolesAndPermissions(): void
     {
         $guard = 'web';
-        
+
         $permissions = [
             'manage_users',
             'manage_companies',
@@ -40,6 +40,7 @@ abstract class TestCase extends BaseTestCase
             'manage_offers',
             'manage_products',
             'view_reports',
+            'manage_expenses',
         ];
 
         foreach ($permissions as $perm) {
@@ -59,6 +60,7 @@ abstract class TestCase extends BaseTestCase
             'manage_offers',
             'manage_products',
             'view_reports',
+            'manage_expenses',
         ];
         $admin->syncPermissions(Permission::whereIn('name', $adminPermissions)->get());
 

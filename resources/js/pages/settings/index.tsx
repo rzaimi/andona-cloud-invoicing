@@ -135,8 +135,19 @@ export default function SettingsIndex() {
     const permissions: string[] = authUser?.permissions ?? []
     const isSuperAdmin = roles.includes("super_admin") || permissions.includes("manage_companies")
     const canImportExport = permissions.includes("manage_settings") || isSuperAdmin
+    const enabledModules = (page.props.enabledModules as string[] | undefined) ?? []
+    const settingsTabModules = (page.props.settingsTabModules as Record<string, string[]> | undefined) ?? {}
+    const has = (module: string) => enabledModules.includes(module)
+    const tabAllowed = (tab: string) => {
+        const required = settingsTabModules[tab]
+        if (!required || required.length === 0) return true
+        return required.some((module) => has(module))
+    }
 
-    const validTabs = [...TAB_IDS].filter((tab) => tab !== "company-settings" || isSuperAdmin)
+    const validTabs = [...TAB_IDS].filter((tab) => {
+        if (tab === "company-settings" && !isSuperAdmin) return false
+        return tabAllowed(tab)
+    })
 
     const tabFromUrl = () => {
         if (typeof window === "undefined") {
@@ -206,28 +217,41 @@ export default function SettingsIndex() {
                     icon: Building2,
                     keywords: ["adresse", "logo", "iban", "bic", "bank", "bankverbindung", "steuernummer", "ust-id", "umsatzsteuer", "geschäftsführer", "handelsregister", "telefon", "website", "kleinunternehmer"],
                 },
-                {
-                    id: "company",
-                    label: "Nummern & Texte",
-                    description: "Nummernkreise, Formate, Steuersätze und Standardtexte",
-                    icon: Settings,
-                    keywords: ["rechnungsnummer", "nummernkreis", "format", "zähler", "counter", "fußzeile", "zahlungsziel", "währung", "steuersatz", "mwst", "trennzeichen", "datumsformat", "storno", "angebotsnummer"],
-                },
-                {
-                    href: "/invoice-layouts",
-                    label: "Rechnungslayouts",
-                    icon: LayoutTemplate,
-                    keywords: ["pdf", "design", "vorlage", "briefpapier", "layout"],
-                },
-                {
-                    href: "/offer-layouts",
-                    label: "Angebotslayouts",
-                    icon: LayoutTemplate,
-                    keywords: ["pdf", "design", "vorlage", "angebot", "layout"],
-                },
+                ...(tabAllowed("company")
+                    ? [
+                        {
+                            id: "company",
+                            label: "Nummern & Texte",
+                            description: "Nummernkreise, Formate, Steuersätze und Standardtexte",
+                            icon: Settings,
+                            keywords: ["rechnungsnummer", "nummernkreis", "format", "zähler", "counter", "fußzeile", "zahlungsziel", "währung", "steuersatz", "mwst", "trennzeichen", "datumsformat", "storno", "angebotsnummer"],
+                        },
+                    ]
+                    : []),
+                ...(has("invoices")
+                    ? [
+                        {
+                            href: "/invoice-layouts",
+                            label: "Rechnungslayouts",
+                            icon: LayoutTemplate,
+                            keywords: ["pdf", "design", "vorlage", "briefpapier", "layout"],
+                        },
+                    ]
+                    : []),
+                ...(has("offers")
+                    ? [
+                        {
+                            href: "/offer-layouts",
+                            label: "Angebotslayouts",
+                            icon: LayoutTemplate,
+                            keywords: ["pdf", "design", "vorlage", "angebot", "layout"],
+                        },
+                    ]
+                    : []),
             ],
         },
-        {
+        ...(tabAllowed("payment-methods") || tabAllowed("reminders") || tabAllowed("erechnung") || tabAllowed("datev")
+            ? [{
             label: "Finanzen",
             items: [
                 {
@@ -258,8 +282,8 @@ export default function SettingsIndex() {
                     icon: Database,
                     keywords: ["export", "buchhaltung", "steuerberater", "kontenrahmen", "skr", "beraternummer", "mandant"],
                 },
-            ],
-        },
+            ].filter((item) => !item.id || tabAllowed(item.id)),
+        }] : []),
         {
             label: "Kommunikation",
             items: [
@@ -310,8 +334,7 @@ export default function SettingsIndex() {
                     icon: Palette,
                     keywords: ["dunkel", "hell", "dark", "theme", "darstellung"],
                 },
-                ...(canImportExport
-                    ? [{
+                ...((has("invoices") || has("customers") || has("products") || has("expenses")) && canImportExport ? [{
                         href: "/settings/import-export",
                         label: "Import / Export",
                         icon: Download,
@@ -349,7 +372,7 @@ export default function SettingsIndex() {
                 }))
                 .filter((group) => group.items.length > 0),
         // navGroups is rebuilt each render but its content only depends on permissions
-        [normalizedSearch, isSuperAdmin, canImportExport],
+        [normalizedSearch, isSuperAdmin, canImportExport, enabledModules],
     )
 
     const openFirstMatch = () => {

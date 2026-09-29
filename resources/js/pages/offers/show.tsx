@@ -67,6 +67,7 @@ interface OffersShowProps extends PageProps {
 export default function OffersShow() {
     const { offer } = usePage<OffersShowProps>().props
     const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
+    const hasInvoicesModule = ((usePage().props as any).enabledModules as string[] | undefined)?.includes("invoices") ?? true
     const [sendDialogOpen, setSendDialogOpen] = useState(false)
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -173,7 +174,7 @@ export default function OffersShow() {
                                 </Button>
                             </>
                         )}
-                        {offer.status === "accepted" && !offer.converted_to_invoice_id && (
+                        {hasInvoicesModule && offer.status === "accepted" && !offer.converted_to_invoice_id && (
                             <Button onClick={handleConvertToInvoice}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 In Rechnung umwandeln
@@ -439,7 +440,7 @@ export default function OffersShow() {
                                     <Send className="mr-2 h-4 w-4" />
                                     {offer.status === "draft" ? "Angebot versenden" : "Erneut senden"}
                                 </Button>
-                                {offer.status === "accepted" && !offer.converted_to_invoice_id && (
+                                {hasInvoicesModule && offer.status === "accepted" && !offer.converted_to_invoice_id && (
                                     <Button
                                         className="w-full justify-start"
                                         onClick={handleConvertToInvoice}

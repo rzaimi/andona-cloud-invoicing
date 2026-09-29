@@ -1,6 +1,7 @@
 "use client"
 
 import { router, usePage } from "@inertiajs/react"
+import type { PageProps } from "@/types"
 import { Command } from "cmdk"
 import {
     Calendar as CalendarIcon,
@@ -21,30 +22,26 @@ type NavEntry = {
     shortcut?: string
     href: string
     icon: React.ComponentType<{ className?: string }>
+    module?: string
 }
 
-/**
- * Static navigation entries. Customer search is fetched on demand from the
- * existing customers index endpoint so we don't pre-load the whole customer
- * list into every page.
- */
 const STATIC_ENTRIES: NavEntry[] = [
-    { group: "Neu", label: "Neue Rechnung",  href: "/invoices/create",  icon: ReceiptText },
-    { group: "Neu", label: "Neues Angebot",  href: "/offers/create",    icon: FileText },
-    { group: "Neu", label: "Neuer Kunde",    href: "/customers/create", icon: Users },
-    { group: "Neu", label: "Neues Produkt",  href: "/products/create",  icon: Package },
-    { group: "Neu", label: "Neue Ausgabe",   href: "/expenses/create",  icon: ReceiptText },
+    { group: "Neu", label: "Neue Rechnung",  href: "/invoices/create",  icon: ReceiptText, module: "invoices" },
+    { group: "Neu", label: "Neues Angebot",  href: "/offers/create",    icon: FileText, module: "offers" },
+    { group: "Neu", label: "Neuer Kunde",    href: "/customers/create", icon: Users, module: "customers" },
+    { group: "Neu", label: "Neues Produkt",  href: "/products/create",  icon: Package, module: "products" },
+    { group: "Neu", label: "Neue Ausgabe",   href: "/expenses/create",  icon: ReceiptText, module: "expenses" },
 
     { group: "Navigieren", label: "Dashboard",         href: "/dashboard",        icon: Home },
-    { group: "Navigieren", label: "Rechnungen",        href: "/invoices",         icon: ReceiptText },
-    { group: "Navigieren", label: "Angebote",          href: "/offers",           icon: FileText },
-    { group: "Navigieren", label: "Kunden",            href: "/customers",        icon: Users },
-    { group: "Navigieren", label: "Produkte",          href: "/products",         icon: Package },
-    { group: "Navigieren", label: "Ausgaben",          href: "/expenses",         icon: ReceiptText },
-    { group: "Navigieren", label: "Kalender",          href: "/calendar",         icon: CalendarIcon },
+    { group: "Navigieren", label: "Rechnungen",        href: "/invoices",         icon: ReceiptText, module: "invoices" },
+    { group: "Navigieren", label: "Angebote",          href: "/offers",           icon: FileText, module: "offers" },
+    { group: "Navigieren", label: "Kunden",            href: "/customers",        icon: Users, module: "customers" },
+    { group: "Navigieren", label: "Produkte",          href: "/products",         icon: Package, module: "products" },
+    { group: "Navigieren", label: "Ausgaben",          href: "/expenses",         icon: ReceiptText, module: "expenses" },
+    { group: "Navigieren", label: "Kalender",          href: "/calendar",         icon: CalendarIcon, module: "calendar" },
     { group: "Navigieren", label: "Einstellungen",     href: "/settings",         icon: Settings },
-    { group: "Navigieren", label: "Rechnungslayouts",  href: "/invoice-layouts",  icon: LayoutTemplate },
-    { group: "Navigieren", label: "Angebotslayouts",   href: "/offer-layouts",    icon: LayoutTemplate },
+    { group: "Navigieren", label: "Rechnungslayouts",  href: "/invoice-layouts",  icon: LayoutTemplate, module: "invoices" },
+    { group: "Navigieren", label: "Angebotslayouts",   href: "/offer-layouts",    icon: LayoutTemplate, module: "offers" },
 ]
 
 type CustomerHit = { id: string; name: string; number?: string | null }
@@ -53,6 +50,9 @@ export function CommandPalette() {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
     const [customers, setCustomers] = useState<CustomerHit[]>([])
+    const { props } = usePage<PageProps>()
+    const enabledModules = (props.enabledModules as string[] | undefined) ?? []
+    const has = (module: string) => enabledModules.includes(module)
 
     // Cmd/Ctrl+K toggles the palette. Registers once.
     useEffect(() => {
@@ -72,7 +72,7 @@ export function CommandPalette() {
     // payload small via the `only` partial-reload pattern isn't applicable
     // without an Inertia-first route, so we query the simple API).
     useEffect(() => {
-        if (!open || search.length < 2) {
+        if (!open || !has("customers") || search.length < 2) {
             setCustomers([])
             return
         }
@@ -99,7 +99,7 @@ export function CommandPalette() {
             controller.abort()
             window.clearTimeout(handle)
         }
-    }, [open, search])
+    }, [open, search, enabledModules])
 
     const go = (href: string) => {
         setOpen(false)
@@ -108,7 +108,10 @@ export function CommandPalette() {
     }
 
     // Group static entries for rendering.
-    const groupedStatic = STATIC_ENTRIES.reduce<Record<string, NavEntry[]>>((acc, entry) => {
+    const groupedStatic = STATIC_ENTRIES.filter((entry) => {
+        if (!entry.module) return true
+        return has(entry.module)
+    }).reduce<Record<string, NavEntry[]>>((acc, entry) => {
         acc[entry.group] ??= []
         acc[entry.group].push(entry)
         return acc

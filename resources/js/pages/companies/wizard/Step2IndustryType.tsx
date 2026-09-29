@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { ModuleChecklist } from "@/components/module-checklist"
 import { CheckCircle2, Sprout, HardHat, Layers, Wrench, Package, ShoppingBag, Briefcase, X } from "lucide-react"
 
 interface Step2Props {
@@ -89,7 +90,7 @@ const INDUSTRY_TYPES = [
     },
 ]
 
-export default function Step2IndustryType({ data, setData }: Step2Props) {
+export default function Step2IndustryType({ data, setData, errors }: Step2Props) {
     const current = data.industry_type || { slug: null, initialize_data: true }
 
     const select = (slug: string | null) => {
@@ -214,6 +215,22 @@ export default function Step2IndustryType({ data, setData }: Step2Props) {
                     </div>
                 </div>
             )}
+
+            {/* Module selection */}
+            <div className="space-y-3 rounded-xl border p-4">
+                <div>
+                    <Label className="text-base">Freigeschaltete Module</Label>
+                    <p className="text-sm text-muted-foreground">
+                        Nur die angehakten Module sind für die neue Firma verfügbar. Abhängige Module
+                        werden automatisch mit aktiviert. Mindestens ein Modul muss aktiv bleiben.
+                    </p>
+                </div>
+                <ModuleChecklist
+                    value={data.modules ?? null}
+                    onChange={(modules) => setData("modules", modules)}
+                    error={errors?.["modules"] ?? null}
+                />
+            </div>
         </div>
     )
 }

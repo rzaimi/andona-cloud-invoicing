@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Modules\Company\Models\Company;
 use App\Modules\User\Models\User;
+use App\Services\ModuleDependencyService;
 use App\Services\SettingsService;
 use App\Services\UserWelcomeMailer;
 use App\Traits\ResizesCompanyLogo;
@@ -90,6 +91,15 @@ class CompanyWizardController extends Controller
             'industry_type.slug' => 'nullable|in:gartenbau,bauunternehmen,raumausstattung,gebaudetechnik,logistik,handel,dienstleistung',
             'industry_type.initialize_data' => 'nullable|boolean',
 
+            // Module package — absent means the full product. Dependent
+            // modules must not be separated (same rule as company edit).
+            'modules' => ['nullable', 'array', 'min:1', function ($attribute, $value, $fail) {
+                foreach (app(ModuleDependencyService::class)->violationMessages((array) $value) as $message) {
+                    $fail($message);
+                }
+            }],
+            'modules.*' => 'string|in:'.implode(',', config('modules.all')),
+
             // Email / SMTP – all optional unless configure_smtp is on
             'email_settings.configure_smtp' => 'nullable|boolean',
             'email_settings.smtp_host' => $smtpRule.'|string|max:255',
@@ -151,6 +161,14 @@ class CompanyWizardController extends Controller
 
             // ── Company ──────────────────────────────────────────────────────
             $ci = $request->input('company_info', []);
+            $modules = $request->input('modules');
+            $allModules = config('modules.all', []);
+            // A full (or missing) selection is stored as null = full product,
+            // so future modules are on by default for unrestricted companies.
+            $enabledModules = is_array($modules) && $modules !== [] && array_diff($allModules, $modules) !== []
+                ? array_values(array_intersect($allModules, $modules))
+                : null;
+
             $company = Company::create([
                 'id' => Str::uuid(),
                 'name' => $ci['name'] ?? '',
@@ -163,6 +181,7 @@ class CompanyWizardController extends Controller
                 'tax_number' => $ci['tax_number'] ?? null,
                 'vat_number' => $ci['vat_number'] ?? null,
                 'website' => $ci['website'] ?? null,
+                'enabled_modules' => $enabledModules,
             ]);
 
             // ── Logo (needs company ID for tenant path) ───────────────────────

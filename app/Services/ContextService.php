@@ -292,6 +292,60 @@ class ContextService
     }
 
     /**
+     * Active company id: the session-selected company for super admins, otherwise the user's company.
+     */
+    public function effectiveCompanyId(?User $user = null): ?string
+    {
+        $user = $user ?? Auth::user();
+
+        if (! $user) {
+            return null;
+        }
+
+        return $this->getEffectiveCompanyId($user);
+    }
+
+    /**
+     * Per-request memo for effectiveCompany(): the middleware, Inertia shared
+     * props, and controllers all resolve the same company on one request.
+     *
+     * @var array<string, Company|null>
+     */
+    private array $companyMemo = [];
+
+    /**
+     * Active company for the current (or given) user.
+     */
+    public function effectiveCompany(?User $user = null): ?Company
+    {
+        $id = $this->effectiveCompanyId($user);
+
+        if (! $id) {
+            return null;
+        }
+
+        if (! array_key_exists($id, $this->companyMemo)) {
+            $this->companyMemo[$id] = Company::find($id);
+        }
+
+        return $this->companyMemo[$id];
+    }
+
+    /**
+     * Drop the memoized company after mutating it mid-request.
+     */
+    public function forgetCompanyMemo(?string $companyId = null): void
+    {
+        if ($companyId === null) {
+            $this->companyMemo = [];
+
+            return;
+        }
+
+        unset($this->companyMemo[$companyId]);
+    }
+
+    /**
      * Get effective company ID for filtering (selected company for super admins, user's company otherwise)
      */
     protected function getEffectiveCompanyId(User $user): ?string

@@ -30,6 +30,14 @@ class SendDailyDunning extends Command
             : Company::all();
 
         foreach ($companies as $company) {
+            // Route middleware only guards HTTP — the scheduler must respect
+            // the module flags itself or disabled companies still get dunned.
+            if (! $company->hasModule('dunning')) {
+                $this->line("Skipping {$company->name} - Mahnwesen module not enabled");
+
+                continue;
+            }
+
             if (! $company->smtp_host || ! $company->smtp_username) {
                 $this->warn("Skipping {$company->name} - SMTP not configured");
 

@@ -163,6 +163,22 @@ class MahnungModuleTest extends TestCase
         $this->assertDatabaseCount('email_logs', 0);
     }
 
+    public function test_daily_command_skips_companies_without_the_dunning_module(): void
+    {
+        Queue::fake();
+
+        // Fully overdue invoice that WOULD be escalated — but the company's
+        // dunning module is disabled, so the scheduler must not touch it.
+        $this->company->update(['enabled_modules' => ['invoices', 'customers', 'payments']]);
+        $this->makeInvoice(['due_date' => now()->subDays(20)]);
+
+        $this->artisan('dunning:send')
+            ->expectsOutputToContain('Mahnwesen module not enabled')
+            ->assertSuccessful();
+
+        Queue::assertNothingPushed();
+    }
+
     public function test_daily_command_dry_run_queues_nothing(): void
     {
         Queue::fake();

@@ -30,8 +30,8 @@ class ExpensePolicy
             return true;
         }
 
-        // Only admins (with manage_settings) can create expenses; regular users are read-only
-        return $user->company_id !== null && $user->hasRole('admin');
+        // Only users who may manage expenses can create them
+        return $user->company_id !== null && $user->hasPermissionTo('manage_expenses');
     }
 
     public function update(User $user, Expense $expense): bool
@@ -42,7 +42,7 @@ class ExpensePolicy
         }
 
         // Admin can update only their own company's expenses
-        return $user->company_id === $expense->company_id && $user->hasRole('admin');
+        return $user->company_id === $expense->company_id && $user->hasPermissionTo('manage_expenses');
     }
 
     public function delete(User $user, Expense $expense): bool
@@ -53,9 +53,6 @@ class ExpensePolicy
         }
 
         // Admin can delete only their own company's expenses
-        return $user->company_id === $expense->company_id && $user->hasRole('admin');
+        return $user->company_id === $expense->company_id && $user->hasPermissionTo('manage_expenses');
     }
 }
-
-
-

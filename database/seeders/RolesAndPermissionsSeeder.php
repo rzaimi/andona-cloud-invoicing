@@ -25,6 +25,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_own_documents',          // Employee self-service: view own documents
             'approve_expenses',            // Expense inbox: approve/reject expenses
             'export_expenses',             // Expense inbox: export approved expenses
+            'manage_expenses',             // Create, update, and delete expenses and categories
         ];
 
         foreach ($permissions as $perm) {
@@ -52,10 +53,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_employee_documents',
             'approve_expenses',
             'export_expenses',
+            'manage_expenses',
         ];
         $admin->syncPermissions(Permission::whereIn('name', $adminPermissions)->get());
 
-        $accountant->syncPermissions(Permission::whereIn('name', ['view_reports', 'export_expenses'])->get());
+        $accountant->syncPermissions(Permission::whereIn('name', ['view_reports', 'export_expenses', 'manage_expenses'])->get());
         $approver->syncPermissions(Permission::whereIn('name', ['view_reports', 'approve_expenses'])->get());
         $auditor->syncPermissions(Permission::whereIn('name', ['view_reports'])->get());
 

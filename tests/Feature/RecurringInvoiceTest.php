@@ -15,7 +15,9 @@ use Tests\TestCase;
 class RecurringInvoiceTest extends TestCase
 {
     protected Company $company;
+
     protected User $user;
+
     protected Customer $customer;
 
     protected function setUp(): void
@@ -25,22 +27,22 @@ class RecurringInvoiceTest extends TestCase
         $this->seedRolesAndPermissions();
 
         $this->company = Company::create([
-            'name'   => 'Acme GmbH',
-            'email'  => 'billing@acme.example',
+            'name' => 'Acme GmbH',
+            'email' => 'billing@acme.example',
             'status' => 'active',
         ]);
 
         $this->user = User::factory()->create([
             'company_id' => $this->company->id,
-            'role'       => 'user',
+            'role' => 'user',
         ]);
         $this->user->assignRole('user');
 
         $this->customer = Customer::create([
-            'company_id'    => $this->company->id,
-            'name'          => 'Kunde 1',
-            'email'         => 'k1@example.com',
-            'status'        => 'active',
+            'company_id' => $this->company->id,
+            'name' => 'Kunde 1',
+            'email' => 'k1@example.com',
+            'status' => 'active',
             'customer_type' => 'business',
         ]);
     }
@@ -48,30 +50,30 @@ class RecurringInvoiceTest extends TestCase
     private function makeProfile(array $overrides = []): RecurringInvoiceProfile
     {
         $profile = RecurringInvoiceProfile::create(array_merge([
-            'company_id'          => $this->company->id,
-            'customer_id'         => $this->customer->id,
-            'user_id'             => $this->user->id,
-            'name'                => 'Monatliche Wartung',
-            'vat_regime'          => 'standard',
-            'tax_rate'            => 0.19,
-            'due_days_after_issue'=> 14,
-            'interval_unit'       => 'month',
-            'interval_count'      => 1,
-            'day_of_month'        => null,
-            'start_date'          => '2026-01-01',
-            'next_run_date'       => '2026-01-01',
-            'status'              => 'active',
-            'auto_send'           => false,
+            'company_id' => $this->company->id,
+            'customer_id' => $this->customer->id,
+            'user_id' => $this->user->id,
+            'name' => 'Monatliche Wartung',
+            'vat_regime' => 'standard',
+            'tax_rate' => 0.19,
+            'due_days_after_issue' => 14,
+            'interval_unit' => 'month',
+            'interval_count' => 1,
+            'day_of_month' => null,
+            'start_date' => '2026-01-01',
+            'next_run_date' => '2026-01-01',
+            'status' => 'active',
+            'auto_send' => false,
         ], $overrides));
 
         RecurringInvoiceItem::create([
             'recurring_profile_id' => $profile->id,
-            'description'          => 'Wartungspauschale',
-            'quantity'             => 1,
-            'unit_price'           => 100.00,
-            'unit'                 => 'Monat',
-            'tax_rate'             => 0.19,
-            'sort_order'           => 0,
+            'description' => 'Wartungspauschale',
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'unit' => 'Monat',
+            'tax_rate' => 0.19,
+            'sort_order' => 0,
         ]);
 
         return $profile;
@@ -103,10 +105,26 @@ class RecurringInvoiceTest extends TestCase
         $this->assertCount(1, $invoice->items);
     }
 
+    public function test_skips_companies_without_the_invoices_module(): void
+    {
+        // A due profile of a company whose invoices module was revoked must
+        // not generate anything — the scheduler has no route middleware.
+        $this->company->update(['enabled_modules' => ['expenses']]);
+        $profile = $this->makeProfile();
+
+        $results = app(RecurringInvoiceService::class)
+            ->generateDue(CarbonImmutable::parse('2026-01-01'));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('skipped', $results[0]['status']);
+        $this->assertDatabaseMissing('invoices', ['recurring_profile_id' => $profile->id]);
+        $this->assertSame('2026-01-01', $profile->fresh()->next_run_date->toDateString());
+    }
+
     public function test_skips_profiles_that_are_not_due_yet(): void
     {
         $profile = $this->makeProfile([
-            'start_date'    => '2026-06-01',
+            'start_date' => '2026-06-01',
             'next_run_date' => '2026-06-01',
         ]);
 
@@ -131,10 +149,10 @@ class RecurringInvoiceTest extends TestCase
     public function test_respects_max_occurrences_and_marks_completed(): void
     {
         $profile = $this->makeProfile([
-            'max_occurrences'   => 2,
-            'interval_unit'     => 'day',
-            'interval_count'    => 1,
-            'next_run_date'     => '2026-01-01',
+            'max_occurrences' => 2,
+            'interval_unit' => 'day',
+            'interval_count' => 1,
+            'next_run_date' => '2026-01-01',
         ]);
 
         $service = app(RecurringInvoiceService::class);
@@ -152,10 +170,10 @@ class RecurringInvoiceTest extends TestCase
     public function test_respects_end_date_and_stops_at_boundary(): void
     {
         $profile = $this->makeProfile([
-            'interval_unit'  => 'day',
+            'interval_unit' => 'day',
             'interval_count' => 1,
-            'next_run_date'  => '2026-01-01',
-            'end_date'       => '2026-01-02',
+            'next_run_date' => '2026-01-01',
+            'end_date' => '2026-01-02',
         ]);
 
         $service = app(RecurringInvoiceService::class);
@@ -182,8 +200,8 @@ class RecurringInvoiceTest extends TestCase
         // "31st of every month" starting 2026-01-31 should land on
         // 2026-02-28 (non-leap) rather than rolling into March.
         $profile = $this->makeProfile([
-            'day_of_month'  => 31,
-            'start_date'    => '2026-01-31',
+            'day_of_month' => 31,
+            'start_date' => '2026-01-31',
             'next_run_date' => '2026-01-31',
         ]);
 
@@ -198,39 +216,39 @@ class RecurringInvoiceTest extends TestCase
     {
         $otherCompany = Company::create([
             'name' => 'Other',
-            'email'=> 'o@o.example',
-            'status'=> 'active',
+            'email' => 'o@o.example',
+            'status' => 'active',
         ]);
         $otherCustomer = Customer::create([
-            'company_id'    => $otherCompany->id,
-            'name'          => 'Other customer',
-            'email'         => 'oc@example.com',
-            'status'        => 'active',
+            'company_id' => $otherCompany->id,
+            'name' => 'Other customer',
+            'email' => 'oc@example.com',
+            'status' => 'active',
             'customer_type' => 'business',
         ]);
 
         $profileA = $this->makeProfile();
         $profileB = RecurringInvoiceProfile::create([
-            'company_id'           => $otherCompany->id,
-            'customer_id'          => $otherCustomer->id,
-            'name'                 => 'Other',
-            'vat_regime'           => 'standard',
-            'tax_rate'             => 0.19,
+            'company_id' => $otherCompany->id,
+            'customer_id' => $otherCustomer->id,
+            'name' => 'Other',
+            'vat_regime' => 'standard',
+            'tax_rate' => 0.19,
             'due_days_after_issue' => 14,
-            'interval_unit'        => 'month',
-            'interval_count'       => 1,
-            'start_date'           => '2026-01-01',
-            'next_run_date'        => '2026-01-01',
-            'status'               => 'active',
+            'interval_unit' => 'month',
+            'interval_count' => 1,
+            'start_date' => '2026-01-01',
+            'next_run_date' => '2026-01-01',
+            'status' => 'active',
         ]);
         RecurringInvoiceItem::create([
             'recurring_profile_id' => $profileB->id,
-            'description'          => 'Foo',
-            'quantity'             => 1,
-            'unit_price'           => 50,
-            'unit'                 => 'Stk.',
-            'tax_rate'             => 0.19,
-            'sort_order'           => 0,
+            'description' => 'Foo',
+            'quantity' => 1,
+            'unit_price' => 50,
+            'unit' => 'Stk.',
+            'tax_rate' => 0.19,
+            'sort_order' => 0,
         ]);
 
         app(RecurringInvoiceService::class)
@@ -246,10 +264,10 @@ class RecurringInvoiceTest extends TestCase
         // design advances one period per call so the scheduler catches up
         // gradually rather than spamming five invoices in one shot.
         $profile = $this->makeProfile([
-            'interval_unit'  => 'day',
+            'interval_unit' => 'day',
             'interval_count' => 1,
-            'start_date'     => '2026-01-01',
-            'next_run_date'  => '2026-01-01',
+            'start_date' => '2026-01-01',
+            'next_run_date' => '2026-01-01',
         ]);
 
         app(RecurringInvoiceService::class)
@@ -266,25 +284,25 @@ class RecurringInvoiceTest extends TestCase
         $this->actingAs($this->user);
 
         $response = $this->post('/recurring-invoices', [
-            'customer_id'    => $this->customer->id,
-            'name'           => 'Website-Hosting',
-            'interval_unit'  => 'month',
+            'customer_id' => $this->customer->id,
+            'name' => 'Website-Hosting',
+            'interval_unit' => 'month',
             'interval_count' => 1,
-            'start_date'     => '2026-02-01',
-            'items'          => [[
+            'start_date' => '2026-02-01',
+            'items' => [[
                 'description' => 'Hosting-Gebühr',
-                'quantity'    => 1,
-                'unit_price'  => 25,
-                'unit'        => 'Monat',
-                'tax_rate'    => 0.19,
+                'quantity' => 1,
+                'unit_price' => 25,
+                'unit' => 'Monat',
+                'tax_rate' => 0.19,
             ]],
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('recurring_invoice_profiles', [
             'company_id' => $this->company->id,
-            'name'       => 'Website-Hosting',
-            'status'     => 'active',
+            'name' => 'Website-Hosting',
+            'status' => 'active',
         ]);
     }
 
@@ -305,13 +323,13 @@ class RecurringInvoiceTest extends TestCase
         $profile = $this->makeProfile();
 
         $otherCompany = Company::create([
-            'name'  => 'Stranger',
+            'name' => 'Stranger',
             'email' => 's@s.example',
-            'status'=> 'active',
+            'status' => 'active',
         ]);
         $stranger = User::factory()->create([
             'company_id' => $otherCompany->id,
-            'role'       => 'user',
+            'role' => 'user',
         ]);
         $stranger->assignRole('user');
 

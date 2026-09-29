@@ -52,6 +52,9 @@ const defaultData = {
         slug: null as string | null,
         initialize_data: true,
     },
+    // null = full product; materialized to a concrete list once the super
+    // admin touches the module checkboxes on step 2.
+    modules: null as string[] | null,
     email_settings: {
         configure_smtp: false,
         smtp_host: "", smtp_port: 587, smtp_username: "", smtp_password: "",
@@ -93,7 +96,7 @@ type WizardFormData = typeof defaultData
 
 function stepForErrorKey(key: string): number {
     if (key.startsWith("company_info")) return 1
-    if (key.startsWith("industry_type")) return 2
+    if (key.startsWith("industry_type") || key.startsWith("modules")) return 2
     if (key.startsWith("email_settings")) return 3
     if (key.startsWith("invoice_settings")) return 4
     if (key.startsWith("mahnung_settings")) return 5
@@ -117,6 +120,10 @@ function validateStep(step: number, data: WizardFormData): Record<string, string
             e["company_info.email"] = "Bitte geben Sie eine gültige E-Mail-Adresse ein."
         if (ci.website?.trim() && !/^https?:\/\//.test(ci.website))
             e["company_info.website"] = "Die Webseite muss mit https:// oder http:// beginnen."
+    }
+
+    if (step === 2 && Array.isArray(data.modules) && data.modules.length === 0) {
+        e["modules"] = "Mindestens ein Modul muss aktiv sein."
     }
 
     if (step === 3 && es.configure_smtp) {
@@ -247,6 +254,7 @@ export default function CompanyWizard() {
     const handleComplete = () => {
         const reviewErrors = {
             ...validateStep(1, formData),
+            ...validateStep(2, formData),
             ...validateStep(3, formData),
             ...validateStep(6, formData),
             ...validateStep(7, formData),
@@ -262,6 +270,10 @@ export default function CompanyWizard() {
         const payload: Record<string, any> = { ...formData }
         if (logoFileRef.current) {
             payload.company_info = { ...payload.company_info, logo: logoFileRef.current }
+        }
+        // null means "full product" — the server treats a missing key the same.
+        if (payload.modules === null) {
+            delete payload.modules
         }
         router.post(route("companies.wizard.complete"), payload, {
             forceFormData: true,

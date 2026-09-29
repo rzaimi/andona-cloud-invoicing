@@ -2,6 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Modules\Company\Models\Company;
+use App\Services\ContextService;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -52,24 +55,24 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => function () use ($request) {
                     $user = $request->user();
-                    if (!$user) {
+                    if (! $user) {
                         return null;
                     }
-                    
+
                     $roles = [];
                     $permissions = [];
-                    
+
                     if (method_exists($user, 'getRoleNames')) {
                         $roles = $user->getRoleNames()->values()->all();
                     }
-                    
+
                     if (method_exists($user, 'getAllPermissions')) {
                         // Get all permissions (both direct and through roles)
                         $permissions = $user->getAllPermissions()->pluck('name')->toArray();
                     } elseif (method_exists($user, 'getPermissionNames')) {
                         $permissions = $user->getPermissionNames();
                     }
-                    
+
                     // Only include essential user fields to reduce payload
                     $userData = [
                         'id' => $user->id,
@@ -87,17 +90,17 @@ class HandleInertiaRequests extends Middleware
                             ? $user->isSuperAdmin()
                             : false,
                     ];
-                    
+
                     // Ensure user always has a company selected
                     $company = null;
-                    
+
                     // For super admins with manage_companies permission, use selected company from session if available
                     if (method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('manage_companies')) {
                         $selectedCompanyId = Session::get('selected_company_id');
-                        
+
                         // Validate that the selected company from session still exists
                         if ($selectedCompanyId) {
-                            $selectedCompany = \App\Modules\Company\Models\Company::find($selectedCompanyId);
+                            $selectedCompany = Company::find($selectedCompanyId);
                             if ($selectedCompany && $selectedCompany->status === 'active') {
                                 $company = $selectedCompany;
                             } else {
@@ -105,17 +108,17 @@ class HandleInertiaRequests extends Middleware
                                 Session::forget('selected_company_id');
                             }
                         }
-                        
+
                         // If no valid company from session, try to get default company first
-                        if (!$company) {
-                            $defaultCompany = \App\Modules\Company\Models\Company::getDefault();
+                        if (! $company) {
+                            $defaultCompany = Company::getDefault();
                             if ($defaultCompany) {
                                 $company = $defaultCompany;
                                 // Auto-select default company in session for consistency
                                 Session::put('selected_company_id', $defaultCompany->id);
                             } else {
                                 // Fallback to first available company if no default
-                                $firstCompany = \App\Modules\Company\Models\Company::where('status', 'active')
+                                $firstCompany = Company::where('status', 'active')
                                     ->orderBy('name')
                                     ->first();
                                 if ($firstCompany) {
@@ -125,44 +128,44 @@ class HandleInertiaRequests extends Middleware
                             }
                         }
                     }
-                    
+
                     // Fallback to user's own company if no company selected yet
-                    if (!$company && $user->company_id) {
-                        $userCompany = \App\Modules\Company\Models\Company::find($user->company_id);
+                    if (! $company && $user->company_id) {
+                        $userCompany = Company::find($user->company_id);
                         if ($userCompany && $userCompany->status === 'active') {
                             $company = $userCompany;
                         }
                     }
-                    
+
                     // Set company in userData if we found one - only essential fields
                     if ($company) {
                         // Only include essential company settings, not all settings
-                        $settingsService = app(\App\Services\SettingsService::class);
+                        $settingsService = app(SettingsService::class);
                         $allSettings = $settingsService->getAll($company->id);
-                        
+
                         // Only include frequently used settings to reduce payload
                         $rawPaymentMethods = $allSettings['payment_methods'] ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'];
-                        $rawDefaultUnits   = $allSettings['default_units'] ?? config('units.default');
+                        $rawDefaultUnits = $allSettings['default_units'] ?? config('units.default');
                         $essentialSettings = [
-                            'currency'               => $allSettings['currency'] ?? 'EUR',
-                            'tax_rate'               => $allSettings['tax_rate'] ?? 0.19,
-                            'reduced_tax_rate'       => $allSettings['reduced_tax_rate'] ?? 0.07,
-                            'invoice_number_format'  => $allSettings['invoice_number_format']  ?? 'RE-{YYYY}-{####}',
-                            'storno_number_format'   => $allSettings['storno_number_format']   ?? 'STORNO-{YYYY}-{####}',
-                            'offer_number_format'    => $allSettings['offer_number_format']    ?? 'AN-{YYYY}-{####}',
+                            'currency' => $allSettings['currency'] ?? 'EUR',
+                            'tax_rate' => $allSettings['tax_rate'] ?? 0.19,
+                            'reduced_tax_rate' => $allSettings['reduced_tax_rate'] ?? 0.07,
+                            'invoice_number_format' => $allSettings['invoice_number_format'] ?? 'RE-{YYYY}-{####}',
+                            'storno_number_format' => $allSettings['storno_number_format'] ?? 'STORNO-{YYYY}-{####}',
+                            'offer_number_format' => $allSettings['offer_number_format'] ?? 'AN-{YYYY}-{####}',
                             'customer_number_format' => $allSettings['customer_number_format'] ?? 'KU-{YYYY}-{####}',
                             'abschlag_number_format' => $allSettings['abschlag_number_format'] ?? 'AR-{YYYY}-{####}',
-                            'schluss_number_format'  => $allSettings['schluss_number_format']  ?? 'SR-{YYYY}-{####}',
+                            'schluss_number_format' => $allSettings['schluss_number_format'] ?? 'SR-{YYYY}-{####}',
                             // Legacy prefix keys kept for backward compat
-                            'invoice_prefix'         => $allSettings['invoice_prefix'] ?? 'RE-',
-                            'offer_prefix'           => $allSettings['offer_prefix']   ?? 'AN-',
-                            'date_format'            => $allSettings['date_format'] ?? 'd.m.Y',
-                            'payment_terms'          => $allSettings['payment_terms'] ?? 14,
-                            'payment_methods'        => is_array($rawPaymentMethods) ? $rawPaymentMethods : json_decode($rawPaymentMethods, true) ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
+                            'invoice_prefix' => $allSettings['invoice_prefix'] ?? 'RE-',
+                            'offer_prefix' => $allSettings['offer_prefix'] ?? 'AN-',
+                            'date_format' => $allSettings['date_format'] ?? 'd.m.Y',
+                            'payment_terms' => $allSettings['payment_terms'] ?? 14,
+                            'payment_methods' => is_array($rawPaymentMethods) ? $rawPaymentMethods : json_decode($rawPaymentMethods, true) ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
                             'default_payment_method' => $allSettings['default_payment_method'] ?? 'Überweisung',
-                            'default_units'          => is_array($rawDefaultUnits) ? $rawDefaultUnits : json_decode($rawDefaultUnits, true) ?? config('units.default'),
+                            'default_units' => is_array($rawDefaultUnits) ? $rawDefaultUnits : json_decode($rawDefaultUnits, true) ?? config('units.default'),
                         ];
-                        
+
                         $userData['company'] = [
                             'id' => $company->id,
                             'name' => $company->name,
@@ -170,27 +173,47 @@ class HandleInertiaRequests extends Middleware
                             'settings' => $essentialSettings,
                         ];
                     }
-                    
+
                     return $userData;
                 },
                 'available_companies' => function () use ($request) {
-                    if (!$request->user()) {
+                    if (! $request->user()) {
                         return [];
                     }
                     $user = $request->user();
                     if (method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('manage_companies')) {
-                        return \App\Modules\Company\Models\Company::where('status', 'active')
+                        return Company::where('status', 'active')
                             ->orderBy('name')
                             ->get(['id', 'name'])
-                            ->map(fn($c) => ['id' => $c->id, 'name' => $c->name])
+                            ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])
                             ->toArray();
                     }
+
                     return [];
                 },
             ],
             // Ziggy routes are loaded from generated resources/js/ziggy.js file
             // This removes routes from HTML payload (generated via: php artisan ziggy:generate)
             // No need to include routes in Inertia props anymore
+            'enabledModules' => function () use ($request) {
+                $user = $request->user();
+                if (! $user) {
+                    return config('modules.all');
+                }
+
+                $company = app(ContextService::class)->effectiveCompany($user);
+
+                return $company ? $company->enabledModules() : config('modules.all');
+            },
+            'moduleCatalog' => collect(config('modules.labels'))
+                ->map(fn ($label, $key) => ['key' => $key, 'label' => $label])
+                ->values()
+                ->all(),
+            'moduleDependencies' => [
+                'requires' => (object) config('modules.requires', []),
+                'requires_any' => (object) config('modules.requires_any', []),
+            ],
+            'settingsTabModules' => config('modules.settings_tabs'),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

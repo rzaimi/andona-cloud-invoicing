@@ -56,6 +56,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: "Dashboard", href: "/dashboard" 
 export default function OffersIndex() {
     const { offers, filters, stats } = usePage<OffersIndexProps>().props
     const settings = (usePage().props as any).auth?.user?.company?.settings ?? {}
+    const hasInvoicesModule = ((usePage().props as any).enabledModules as string[] | undefined)?.includes("invoices") ?? true
     const [search, setSearch] = useState(filters.search || "")
     const [status, setStatus] = useState(filters.status || "all")
     const sort = filters.sort || "issue_date"
@@ -467,7 +468,7 @@ export default function OffersIndex() {
                                                                         {offer.status === "draft" ? "Versenden" : "Erneut senden"}
                                                                     </DropdownMenuItem>
 
-                                                                    {offer.status === "accepted" && !offer.converted_to_invoice_id && (
+                                                                    {hasInvoicesModule && offer.status === "accepted" && !offer.converted_to_invoice_id && (
                                                                         <DropdownMenuItem onClick={() => handleConvertToInvoice(offer)}>
                                                                             <FileText className="mr-2 h-4 w-4" />
                                                                             In Rechnung umwandeln

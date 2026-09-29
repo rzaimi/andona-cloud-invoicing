@@ -52,9 +52,23 @@ class RecurringInvoiceService
             $query->where('company_id', $onlyCompanyId);
         }
 
-        $profileIds = $query->pluck('id');
+        $profiles = $query->get();
 
-        foreach ($profileIds as $profileId) {
+        foreach ($profiles as $profile) {
+            // Scheduler-side module guard: never generate invoices for a
+            // company whose invoices module has been disabled.
+            if (! $profile->company || ! $profile->company->hasModule('invoices')) {
+                $results->push([
+                    'profile_id' => $profile->id,
+                    'invoice_id' => null,
+                    'status' => 'skipped',
+                ]);
+
+                continue;
+            }
+
+            $profileId = $profile->id;
+
             try {
                 $invoice = $this->runOnce($profileId, $now);
                 $results->push([

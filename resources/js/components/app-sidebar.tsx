@@ -33,6 +33,7 @@ import {
     Search,
     Check,
     Repeat,
+    Settings,
 } from "lucide-react"
 import {
     Sidebar,
@@ -93,6 +94,11 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
     const user = userProp ?? (pageProps.auth?.user as User | null | undefined)
     const availableCompanies = pageProps.auth?.available_companies || []
     const canSwitchCompany = availableCompanies.length > 0 && !!user?.permissions?.includes("manage_companies")
+    // Fallback: when the prop is missing (e.g. an error page outside Inertia
+    // shares), fall back to every module in the shared catalog.
+    const moduleCatalog = (pageProps.moduleCatalog as { key: string; label: string }[] | undefined) ?? []
+    const enabledModules = (pageProps.enabledModules as string[] | undefined) ?? moduleCatalog.map((entry) => entry.key)
+    const has = (module: string) => enabledModules.includes(module)
     const [selectedCompanyId, setSelectedCompanyId] = useState<string>(user?.company?.id || "")
     const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false)
     const [companySearch, setCompanySearch] = useState("")
@@ -159,32 +165,37 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
             url: "/invoices/create",
             icon: Plus,
             isActive: isActive("/invoices/create"),
+            module: "invoices" as const,
         },
         {
             title: "Neues Angebot",
             url: "/offers/create",
             icon: Plus,
             isActive: isActive("/offers/create"),
+            module: "offers" as const,
         },
         {
             title: "Neuer Kunde",
             url: "/customers/create",
             icon: Plus,
             isActive: isActive("/customers/create"),
+            module: "customers" as const,
         },
         {
             title: "Neue Ausgabe",
             url: "/expenses/create",
             icon: Plus,
             isActive: isActive("/expenses/create"),
+            module: "expenses" as const,
         },
         {
             title: "Neues Produkt",
             url: "/products/create",
             icon: Plus,
             isActive: isActive("/products/create"),
+            module: "products" as const,
         },
-    ]
+    ].filter((item) => has(item.module))
 
     const invoiceManagement = [
         {
@@ -258,6 +269,12 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
             url: "/expenses",
             icon: ReceiptEuro,
             isActive: isActive("/expenses"),
+        },
+        {
+            title: "Neue Ausgabe",
+            url: "/expenses/create",
+            icon: Plus,
+            isActive: isActive("/expenses/create"),
         },
         {
             title: "Kategorien",
@@ -347,6 +364,16 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
             isActive: isActive("/datev"),
         },
     ]
+
+    const visibleReports = reportsAndAnalytics.filter((item) => {
+        if (item.url === "/reports/expenses" || item.url === "/reports/profit" || item.url === "/reports/vat") {
+            return has("expenses")
+        }
+        if (item.url === "/datev") {
+            return has("datev")
+        }
+        return has("reports")
+    })
 
     // Moved to dropdown
     const adminNavigation = [
@@ -499,7 +526,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
 
                 <SidebarSeparator />
 
-                {/* Quick Actions - Most Used */}
+                {quickActions.length > 0 && (
                 <SidebarGroup>
                     <SidebarGroupLabel>Schnellzugriff</SidebarGroupLabel>
                     <SidebarGroupContent>
@@ -530,11 +557,11 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
-
-                {/* Core Modules - Always Visible */}
+                )}
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
+                            {has("invoices") && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={isActive("/invoices")}>
                                     <Link href="/invoices" className="flex items-center min-w-0">
@@ -543,6 +570,8 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            )}
+                            {has("dunning") && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={isActive("/dunning")}>
                                     <Link href="/dunning" className="flex items-center min-w-0">
@@ -551,6 +580,8 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            )}
+                            {has("invoices") && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={isActive("/recurring-invoices")}>
                                     <Link href="/recurring-invoices" className="flex items-center min-w-0">
@@ -559,6 +590,8 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            )}
+                            {has("offers") && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={isActive("/offers")}>
                                     <Link href="/offers" className="flex items-center min-w-0">
@@ -567,6 +600,8 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            )}
+                            {has("customers") && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={isActive("/customers")}>
                                     <Link href="/customers">
@@ -575,6 +610,8 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            )}
+                            {has("payments") && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={isActive("/payments")}>
                                     <Link href="/payments">
@@ -583,6 +620,8 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            )}
+                            {has("expenses") && (
                             <SidebarMenuItem>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -606,6 +645,8 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </SidebarMenuItem>
+                            )}
+                            {has("products") && (
                             <SidebarMenuItem>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -629,6 +670,8 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </SidebarMenuItem>
+                            )}
+                            {has("calendar") && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={isActive("/calendar")}>
                                     <Link href="/calendar">
@@ -637,6 +680,8 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            )}
+                            {has("documents") && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={isActive("/settings/documents")}>
                                     <Link href="/settings/documents">
@@ -645,11 +690,22 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            )}
+                            {!has("invoices") && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isActive("/settings")}>
+                                    <Link href="/settings">
+                                        <Settings />
+                                        <span className="truncate">Einstellungen</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            )}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
 
-                {/* Reports - Dropdown */}
+                {visibleReports.length > 0 && (
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
@@ -665,7 +721,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     <DropdownMenuContent side="right" align="start" className="w-56">
                                         <DropdownMenuLabel>Berichte & Analysen</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {reportsAndAnalytics.map((item) => (
+                                        {visibleReports.map((item) => (
                                             <DropdownMenuItem key={item.title} asChild>
                                                 <Link href={item.url}>
                                                     <item.icon className="mr-2 h-4 w-4" />
@@ -679,6 +735,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
+                )}
             </SidebarContent>
             <SidebarRail />
         </Sidebar>

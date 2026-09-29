@@ -8,11 +8,13 @@ use App\Modules\Invoice\Models\InvoiceLayout;
 use App\Modules\Offer\Models\Offer;
 use App\Modules\Offer\Models\OfferLayout;
 use App\Modules\User\Models\User;
+use App\Services\ModuleDependencyService;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Log;
 
 class Company extends Model
 {
@@ -48,10 +50,12 @@ class Company extends Model
         'status',
         'is_default',
         'settings',
+        'enabled_modules',
     ];
 
     protected $casts = [
         'settings' => 'array',
+        'enabled_modules' => 'array',
         'is_small_business' => 'boolean',
     ];
 
@@ -60,15 +64,23 @@ class Company extends Model
     // role of the managing person are derived via getLegalFormLabel() /
     // getManagerTitle() so incorrect combinations (e.g. "Geschäftsführer" on
     // an Einzelunternehmen) become impossible.
-    public const LEGAL_FORM_EINZEL        = 'einzelunternehmen';
-    public const LEGAL_FORM_FREIBERUFLER  = 'freiberufler';
-    public const LEGAL_FORM_GBR           = 'gbr';
-    public const LEGAL_FORM_OHG           = 'ohg';
-    public const LEGAL_FORM_KG            = 'kg';
-    public const LEGAL_FORM_GMBH          = 'gmbh';
-    public const LEGAL_FORM_UG            = 'ug';
-    public const LEGAL_FORM_GMBH_CO_KG    = 'gmbh_co_kg';
-    public const LEGAL_FORM_AG            = 'ag';
+    public const LEGAL_FORM_EINZEL = 'einzelunternehmen';
+
+    public const LEGAL_FORM_FREIBERUFLER = 'freiberufler';
+
+    public const LEGAL_FORM_GBR = 'gbr';
+
+    public const LEGAL_FORM_OHG = 'ohg';
+
+    public const LEGAL_FORM_KG = 'kg';
+
+    public const LEGAL_FORM_GMBH = 'gmbh';
+
+    public const LEGAL_FORM_UG = 'ug';
+
+    public const LEGAL_FORM_GMBH_CO_KG = 'gmbh_co_kg';
+
+    public const LEGAL_FORM_AG = 'ag';
 
     /**
      * Human-readable label for each legal form. This is what's printed on the
@@ -77,15 +89,15 @@ class Company extends Model
     public static function legalFormLabels(): array
     {
         return [
-            self::LEGAL_FORM_EINZEL       => 'Einzelunternehmen',
+            self::LEGAL_FORM_EINZEL => 'Einzelunternehmen',
             self::LEGAL_FORM_FREIBERUFLER => 'Freiberufler',
-            self::LEGAL_FORM_GBR          => 'GbR',
-            self::LEGAL_FORM_OHG          => 'OHG',
-            self::LEGAL_FORM_KG           => 'KG',
-            self::LEGAL_FORM_GMBH         => 'GmbH',
-            self::LEGAL_FORM_UG           => 'UG (haftungsbeschränkt)',
-            self::LEGAL_FORM_GMBH_CO_KG   => 'GmbH & Co. KG',
-            self::LEGAL_FORM_AG           => 'AG',
+            self::LEGAL_FORM_GBR => 'GbR',
+            self::LEGAL_FORM_OHG => 'OHG',
+            self::LEGAL_FORM_KG => 'KG',
+            self::LEGAL_FORM_GMBH => 'GmbH',
+            self::LEGAL_FORM_UG => 'UG (haftungsbeschränkt)',
+            self::LEGAL_FORM_GMBH_CO_KG => 'GmbH & Co. KG',
+            self::LEGAL_FORM_AG => 'AG',
         ];
     }
 
@@ -97,21 +109,21 @@ class Company extends Model
      */
     public function getManagerTitle(): ?string
     {
-        if (!empty($this->manager_title_override)) {
+        if (! empty($this->manager_title_override)) {
             return $this->manager_title_override;
         }
 
         return match ($this->legal_form) {
             self::LEGAL_FORM_EINZEL,
-            self::LEGAL_FORM_FREIBERUFLER   => 'Inhaber',
+            self::LEGAL_FORM_FREIBERUFLER => 'Inhaber',
             self::LEGAL_FORM_GBR,
-            self::LEGAL_FORM_OHG            => 'Gesellschafter',
+            self::LEGAL_FORM_OHG => 'Gesellschafter',
             self::LEGAL_FORM_KG,
-            self::LEGAL_FORM_GMBH_CO_KG     => 'Komplementär',
+            self::LEGAL_FORM_GMBH_CO_KG => 'Komplementär',
             self::LEGAL_FORM_GMBH,
-            self::LEGAL_FORM_UG             => 'Geschäftsführer',
-            self::LEGAL_FORM_AG             => 'Vorstand',
-            default                         => null,
+            self::LEGAL_FORM_UG => 'Geschäftsführer',
+            self::LEGAL_FORM_AG => 'Vorstand',
+            default => null,
         };
     }
 
@@ -131,7 +143,7 @@ class Company extends Model
         $name = (string) ($this->name ?? '');
         $form = $this->getLegalFormLabel();
 
-        if (!$form || $name === '') {
+        if (! $form || $name === '') {
             return $name;
         }
 
@@ -141,7 +153,7 @@ class Company extends Model
             return $name;
         }
 
-        return trim($name . ' ' . $form);
+        return trim($name.' '.$form);
     }
 
     /**
@@ -227,19 +239,19 @@ class Company extends Model
             'currency' => 'EUR',
             'tax_rate' => 0.19,
             'reduced_tax_rate' => 0.07,
-            'invoice_number_format'  => 'RE-{YYYY}-{####}',
-            'invoice_next_counter'   => 1,
-            'storno_number_format'   => 'STORNO-{YYYY}-{####}',
-            'storno_next_counter'    => 1,
-            'offer_number_format'    => 'AN-{YYYY}-{####}',
-            'offer_next_counter'     => 1,
+            'invoice_number_format' => 'RE-{YYYY}-{####}',
+            'invoice_next_counter' => 1,
+            'storno_number_format' => 'STORNO-{YYYY}-{####}',
+            'storno_next_counter' => 1,
+            'offer_number_format' => 'AN-{YYYY}-{####}',
+            'offer_next_counter' => 1,
             'customer_number_format' => 'KU-{YYYY}-{####}',
-            'customer_next_counter'  => 1,
-            'product_number_format'  => 'PR-{YYYY}-{####}',
-            'product_next_counter'   => 1,
+            'customer_next_counter' => 1,
+            'product_number_format' => 'PR-{YYYY}-{####}',
+            'product_next_counter' => 1,
             // Legacy prefix keys kept for backward-compatibility read fallback
-            'invoice_prefix'  => 'RE-',
-            'offer_prefix'    => 'AN-',
+            'invoice_prefix' => 'RE-',
+            'offer_prefix' => 'AN-',
             'customer_prefix' => 'KU-',
             'date_format' => 'd.m.Y',
             'payment_terms' => 14,
@@ -255,12 +267,69 @@ class Company extends Model
         ];
     }
 
+    /**
+     * Modules this company may use. Missing or empty means the full product,
+     * until a super admin saves an explicit list.
+     *
+     * @return list<string>
+     */
+    public function enabledModules(): array
+    {
+        $all = config('modules.all', []);
+        $enabled = $this->enabled_modules;
+
+        if (! is_array($enabled) || $enabled === []) {
+            return $all;
+        }
+
+        $expanded = [];
+        $legacy = config('modules.legacy', []);
+        foreach ($enabled as $key) {
+            if (isset($legacy[$key]) && is_array($legacy[$key])) {
+                $expanded = array_merge($expanded, $legacy[$key]);
+            } else {
+                $expanded[] = $key;
+            }
+        }
+
+        $known = array_values(array_unique(array_intersect($all, $expanded)));
+
+        // An explicit list that resolves to nothing fails CLOSED: the company
+        // was restricted on purpose, so unknown keys must not unlock everything.
+        if ($known === []) {
+            Log::warning('Company has an enabled_modules list with no known module keys.', [
+                'company_id' => $this->id,
+                'enabled_modules' => $enabled,
+            ]);
+
+            return $known;
+        }
+
+        // Heal stored lists that predate dependency enforcement: a module is
+        // never active without its hard requirements (e.g. invoices without
+        // payments could otherwise never be marked paid).
+        return app(ModuleDependencyService::class)->closure($known);
+    }
+
+    public function hasModule(string $module): bool
+    {
+        return in_array($module, $this->enabledModules(), true);
+    }
+
+    /**
+     * @param  list<string>  $modules
+     */
+    public function hasAnyModule(array $modules): bool
+    {
+        return array_intersect($modules, $this->enabledModules()) !== [];
+    }
+
     public function getSetting(string $key, $default = null)
     {
         $setting = $this->settings()->where('key', $key)->first();
 
         if ($setting) {
-            return match($setting->type) {
+            return match ($setting->type) {
                 'integer' => (int) $setting->value,
                 'decimal' => (float) $setting->value,
                 'boolean' => (bool) $setting->value,
@@ -270,6 +339,7 @@ class Company extends Model
         }
 
         $defaults = $this->getDefaultSettings();
+
         return $defaults[$key] ?? $default;
     }
 
@@ -304,7 +374,7 @@ class Company extends Model
         static::where('is_default', true)
             ->where('id', '!=', $this->id)
             ->update(['is_default' => false]);
-        
+
         // Set this one as default
         $this->update(['is_default' => true]);
     }

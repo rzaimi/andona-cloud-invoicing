@@ -64,6 +64,14 @@ class SendDailyReminders extends Command
             : Company::all();
 
         foreach ($companies as $company) {
+            // Scheduler-side module guard: no offer reminders for companies
+            // without the offers module.
+            if (! $company->hasModule('offers')) {
+                $this->line("Skipping {$company->name} - Angebote module not enabled");
+
+                continue;
+            }
+
             if (! $company->smtp_host || ! $company->smtp_username) {
                 $this->warn("Skipping {$company->name} - SMTP not configured");
 

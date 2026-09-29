@@ -27,7 +27,7 @@ class ExpenseCategoryPolicy
             return true;
         }
 
-        return $user->company_id !== null && $user->hasRole('admin');
+        return $user->company_id !== null && $user->hasPermissionTo('manage_expenses');
     }
 
     public function update(User $user, ExpenseCategory $category): bool
@@ -36,7 +36,7 @@ class ExpenseCategoryPolicy
             return true;
         }
 
-        return $user->company_id === $category->company_id && $user->hasRole('admin');
+        return $user->company_id === $category->company_id && $user->hasPermissionTo('manage_expenses');
     }
 
     public function delete(User $user, ExpenseCategory $category): bool
@@ -45,6 +45,6 @@ class ExpenseCategoryPolicy
             return true;
         }
 
-        return $user->company_id === $category->company_id && $user->hasRole('admin');
+        return $user->company_id === $category->company_id && $user->hasPermissionTo('manage_expenses');
     }
 }

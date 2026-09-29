@@ -4,6 +4,10 @@ namespace App\Modules\Company\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Company\Models\Company;
+use App\Modules\User\Models\User;
+use App\Services\ContextService;
+use App\Services\ModuleDependencyService;
+use App\Services\SettingsService;
 use App\Traits\ResizesCompanyLogo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,9 +17,10 @@ use Inertia\Inertia;
 class CompanyController extends Controller
 {
     use ResizesCompanyLogo;
+
     public function index(Request $request)
     {
-        $user   = Auth::user();
+        $user = Auth::user();
         $search = $request->input('search', '');
 
         $companies = Company::withCount(['users', 'customers', 'invoices', 'offers'])
@@ -26,15 +31,15 @@ class CompanyController extends Controller
             }])
             ->when($search, fn ($q) => $q->where(function ($inner) use ($search) {
                 $inner->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             }))
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('companies/index', [
-            'companies'  => $companies,
-            'search'     => $search,
+            'companies' => $companies,
+            'search' => $search,
             'can_create' => $user->hasPermissionTo('manage_companies'),
         ]);
     }
@@ -124,7 +129,7 @@ class CompanyController extends Controller
         // Get wizard data from session
         $wizardData = $request->session()->get('company_wizard');
 
-        if (!$wizardData) {
+        if (! $wizardData) {
             return redirect()->route('companies.wizard.show')
                 ->with('error', 'Wizard-Daten nicht gefunden. Bitte starten Sie erneut.');
         }
@@ -137,7 +142,7 @@ class CompanyController extends Controller
             // 1. Create Company
             $companyInfo = $data['company_info'];
             $bankingInfo = $data['banking_info'] ?? [];
-            
+
             $company = Company::create([
                 'name' => $companyInfo['name'],
                 'email' => $companyInfo['email'],
@@ -153,7 +158,7 @@ class CompanyController extends Controller
             ]);
 
             // 2. Set up SMTP Settings (normalized to company_settings)
-            if (!empty($data['email_settings'])) {
+            if (! empty($data['email_settings'])) {
                 $emailSettings = $data['email_settings'];
                 $company->setSmtpSettings([
                     'smtp_host' => $emailSettings['smtp_host'] ?? null,
@@ -167,7 +172,7 @@ class CompanyController extends Controller
             }
 
             // Set up Bank Settings (normalized to company_settings)
-            if (!empty($bankingInfo)) {
+            if (! empty($bankingInfo)) {
                 $company->setBankSettings([
                     'bank_name' => $bankingInfo['bank_name'] ?? null,
                     'bank_iban' => $bankingInfo['iban'] ?? $bankingInfo['bank_iban'] ?? null,
@@ -177,9 +182,9 @@ class CompanyController extends Controller
             }
 
             // 3. Set up Invoice/Offer Settings
-            $settingsService = app(\App\Services\SettingsService::class);
-            
-            if (!empty($data['invoice_settings'])) {
+            $settingsService = app(SettingsService::class);
+
+            if (! empty($data['invoice_settings'])) {
                 foreach ($data['invoice_settings'] as $key => $value) {
                     $type = is_bool($value) ? 'boolean' : (is_numeric($value) ? 'number' : 'string');
                     $settingsService->setCompany($key, $value, $company->id, $type);
@@ -187,7 +192,7 @@ class CompanyController extends Controller
             }
 
             // 4. Set up Mahnung Settings
-            if (!empty($data['mahnung_settings'])) {
+            if (! empty($data['mahnung_settings'])) {
                 foreach ($data['mahnung_settings'] as $key => $value) {
                     $type = is_bool($value) ? 'boolean' : (is_numeric($value) ? 'number' : 'string');
                     $settingsService->setCompany($key, $value, $company->id, $type);
@@ -195,10 +200,10 @@ class CompanyController extends Controller
             }
 
             // 5. Create First User (if requested)
-            if (!empty($data['first_user']['create_user']) && $data['first_user']['create_user']) {
+            if (! empty($data['first_user']['create_user']) && $data['first_user']['create_user']) {
                 $userData = $data['first_user'];
-                
-                $firstUser = \App\Modules\User\Models\User::create([
+
+                $firstUser = User::create([
                     'name' => $userData['name'],
                     'email' => $userData['email'],
                     'password' => \Hash::make($userData['password']),
@@ -217,14 +222,14 @@ class CompanyController extends Controller
             $request->session()->forget('company_wizard');
 
             return redirect()->route('companies.index')
-                ->with('success', 'Firma "' . $company->name . '" wurde erfolgreich erstellt und konfiguriert!');
+                ->with('success', 'Firma "'.$company->name.'" wurde erfolgreich erstellt und konfiguriert!');
 
         } catch (\Exception $e) {
             \DB::rollBack();
-            \Log::error('Company wizard failed: ' . $e->getMessage());
-            
+            \Log::error('Company wizard failed: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Fehler beim Erstellen der Firma: ' . $e->getMessage());
+                ->with('error', 'Fehler beim Erstellen der Firma: '.$e->getMessage());
         }
     }
 
@@ -253,6 +258,14 @@ class CompanyController extends Controller
             'bank_account_holder' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'enabled_modules' => ['sometimes', 'array', 'min:1', function ($attribute, $value, $fail) {
+                foreach (app(ModuleDependencyService::class)->violationMessages((array) $value) as $message) {
+                    $fail($message);
+                }
+            }],
+            'enabled_modules.*' => 'string|in:'.implode(',', config('modules.all')),
+        ], [
+            'enabled_modules.min' => 'Mindestens ein Modul muss aktiv sein.',
         ]);
 
         // Extract bank settings (normalized to company_settings)
@@ -266,13 +279,22 @@ class CompanyController extends Controller
 
         $validated['status'] = 'active';
 
+        // A full selection is stored as null = full product, so future
+        // modules are on by default for unrestricted companies.
+        if (array_key_exists('enabled_modules', $validated)) {
+            $all = config('modules.all', []);
+            $validated['enabled_modules'] = array_diff($all, $validated['enabled_modules']) !== []
+                ? array_values(array_intersect($all, $validated['enabled_modules']))
+                : null;
+        }
+
         $company = Company::create($validated);
 
         if ($request->hasFile('logo')) {
             $validated['logo'] = $this->processAndStoreLogo($request->file('logo'), $company->id);
             $company->update(['logo' => $validated['logo']]);
         }
-        
+
         // Set bank settings after creation
         $company->setBankSettings($bankSettings);
 
@@ -288,7 +310,7 @@ class CompanyController extends Controller
             'users' => function ($query) {
                 $query->orderBy('name');
             },
-            'settings'
+            'settings',
         ]);
 
         $stats = [
@@ -312,12 +334,24 @@ class CompanyController extends Controller
 
         return Inertia::render('companies/edit', [
             'company' => $company,
+            'grantedModules' => $company->enabledModules(),
         ]);
     }
 
     public function update(Request $request, Company $company)
     {
         $this->authorize('update', $company);
+
+        // The edit form submits [""] when every module is unchecked (FormData
+        // cannot carry an empty array) — normalize so min:1 actually fires.
+        if ($request->has('enabled_modules')) {
+            $request->merge([
+                'enabled_modules' => array_values(array_filter(
+                    (array) $request->input('enabled_modules'),
+                    fn ($module) => is_string($module) && $module !== ''
+                )),
+            ]);
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -343,7 +377,29 @@ class CompanyController extends Controller
             'website' => 'nullable|url|max:255',
             'status' => 'required|in:active,inactive',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'enabled_modules' => ['sometimes', 'array', 'min:1', function ($attribute, $value, $fail) {
+                // Dependent modules must not be separated (invoices need
+                // customers + payments, dunning needs both, etc.).
+                foreach (app(ModuleDependencyService::class)->violationMessages((array) $value) as $message) {
+                    $fail($message);
+                }
+            }],
+            'enabled_modules.*' => 'string|in:'.implode(',', config('modules.all')),
+        ], [
+            'enabled_modules.min' => 'Mindestens ein Modul muss aktiv sein.',
         ]);
+
+        if (array_key_exists('enabled_modules', $validated)) {
+            if ($request->user()?->hasPermissionTo('manage_companies')) {
+                // A full selection is stored as null = full product, matching
+                // company creation, so a module added later stays on.
+                $all = config('modules.all', []);
+                $selected = array_values(array_intersect($all, $validated['enabled_modules']));
+                $validated['enabled_modules'] = array_diff($all, $selected) !== [] ? $selected : null;
+            } else {
+                unset($validated['enabled_modules']);
+            }
+        }
 
         // Extract bank settings (normalized to company_settings)
         $bankSettings = [
@@ -355,7 +411,7 @@ class CompanyController extends Controller
         unset($validated['bank_name'], $validated['bank_iban'], $validated['bank_bic'], $validated['bank_account_holder']);
 
         // Handle logo: removal > upload > preserve (never let a missing file wipe an existing logo)
-        if ($request->input('remove_logo') === '1' && !$request->hasFile('logo')) {
+        if ($request->input('remove_logo') === '1' && ! $request->hasFile('logo')) {
             if ($company->logo && Storage::disk('public')->exists($company->logo)) {
                 Storage::disk('public')->delete($company->logo);
             }
@@ -367,7 +423,8 @@ class CompanyController extends Controller
         }
 
         $company->update($validated);
-        
+        app(ContextService::class)->forgetCompanyMemo($company->id);
+
         // Update bank settings separately (normalized to company_settings)
         $company->setBankSettings($bankSettings);
 

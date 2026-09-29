@@ -78,6 +78,7 @@ class RoleCatalog
         // Ausgaben
         'approve_expenses' => ['label' => 'Ausgaben freigeben', 'group' => 'Ausgaben', 'super_only' => false],
         'export_expenses' => ['label' => 'Ausgaben exportieren', 'group' => 'Ausgaben', 'super_only' => false],
+        'manage_expenses' => ['label' => 'Ausgaben verwalten', 'group' => 'Ausgaben', 'super_only' => false],
         // Verwaltung
         'manage_users' => ['label' => 'Benutzer verwalten', 'group' => 'Verwaltung', 'super_only' => false],
         'manage_settings' => ['label' => 'Einstellungen verwalten', 'group' => 'Verwaltung', 'super_only' => false],

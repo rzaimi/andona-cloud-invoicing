@@ -18,6 +18,7 @@ import {
     Eye,
     Edit,
     ReceiptText,
+    ReceiptEuro,
 } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, User, Customer, Invoice, Offer, Product, PageProps } from "@/types"
@@ -69,18 +70,29 @@ interface GrowthData {
     customer_growth: number
 }
 
-interface DashboardProps extends PageProps {
-    stats: DashboardStats
-    growth: GrowthData
+interface ExpenseDashboardData {
+    current_month: number
     recent: {
+        id: string
+        title: string
+        amount: number | string
+        expense_date: string
+    }[]
+}
+
+interface DashboardProps extends PageProps {
+    stats?: DashboardStats
+    growth?: GrowthData
+    recent?: {
         invoices: Invoice[]
         offers: Offer[]
         customers: Customer[]
     }
-    alerts: {
+    alerts?: {
         overdue_invoices: Invoice[]
         low_stock_products: Product[]
     }
+    expenseDashboard?: ExpenseDashboardData
     user: User
 }
 
@@ -90,8 +102,137 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ]
 
+// Quick-access targets for companies without the invoices module: whatever
+// modules they do have get an entry point on the fallback dashboard.
+const MODULE_QUICK_LINKS: { module: string; label: string; href: string }[] = [
+    { module: "offers", label: "Angebote", href: "/offers" },
+    { module: "customers", label: "Kunden", href: "/customers" },
+    { module: "products", label: "Produkte", href: "/products" },
+    { module: "payments", label: "Zahlungen", href: "/payments" },
+    { module: "calendar", label: "Kalender", href: "/calendar" },
+    { module: "documents", label: "Dokumente", href: "/settings/documents" },
+    { module: "reports", label: "Berichte", href: "/reports" },
+    { module: "datev", label: "DATEV", href: "/datev" },
+]
+
+function ExpensesOnlyDashboard({
+    user,
+    expenseDashboard,
+    enabledModules,
+}: {
+    user: User
+    expenseDashboard?: ExpenseDashboardData
+    enabledModules: string[]
+}) {
+    const formatCurrency = (amount: number) => formatCurrencyUtil(amount, user.company?.settings)
+    const recent = expenseDashboard?.recent ?? []
+    const currentMonth = expenseDashboard?.current_month ?? 0
+    const showExpenses = expenseDashboard !== undefined
+    const quickLinks = MODULE_QUICK_LINKS.filter((link) => enabledModules.includes(link.module))
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Dashboard" />
+            <div className="flex flex-1 flex-col gap-6">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+                        <p className="text-gray-600">Willkommen zurück, {user.name}</p>
+                        <p className="text-sm text-gray-500">{user.company?.name || "Keine Firma"}</p>
+                    </div>
+                    {showExpenses && (
+                        <Link href="/expenses/create">
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Neue Ausgabe
+                            </Button>
+                        </Link>
+                    )}
+                </div>
+
+                {quickLinks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Ihre Module</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap gap-2">
+                        {quickLinks.map((link) => (
+                            <Link key={link.module} href={link.href}>
+                                <Button variant="outline">{link.label}</Button>
+                            </Link>
+                        ))}
+                    </CardContent>
+                </Card>
+                )}
+
+                {showExpenses && (
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Ausgaben diesen Monat</CardTitle>
+                            <ReceiptEuro className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{formatCurrency(Number(currentMonth) || 0)}</div>
+                            <Link href="/expenses" className="text-xs text-muted-foreground hover:underline">
+                                Alle Ausgaben anzeigen
+                            </Link>
+                        </CardContent>
+                    </Card>
+                </div>
+                )}
+
+                {showExpenses && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Letzte Ausgaben</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {recent.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">Noch keine Ausgaben erfasst.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {recent.map((expense) => (
+                                    <Link key={expense.id} href={`/expenses/${expense.id}`} className="flex items-center justify-between gap-4 text-sm hover:underline">
+                                        <span className="truncate">{expense.title}</span>
+                                        <span className="shrink-0 text-muted-foreground">
+                                            {new Date(expense.expense_date).toLocaleDateString("de-DE")}
+                                        </span>
+                                        <span className="shrink-0 font-medium">{formatCurrency(Number(expense.amount) || 0)}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+                )}
+            </div>
+        </AppLayout>
+    )
+}
+
 export default function Dashboard() {
-    const { stats, growth, recent, alerts, user } = usePage<DashboardProps>().props
+    const page = usePage<DashboardProps>().props
+    const enabledModules = (page.enabledModules as string[] | undefined) ?? []
+    const has = (module: string) => enabledModules.includes(module)
+
+    if (!has("invoices")) {
+        return (
+            <ExpensesOnlyDashboard
+                user={page.user}
+                expenseDashboard={has("expenses") ? page.expenseDashboard : undefined}
+                enabledModules={enabledModules}
+            />
+        )
+    }
+
+    const stats = page.stats as DashboardStats
+    const growth = page.growth as GrowthData
+    const recent = page.recent as NonNullable<DashboardProps["recent"]>
+    const alerts = page.alerts as NonNullable<DashboardProps["alerts"]>
+    const user = page.user
+    const authPermissions: string[] = (page.auth?.user as User | null | undefined)?.permissions ?? []
+    const can = (permission: string) => authPermissions.includes(permission)
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -189,17 +330,20 @@ export default function Dashboard() {
                                 Neue Rechnung
                             </Button>
                         </Link>
+                        {has("offers") && (
                         <Link href="/offers/create">
                             <Button variant="outline">
                                 <Plus className="mr-2 h-4 w-4" />
                                 Neues Angebot
                             </Button>
                         </Link>
+                        )}
                     </div>
                 </div>
 
                 {/* Main Stats Cards */}
                 <div className="grid auto-rows-min gap-4 md:grid-cols-4">
+                    {has("customers") && (
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Kunden</CardTitle>
@@ -217,6 +361,7 @@ export default function Dashboard() {
                             </Link>
                         </CardContent>
                     </Card>
+                    )}
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -236,6 +381,7 @@ export default function Dashboard() {
                         </CardContent>
                     </Card>
 
+                    {has("offers") && (
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Angebote</CardTitle>
@@ -253,7 +399,9 @@ export default function Dashboard() {
                             </Link>
                         </CardContent>
                     </Card>
+                    )}
 
+                    {has("products") && (
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Produkte</CardTitle>
@@ -271,6 +419,7 @@ export default function Dashboard() {
                             </Link>
                         </CardContent>
                     </Card>
+                    )}
                 </div>
 
                 {/* Revenue Cards */}
@@ -429,6 +578,7 @@ export default function Dashboard() {
                     </Card>
 
                     {/* Recent Offers */}
+                    {has("offers") && (
                     <Card>
                         <CardHeader>
                             <CardTitle>Aktuelle Angebote</CardTitle>
@@ -461,6 +611,7 @@ export default function Dashboard() {
                             </div>
                         </CardContent>
                     </Card>
+                    )}
 
                     {/* Quick Actions */}
                     <Card>
@@ -469,21 +620,25 @@ export default function Dashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="grid gap-2">
+                                {has("customers") && (
                                 <Link href="/customers/create">
                                     <Button variant="outline" className="w-full justify-start bg-transparent">
                                         <Users className="mr-2 h-4 w-4" />
                                         Neuen Kunden hinzufügen
                                     </Button>
                                 </Link>
+                                )}
 
+                                {has("products") && (
                                 <Link href="/products/create">
                                     <Button variant="outline" className="w-full justify-start bg-transparent">
                                         <Package className="mr-2 h-4 w-4" />
                                         Neues Produkt hinzufügen
                                     </Button>
                                 </Link>
+                                )}
 
-                                {user.role === "admin" && (
+                                {can("manage_users") && (
                                     <Link href="/users">
                                         <Button variant="outline" className="w-full justify-start bg-transparent">
                                             <Users className="mr-2 h-4 w-4" />
@@ -499,7 +654,7 @@ export default function Dashboard() {
                                     </Button>
                                 </Link>
 
-                                {user.role === "admin" && (
+                                {can("manage_settings") && (
                                     <Link href="/settings/invoice-layouts">
                                         <Button variant="outline" className="w-full justify-start bg-transparent">
                                             <FileText className="mr-2 h-4 w-4" />
@@ -508,19 +663,21 @@ export default function Dashboard() {
                                     </Link>
                                 )}
 
+                                {has("reports") && (
                                 <Link href="/reports">
                                     <Button variant="outline" className="w-full justify-start bg-transparent">
                                         <TrendingUp className="mr-2 h-4 w-4" />
                                         Berichte anzeigen
                                     </Button>
                                 </Link>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Recent Customers */}
-                {recent.customers.length > 0 && (
+                {has("customers") && recent.customers.length > 0 && (
                     <Card>
                         <CardHeader>
                             <CardTitle>Neue Kunden</CardTitle>

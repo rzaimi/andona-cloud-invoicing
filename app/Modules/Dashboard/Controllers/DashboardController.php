@@ -3,15 +3,15 @@
 namespace App\Modules\Dashboard\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
+use App\Modules\Expense\Models\Expense;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Offer\Models\Offer;
 use App\Modules\Product\Models\Product;
-use App\Modules\Expense\Models\Expense;
 use App\Services\ContextService;
 use App\Services\ExpenseReportService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -26,8 +26,13 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
         $companyId = $this->getEffectiveCompanyId();
+        $company = $this->contextService->effectiveCompany($request->user());
+
+        if ($company && ! $company->hasModule('invoices')) {
+            return $this->expensesOnlyDashboard($companyId, $company);
+        }
+
         $stats = $this->getDashboardStats();
 
         // Get recent activities
@@ -102,7 +107,7 @@ class DashboardController extends Controller
             now()->startOfMonth()->format('Y-m-d'),
             now()->endOfMonth()->format('Y-m-d')
         );
-        
+
         // Calculate profit (income from payments - expenses)
         $currentMonthIncome = $expenseReportService->getIncome(
             $companyId,
@@ -126,6 +131,35 @@ class DashboardController extends Controller
             'expenses' => [
                 'current_month' => $currentMonthExpenses['total_amount'],
                 'net_profit' => $netProfit,
+            ],
+        ]);
+    }
+
+    /**
+     * Dashboard for companies that do not have the invoices module.
+     */
+    private function expensesOnlyDashboard(?string $companyId, Company $company)
+    {
+        if (! $company->hasModule('expenses')) {
+            return $this->inertia('dashboard', []);
+        }
+
+        $expenseReportService = app(ExpenseReportService::class);
+        $currentMonthExpenses = $expenseReportService->getMonthlyTotals(
+            $companyId,
+            now()->startOfMonth()->format('Y-m-d'),
+            now()->endOfMonth()->format('Y-m-d')
+        );
+
+        $recentExpenses = Expense::forCompany($companyId)
+            ->orderBy('expense_date', 'desc')
+            ->limit(8)
+            ->get(['id', 'title', 'amount', 'expense_date']);
+
+        return $this->inertia('dashboard', [
+            'expenseDashboard' => [
+                'current_month' => $currentMonthExpenses['total_amount'],
+                'recent' => $recentExpenses,
             ],
         ]);
     }

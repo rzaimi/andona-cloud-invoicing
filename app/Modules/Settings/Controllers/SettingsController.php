@@ -7,6 +7,7 @@ use App\Models\EmailLog;
 use App\Modules\Company\Models\Company;
 use App\Modules\Company\Models\CompanySetting;
 use App\Modules\Invoice\Models\InvoiceLayout;
+use App\Services\ContextService;
 use App\Services\SettingsService;
 use App\Traits\ResizesCompanyLogo;
 use Illuminate\Http\Request;
@@ -79,6 +80,12 @@ class SettingsController extends Controller
 
         // Get active tab from request
         $activeTab = $request->get('tab', 'company-info');
+        $required = config('modules.settings_tabs.'.$activeTab);
+        if (is_array($required) && ! $company->hasAnyModule($required)) {
+            // A stale bookmark to a disabled module's tab should not 403 the
+            // whole settings page — fall back to the default tab instead.
+            return redirect()->route('settings.index');
+        }
 
         // Load all settings data for unified page
         $emailSettings = [
@@ -223,6 +230,7 @@ class SettingsController extends Controller
 
     public function update(Request $request)
     {
+        $this->ensureModules(['invoices', 'offers', 'customers', 'products']);
         $companyId = $this->getEffectiveCompanyId();
 
         $validated = $request->validate([
@@ -528,6 +536,7 @@ class SettingsController extends Controller
 
     public function updateReminders(Request $request)
     {
+        $this->ensureModules(['dunning']);
         $companyId = $this->getEffectiveCompanyId();
 
         $validated = $request->validate([
@@ -629,6 +638,7 @@ class SettingsController extends Controller
      */
     public function updateErechnung(Request $request)
     {
+        $this->ensureModules(['invoices']);
         $companyId = $this->getEffectiveCompanyId();
 
         $validated = $request->validate([
@@ -686,6 +696,7 @@ class SettingsController extends Controller
      */
     public function updatePaymentMethods(Request $request)
     {
+        $this->ensureModules(['payments', 'invoices']);
         $companyId = $this->getEffectiveCompanyId();
 
         $validated = $request->validate([
@@ -794,5 +805,17 @@ class SettingsController extends Controller
         $company->update(['logo' => $path]);
 
         return back()->with('success', 'Logo wurde erfolgreich hochgeladen.');
+    }
+
+    /**
+     * @param  list<string>  $modules
+     */
+    private function ensureModules(array $modules): void
+    {
+        $company = app(ContextService::class)->effectiveCompany();
+
+        if ($company && ! $company->hasAnyModule($modules)) {
+            abort(403, 'Dieses Modul ist für diese Firma nicht freigeschaltet.');
+        }
     }
 }

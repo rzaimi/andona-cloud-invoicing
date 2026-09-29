@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ModuleChecklist } from "@/components/module-checklist"
 import { ArrowLeft, Save, Building2, Mail, Landmark, Settings, Upload, X } from "lucide-react"
 import AppLayout from "@/layouts/app-layout"
 import type { User } from "@/types"
@@ -40,11 +41,13 @@ interface Company {
     website?: string
     logo?: string
     status: string
+    enabled_modules?: string[] | null
 }
 
 interface EditProps {
     auth: { user: User }
     company: Company
+    grantedModules: string[]
 }
 
 const TITLE_BY_FORM: Record<string, string> = {
@@ -59,7 +62,7 @@ const TITLE_BY_FORM: Record<string, string> = {
     ag:                "Vorstand",
 }
 
-export default function Edit({ auth, company }: EditProps) {
+export default function Edit({ auth, company, grantedModules }: EditProps) {
     const { data, setData, post, processing, errors, transform } = useForm({
         name: company.name || "",
         email: company.email || "",
@@ -84,6 +87,7 @@ export default function Edit({ auth, company }: EditProps) {
         website: company.website || "",
         status: company.status || "active",
         logo: null as File | null,
+        enabled_modules: grantedModules,
     })
 
     const [activeTab, setActiveTab] = useState("basic")
@@ -107,7 +111,12 @@ export default function Edit({ auth, company }: EditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        transform((d) => ({ ...d, _method: "put", remove_logo: removedLogo ? "1" : "0" }))
+        transform((d) => ({
+            ...d,
+            _method: "put",
+            remove_logo: removedLogo ? "1" : "0",
+            enabled_modules: d.enabled_modules.length ? d.enabled_modules : [""],
+        }))
         post(route("companies.update", company.id), { forceFormData: true, preserveScroll: true })
     }
 
@@ -539,6 +548,21 @@ export default function Edit({ auth, company }: EditProps) {
 
                         {/* Settings */}
                         <TabsContent value="settings" className="space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Freigeschaltete Module</CardTitle>
+                                    <CardDescription>
+                                        Nur die angehakten Module sind für diese Firma freigeschaltet. Mindestens ein Modul muss aktiv bleiben.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <ModuleChecklist
+                                        value={data.enabled_modules}
+                                        onChange={(modules) => setData("enabled_modules", modules)}
+                                        error={errors.enabled_modules ?? (errors as Record<string, string>)["enabled_modules.0"] ?? null}
+                                    />
+                                </CardContent>
+                            </Card>
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Einstellungen</CardTitle>
