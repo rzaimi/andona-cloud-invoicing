@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Modules\Invoice\Models\Invoice;
+use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Services\InvoiceMailer;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -51,5 +52,35 @@ class SendInvoiceEmail implements ShouldQueue
                 previous: $previous instanceof \Throwable ? $previous : null,
             );
         }
+    }
+
+    /**
+     * Called by the queue worker after all retry attempts are exhausted.
+     * Revert the invoice from 'queued' back to 'draft' so the user can
+     * see that sending failed and try again.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        $invoice = Invoice::find($this->invoiceId);
+
+        if (! $invoice || $invoice->status !== 'queued') {
+            return;
+        }
+
+        $invoice->update(['status' => 'draft']);
+
+        InvoiceAuditLog::log(
+            $invoice->id,
+            'status_changed',
+            'queued',
+            'draft',
+            ['error' => $exception->getMessage()],
+            'E-Mail-Versand fehlgeschlagen — zurück auf Entwurf gesetzt',
+        );
+
+        Log::error('SendInvoiceEmail permanently failed', [
+            'invoice_id' => $this->invoiceId,
+            'error'      => $exception->getMessage(),
+        ]);
     }
 }

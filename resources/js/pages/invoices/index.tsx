@@ -63,6 +63,7 @@ interface InvoicesIndexProps extends PageProps {
     stats: {
         total: number
         draft: number
+        queued: number
         sent: number
         paid: number
         overdue: number
@@ -203,6 +204,7 @@ export default function InvoicesIndex() {
     const getStatusBadge = (status: string) => {
         const statusConfig = {
             draft: { label: "Entwurf", variant: "outline" as const },
+            queued: { label: "Wird versendet…", variant: "secondary" as const },
             sent: { label: "Versendet", variant: "secondary" as const },
             paid: { label: "Bezahlt", variant: "default" as const },
             overdue: { label: "Überfällig", variant: "destructive" as const },
@@ -287,6 +289,18 @@ export default function InvoicesIndex() {
                         </CardContent>
                     </Card>
 
+                    {(stats.queued ?? 0) > 0 && (
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Wird versendet</CardTitle>
+                                <Clock className="h-4 w-4 text-yellow-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-yellow-500">{stats.queued}</div>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Versendet</CardTitle>
@@ -352,6 +366,7 @@ export default function InvoicesIndex() {
                                 <SelectContent>
                                     <SelectItem value="all">Alle Status</SelectItem>
                                     <SelectItem value="draft">Entwurf</SelectItem>
+                                    <SelectItem value="queued">Wird versendet…</SelectItem>
                                     <SelectItem value="sent">Versendet</SelectItem>
                                     <SelectItem value="paid">Bezahlt</SelectItem>
                                     <SelectItem value="overdue">Überfällig</SelectItem>

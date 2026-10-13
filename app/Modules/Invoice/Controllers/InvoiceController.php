@@ -79,11 +79,12 @@ class InvoiceController extends Controller
 
         // Calculate statistics
         $stats = [
-            'total' => Invoice::forCompany($companyId)->count(),
-            'draft' => Invoice::forCompany($companyId)->where('status', 'draft')->count(),
-            'sent' => Invoice::forCompany($companyId)->where('status', 'sent')->count(),
-            'paid' => Invoice::forCompany($companyId)->where('status', 'paid')->count(),
-            'overdue' => Invoice::forCompany($companyId)->where('status', 'overdue')->count(),
+            'total'     => Invoice::forCompany($companyId)->count(),
+            'draft'     => Invoice::forCompany($companyId)->where('status', 'draft')->count(),
+            'queued'    => Invoice::forCompany($companyId)->where('status', 'queued')->count(),
+            'sent'      => Invoice::forCompany($companyId)->where('status', 'sent')->count(),
+            'paid'      => Invoice::forCompany($companyId)->where('status', 'paid')->count(),
+            'overdue'   => Invoice::forCompany($companyId)->where('status', 'overdue')->count(),
             'cancelled' => Invoice::forCompany($companyId)->where('status', 'cancelled')->count(),
         ];
 
@@ -141,12 +142,13 @@ class InvoiceController extends Controller
         $this->authorize('send', $invoice); // loose company-boundary check
 
         $validated = $request->validate([
-            'status' => 'required|in:draft,sent,overdue,cancelled',
+            'status' => 'required|in:draft,sent,overdue,cancelled,queued',
         ]);
 
         $allowed = [
-            'draft' => ['sent', 'cancelled'],
-            'sent' => ['cancelled'],
+            'draft'  => ['sent', 'cancelled', 'queued'],
+            'queued' => ['draft', 'sent', 'cancelled'], // allow reverting if job fails
+            'sent'   => ['cancelled'],
             'overdue' => ['cancelled'],
         ];
 
@@ -1050,6 +1052,23 @@ class InvoiceController extends Controller
                 'email' => 'SMTP-Einstellungen sind nicht konfiguriert.',
             ]);
         }
+
+        // Mark as queued immediately so the user sees feedback before the
+        // queue worker picks up the job.
+        DB::transaction(function () use ($invoice) {
+            $old = $invoice->status;
+            $invoice->status = 'queued';
+            $invoice->save();
+
+            InvoiceAuditLog::log(
+                $invoice->id,
+                'status_changed',
+                $old,
+                'queued',
+                null,
+                'E-Mail in Versandwarteschlange eingestellt',
+            );
+        });
 
         SendInvoiceEmail::dispatch(
             invoiceId: $invoice->id,

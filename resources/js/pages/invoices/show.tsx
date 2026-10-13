@@ -101,6 +101,7 @@ export default function InvoicesShow() {
     const getStatusBadge = (status: string) => {
         const statusConfig = {
             draft: { label: "Entwurf", variant: "outline" as const },
+            queued: { label: "Wird versendet…", variant: "secondary" as const },
             sent: { label: "Versendet", variant: "secondary" as const },
             paid: { label: "Bezahlt", variant: "default" as const },
             overdue: { label: "Überfällig", variant: "destructive" as const },

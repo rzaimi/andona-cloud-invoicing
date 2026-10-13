@@ -93,7 +93,7 @@ class InvoiceMailer
                 ]
             );
 
-            if ($invoice->status === 'draft') {
+            if (in_array($invoice->status, ['draft', 'queued'])) {
                 $oldStatus = $invoice->status;
                 $invoice->freezeCompanySnapshot();
                 $invoice->update(['status' => 'sent']);
