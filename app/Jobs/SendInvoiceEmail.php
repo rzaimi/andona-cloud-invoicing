@@ -44,7 +44,12 @@ class SendInvoiceEmail implements ShouldQueue
         );
 
         if (! ($result['ok'] ?? false)) {
-            throw new \RuntimeException($result['error'] ?? 'Invoice email could not be sent.');
+            $previous = $result['exception'] ?? null;
+
+            throw new \RuntimeException(
+                $result['error'] ?? 'Invoice email could not be sent.',
+                previous: $previous instanceof \Throwable ? $previous : null,
+            );
         }
     }
 }

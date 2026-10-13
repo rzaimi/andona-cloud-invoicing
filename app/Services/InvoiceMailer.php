@@ -28,7 +28,7 @@ class InvoiceMailer
      * @param  string|null  $subject  overrides default subject
      * @param  string|null  $customMessage  optional plain-text body to embed
      * @param  string|null  $cc  optional CC address
-     * @return array{ok: bool, error?: string}
+     * @return array{ok: bool, error?: string, exception?: \Throwable}
      */
     public function send(
         Invoice $invoice,
@@ -119,13 +119,23 @@ class InvoiceMailer
 
             return ['ok' => true];
         } catch (\Throwable $e) {
-            Log::error('Failed to send invoice email: '.$e->getMessage(), [
+            $error = sprintf(
+                '%s (%s at %s:%d)',
+                $e->getMessage(),
+                $e::class,
+                $e->getFile(),
+                $e->getLine(),
+            );
+
+            Log::error('Failed to send invoice email: '.$error, [
                 'invoice_id' => $invoice->id,
+                'exception' => $e,
             ]);
 
             return [
                 'ok' => false,
-                'error' => $e->getMessage(),
+                'error' => $error,
+                'exception' => $e,
             ];
         }
     }
