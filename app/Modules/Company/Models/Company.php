@@ -135,8 +135,15 @@ class Company extends Model
     /**
      * Company name with the legal form appended — for use in letterheads and
      * sender-return strips where HGB §37a compliance applies. Guards against
-     * duplication when the user already typed the form into `name` (e.g.
-     * "Musterfirma GmbH") by checking whether the label is already present.
+     * duplication when the user already typed the form into `name`.
+     *
+     * Two checks are performed:
+     *  1. Full label present  — "Musterfirma GmbH & Co. KG" already contains
+     *     "GmbH & Co. KG", nothing to append.
+     *  2. Abbreviation present — "Andona Cloud UG" already contains "UG"
+     *     (the abbreviation of "UG (haftungsbeschränkt)"), so we must not
+     *     double-append the full label. We use a word-boundary regex so that
+     *     e.g. "UG" does not accidentally match inside another word.
      */
     public function getDisplayName(): string
     {
@@ -147,13 +154,20 @@ class Company extends Model
             return $name;
         }
 
-        // Substring match (case-insensitive) — covers "Musterfirma GmbH",
-        // "Muster GmbH & Co. KG", etc.
+        // 1. Full label already present (case-insensitive substring).
         if (mb_stripos($name, $form) !== false) {
             return $name;
         }
 
-        return trim($name.' '.$form);
+        // 2. Abbreviation already present — extract the first token of the
+        //    label (e.g. "UG" from "UG (haftungsbeschränkt)") and check with
+        //    a word boundary so we don't match partial tokens.
+        $abbreviation = preg_quote(explode(' ', $form)[0], '/');
+        if (preg_match('/\b' . $abbreviation . '\b/ui', $name)) {
+            return $name;
+        }
+
+        return trim($name . ' ' . $form);
     }
 
     /**
