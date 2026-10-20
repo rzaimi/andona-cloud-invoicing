@@ -47,6 +47,32 @@
         if (!in_array($template, $validTemplates, true)) {
             $template = 'minimal';
         }
+
+        if (!function_exists('pdfContinuationLogoMm')) {
+            function pdfContinuationLogoMm(string $template, string $size): array {
+                $minimal = $template === 'minimal';
+                $height = match ($size) {
+                    'small' => $minimal ? 10 : 14,
+                    'large' => $minimal ? 24 : 28,
+                    default => $minimal ? 16 : 22,
+                };
+                $width = match ($size) {
+                    'small' => $minimal ? 38 : 50,
+                    'large' => $minimal ? 72 : 90,
+                    default => $minimal ? 54 : 70,
+                };
+
+                return [$height, $width];
+            }
+        }
+
+        $logoOnEveryPage = (bool) ($layoutSettings['branding']['logo_on_every_page'] ?? false);
+        $footerLastPageOnly = (bool) ($layoutSettings['content']['footer_last_page_only'] ?? false);
+        [$continuationLogoHmm, $continuationLogoWmm] = pdfContinuationLogoMm(
+            $template,
+            (string) ($layoutSettings['branding']['logo_size'] ?? 'medium')
+        );
+        $continuationMarginTop = $logoOnEveryPage ? ($continuationLogoHmm + 8) : 5;
     @endphp
 
     /* Minimal stylesheet — only rules that active templates
@@ -75,10 +101,9 @@
         line-height: 1.45;
         color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
         background: white;
-        /* margin-bottom (not padding) — DomPDF paginates against body
-           margins reliably; reserves room for the fixed 5-column
-           footer block. Kept in sync with invoice.blade.php so shared
-           templates render identically across both document kinds. */
+        /* Reserves the fixed footer. The last-page option still pins it
+           here and covers it on earlier pages. Kept in sync with
+           invoice.blade.php. */
         margin-bottom: 35mm;
     }
 
@@ -179,13 +204,18 @@
     }
     @endif
 
-    /* Small uniform top/bottom @page margin (5mm ≈ 20px). Horizontal
-       insets are 0 — templates apply their own 20mm inline padding so
-       content lands at the DIN 5008 address-window x-coordinate
-       (20mm from page edge). Kept in sync with invoice.blade.php. */
+    /* Continuation pages keep 5mm top margin unless the logo repeats.
+       Then @page grows the top margin and :first restores page 1 so the
+       DIN 5008 address window stays put. Horizontal insets stay 0 —
+       templates apply their own 20mm inline padding. */
     @page {
+        margin: {{ $continuationMarginTop }}mm 0 5mm 0;
+    }
+    @if($logoOnEveryPage)
+    @page :first {
         margin: 5mm 0;
     }
+    @endif
     </style>
 </head>
 <body>
@@ -298,32 +328,14 @@
 </div>
 @endif
 
-{{-- ── FOOTER: rendered as a DIRECT child of <body> so DomPDF's
-     position:fixed extractor clones it onto every page. If it's
-     nested inside the template's container <div>, DomPDF falls back
-     to flow rendering and only the last page shows the footer. ──── --}}
+{{-- Footer is position:fixed at the bottom of every page. The last-page
+     option covers it on earlier pages from the page script. --}}
 @include('pdf.partials.footer')
 
 {{-- ── INCLUDE SUB-TEMPLATE ─────────────────────────────────────────── --}}
 @includeFirst([$templateFile, 'pdf.templates.minimal'])
 
-{{-- ── PAGE NUMBER: bottom-right corner, small letters. y=height-12pt
-     (~4mm from bottom edge) places it inside the footer's right edge,
-     below the column text on the footer's white background. Matches
-     invoice.blade.php so both render identically. ── --}}
-<script type="text/php">
-if (isset($pdf)) {
-    $pdf->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
-        $font = $fontMetrics->get_font("DejaVu Sans", "normal");
-        $size = 6.5;
-        $text = "Seite {$pageNumber} / {$pageCount}";
-        $w    = $fontMetrics->get_text_width($text, $font, $size);
-        $x    = $canvas->get_width() - $w - 23;
-        $y    = $canvas->get_height() - 12;
-        $canvas->text($x, $y, $text, $font, $size, [0.4, 0.4, 0.4]);
-    });
-}
-</script>
+@include('pdf.partials.page-script')
 
 </body>
 </html>

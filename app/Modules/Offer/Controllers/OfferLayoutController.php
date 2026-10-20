@@ -95,6 +95,7 @@ class OfferLayoutController extends Controller
             'settings.branding'                           => 'required|array',
             'settings.branding.show_logo'                 => 'sometimes|boolean',
             'settings.branding.logo_position'             => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.branding.logo_on_every_page'        => 'sometimes|boolean',
             'settings.branding.company_info_position'     => 'sometimes|in:top-left,top-center,top-right,left,center,right',
             'settings.branding.show_header_line'          => 'sometimes|boolean',
             'settings.branding.show_footer_line'          => 'sometimes|boolean',
@@ -116,6 +117,7 @@ class OfferLayoutController extends Controller
             'settings.content.show_bauvorhaben'           => 'required|boolean',
             'settings.content.show_tax_breakdown'         => 'required|boolean',
             'settings.content.custom_footer_text'         => 'nullable|string|max:2000',
+            'settings.content.footer_last_page_only'      => 'sometimes|boolean',
             'settings.template_specific'                  => 'sometimes|array',
         ];
     }
@@ -142,6 +144,7 @@ class OfferLayoutController extends Controller
             'settings.layout.margin_right'            => 'required|integer|min:0|max:100',
             'settings.branding'                       => 'required|array',
             'settings.branding.logo_position'         => 'required|in:top-left,top-center,top-right,left,center,right',
+            'settings.branding.logo_on_every_page'    => 'sometimes|boolean',
             'settings.content'                        => 'required|array',
             'settings.content.show_item_codes'        => 'required|boolean',
             'settings.content.show_row_number'        => 'required|boolean',
@@ -150,6 +153,7 @@ class OfferLayoutController extends Controller
             'settings.content.show_tax_breakdown'     => 'required|boolean',
             'settings.content.show_payment_terms'     => 'required|boolean',
             'settings.content.custom_footer_text'     => 'nullable|string|max:2000',
+            'settings.content.footer_last_page_only'  => 'sometimes|boolean',
             'settings.template_specific'              => 'sometimes|array',
         ];
     }
@@ -245,7 +249,7 @@ class OfferLayoutController extends Controller
     {
         $this->authorize('view', $offerLayout);
 
-        [$sampleOffer, $sampleCustomer] = $this->buildSampleOffer();
+        [$sampleOffer, $sampleCustomer] = $this->buildSampleOffer($offerLayout->settings ?? []);
         $company = Company::find($offerLayout->company_id);
 
         return view('pdf.offer', [
@@ -270,7 +274,7 @@ class OfferLayoutController extends Controller
         $layout->template   = $request->template;
         $layout->settings   = $request->input('settings');
 
-        [$sampleOffer, $sampleCustomer] = $this->buildSampleOffer();
+        [$sampleOffer, $sampleCustomer] = $this->buildSampleOffer($request->input('settings', []));
         $company = Company::find($companyId);
 
         return response()->view('pdf.offer', [
@@ -298,7 +302,7 @@ class OfferLayoutController extends Controller
         $layout->template   = $request->template;
         $layout->settings   = $request->input('settings');
 
-        [$sampleOffer, $sampleCustomer] = $this->buildSampleOffer();
+        [$sampleOffer, $sampleCustomer] = $this->buildSampleOffer($request->input('settings', []));
         $company = Company::find($companyId);
 
         $html = view('pdf.offer', [
@@ -328,7 +332,7 @@ class OfferLayoutController extends Controller
         ]);
     }
 
-    private function buildSampleOffer(): array
+    private function buildSampleOffer(array $settings = []): array
     {
         $sampleCustomer = (object) [
             'id'             => 'customer-001',
@@ -363,7 +367,42 @@ class OfferLayoutController extends Controller
             ]),
         ];
 
+        $this->repeatItemsForMultipagePreview($sampleOffer, $settings);
+
         return [$sampleOffer, $sampleCustomer];
+    }
+
+    /**
+     * The layout preview sample is short enough to fit on one page, which
+     * hides "logo on every page" and "footer on the last page". Repeat the
+     * sample rows until the document spills onto a second page.
+     */
+    private function repeatItemsForMultipagePreview(object $document, array $settings): void
+    {
+        $enabled = (bool) data_get($settings, 'branding.logo_on_every_page')
+            || (bool) data_get($settings, 'content.footer_last_page_only');
+
+        if (! $enabled || ! isset($document->items)) {
+            return;
+        }
+
+        $base = collect($document->items)->values();
+        if ($base->isEmpty()) {
+            return;
+        }
+
+        $rows = collect();
+        $copy = 0;
+        while ($rows->count() < 24 && $copy < 20) {
+            foreach ($base as $index => $item) {
+                $clone = clone $item;
+                $clone->id = ($item->id ?? 'item').'-'.$copy.'-'.$index;
+                $rows->push($clone);
+            }
+            $copy++;
+        }
+
+        $document->items = $rows;
     }
 
 }

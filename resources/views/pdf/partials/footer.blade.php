@@ -3,20 +3,20 @@
     Expects: $snapshot (array), $layoutSettings (array)
 --}}
 @php
-    $ls        = $layoutSettings ?? [];
-    $lineColor = $ls['colors']['primary']   ?? '#1e40af';
-    $fgColor   = $ls['colors']['secondary'] ?? '#374151';
-    $showBank  = $ls['content']['show_bank_details'] ?? true;
-    $showReg   = $ls['content']['show_company_registration'] ?? true;
+    $ls         = $layoutSettings ?? [];
+    $lineColor  = $ls['colors']['primary']   ?? '#1e40af';
+    $fgColor    = $ls['colors']['secondary'] ?? '#374151';
+    $showBank   = $ls['content']['show_bank_details'] ?? true;
+    $showReg    = $ls['content']['show_company_registration'] ?? true;
 @endphp
 <div class="pdf-footer" style="
     position: fixed;
     bottom: 0; left: 0; right: 0;
+    z-index: 1000;
     width: 100%;
     padding: 2mm 4mm 2mm 4mm;
     background-color: white;
     border-top: 1.5px solid {{ $lineColor }};
-    z-index: 1000;
 ">
     <table style="width:100%; border-collapse:collapse; font-size:8pt; line-height:1.5; color:{{ $fgColor }};">
         <tr>

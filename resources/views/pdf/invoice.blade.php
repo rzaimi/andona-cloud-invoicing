@@ -61,6 +61,33 @@
             if (!in_array($template, $validTemplates, true)) {
                 $template = 'minimal';
             }
+
+            if (!function_exists('pdfContinuationLogoMm')) {
+                function pdfContinuationLogoMm(string $template, string $size): array {
+                    $minimal = $template === 'minimal';
+                    $height = match ($size) {
+                        'small' => $minimal ? 10 : 14,
+                        'large' => $minimal ? 24 : 28,
+                        default => $minimal ? 16 : 22,
+                    };
+                    $width = match ($size) {
+                        'small' => $minimal ? 38 : 50,
+                        'large' => $minimal ? 72 : 90,
+                        default => $minimal ? 54 : 70,
+                    };
+
+                    return [$height, $width];
+                }
+            }
+
+            $logoOnEveryPage = (bool) ($layoutSettings['branding']['logo_on_every_page'] ?? false);
+            $footerLastPageOnly = (bool) ($layoutSettings['content']['footer_last_page_only'] ?? false);
+            [$continuationLogoHmm, $continuationLogoWmm] = pdfContinuationLogoMm(
+                $template,
+                (string) ($layoutSettings['branding']['logo_size'] ?? 'medium')
+            );
+            // 4mm above the logo and 4mm below it, so line items clear the image.
+            $continuationMarginTop = $logoOnEveryPage ? ($continuationLogoHmm + 8) : 5;
         @endphp
         /* Minimal stylesheet — only rules that active templates
            (minimal/modern/professional) actually consume. The legacy
@@ -79,8 +106,16 @@
            own 20mm inline left/right padding so content lands at the
            DIN 5008 address-window x-coordinate (20mm from page edge). */
         @page {
+            margin: {{ $continuationMarginTop }}mm 0 5mm 0;
+        }
+        @if($logoOnEveryPage)
+        /* Page 1 keeps the in-flow 40mm letterhead, so its top margin
+           stays 5mm and the DIN 5008 address window does not move.
+           Later pages use the larger top margin reserved above. */
+        @page :first {
             margin: 5mm 0;
         }
+        @endif
 
         body {
             font-family: {{ $layoutSettings['fonts']['body'] ?? 'DejaVu Sans' }}, sans-serif;
@@ -88,9 +123,9 @@
             line-height: 1.4;
             color: {{ $layoutSettings['colors']['text'] ?? '#1f2937' }};
             background: white;
-            /* margin-bottom reserves space for the fixed 5-column
-               footer block (~25mm) plus buffer so body content
-               never bleeds into the footer area. */
+            /* Reserves the fixed 5-column footer so body content never
+               runs into it. The last-page option still pins the footer
+               here and covers it on earlier pages. */
             margin-bottom: 35mm;
         }
 
@@ -215,13 +250,9 @@
 
 @endphp
 
-    {{-- Footer must be a DIRECT child of <body> for DomPDF's
-         position:fixed extractor to clone it onto every page.
-         If it's nested inside the template's container <div>, DomPDF
-         falls back to flow rendering and only the LAST page shows
-         the footer (issue reproduced repeatedly during DIN 5008 work).
-         Render it here, BEFORE the template include — DomPDF will
-         strip the position:fixed element and apply it on every page. --}}
+    {{-- Footer is a direct child of <body> with position:fixed, so DomPDF
+         pins it to the bottom of every page. When it should appear only
+         on the last page, page-script covers it on the pages before that. --}}
     @include('pdf.partials.footer')
 
 @php
@@ -260,24 +291,7 @@
 {{-- Include the specific template file based on layout->template --}}
 @includeFirst([$templateFile, 'pdf.templates.minimal'])
 
-{{-- Page number: bottom-right corner of every page in small
-     letters. page_script fires once per page, so this draws on
-     EVERY page automatically. y = height - 12pt (≈4mm from
-     bottom edge) places it inside the footer's right edge — below
-     the column text, on the footer's white background. --}}
-<script type="text/php">
-if (isset($pdf)) {
-    $pdf->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
-        $font = $fontMetrics->get_font("DejaVu Sans", "normal");
-        $size = 6.5;
-        $text = "Seite {$pageNumber} / {$pageCount}";
-        $w    = $fontMetrics->get_text_width($text, $font, $size);
-        $x = $canvas->get_width() - $w - 23;
-        $y = $canvas->get_height() - 12;
-        $canvas->text($x, $y, $text, $font, $size, [0.4, 0.4, 0.4]);
-    });
-}
-</script>
+@include('pdf.partials.page-script')
 
 </body>
 </html>

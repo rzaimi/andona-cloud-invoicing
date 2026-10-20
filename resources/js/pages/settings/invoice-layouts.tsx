@@ -49,6 +49,7 @@ interface InvoiceLayoutSettings {
     branding: {
         logo_position: string
         logo_size: string
+        logo_on_every_page: boolean
     }
     content: {
         show_company_address: boolean
@@ -65,6 +66,7 @@ interface InvoiceLayoutSettings {
         show_customer_number: boolean
         show_tax_breakdown: boolean
         custom_footer_text: string
+        footer_last_page_only: boolean
     }
     template_specific?: Record<string, any>
 }
@@ -119,6 +121,7 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
     branding: {
         logo_position: "top-left",
         logo_size: "medium",
+        logo_on_every_page: false,
     },
     content: {
         show_company_address: true,
@@ -135,6 +138,7 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         show_customer_number: true,
         show_tax_breakdown: true,
         custom_footer_text: "",
+        footer_last_page_only: false,
     },
 })
 
@@ -335,6 +339,7 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
         branding: {
             logo_position: settings.branding?.logo_position ?? defaults.branding.logo_position,
             logo_size: settings.branding?.logo_size ?? defaults.branding.logo_size,
+            logo_on_every_page: settings.branding?.logo_on_every_page ?? defaults.branding.logo_on_every_page,
         },
         content: {
             ...defaults.content,
@@ -352,6 +357,7 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
             show_customer_number: settings.content?.show_customer_number ?? defaults.content.show_customer_number,
             show_tax_breakdown: settings.content?.show_tax_breakdown ?? defaults.content.show_tax_breakdown,
             custom_footer_text: settings.content?.custom_footer_text ?? defaults.content.custom_footer_text,
+            footer_last_page_only: settings.content?.footer_last_page_only ?? defaults.content.footer_last_page_only,
         },
         template_specific: settings.template_specific || {},
     }
@@ -452,12 +458,22 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
 
     const handleTemplateChange = (templateId: string) => {
         const templateDefaults = getTemplateDefaults(templateId, templates)
+        const current = layoutFormData.settings
         setLayoutFormData({
             ...layoutFormData,
             template: templateId,
             settings: {
-                ...layoutFormData.settings,
+                ...current,
                 ...templateDefaults,
+                branding: {
+                    ...current.branding,
+                    ...(templateDefaults.branding ?? {}),
+                    logo_on_every_page: current.branding.logo_on_every_page,
+                },
+                content: {
+                    ...(templateDefaults.content ?? current.content),
+                    footer_last_page_only: current.content.footer_last_page_only,
+                },
             },
         })
     }
@@ -1004,6 +1020,18 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                         </div>
                                                     </div>
 
+                                                    <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                                                        <div className="space-y-0.5 pr-4">
+                                                            <Label htmlFor="logo-on-every-page" className="cursor-pointer text-sm font-normal">Logo auf jeder Seite</Label>
+                                                            <p className="text-xs text-muted-foreground">Auf Folgeseiten erscheint das Logo oben. Die erste Seite mit dem Anschriftenfeld bleibt unverändert.</p>
+                                                        </div>
+                                                        <Switch
+                                                            id="logo-on-every-page"
+                                                            checked={!!layoutFormData.settings.branding.logo_on_every_page}
+                                                            onCheckedChange={(v) => updateBrandingSetting("logo_on_every_page", v)}
+                                                        />
+                                                    </div>
+
                                                     <div className="space-y-3 pt-4 border-t">
                                                         <Label className="text-sm">Seitenränder (mm)</Label>
                                                         <div className="grid grid-cols-2 gap-3">
@@ -1055,7 +1083,19 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                 <div className="space-y-5">
                                                     <div>
                                                         <h3 className="text-base font-semibold mb-1">Fußzeile</h3>
-                                                        <p className="text-sm text-muted-foreground">Was unten auf jeder Seite erscheint.</p>
+                                                        <p className="text-sm text-muted-foreground">Bankverbindung, Registerangaben und zusätzlicher Text.</p>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                                                        <div className="space-y-0.5 pr-4">
+                                                            <Label htmlFor="footer-last-page" className="cursor-pointer text-sm font-normal">Fußzeile nur auf der letzten Seite</Label>
+                                                            <p className="text-xs text-muted-foreground">Die Fußzeile bleibt unten auf der letzten Seite und wird auf den Seiten davor ausgeblendet.</p>
+                                                        </div>
+                                                        <Switch
+                                                            id="footer-last-page"
+                                                            checked={!!layoutFormData.settings.content.footer_last_page_only}
+                                                            onCheckedChange={(v) => updateContentSetting("footer_last_page_only", v)}
+                                                        />
                                                     </div>
 
                                                     <div className="rounded-lg border divide-y">
@@ -1078,7 +1118,7 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                             rows={3}
                                                             value={layoutFormData.settings.content.custom_footer_text}
                                                             onChange={(e) => updateContentSetting("custom_footer_text", e.target.value)}
-                                                            placeholder="Zusätzlicher Text unten auf jeder Seite…"
+                                                            placeholder="Zusätzlicher Text in der Fußzeile…"
                                                         />
                                                     </div>
                                                 </div>

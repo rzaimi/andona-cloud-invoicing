@@ -94,6 +94,7 @@ class InvoiceLayoutController extends Controller
             'settings.layout.margin_right' => 'required|integer|min:0|max:100',
             'settings.branding' => 'required|array',
             'settings.branding.logo_position' => 'required|in:top-left,top-center,top-right',
+            'settings.branding.logo_on_every_page' => 'sometimes|boolean',
             'settings.content' => 'required|array',
             'settings.content.show_item_codes' => 'required|boolean',
             'settings.content.show_row_number' => 'required|boolean',
@@ -104,6 +105,7 @@ class InvoiceLayoutController extends Controller
             'settings.content.show_payment_terms' => 'required|boolean',
             'settings.content.show_payment_qr' => 'sometimes|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
+            'settings.content.footer_last_page_only' => 'sometimes|boolean',
             'settings.template_specific' => 'sometimes|array',
         ]);
 
@@ -155,6 +157,7 @@ class InvoiceLayoutController extends Controller
             'settings.layout.margin_right' => 'required|integer|min:0|max:100',
             'settings.branding' => 'required|array',
             'settings.branding.logo_position' => 'required|in:top-left,top-center,top-right',
+            'settings.branding.logo_on_every_page' => 'sometimes|boolean',
             'settings.content' => 'required|array',
             'settings.content.show_item_codes' => 'required|boolean',
             'settings.content.show_row_number' => 'required|boolean',
@@ -165,6 +168,7 @@ class InvoiceLayoutController extends Controller
             'settings.content.show_payment_terms' => 'required|boolean',
             'settings.content.show_payment_qr' => 'sometimes|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
+            'settings.content.footer_last_page_only' => 'sometimes|boolean',
             'settings.template_specific' => 'sometimes|array',
         ]);
 
@@ -305,6 +309,7 @@ class InvoiceLayoutController extends Controller
 
         // Attach customer to invoice (as the view expects $invoice->customer)
         $sampleInvoice->customer = $sampleCustomer;
+        $this->repeatItemsForMultipagePreview($sampleInvoice, $invoiceLayout->settings ?? []);
 
         $sampleCompany = Company::find($companyId);
 
@@ -345,6 +350,7 @@ class InvoiceLayoutController extends Controller
             'settings.layout.margin_right' => 'required|integer|min:0|max:100',
             'settings.branding' => 'required|array',
             'settings.branding.logo_position' => 'required|in:top-left,top-center,top-right',
+            'settings.branding.logo_on_every_page' => 'sometimes|boolean',
             'settings.content' => 'required|array',
             'settings.content.show_item_codes' => 'required|boolean',
             'settings.content.show_row_number' => 'required|boolean',
@@ -355,6 +361,7 @@ class InvoiceLayoutController extends Controller
             'settings.content.show_payment_terms' => 'required|boolean',
             'settings.content.show_payment_qr' => 'sometimes|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
+            'settings.content.footer_last_page_only' => 'sometimes|boolean',
             'settings.template_specific' => 'sometimes|array',
         ]);
 
@@ -428,6 +435,7 @@ class InvoiceLayoutController extends Controller
             'number' => 'KU-2024-0001',
         ];
         $sampleInvoice->customer = $sampleCustomer;
+        $this->repeatItemsForMultipagePreview($sampleInvoice, $request->input('settings', []));
 
         $sampleCompany = Company::find($companyId);
 
@@ -470,6 +478,7 @@ class InvoiceLayoutController extends Controller
             'settings.layout.margin_right' => 'required|integer|min:0|max:100',
             'settings.branding' => 'required|array',
             'settings.branding.logo_position' => 'required|in:top-left,top-center,top-right',
+            'settings.branding.logo_on_every_page' => 'sometimes|boolean',
             'settings.content' => 'required|array',
             'settings.content.show_item_codes' => 'required|boolean',
             'settings.content.show_row_number' => 'required|boolean',
@@ -480,6 +489,7 @@ class InvoiceLayoutController extends Controller
             'settings.content.show_payment_terms' => 'required|boolean',
             'settings.content.show_payment_qr' => 'sometimes|boolean',
             'settings.content.custom_footer_text' => 'nullable|string|max:2000',
+            'settings.content.footer_last_page_only' => 'sometimes|boolean',
             'settings.template_specific' => 'sometimes|array',
         ]);
 
@@ -531,6 +541,7 @@ class InvoiceLayoutController extends Controller
             'number' => 'KU-2026-0002',
         ];
         $sampleInvoice->customer = $sampleCustomer;
+        $this->repeatItemsForMultipagePreview($sampleInvoice, $request->input('settings', []));
 
         $company = Company::find($companyId);
 
@@ -558,5 +569,38 @@ class InvoiceLayoutController extends Controller
             'Content-Type' => 'application/pdf',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ]);
+    }
+
+    /**
+     * The layout preview sample is short enough to fit on one page, which
+     * hides "logo on every page" and "footer on the last page". Repeat the
+     * sample rows until the document spills onto a second page.
+     */
+    private function repeatItemsForMultipagePreview(object $document, array $settings): void
+    {
+        $enabled = (bool) data_get($settings, 'branding.logo_on_every_page')
+            || (bool) data_get($settings, 'content.footer_last_page_only');
+
+        if (! $enabled || ! isset($document->items)) {
+            return;
+        }
+
+        $base = collect($document->items)->values();
+        if ($base->isEmpty()) {
+            return;
+        }
+
+        $rows = collect();
+        $copy = 0;
+        while ($rows->count() < 24 && $copy < 20) {
+            foreach ($base as $index => $item) {
+                $clone = clone $item;
+                $clone->id = ($item->id ?? 'item').'-'.$copy.'-'.$index;
+                $rows->push($clone);
+            }
+            $copy++;
+        }
+
+        $document->items = $rows;
     }
 }
