@@ -175,12 +175,12 @@ export default function ExpensesShow() {
                                 {expense.receipt_path && (
                                     <div className="pt-4 border-t">
                                         <div className="text-sm text-gray-600 mb-2">Beleg</div>
-                                        <Link href={`/expenses/${expense.id}/receipt`}>
-                                            <Button variant="outline">
+                                        <Button variant="outline" asChild>
+                                            <a href={`/expenses/${expense.id}/receipt`}>
                                                 <Download className="mr-2 h-4 w-4" />
                                                 Beleg herunterladen
-                                            </Button>
-                                        </Link>
+                                            </a>
+                                        </Button>
                                     </div>
                                 )}
                             </CardContent>

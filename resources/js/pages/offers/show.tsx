@@ -139,29 +139,29 @@ export default function OffersShow() {
             <Head title={`Angebot ${offer.number}`} />
 
             <div className="flex flex-1 flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                {/* Header — stacked on narrow widths so actions are not clipped */}
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-start gap-3 sm:items-center">
                         <Link href="/offers">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Zurück
                             </Button>
                         </Link>
-                        <div>
-                            <div className="flex items-center gap-3">
+                        <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                                     Angebot {offer.number}
                                 </h1>
                                 {getStatusBadge(offer.status)}
                             </div>
-                            <p className="text-gray-600">
+                            <p className="mt-1 truncate text-sm text-gray-600">
                                 {offer.customer?.name} • {formatDate(offer.issue_date)}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         {offer.status === "sent" && (
                             <>
                                 <Button onClick={handleAccept} variant="outline">
@@ -448,6 +448,14 @@ export default function OffersShow() {
                                         <FileText className="mr-2 h-4 w-4" />
                                         In Rechnung umwandeln
                                     </Button>
+                                )}
+                                {hasInvoicesModule && offer.status !== "accepted" && !offer.converted_to_invoice_id && (
+                                    <p className="text-sm text-muted-foreground">
+                                        In Rechnung umwandeln ist erst möglich, wenn das Angebot angenommen wurde.
+                                        {offer.status === "draft" ? " Versenden Sie es zuerst, danach können Sie es annehmen." : ""}
+                                        {offer.status === "sent" ? " Markieren Sie es oben als angenommen." : ""}
+                                        {offer.status === "rejected" ? " Abgelehnte Angebote können nicht umgewandelt werden." : ""}
+                                    </p>
                                 )}
                                 {offer.converted_to_invoice_id && offer.converted_to_invoice && (
                                     <Link href={`/invoices/${offer.converted_to_invoice.id}`} className="block">

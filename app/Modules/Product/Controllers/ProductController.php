@@ -147,11 +147,12 @@ class ProductController extends Controller
             }
         }
 
-        $attempts  = 0;
+        $attempts = 0;
+        $product = null;
 
         do {
             try {
-                Product::create([
+                $product = Product::create([
                     ...$validated,
                     'company_id' => $companyId,
                 ]);
@@ -165,6 +166,14 @@ class ProductController extends Controller
                 }
             }
         } while ($collision);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'product' => $product->only([
+                    'id', 'name', 'description', 'price', 'unit', 'tax_rate', 'sku', 'number',
+                ]),
+            ]);
+        }
 
         return redirect()->route('products.index')
             ->with('success', 'Produkt wurde erfolgreich erstellt.');

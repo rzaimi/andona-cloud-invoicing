@@ -2,7 +2,60 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function isZeroValue(value: unknown): boolean {
+  if (typeof value === "number") return value === 0
+  if (typeof value !== "string" || value.trim() === "") return false
+  const numeric = Number(value.replace(",", "."))
+  return !Number.isNaN(numeric) && numeric === 0
+}
+
+function stripLeadingZeros(raw: string): string {
+  return raw.replace(/^(-?)0+(?=\d)/, "$1")
+}
+
+function Input({ className, type, value, onChange, onFocus, onBlur, ...props }: React.ComponentProps<"input">) {
+  const isNumber = type === "number"
+  const controlled = value !== undefined
+  const [draft, setDraft] = React.useState<string | null>(null)
+
+  const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
+    if (isNumber && (event.currentTarget.value === "" || event.currentTarget.valueAsNumber === 0)) {
+      if (controlled) {
+        setDraft("")
+      } else {
+        event.currentTarget.value = ""
+      }
+    }
+    onFocus?.(event)
+  }
+
+  const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    setDraft(null)
+    onBlur?.(event)
+  }
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (isNumber) {
+      const normalized = stripLeadingZeros(event.target.value)
+      if (normalized !== event.target.value) {
+        event.target.value = normalized
+      }
+      if (controlled) {
+        setDraft(event.target.value)
+      }
+    }
+    onChange?.(event)
+  }
+
+  const displayValue =
+    !isNumber || !controlled
+      ? value
+      : draft !== null
+        ? draft
+        : isZeroValue(value)
+          ? ""
+          : value
+
   return (
     <input
       type={type}
@@ -14,6 +67,10 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         className
       )}
       {...props}
+      value={displayValue}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
     />
   )
 }

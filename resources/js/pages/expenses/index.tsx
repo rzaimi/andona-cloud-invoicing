@@ -259,11 +259,11 @@ export default function ExpensesIndex() {
                                             </TableCell>
                                             <TableCell>
                                                 {expense.receipt_path ? (
-                                                    <Link href={`/expenses/${expense.id}/receipt`}>
-                                                        <Button variant="ghost" size="sm">
+                                                    <Button variant="ghost" size="sm" asChild>
+                                                        <a href={`/expenses/${expense.id}/receipt`} title="Beleg herunterladen">
                                                             <Download className="h-4 w-4" />
-                                                        </Button>
-                                                    </Link>
+                                                        </a>
+                                                    </Button>
                                                 ) : (
                                                     "-"
                                                 )}

@@ -17,6 +17,7 @@ return [
         'Monat',
         'Jahr',
         'm',
+        'lfm',     // Laufmeter
         'm²',
         'm³',
         'kg',

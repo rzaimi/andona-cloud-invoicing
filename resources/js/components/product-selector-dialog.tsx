@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { usePage } from "@inertiajs/react"
 import { useUnits } from "@/hooks/use-units"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -7,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Search, Plus, Package, Check } from "lucide-react"
 
 interface Product {
@@ -36,11 +38,18 @@ interface ProductSelectorDialogProps {
 }
 
 export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSelectorDialogProps) {
+    const page = usePage()
+    const hasProductsModule = ((page.props as { enabledModules?: string[] }).enabledModules)?.includes("products") ?? true
+    const defaultTaxRate = Number((page.props as { auth?: { user?: { company?: { settings?: { tax_rate?: number } } } } }).auth?.user?.company?.settings?.tax_rate ?? 0.19)
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
+    const [catalog, setCatalog] = useState(products)
     const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
     const [addedCount, setAddedCount] = useState(0)
     const [customAdded, setCustomAdded] = useState(false)
+    const [saveAsProduct, setSaveAsProduct] = useState(false)
+    const [savingProduct, setSavingProduct] = useState(false)
+    const [saveError, setSaveError] = useState<string | null>(null)
     const [customItem, setCustomItem] = useState({
         description: "",
         quantity: 1,
@@ -48,7 +57,11 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
         unit: "Stk.",
     })
 
-    const filteredProducts = products.filter((product) =>
+    useEffect(() => {
+        setCatalog(products)
+    }, [products])
+
+    const filteredProducts = catalog.filter((product) =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,12 +94,77 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
         }, 2000)
     }
 
-    const handleCustomItemAdd = () => {
-        if (!customItem.description) return
-        onSelect(customItem)
+    const handleCustomItemAdd = async () => {
+        if (!customItem.description || savingProduct) return
+
+        let productId: string | undefined
+        let productNumber: string | undefined
+        let productSku: string | undefined
+        let taxRate: number | undefined
+
+        if (saveAsProduct) {
+            setSavingProduct(true)
+            setSaveError(null)
+            try {
+                const token = (page.props as { csrf_token?: string }).csrf_token
+                    || document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")
+                    || ""
+                const response = await fetch("/products", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN": token,
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    body: JSON.stringify({
+                        name: customItem.description,
+                        unit: customItem.unit,
+                        price: customItem.unit_price,
+                        tax_rate: defaultTaxRate,
+                        stock_quantity: 0,
+                        min_stock_level: 0,
+                        track_stock: false,
+                        is_service: false,
+                        status: "active",
+                    }),
+                })
+
+                const body = await response.json().catch(() => ({}))
+                if (!response.ok) {
+                    const validationMessage = body?.errors
+                        ? Object.values(body.errors as Record<string, string[]>)[0]?.[0]
+                        : null
+                    setSaveError(validationMessage || body?.message || "Produkt konnte nicht gespeichert werden.")
+                    setSavingProduct(false)
+                    return
+                }
+
+                const created = body.product as Product
+                productId = created.id
+                productNumber = created.number
+                productSku = created.sku
+                taxRate = Number(created.tax_rate)
+                setCatalog((current) => [created, ...current.filter((product) => product.id !== created.id)])
+            } catch {
+                setSaveError("Produkt konnte nicht gespeichert werden.")
+                setSavingProduct(false)
+                return
+            }
+            setSavingProduct(false)
+        }
+
+        onSelect({
+            ...customItem,
+            tax_rate: taxRate,
+            product_id: productId,
+            product_sku: productSku,
+            product_number: productNumber,
+        })
         setAddedCount((c) => c + 1)
         setCustomAdded(true)
-        // Reset form but keep dialog open
+        setSaveError(null)
+        setSaveAsProduct(false)
         setCustomItem({ description: "", quantity: 1, unit_price: 0, unit: "Stk." })
         setTimeout(() => setCustomAdded(false), 2000)
     }
@@ -97,6 +175,8 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
         setAddedIds(new Set())
         setAddedCount(0)
         setCustomAdded(false)
+        setSaveAsProduct(false)
+        setSaveError(null)
     }
 
     const germanUnits = useUnits()
@@ -282,6 +362,18 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
                                 </div>
                             </div>
 
+                            {hasProductsModule && (
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="save-as-product"
+                                        checked={saveAsProduct}
+                                        onCheckedChange={(checked) => setSaveAsProduct(checked === true)}
+                                    />
+                                    <Label htmlFor="save-as-product">Als Produkt speichern</Label>
+                                </div>
+                            )}
+                            {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+
                             <div className="flex items-center justify-between">
                                 {customAdded ? (
                                     <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
@@ -298,10 +390,10 @@ export function ProductSelectorDialog({ products, onSelect, trigger }: ProductSe
                                     <Button
                                         type="button"
                                         onClick={handleCustomItemAdd}
-                                        disabled={!customItem.description}
+                                        disabled={!customItem.description || savingProduct}
                                     >
                                         <Plus className="mr-2 h-4 w-4" />
-                                        Position hinzufügen
+                                        {savingProduct ? "Wird gespeichert..." : "Position hinzufügen"}
                                     </Button>
                                 </div>
                             </div>

@@ -19,6 +19,7 @@ import {
     AlertTriangle,
     Clock,
     CheckCircle,
+    XCircle,
     Send,
     Download,
     Eye,
@@ -467,6 +468,31 @@ export default function OffersIndex() {
                                                                         <Send className="mr-2 h-4 w-4" />
                                                                         {offer.status === "draft" ? "Versenden" : "Erneut senden"}
                                                                     </DropdownMenuItem>
+
+                                                                    {offer.status === "sent" && (
+                                                                        <>
+                                                                            <DropdownMenuItem
+                                                                                onClick={() => {
+                                                                                    if (confirm("Möchten Sie dieses Angebot als angenommen markieren?")) {
+                                                                                        router.post(route("offers.accept", offer.id))
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <CheckCircle className="mr-2 h-4 w-4" />
+                                                                                Als angenommen markieren
+                                                                            </DropdownMenuItem>
+                                                                            <DropdownMenuItem
+                                                                                onClick={() => {
+                                                                                    if (confirm("Möchten Sie dieses Angebot als abgelehnt markieren?")) {
+                                                                                        router.post(route("offers.reject", offer.id))
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <XCircle className="mr-2 h-4 w-4" />
+                                                                                Ablehnen
+                                                                            </DropdownMenuItem>
+                                                                        </>
+                                                                    )}
 
                                                                     {hasInvoicesModule && offer.status === "accepted" && !offer.converted_to_invoice_id && (
                                                                         <DropdownMenuItem onClick={() => handleConvertToInvoice(offer)}>
