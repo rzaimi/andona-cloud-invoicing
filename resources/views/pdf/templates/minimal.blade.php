@@ -141,15 +141,10 @@
 </div>
 
 {{-- Salutation --}}
-@if($ls['content']['show_salutation'] ?? true)
 @if($docKind === 'offer')
-<div style="margin-top:5mm; margin-bottom:5mm; font-size:{{ $fs }}px; line-height:1.7;">
-    Sehr geehrte Damen und Herren,<br>
-    vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:
-</div>
-@elseif($doc->salutation ?? null)
+@include('pdf.partials.offer-intro', ['ink' => $primary])
+@elseif(($ls['content']['show_salutation'] ?? true) && ($doc->salutation ?? null))
 <div style="margin-top:5mm; font-size:{{ $fs }}px; line-height:1.7;">{!! nl2br(e($doc->salutation)) !!}</div>
-@endif
 @endif
 
 {{-- Items --}}
@@ -177,24 +172,20 @@
 @include('pdf.partials.girocode')
 @endif
 
+@if($docKind === 'offer')
+@include('pdf.partials.offer-closing', ['muted' => $soft, 'ink' => $primary])
+@else
 {{-- Notes --}}
 @if(($ls['content']['show_notes'] ?? true) && !empty($doc->notes))
 <div style="margin-top:5mm; font-size:{{ $fs - 1 }}px; color:{{ $soft }}; line-height:1.6; white-space:pre-wrap;">{{ $doc->notes }}</div>
 @endif
 
-@if($docKind === 'invoice')
 {{-- Payment terms (single line) --}}
 @if($ls['content']['show_payment_terms'] ?? true)
 <div style="margin-top:4mm; font-size:{{ $fs - 1 }}px; color:{{ $soft }}; page-break-inside:avoid;">
     @include('pdf.partials.payment-terms')
 </div>
 @endif
-@endif
-
-@if($docKind === 'offer' && !empty($doc->terms_conditions))
-<div style="margin-top:5mm; font-size:{{ $fs - 1 }}px; color:{{ $soft }}; line-height:1.65; page-break-inside:avoid;">
-    <strong style="color:{{ $primary }}; font-weight:500;">Geschäftsbedingungen:</strong> {!! nl2br(e($doc->terms_conditions)) !!}
-</div>
 @endif
 
 </div>{{-- /content --}}

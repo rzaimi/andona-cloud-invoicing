@@ -1,12 +1,14 @@
 {{--
     Mandatory / typical tax wording on German invoices & offers (non-standard USt regimes).
-    Expects: $vat_regime (string), optional $fontSizePx (int), $mutedColor (hex), $align (e.g. 'right' for totals block)
+    Expects: $vat_regime (string), optional $fontSizePx (int), $mutedColor (hex), $align (e.g. 'right' for totals block).
+    Set $fullWidth to place the notice under the letter body instead of beside the totals.
 --}}
 @php
     $regime = $vat_regime ?? 'standard';
     $fs     = max(8, (int) ($fontSizePx ?? 12) - 1);
     $muted  = $mutedColor ?? '#64748b';
     $ta     = $align ?? 'right';
+    $full   = !empty($fullWidth);
 
     // Standard formulations aligned with the UI labels (invoices / offers).
     $lines = match ($regime) {
@@ -30,7 +32,7 @@
     };
 @endphp
 @if(count($lines))
-<div style="margin-top:8px; max-width:{{ $tableWidth ?? '290px' }}; margin-left:auto; text-align:{{ $ta }}; font-size:{{ $fs }}px; line-height:1.45; color:{{ $muted }};">
+<div style="margin-top:{{ $full ? '6mm' : '8px' }}; {{ $full ? '' : 'max-width:'.($tableWidth ?? '290px').'; margin-left:auto;' }} text-align:{{ $full ? 'left' : $ta }}; font-size:{{ $fs }}px; line-height:1.55; color:{{ $muted }};">
     @foreach($lines as $line)
         <div>{{ $line }}</div>
     @endforeach

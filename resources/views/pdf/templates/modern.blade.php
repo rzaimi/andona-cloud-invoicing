@@ -127,17 +127,15 @@
 @endif
 
 {{-- Salutation --}}
-@if($ls['content']['show_salutation'] ?? true)
+@if($docKind === 'offer')
+@include('pdf.partials.offer-intro')
+@elseif($ls['content']['show_salutation'] ?? true)
 <div style="margin-top:7mm; margin-bottom:5mm; font-size:{{ $fs }}px; line-height:1.7;">
     @if($doc->salutation ?? null)
         {!! nl2br(e($doc->salutation)) !!}
     @else
         Sehr geehrte Damen und Herren,<br>
-        @if($docKind === 'offer')
-            vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:
-        @else
-            vielen Dank für Ihren Auftrag. Hiermit stellen wir Ihnen die folgenden Leistungen in Rechnung:
-        @endif
+        vielen Dank für Ihren Auftrag. Hiermit stellen wir Ihnen die folgenden Leistungen in Rechnung:
     @endif
 </div>
 @endif
@@ -175,14 +173,9 @@
 @endif
 @endif
 
-{{-- Geschäftsbedingungen (offer) --}}
-@if($docKind === 'offer' && !empty($doc->terms_conditions))
-<div style="margin-top:6mm; font-size:{{ $fs - 1 }}px; line-height:1.7; color:{{ $muted }}; page-break-inside:avoid;">
-    <div style="color:{{ $primary }}; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; font-size:{{ $fs - 2 }}px; margin-bottom:1.5mm;">Geschäftsbedingungen</div>
-    {!! nl2br(e($doc->terms_conditions)) !!}
-</div>
-@endif
-
+@if($docKind === 'offer')
+@include('pdf.partials.offer-closing')
+@else
 {{-- Notes --}}
 @if(($ls['content']['show_notes'] ?? true) && !empty($doc->notes))
 <div style="margin-top:5mm; font-size:{{ $fs - 1 }}px; color:{{ $muted }}; line-height:1.65; white-space:pre-wrap;">{{ $doc->notes }}</div>
@@ -202,6 +195,7 @@
     </div>
     @endif
 </div>
+@endif
 @endif
 
 </div>{{-- /content --}}

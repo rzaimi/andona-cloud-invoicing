@@ -58,7 +58,7 @@
     $netAfterSkonto = $skontoRemainingDue - $skontoAmount;
     $skontoColor    = $layoutSettings['colors']['skonto'] ?? '#16a34a';
 @endphp
-<table style="width: {{ $tableWidth }}; margin-left: auto; border-collapse: collapse; font-size: {{ $bodyFontSize }}px;">
+<table style="width: {{ $tableWidth }}; margin-left: auto; border-collapse: collapse; font-size: {{ $bodyFontSize }}px; page-break-inside: avoid;">
 
     {{-- Discount rows --}}
     @if($totalDiscount > 0.0001)
@@ -136,9 +136,13 @@
     @endif
 
 </table>
+{{-- Offers print the notice full-width in the letter closing, so the
+     domestic § 13b sentence is not squeezed into the totals column. --}}
+@if(($docKind ?? 'invoice') !== 'offer')
 @include('pdf.partials.vat-regime-legal-notice', [
     'vat_regime' => $doc->vat_regime ?? 'standard',
     'fontSizePx' => $bodyFontSize,
     'mutedColor' => $layoutSettings['colors']['secondary'] ?? '#64748b',
     'tableWidth' => $tableWidth,
 ])
+@endif
