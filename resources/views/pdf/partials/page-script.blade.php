@@ -73,7 +73,21 @@ if (isset($pdf)) {
             // Body reserves 35mm and the page margin adds 5mm, so the
             // fixed footer — including its top rule — sits in this band.
             $cover = 40 * 72 / 25.4;
-            $canvas->filled_rectangle(0, $canvas->get_height() - $cover, $canvas->get_width(), $cover, [1, 1, 1]);
+            // canvas->filled_rectangle() goes through DomPDF's fill-color
+            // cache. That cache skips the color operator when it already
+            // believes the fill is white, while this page's stream can
+            // still be the page-number gray (or a non-opaque graphics
+            // state left by a logo). The cover then paints as a gray bar.
+            // Write the operators directly so the band is opaque white.
+            $cpdf = $canvas->get_cpdf();
+            $cpdf->setGraphicsState([
+                'BM' => '/Normal',
+                'ca' => 1,
+                'CA' => 1,
+                'SMask' => '/None',
+            ]);
+            $cpdf->setColor([1, 1, 1], true);
+            $cpdf->filledRectangle(0, 0, $canvas->get_width(), $cover);
         }
 
         $font = $fontMetrics->get_font('DejaVu Sans', 'normal');

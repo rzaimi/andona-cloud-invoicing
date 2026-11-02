@@ -59,6 +59,8 @@ class PdfPageChromeTest extends TestCase
         $this->assertStringContainsString($logoPath, $html);
         $this->assertStringContainsString("'pos' => \"top-right\"", $html);
         $this->assertStringContainsString("'hideFooterExceptLast' => true", $html);
+        $this->assertStringContainsString('setColor([1, 1, 1], true)', $html);
+        $this->assertStringContainsString("'SMask' => '/None'", $html);
 
         $pdf = $this->renderPdf($html);
         $this->assertGreaterThanOrEqual(2, $this->pageCount($pdf));
