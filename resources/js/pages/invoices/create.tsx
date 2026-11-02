@@ -19,6 +19,7 @@ import AppLayout from "@/layouts/app-layout"
 import { useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer, PageProps } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
+import { GaebImportButton, gaebLineItems } from "@/components/gaeb-import-button"
 import { AbschlagSelectionDialog } from "@/components/abschlag-selection-dialog"
 import type { AbschlagRef, SelectableAbschlag } from "@/components/abschlag-selection-dialog"
 
@@ -665,6 +666,15 @@ export default function InvoicesCreate() {
                                 <CardTitle>Rechnungspositionen</CardTitle>
                                 <CardDescription>Fügen Sie Positionen zu Ihrer Rechnung hinzu</CardDescription>
                             </div>
+                            <div className="flex items-center gap-2">
+                            <GaebImportButton
+                                onImport={(positions) => {
+                                    setData("items", [
+                                        ...(data.items as InvoiceItem[]),
+                                        ...gaebLineItems(positions, settings.tax_rate || 0.19),
+                                    ])
+                                }}
+                            />
                             <ProductSelectorDialog 
                                 products={products} 
                                 onSelect={(item) => {
@@ -704,6 +714,7 @@ export default function InvoicesCreate() {
                                     }
                                 }}
                             />
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
@@ -753,7 +764,7 @@ export default function InvoicesCreate() {
                                                         value={item.description}
                                                         onChange={(e) => updateItem(item.id, "description", e.target.value)}
                                                         placeholder={Number(item.unit_price) < 0 ? "Nachlass / Abzug lt. Rechnung …" : "Beschreibung der Leistung..."}
-                                                        className="min-h-[100px] min-w-[260px] resize-y"
+                                                        className="min-h-[100px] min-w-[360px] resize-y leading-relaxed"
                                                         rows={4}
                                                         required
                                                     />

@@ -11,6 +11,7 @@ use App\Services\SettingsService;
 use App\Traits\ResizesCompanyLogo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -335,6 +336,7 @@ class CompanyController extends Controller
         return Inertia::render('companies/edit', [
             'company' => $company,
             'grantedModules' => $company->enabledModules(),
+            'gaebImportEnabled' => $company->gaebImportEnabled(),
         ]);
     }
 
@@ -424,6 +426,16 @@ class CompanyController extends Controller
 
         $company->update($validated);
         app(ContextService::class)->forgetCompanyMemo($company->id);
+
+        if ($request->exists('gaeb_import_enabled') && $request->user()?->hasPermissionTo('manage_companies')) {
+            $company->setSetting(
+                'gaeb_import_enabled',
+                $request->boolean('gaeb_import_enabled') ? '1' : '0',
+                'string',
+                'GAEB-Leistungsverzeichnis in Rechnungen und Angeboten importieren'
+            );
+            Cache::forget("setting.{$company->id}.gaeb_import_enabled");
+        }
 
         // Update bank settings separately (normalized to company_settings)
         $company->setBankSettings($bankSettings);

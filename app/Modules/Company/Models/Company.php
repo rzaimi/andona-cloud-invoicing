@@ -163,11 +163,11 @@ class Company extends Model
         //    label (e.g. "UG" from "UG (haftungsbeschränkt)") and check with
         //    a word boundary so we don't match partial tokens.
         $abbreviation = preg_quote(explode(' ', $form)[0], '/');
-        if (preg_match('/\b' . $abbreviation . '\b/ui', $name)) {
+        if (preg_match('/\b'.$abbreviation.'\b/ui', $name)) {
             return $name;
         }
 
-        return trim($name . ' ' . $form);
+        return trim($name.' '.$form);
     }
 
     /**
@@ -336,6 +336,17 @@ class Company extends Model
     public function hasAnyModule(array $modules): bool
     {
         return array_intersect($modules, $this->enabledModules()) !== [];
+    }
+
+    /**
+     * Opt-in: GAEB bill-of-quantities import on invoices and offers.
+     * Stored as the string "1" so a stored "0" is not read as true.
+     */
+    public function gaebImportEnabled(): bool
+    {
+        $setting = $this->settings()->where('key', 'gaeb_import_enabled')->first();
+
+        return $setting !== null && $setting->getRawOriginal('value') === '1';
     }
 
     public function getSetting(string $key, $default = null)

@@ -48,6 +48,7 @@ interface EditProps {
     auth: { user: User }
     company: Company
     grantedModules: string[]
+    gaebImportEnabled?: boolean
 }
 
 const TITLE_BY_FORM: Record<string, string> = {
@@ -62,7 +63,7 @@ const TITLE_BY_FORM: Record<string, string> = {
     ag:                "Vorstand",
 }
 
-export default function Edit({ auth, company, grantedModules }: EditProps) {
+export default function Edit({ auth, company, grantedModules, gaebImportEnabled = false }: EditProps) {
     const { data, setData, post, processing, errors, transform } = useForm({
         name: company.name || "",
         email: company.email || "",
@@ -88,6 +89,7 @@ export default function Edit({ auth, company, grantedModules }: EditProps) {
         status: company.status || "active",
         logo: null as File | null,
         enabled_modules: grantedModules,
+        gaeb_import_enabled: gaebImportEnabled,
     })
 
     const [activeTab, setActiveTab] = useState("basic")
@@ -561,6 +563,26 @@ export default function Edit({ auth, company, grantedModules }: EditProps) {
                                         onChange={(modules) => setData("enabled_modules", modules)}
                                         error={errors.enabled_modules ?? (errors as Record<string, string>)["enabled_modules.0"] ?? null}
                                     />
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>GAEB-Import</CardTitle>
+                                    <CardDescription>
+                                        Leistungsverzeichnisse im GAEB-DA-XML-Format (.X81 und verwandte Dateien) können in Rechnungen und Angebote übernommen werden. Es werden nur die Positionen als benutzerdefinierte Zeilen eingefügt.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            id="gaeb_import_enabled"
+                                            checked={data.gaeb_import_enabled}
+                                            onCheckedChange={(checked) => setData("gaeb_import_enabled", checked === true)}
+                                        />
+                                        <Label htmlFor="gaeb_import_enabled" className="cursor-pointer">
+                                            GAEB-Import für diese Firma freischalten
+                                        </Label>
+                                    </div>
                                 </CardContent>
                             </Card>
                             <Card>

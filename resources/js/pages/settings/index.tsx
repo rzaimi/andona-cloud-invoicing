@@ -31,6 +31,7 @@ import {
     CheckCircle2,
     Building2,
     FileText,
+    FileUp,
     Database,
     Search,
     ArrowUpRight,
@@ -51,6 +52,7 @@ import ProfileSettingsTab from "./tabs/profile"
 import PasswordSettingsTab from "./tabs/password"
 import AppearanceSettingsTab from "./tabs/appearance"
 import DatevSettingsTab from "./tabs/datev"
+import GaebSettingsTab from "./tabs/gaeb"
 import CompanySettingsAdminTab from "./tabs/company-settings"
 import NotificationsSettingsTab from "./tabs/notifications"
 
@@ -69,6 +71,7 @@ interface SettingsPageProps extends PageProps {
     emailLogsFilters?: any
     user?: any
     activeTab?: string
+    gaebImportEnabled?: boolean
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -86,6 +89,7 @@ const TAB_IDS = [
     "notifications",
     "email-logs",
     "datev",
+    "gaeb",
     "profile",
     "password",
     "appearance",
@@ -124,6 +128,7 @@ export default function SettingsIndex() {
         emailLogsFilters,
         user,
         activeTab = "company-info",
+        gaebImportEnabled = false,
         flash,
         auth,
     } = page.props
@@ -245,6 +250,17 @@ export default function SettingsIndex() {
                             label: "Angebotslayouts",
                             icon: LayoutTemplate,
                             keywords: ["pdf", "design", "vorlage", "angebot", "layout"],
+                        },
+                    ]
+                    : []),
+                ...(has("invoices") || has("offers")
+                    ? [
+                        {
+                            id: "gaeb",
+                            label: "GAEB-Import",
+                            description: "Leistungsverzeichnis aus einer GAEB-Datei in Rechnungen und Angebote übernehmen",
+                            icon: FileUp,
+                            keywords: ["gaeb", "x81", "x83", "x84", "leistungsverzeichnis", "import", "positionen", "upload"],
                         },
                     ]
                     : []),
@@ -577,6 +593,9 @@ export default function SettingsIndex() {
                                 emailLogsStats={emailLogsStats}
                                 emailLogsFilters={emailLogsFilters}
                             />
+                        </TabsContent>
+                        <TabsContent value="gaeb" className="mt-0 space-y-6">
+                            <GaebSettingsTab enabled={gaebImportEnabled} />
                         </TabsContent>
                         <TabsContent value="datev" className="mt-0 space-y-6">
                             <DatevSettingsTab datevSettings={datevSettings} />

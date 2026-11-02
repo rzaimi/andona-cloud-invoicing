@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\GaebImportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -49,6 +50,9 @@ Route::middleware(['auth', 'session.timeout', 'employee.portal.only'])->group(fu
     });
     // Import/export routes carry their own per-route module middleware.
     require __DIR__.'/modules/import-export.php';
+    Route::post('gaeb/positions', [GaebImportController::class, 'positions'])
+        ->middleware('throttle:20,1')
+        ->name('gaeb.positions');
     Route::middleware('company.module:documents')->group(function () {
         require __DIR__.'/modules/documents.php';
     });

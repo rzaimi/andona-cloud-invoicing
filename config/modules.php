@@ -87,5 +87,6 @@ return [
         'erechnung' => ['invoices'],
         'payment-methods' => ['payments', 'invoices'],
         'datev' => ['datev'],
+        'gaeb' => ['invoices', 'offers'],
     ],
 ];

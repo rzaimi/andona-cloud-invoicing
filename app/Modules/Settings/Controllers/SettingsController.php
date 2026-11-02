@@ -225,6 +225,7 @@ class SettingsController extends Controller
             'emailLogsFilters' => $emailLogsFilters,
             'user' => $request->user(),
             'activeTab' => $activeTab,
+            'gaebImportEnabled' => $company->gaebImportEnabled(),
         ]);
     }
 
@@ -660,6 +661,32 @@ class SettingsController extends Controller
 
         return redirect()->route('settings.erechnung')
             ->with('success', 'E-Rechnung Einstellungen wurden erfolgreich aktualisiert.');
+    }
+
+    /**
+     * Turn GAEB bill-of-quantities import on or off for this company.
+     * Stored as the string "1"/"0" so a stored "0" is not read as true.
+     */
+    public function updateGaeb(Request $request)
+    {
+        $this->ensureModules(['invoices', 'offers']);
+        $companyId = $this->getEffectiveCompanyId();
+        $company = Company::findOrFail($companyId);
+
+        $request->validate([
+            'gaeb_import_enabled' => 'required|boolean',
+        ]);
+
+        $company->setSetting(
+            'gaeb_import_enabled',
+            $request->boolean('gaeb_import_enabled') ? '1' : '0',
+            'string',
+            'GAEB-Leistungsverzeichnis in Rechnungen und Angeboten importieren'
+        );
+        $this->settingsService->clearCompanyCache($companyId);
+
+        return redirect()->route('settings.index', ['tab' => 'gaeb'])
+            ->with('success', 'GAEB-Import wurde gespeichert.');
     }
 
     /**

@@ -164,6 +164,7 @@ class HandleInertiaRequests extends Middleware
                             'payment_methods' => is_array($rawPaymentMethods) ? $rawPaymentMethods : json_decode($rawPaymentMethods, true) ?? ['Überweisung', 'SEPA-Lastschrift', 'PayPal'],
                             'default_payment_method' => $allSettings['default_payment_method'] ?? 'Überweisung',
                             'default_units' => is_array($rawDefaultUnits) ? $rawDefaultUnits : json_decode($rawDefaultUnits, true) ?? config('units.default'),
+                            'gaeb_import_enabled' => $company->gaebImportEnabled(),
                         ];
 
                         $userData['company'] = [
