@@ -50,7 +50,7 @@
         : "border-bottom: 2px solid {$showBorderColor};";
     $headerBgStyle .= ' ' . $tableHeaderStyle;
 @endphp
-<table style="width: 100%; border-collapse: collapse; margin: 0 0 10px 0; page-break-inside: auto; {{ $tableOuterBorder !== 'none' ? 'border: ' . $tableOuterBorder . ';' : '' }}">
+<table style="width: 100%; border-collapse: collapse; margin: 0 0 10px 0; page-break-inside: auto; font-family: {{ $layoutSettings['fonts']['body'] ?? 'DejaVu Sans' }}, DejaVu Sans, sans-serif; font-size: {{ $bodyFontSize }}px; {{ $tableOuterBorder !== 'none' ? 'border: ' . $tableOuterBorder . ';' : '' }}">
     <thead>
         <tr style="{{ $headerBgStyle }}">
             @if($showRowNumber && !$inlineRowNumber)

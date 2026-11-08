@@ -10,13 +10,12 @@
             // Check if function exists to avoid redeclaration errors when multiple PDFs are generated
             if (!function_exists('getFontSizePx')) {
                 function getFontSizePx($size) {
-                    // Target: body 10–12pt, title 14–18pt, footer 8–10pt (DIN/ISO best practice).
-                    // At 96 dpi: 1pt ≈ 1.333px  →  10pt ≈ 13px, 11pt ≈ 14.7px, 12pt ≈ 16px
+                    // Klein 10px, Mittel 12px, Groß 15px. The footer uses body − 3.
                     switch($size) {
-                        case 'small': return 11;   //  ~8 pt  — compact layouts
-                        case 'large': return 16;   // ~12 pt  — generous readability
+                        case 'small': return 10;   // Klein
+                        case 'large': return 15;   // Groß
                         case 'medium':
-                        default: return 13;        //  ~10 pt — DIN-compliant default
+                        default: return 12;        // Mittel
                     }
                 }
             }
@@ -139,7 +138,8 @@
             width: 100%;
             padding: 10px {{ min($layoutSettings['layout']['margin_right'] ?? 15, 15) }}mm 10px {{ min($layoutSettings['layout']['margin_left'] ?? 15, 15) }}mm;
             border-top: 1px solid #e5e7eb;
-            font-size: {{ $bodyFontSize - 1 }}px;
+            font-family: {{ $layoutSettings['fonts']['body'] ?? 'DejaVu Sans' }}, DejaVu Sans, sans-serif;
+            font-size: {{ $bodyFontSize - 3 }}px;
             color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }};
             background-color: white;
             z-index: 1000;

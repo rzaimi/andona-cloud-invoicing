@@ -116,7 +116,7 @@
             'detailsLabelColor'  => $soft,
             'detailsBorderColor' => $border,
             'detailsPad'         => '0.5mm 0',
-            'detailsFontSize'    => $fs - 1,
+            'detailsFontSize'    => $fs,
         ])
     </td>
 </tr>

@@ -58,7 +58,7 @@
     $netAfterSkonto = $skontoRemainingDue - $skontoAmount;
     $skontoColor    = $layoutSettings['colors']['skonto'] ?? '#16a34a';
 @endphp
-<table style="width: {{ $tableWidth }}; margin-left: auto; border-collapse: collapse; font-size: {{ $bodyFontSize }}px; page-break-inside: avoid;">
+<table style="width: {{ $tableWidth }}; margin-left: auto; border-collapse: collapse; font-family: {{ $layoutSettings['fonts']['body'] ?? 'DejaVu Sans' }}, DejaVu Sans, sans-serif; font-size: {{ $bodyFontSize }}px; page-break-inside: avoid;">
 
     {{-- Discount rows --}}
     @if($totalDiscount > 0.0001)

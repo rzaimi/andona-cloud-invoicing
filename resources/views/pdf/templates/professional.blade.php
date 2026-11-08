@@ -113,7 +113,7 @@
                 'detailsLabelColor'  => $muted,
                 'detailsBorderColor' => $hair,
                 'detailsPad'         => '0.8mm 0',
-                'detailsFontSize'    => $fs - 1,
+                'detailsFontSize'    => $fs,
             ])
         </div>
     </td>

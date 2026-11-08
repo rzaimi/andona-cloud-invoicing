@@ -15,7 +15,7 @@
     $muted    = $ls['colors']['secondary'] ?? '#64748b';
     $hair     = '#e2e8f0';
     $fs       = $bodyFontSize;
-    $heading  = $ls['fonts']['heading'] ?? 'DejaVu Serif';
+    $heading  = $ls['fonts']['heading'] ?? ($ls['fonts']['body'] ?? 'DejaVu Sans');
 
     // Logo (inlined as base64 data URI)
     $logoRelPath = isset($snapshot['logo']) ? ltrim(preg_replace('#^storage/#', '', (string)$snapshot['logo']), '/') : null;
@@ -115,7 +115,7 @@
             'detailsLabelColor'  => $muted,
             'detailsBorderColor' => $hair,
             'detailsPad'         => '0.6mm 0',
-            'detailsFontSize'    => $fs - 1,
+            'detailsFontSize'    => $fs,
         ])
     </td>
 </tr>

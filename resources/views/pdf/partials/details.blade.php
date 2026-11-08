@@ -32,13 +32,14 @@
     $dtTSty       = $detailsTableStyle  ?? '';
     $skontoColor  = $layoutSettings['colors']['skonto'] ?? '#16a34a';
     $valueInk     = $layoutSettings['colors']['text'] ?? '#1f2937';
+    $bodyFont     = $layoutSettings['fonts']['body'] ?? 'DejaVu Sans';
     // Fixed width, 30% narrower than the column the table used to fill.
     // Long values such as Bauvorhaben wrap inside the value column.
     $rule         = "border-bottom:1px solid {$dtBC};";
     $labelCell    = "padding:{$dtPad}; padding-right:2mm; color:{$dtLC}; font-size:{$dtFS}px; font-weight:400; white-space:nowrap; width:24mm; vertical-align:top; {$rule}";
     $valueCell    = "padding:{$dtPad}; padding-left:0; color:{$valueInk}; font-size:{$dtFS}px; font-weight:700; width:36mm; vertical-align:top; word-wrap:break-word; {$rule}";
 @endphp
-<table align="right" style="width:60mm; table-layout:fixed; margin-left:auto; border-collapse:collapse; font-size:{{ $dtFS }}px; background:{{ $dtBg }}; {{ $dtTSty }}">
+<table align="right" style="width:60mm; table-layout:fixed; margin-left:auto; border-collapse:collapse; font-family: {{ $bodyFont }}, DejaVu Sans, sans-serif; font-size:{{ $dtFS }}px; background:{{ $dtBg }}; {{ $dtTSty }}">
     <tr>
         <td style="{{ $labelCell }}">{{ $numberLbl }}</td>
         <td style="{{ $valueCell }}">{{ $doc->number }}</td>

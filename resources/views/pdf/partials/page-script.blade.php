@@ -90,8 +90,9 @@ if (isset($pdf)) {
             $cpdf->filledRectangle(0, 0, $canvas->get_width(), $cover);
         }
 
-        $font = $fontMetrics->get_font('DejaVu Sans', 'normal');
-        $size = 6.5;
+        $fontName = {!! json_encode(data_get($layoutSettings ?? [], 'fonts.body', 'DejaVu Sans')) !!};
+        $font = $fontMetrics->get_font($fontName, 'normal') ?: $fontMetrics->get_font('DejaVu Sans', 'normal');
+        $size = {{ round(max(6, ((int) ($bodyFontSize ?? 10) - 3) * 72 / 96), 2) }};
         $text = "Seite {$pageNumber} / {$pageCount}";
         $width = $fontMetrics->get_text_width($text, $font, $size);
         $x = $canvas->get_width() - $width - 23;

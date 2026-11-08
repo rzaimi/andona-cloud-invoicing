@@ -8,12 +8,12 @@
         // ── Font size helper ──────────────────────────────────────────────────
         if (!function_exists('getOfferFontSizePx')) {
             function getOfferFontSizePx($size) {
-                // Target: body 10–12pt, matching invoice sizing convention.
+                // Klein 10px, Mittel 12px, Groß 15px. Kept in step with invoice.blade.php.
                 switch ($size) {
-                    case 'small':  return 11;   //  ~8 pt
-                    case 'large':  return 16;   // ~12 pt
+                    case 'small':  return 10;   // Klein
+                    case 'large':  return 15;   // Groß
                     case 'medium':
-                    default:       return 13;   // ~10 pt — offer default
+                    default:       return 12;   // Mittel
                 }
             }
         }

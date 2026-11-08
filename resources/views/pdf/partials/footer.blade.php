@@ -8,6 +8,9 @@
     $fgColor    = $ls['colors']['secondary'] ?? '#374151';
     $showBank   = $ls['content']['show_bank_details'] ?? true;
     $showReg    = $ls['content']['show_company_registration'] ?? true;
+    $footerPx   = (int) ($bodyFontSize ?? 10) - 3;
+    $namePx     = $footerPx + 1;
+    $bodyFont   = $ls['fonts']['body'] ?? 'DejaVu Sans';
 @endphp
 <div class="pdf-footer" style="
     position: fixed;
@@ -17,14 +20,16 @@
     padding: 2mm 4mm 2mm 4mm;
     background-color: white;
     border-top: 1.5px solid {{ $lineColor }};
+    font-family: {{ $bodyFont }}, DejaVu Sans, sans-serif;
+    font-size: {{ $footerPx }}px;
 ">
-    <table style="width:100%; border-collapse:collapse; font-size:8pt; line-height:1.5; color:{{ $fgColor }};">
+    <table style="width:100%; border-collapse:collapse; font-family: {{ $bodyFont }}, DejaVu Sans, sans-serif; font-size:{{ $footerPx }}px; line-height:1.3; color:{{ $fgColor }};">
         <tr>
 
             {{-- ── Col 1: Company name + legal form + address ──────────── --}}
             <td style="width:17%; vertical-align:top; padding-right:1mm;">
                 @if($snapshot['name'] ?? null)
-                    <div style="font-weight:bold; color:#111827; font-size:8.5pt;">
+                    <div style="font-weight:bold; color:#111827; font-size:{{ $namePx }}px;">
                         {{ $snapshot['name'] }}
                     </div>
                 @endif
