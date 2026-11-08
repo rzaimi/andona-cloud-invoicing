@@ -39,7 +39,18 @@ class DocumentDetailsStyleTest extends TestCase
         }
     }
 
-    private function render(string $view, string $template): string
+    public function test_contact_person_follows_the_layout_option(): void
+    {
+        foreach (['pdf.invoice', 'pdf.offer'] as $view) {
+            foreach (['minimal', 'modern', 'professional'] as $template) {
+                $this->assertStringContainsString('Herr Müller', $this->render($view, $template, 'Herr Müller', true));
+                $this->assertStringNotContainsString('Herr Müller', $this->render($view, $template, 'Herr Müller', false));
+                $this->assertStringNotContainsString('Herr Müller', $this->render($view, $template, 'Herr Müller', null));
+            }
+        }
+    }
+
+    private function render(string $view, string $template, ?string $contactPerson = null, ?bool $showContactPerson = null): string
     {
         $company = Company::create([
             'name' => 'Details GmbH',
@@ -49,7 +60,7 @@ class DocumentDetailsStyleTest extends TestCase
 
         $customer = (object) [
             'name' => 'Musterkunde GmbH',
-            'contact_person' => null,
+            'contact_person' => $contactPerson,
             'address' => 'Kundenstraße 1',
             'postal_code' => '80331',
             'city' => 'München',
@@ -107,6 +118,7 @@ class DocumentDetailsStyleTest extends TestCase
                 'settings' => [
                     'colors' => ['primary' => '#0e7490', 'text' => '#1f2937', 'secondary' => '#64748b'],
                     'fonts' => ['size' => 'small'],
+                    'content' => $showContactPerson === null ? [] : ['show_contact_person' => $showContactPerson],
                 ],
             ],
             'invoice' => $document,
