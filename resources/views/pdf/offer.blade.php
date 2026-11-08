@@ -274,6 +274,15 @@
     // getReadableInvoiceType() regardless of doc kind; define them here too
     // (same bodies as pdf/invoice.blade.php, guarded by function_exists so
     // a single request that renders both documents doesn't redeclare).
+    if (!function_exists('pdfShowCustomerCountry')) {
+        function pdfShowCustomerCountry($country): bool
+        {
+            $country = mb_strtolower(trim((string) $country));
+
+            return $country !== '' && ! in_array($country, ['de', 'deu', 'deutschland', 'germany'], true);
+        }
+    }
+
     if (!function_exists('formatInvoiceDate')) {
         function formatInvoiceDate($date, $format = 'd.m.Y') {
             if (!$date) {
@@ -315,7 +324,8 @@
     $docKind      = 'offer';
     $templateFile = 'pdf.templates.' . $template;
 
-    // Sender identity shown in the return-address line and sign-off.
+    // Sender identity shown in the sign-off. The return-address line is
+    // built in pdf.partials.return-address.
     $personalForms = ['einzelunternehmen', 'freiberufler'];
     $senderName = (in_array($snapshot['legal_form'] ?? null, $personalForms) && !empty($snapshot['managing_director']))
         ? $snapshot['managing_director']

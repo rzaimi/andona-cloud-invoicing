@@ -95,24 +95,17 @@
     {{-- Customer address (DIN 5008 window) --}}
     <td style="width:85mm; padding:0 0 0 20mm; vertical-align:top;">
         <div style="height:40mm; overflow:hidden;">
-            @if($ls['content']['show_company_address'] ?? true)
-            @php
-                // $senderName is set by invoice.blade.php / offer.blade.php:
-                // company name for GmbH/UG/AG etc., managing_director name
-                // for Einzelunternehmen and Freiberufler.
-                $retParts = array_filter([$senderName ?? null, $snapshot['address'] ?? null, trim(($snapshot['postal_code'] ?? '').' '.($snapshot['city'] ?? '')) ?: null]);
-            @endphp
-            <div style="font-size:6.5pt; color:{{ $soft }}; padding-bottom:1.5mm; margin-bottom:2.5mm; border-bottom:0.2mm solid {{ $border }}; line-height:1;">
-                {{ implode(' · ', $retParts) }}
-            </div>
-            @endif
+            @include('pdf.partials.return-address', [
+                'returnColor' => $soft,
+                'returnBorder' => $border,
+            ])
             @if($customer)
             <div style="font-size:{{ $fs }}px; line-height:1.5;">
                 @if($customer->name ?? null)<span style="font-weight:600;">{{ $customer->name }}</span><br>@endif
                 @if($customer->contact_person ?? null)<span style="color:{{ $soft }};">{{ $customer->contact_person }}</span><br>@endif
                 @if($customer->address ?? null){{ $customer->address }}<br>@endif
                 @if(($customer->postal_code ?? null) || ($customer->city ?? null)){{ trim(($customer->postal_code ?? '').' '.($customer->city ?? '')) }}@endif
-                @if(($customer->country ?? null) && $customer->country !== 'DE')<br>{{ $customer->country }}@endif
+                @if(pdfShowCustomerCountry($customer->country ?? null))<br>{{ $customer->country }}@endif
             </div>
             @endif
         </div>

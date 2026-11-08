@@ -93,13 +93,19 @@
 <tr>
     <td style="width:85mm; padding:0 0 0 20mm; vertical-align:top;">
         <div style="height:40mm; overflow:hidden;">
+            @if(($snapshot['legal_form'] ?? null) === 'einzelunternehmen')
+            @include('pdf.partials.return-address', [
+                'returnColor' => $muted,
+                'returnBorder' => $hair,
+            ])
+            @endif
             @if($customer)
             <div style="font-size:{{ $fs }}px; line-height:1.5;">
                 @if($customer->name ?? null)<div style="font-weight:600;">{{ $customer->name }}</div>@endif
                 @if($customer->contact_person ?? null)<div style="color:{{ $muted }};">{{ $customer->contact_person }}</div>@endif
                 @if($customer->address ?? null)<div>{{ $customer->address }}</div>@endif
                 @if(($customer->postal_code ?? null) || ($customer->city ?? null))<div>{{ trim(($customer->postal_code ?? '').' '.($customer->city ?? '')) }}</div>@endif
-                @if(($customer->country ?? null) && $customer->country !== 'DE')<div>{{ $customer->country }}</div>@endif
+                @if(pdfShowCustomerCountry($customer->country ?? null))<div>{{ $customer->country }}</div>@endif
             </div>
             @endif
         </div>
