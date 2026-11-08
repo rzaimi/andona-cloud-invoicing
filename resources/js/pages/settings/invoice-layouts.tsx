@@ -50,6 +50,7 @@ interface InvoiceLayoutSettings {
         logo_position: string
         logo_size: string
         logo_on_every_page: boolean
+        letterhead_text?: string
     }
     content: {
         show_company_address: boolean
@@ -64,6 +65,7 @@ interface InvoiceLayoutSettings {
         show_bauvorhaben: boolean
         show_auftragsnummer: boolean
         show_customer_number: boolean
+        show_contact_person: boolean
         show_tax_breakdown: boolean
         custom_footer_text: string
         footer_last_page_only: boolean
@@ -122,6 +124,7 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         logo_position: "top-left",
         logo_size: "medium",
         logo_on_every_page: false,
+        letterhead_text: "",
     },
     content: {
         show_company_address: true,
@@ -136,6 +139,7 @@ const getDefaultSettings = (): InvoiceLayoutSettings => ({
         show_bauvorhaben: true,
         show_auftragsnummer: true,
         show_customer_number: true,
+        show_contact_person: false,
         show_tax_breakdown: true,
         custom_footer_text: "",
         footer_last_page_only: false,
@@ -188,6 +192,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bauvorhaben: true,
                 show_auftragsnummer: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -217,6 +222,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bauvorhaben: true,
                 show_auftragsnummer: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -246,6 +252,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bauvorhaben: true,
                 show_auftragsnummer: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: false,
                 custom_footer_text: "",
             }
@@ -275,6 +282,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bauvorhaben: true,
                 show_auftragsnummer: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -304,6 +312,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_bauvorhaben: true,
                 show_auftragsnummer: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -340,10 +349,11 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
             logo_position: settings.branding?.logo_position ?? defaults.branding.logo_position,
             logo_size: settings.branding?.logo_size ?? defaults.branding.logo_size,
             logo_on_every_page: settings.branding?.logo_on_every_page ?? defaults.branding.logo_on_every_page,
+            letterhead_text: settings.branding?.letterhead_text ?? "",
         },
         content: {
             ...defaults.content,
-            show_company_address: settings.content?.show_company_address ?? defaults.content.show_company_address,
+            show_company_address: true,
             show_unit_column: settings.content?.show_unit_column ?? defaults.content.show_unit_column,
             show_notes: settings.content?.show_notes ?? defaults.content.show_notes,
             show_bank_details: settings.content?.show_bank_details ?? defaults.content.show_bank_details,
@@ -355,6 +365,7 @@ const mergeWithDefaults = (settings: Partial<InvoiceLayoutSettings> | null): Inv
             show_bauvorhaben: settings.content?.show_bauvorhaben ?? defaults.content.show_bauvorhaben,
             show_auftragsnummer: settings.content?.show_auftragsnummer ?? defaults.content.show_auftragsnummer,
             show_customer_number: settings.content?.show_customer_number ?? defaults.content.show_customer_number,
+            show_contact_person: settings.content?.show_contact_person ?? defaults.content.show_contact_person,
             show_tax_breakdown: settings.content?.show_tax_breakdown ?? defaults.content.show_tax_breakdown,
             custom_footer_text: settings.content?.custom_footer_text ?? defaults.content.custom_footer_text,
             footer_last_page_only: settings.content?.footer_last_page_only ?? defaults.content.footer_last_page_only,
@@ -381,11 +392,11 @@ const COLOR_PRESETS = [
 
 // Keys exposed as simple on/off toggles in the "Inhalt" section, in display
 // order. Keep in sync with InvoiceLayoutSettings.content.
-const CONTENT_TOGGLES: Array<{ key: "show_company_address" | "show_bauvorhaben" | "show_auftragsnummer" | "show_customer_number" | "show_unit_column" | "show_item_codes" | "show_row_number" | "show_tax_breakdown" | "show_notes"; label: string }> = [
-    { key: "show_company_address", label: "Firmenadresse im Header" },
+const CONTENT_TOGGLES: Array<{ key: "show_bauvorhaben" | "show_auftragsnummer" | "show_customer_number" | "show_contact_person" | "show_unit_column" | "show_item_codes" | "show_row_number" | "show_tax_breakdown" | "show_notes"; label: string }> = [
     { key: "show_bauvorhaben",     label: "BV (Bauvorhaben)" },
     { key: "show_auftragsnummer",  label: "Auftragsnummer" },
     { key: "show_customer_number", label: "Kundennummer" },
+    { key: "show_contact_person",  label: "Ansprechpartner" },
     { key: "show_unit_column",     label: "Einheitsspalte" },
     { key: "show_item_codes",      label: "Artikelnummern" },
     { key: "show_row_number",      label: "Positionsnummern" },
@@ -1018,6 +1029,19 @@ export default function InvoiceLayoutsPage({ layouts, templates, company }: Invo
                                                                 </SelectContent>
                                                             </Select>
                                                         </div>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="letterhead-text">Text im Briefkopf</Label>
+                                                        <Textarea
+                                                            id="letterhead-text"
+                                                            rows={4}
+                                                            maxLength={300}
+                                                            value={layoutFormData.settings.branding.letterhead_text ?? ""}
+                                                            onChange={(e) => updateBrandingSetting("letterhead_text", e.target.value)}
+                                                            placeholder={"Firma GmbH\nTel. 06051 123456\ninfo@firma.de"}
+                                                        />
+                                                        <p className="text-xs text-muted-foreground">Steht auf der ersten Seite gegenüber dem Logo. Bei einem mittigen Logo wird der Text nicht gedruckt. Maximal 4 Zeilen.</p>
                                                     </div>
 
                                                     <div className="flex items-center justify-between rounded-lg border px-4 py-3">

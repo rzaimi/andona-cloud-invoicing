@@ -51,6 +51,7 @@ interface OfferLayoutSettings {
         logo_position: string
         logo_size?: string
         logo_on_every_page?: boolean
+        letterhead_text?: string
         show_logo?: boolean
         company_info_position?: string
     }
@@ -67,6 +68,7 @@ interface OfferLayoutSettings {
         show_row_number: boolean
         show_bauvorhaben: boolean
         show_customer_number: boolean
+        show_contact_person: boolean
         show_tax_breakdown: boolean
         custom_footer_text: string
         footer_last_page_only?: boolean
@@ -123,6 +125,7 @@ const getDefaultSettings = (): OfferLayoutSettings => ({
         logo_position: "top-left",
         logo_size: "medium",
         logo_on_every_page: false,
+        letterhead_text: "",
         show_logo: true,
         company_info_position: "top-right",
     },
@@ -139,6 +142,7 @@ const getDefaultSettings = (): OfferLayoutSettings => ({
         show_row_number: false,
         show_bauvorhaben: true,
         show_customer_number: true,
+        show_contact_person: false,
         show_tax_breakdown: true,
         custom_footer_text: "",
         footer_last_page_only: false,
@@ -189,6 +193,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_row_number: false,
                 show_bauvorhaben: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -216,6 +221,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_row_number: false,
                 show_bauvorhaben: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -243,6 +249,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_row_number: false,
                 show_bauvorhaben: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: false,
                 custom_footer_text: "",
             }
@@ -270,6 +277,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_row_number: false,
                 show_bauvorhaben: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -297,6 +305,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
                 show_row_number: false,
                 show_bauvorhaben: true,
                 show_customer_number: true,
+                show_contact_person: false,
                 show_tax_breakdown: true,
                 custom_footer_text: "",
             }
@@ -333,10 +342,11 @@ const mergeWithDefaults = (settings: Partial<OfferLayoutSettings> | null): Offer
             ...defaults.branding,
             logo_position: settings.branding?.logo_position ?? defaults.branding.logo_position,
             logo_on_every_page: settings.branding?.logo_on_every_page ?? defaults.branding.logo_on_every_page,
+            letterhead_text: settings.branding?.letterhead_text ?? "",
         },
         content: {
             ...defaults.content,
-            show_company_address: settings.content?.show_company_address ?? defaults.content.show_company_address,
+            show_company_address: true,
             show_unit_column: settings.content?.show_unit_column ?? defaults.content.show_unit_column,
             show_notes: settings.content?.show_notes ?? defaults.content.show_notes,
             show_bank_details: settings.content?.show_bank_details ?? defaults.content.show_bank_details,
@@ -346,6 +356,7 @@ const mergeWithDefaults = (settings: Partial<OfferLayoutSettings> | null): Offer
             show_row_number: settings.content?.show_row_number ?? defaults.content.show_row_number,
             show_bauvorhaben: settings.content?.show_bauvorhaben ?? defaults.content.show_bauvorhaben,
             show_customer_number: settings.content?.show_customer_number ?? defaults.content.show_customer_number,
+            show_contact_person: settings.content?.show_contact_person ?? defaults.content.show_contact_person,
             show_tax_breakdown: settings.content?.show_tax_breakdown ?? defaults.content.show_tax_breakdown,
             custom_footer_text: settings.content?.custom_footer_text ?? defaults.content.custom_footer_text,
             footer_last_page_only: settings.content?.footer_last_page_only ?? defaults.content.footer_last_page_only,
@@ -369,10 +380,10 @@ const COLOR_PRESETS = [
     "#dc2626", "#7c3aed", "#ea580c", "#475569",
 ]
 
-const CONTENT_TOGGLES: Array<{ key: "show_company_address" | "show_bauvorhaben" | "show_customer_number" | "show_unit_column" | "show_item_codes" | "show_row_number" | "show_tax_breakdown" | "show_notes"; label: string }> = [
-    { key: "show_company_address", label: "Firmenadresse im Header" },
+const CONTENT_TOGGLES: Array<{ key: "show_bauvorhaben" | "show_customer_number" | "show_contact_person" | "show_unit_column" | "show_item_codes" | "show_row_number" | "show_tax_breakdown" | "show_notes"; label: string }> = [
     { key: "show_bauvorhaben",     label: "BV (Bauvorhaben)" },
     { key: "show_customer_number", label: "Kundennummer" },
+    { key: "show_contact_person",  label: "Ansprechpartner" },
     { key: "show_unit_column",     label: "Einheitsspalte" },
     { key: "show_item_codes",      label: "Artikelnummern" },
     { key: "show_row_number",      label: "Positionsnummern" },
@@ -930,6 +941,19 @@ export default function OfferLayoutsPage({ layouts, templates, company }: OfferL
                                                                 </SelectContent>
                                                             </Select>
                                                         </div>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="letterhead-text">Text im Briefkopf</Label>
+                                                        <Textarea
+                                                            id="letterhead-text"
+                                                            rows={4}
+                                                            maxLength={300}
+                                                            value={layoutFormData.settings.branding.letterhead_text ?? ""}
+                                                            onChange={(e) => updateBrandingSetting("letterhead_text", e.target.value)}
+                                                            placeholder={"Firma GmbH\nTel. 06051 123456\ninfo@firma.de"}
+                                                        />
+                                                        <p className="text-xs text-muted-foreground">Steht auf der ersten Seite gegenüber dem Logo. Bei einem mittigen Logo wird der Text nicht gedruckt. Maximal 4 Zeilen.</p>
                                                     </div>
 
                                                     <div className="flex items-center justify-between rounded-lg border px-4 py-3">

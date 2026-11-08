@@ -226,10 +226,8 @@
         <div class="company-info">
             <div class="company-name">{{ $company->name }}</div>
             <div class="company-details">
-                @if($layout->settings['content']['show_company_address'] ?? true)
-                    {{ $company->address }}<br>
-                    {{ $company->postal_code }} {{ $company->city }}<br>
-                @endif
+                {{ $company->address }}<br>
+                {{ $company->postal_code }} {{ $company->city }}<br>
                 @if($layout->settings['content']['show_company_contact'] ?? true)
                     @if($company->phone)Tel: {{ $company->phone }}<br>@endif
                     @if($company->email)E-Mail: {{ $company->email }}<br>@endif

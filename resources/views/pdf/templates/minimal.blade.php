@@ -52,11 +52,6 @@
     $logoH    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '10mm', 'large' => '24mm', default => '16mm' };
     $logoW    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '38mm', 'large' => '72mm', default => '54mm' };
     $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:'.$logoH.'; max-width:'.$logoW.'; display:block;">' : '';
-    [$colL, $colC, $colR] = match($logoPos) {
-        'top-center' => ['', $logoCell, ''],
-        'top-right'  => ['', '', $logoCell],
-        default      => [$logoCell, '', ''],
-    };
 
     // Table style vars for items-table partial
     $tableHeaderBg        = null;
@@ -79,9 +74,7 @@
 <div style="height:40mm; padding:5mm 20mm 3mm 20mm; box-sizing:border-box;">
     <table style="width:100%; height:100%; border-collapse:collapse;">
     <tr>
-        <td style="width:40%; vertical-align:middle;">{!! $colL !!}</td>
-        <td style="width:20%; vertical-align:middle; text-align:center;">{!! $colC !!}</td>
-        <td style="width:40%; vertical-align:middle; text-align:right;">{!! $colR !!}</td>
+        @include('pdf.partials.letterhead-cells', ['letterheadColor' => $soft])
     </tr>
     </table>
 </div>
@@ -102,7 +95,7 @@
             @if($customer)
             <div style="font-size:{{ $fs }}px; line-height:1.5;">
                 @if($customer->name ?? null)<span style="font-weight:600;">{{ $customer->name }}</span><br>@endif
-                @if($customer->contact_person ?? null)<span style="color:{{ $soft }};">{{ $customer->contact_person }}</span><br>@endif
+                @if(($ls['content']['show_contact_person'] ?? false) && ($customer->contact_person ?? null))<span style="color:{{ $soft }};">{{ $customer->contact_person }}</span><br>@endif
                 @if($customer->address ?? null){{ $customer->address }}<br>@endif
                 @if(($customer->postal_code ?? null) || ($customer->city ?? null)){{ trim(($customer->postal_code ?? '').' '.($customer->city ?? '')) }}@endif
                 @if(pdfShowCustomerCountry($customer->country ?? null))<br>{{ $customer->country }}@endif

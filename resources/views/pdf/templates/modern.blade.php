@@ -66,24 +66,17 @@
     $logoH    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '14mm', 'large' => '28mm', default => '22mm' };
     $logoW    = match($ls['branding']['logo_size'] ?? 'medium') { 'small' => '50mm', 'large' => '90mm', default => '70mm' };
     $logoCell = $showLogo ? '<img src="'.e($logoSrc).'" alt="Logo" style="max-height:'.$logoH.'; max-width:'.$logoW.'; display:block;">' : '';
-    [$colL, $colC, $colR] = match($logoPos) {
-        'top-center' => ['', $logoCell, ''],
-        'top-right'  => ['', '', $logoCell],
-        default      => [$logoCell, '', ''],
-    };
 @endphp
 
 <div class="container" style="padding:0; font-family:{{ $ls['fonts']['body'] ?? 'DejaVu Sans' }},sans-serif; font-size:{{ $fs }}px; color:{{ $ink }}; line-height:1.55;">
 
 {{-- LETTERHEAD: full-width teal band, exactly 40mm tall (DIN 5008).
-     Logo only — position (left/center/right) driven by the layout
-     setting Logo-Position. --}}
+     Logo position comes from the layout setting. Optional text sits
+     in the opposite cell. --}}
 <div style="height:40mm; padding:5mm 20mm; box-sizing:border-box;">
     <table style="width:100%; height:100%; border-collapse:collapse;">
     <tr>
-        <td style="width:40%; vertical-align:middle;">{!! $colL !!}</td>
-        <td style="width:20%; vertical-align:middle; text-align:center;">{!! $colC !!}</td>
-        <td style="width:40%; vertical-align:middle; text-align:right;">{!! $colR !!}</td>
+        @include('pdf.partials.letterhead-cells', ['letterheadColor' => $muted])
     </tr>
     </table>
 </div>
@@ -102,7 +95,7 @@
             @if($customer)
             <div style="font-size:{{ $fs }}px; line-height:1.5;">
                 @if($customer->name ?? null)<div style="font-weight:600;">{{ $customer->name }}</div>@endif
-                @if($customer->contact_person ?? null)<div style="color:{{ $muted }};">{{ $customer->contact_person }}</div>@endif
+                @if(($ls['content']['show_contact_person'] ?? false) && ($customer->contact_person ?? null))<div style="color:{{ $muted }};">{{ $customer->contact_person }}</div>@endif
                 @if($customer->address ?? null)<div>{{ $customer->address }}</div>@endif
                 @if(($customer->postal_code ?? null) || ($customer->city ?? null))<div>{{ trim(($customer->postal_code ?? '').' '.($customer->city ?? '')) }}</div>@endif
                 @if(pdfShowCustomerCountry($customer->country ?? null))<div>{{ $customer->country }}</div>@endif
