@@ -10,7 +10,7 @@
             // Check if function exists to avoid redeclaration errors when multiple PDFs are generated
             if (!function_exists('getFontSizePx')) {
                 function getFontSizePx($size) {
-                    // Klein 10px, Mittel 12px, Groß 15px. The footer uses body − 3.
+                    // Klein 10px, Mittel 12px, Groß 15px. The footer is a fixed 9px.
                     switch($size) {
                         case 'small': return 10;   // Klein
                         case 'large': return 15;   // Groß
@@ -139,7 +139,7 @@
             padding: 10px {{ min($layoutSettings['layout']['margin_right'] ?? 15, 15) }}mm 10px {{ min($layoutSettings['layout']['margin_left'] ?? 15, 15) }}mm;
             border-top: 1px solid #e5e7eb;
             font-family: {{ $layoutSettings['fonts']['body'] ?? 'DejaVu Sans' }}, DejaVu Sans, sans-serif;
-            font-size: {{ $bodyFontSize - 3 }}px;
+            font-size: 9px;
             color: {{ $layoutSettings['colors']['text'] ?? '#6b7280' }};
             background-color: white;
             z-index: 1000;

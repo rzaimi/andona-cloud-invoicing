@@ -8,7 +8,7 @@
     $fgColor    = $ls['colors']['secondary'] ?? '#374151';
     $showBank   = $ls['content']['show_bank_details'] ?? true;
     $showReg    = $ls['content']['show_company_registration'] ?? true;
-    $footerPx   = (int) ($bodyFontSize ?? 10) - 3;
+    $footerPx   = 9;
     $namePx     = $footerPx + 1;
     $bodyFont   = $ls['fonts']['body'] ?? 'DejaVu Sans';
 @endphp
@@ -23,7 +23,7 @@
     font-family: {{ $bodyFont }}, DejaVu Sans, sans-serif;
     font-size: {{ $footerPx }}px;
 ">
-    <table style="width:100%; border-collapse:collapse; font-family: {{ $bodyFont }}, DejaVu Sans, sans-serif; font-size:{{ $footerPx }}px; line-height:1.3; color:{{ $fgColor }};">
+    <table style="width:100%; table-layout:fixed; border-collapse:collapse; font-family: {{ $bodyFont }}, DejaVu Sans, sans-serif; font-size:{{ $footerPx }}px; line-height:1.3; color:{{ $fgColor }};">
         <tr>
 
             {{-- ── Col 1: Company name + legal form + address ──────────── --}}
