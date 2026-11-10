@@ -13,6 +13,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "chillerlan/php-qrcode": "^6.0",
         "horstoeko/zugferd": "^1.0",
+        "horstoeko/zugferdublbridge": "^1.0",
         "inertiajs/inertia-laravel": "^3.0",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",

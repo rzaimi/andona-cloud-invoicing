@@ -24,7 +24,7 @@ class ERechnungService
         $document = ZugferdDocumentBuilder::CreateNew($profile);
 
         // Build the document
-        $this->buildDocument($document, $invoice);
+        $this->buildDocument($document, $invoice, $profile);
 
         // Get XML content
         $xml = $document->getContent();
@@ -73,7 +73,7 @@ class ERechnungService
         // Generate XML
         $profile = $this->resolveProfile($invoice);
         $document = ZugferdDocumentBuilder::CreateNew($profile);
-        $this->buildDocument($document, $invoice);
+        $this->buildDocument($document, $invoice, $profile);
         $xml = $document->getContent();
 
         // Merge PDF and XML using ZUGFeRD library
@@ -87,25 +87,48 @@ class ERechnungService
     /**
      * Build the ZUGFeRD/XRechnung document
      */
-    private function buildDocument(ZugferdDocumentBuilder $document, Invoice $invoice): void
+    private function buildDocument(ZugferdDocumentBuilder $document, Invoice $invoice, int $profile): void
     {
         $company = $invoice->company;
         $customer = $invoice->customer;
-        $settings = $company->settings;
+        $isXRechnung = in_array($profile, [
+            ZugferdProfiles::PROFILE_XRECHNUNG,
+            ZugferdProfiles::PROFILE_XRECHNUNG_2,
+            ZugferdProfiles::PROFILE_XRECHNUNG_2_1,
+            ZugferdProfiles::PROFILE_XRECHNUNG_2_2,
+            ZugferdProfiles::PROFILE_XRECHNUNG_2_3,
+            ZugferdProfiles::PROFILE_XRECHNUNG_3,
+        ], true);
+
+        // The whole invoice shares one VAT category derived from its regime
+        // (lines, allowances and the document breakdown must agree —
+        // BR-S-*/BR-AE-* category-consistency rules).
+        $taxCategory = $this->taxCategoryFor($invoice);
+        $isStandardRegime = $taxCategory === ZugferdDutyTaxFeeCategories::STANDARD_RATE;
 
         // Document header
         $document->setDocumentInformation(
             $invoice->number ?? 'DRAFT-'.$invoice->id,
-            '380', // Invoice type code
+            $this->typeCodeFor($invoice),
             $invoice->issue_date ?? new \DateTime,
-            $settings->currency ?? 'EUR'
+            $company->getSetting('currency') ?? 'EUR'
         );
 
-        // BT-10 Buyer Reference / Routing ID. Mandatory for XRechnung to
-        // German public-sector customers (Leitweg-ID). Populated from the
-        // customer record when present.
-        if (! empty($customer->leitweg_id)) {
-            $document->setDocumentBuyerReference($customer->leitweg_id);
+        // BT-23 business process. XRechnung expects one; the Peppol billing
+        // process is the documented default.
+        if ($isXRechnung) {
+            $document->setDocumentBusinessProcess(
+                $company->getSetting('business_process_id') ?: 'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0'
+            );
+        }
+
+        // BT-10 Buyer Reference. For public-sector customers this is the
+        // Leitweg-ID; XRechnung requires BT-10 for every invoice (BR-DE-15),
+        // so B2B falls back to the customer number.
+        $buyerReference = $customer->leitweg_id
+            ?: ($isXRechnung ? ($customer->number ?: $invoice->number) : null);
+        if (! empty($buyerReference)) {
+            $document->setDocumentBuyerReference($buyerReference);
         }
 
         // Seller (Company) information
@@ -114,10 +137,14 @@ class ERechnungService
             $company->commercial_register ?? null
         );
 
-        $document->addDocumentSellerGlobalId(
-            $company->vat_number ?? '',
-            '0088' // VAT registration number scheme
-        );
+        // BT-31/BT-32: VAT id ('VA') and Steuernummer ('FC') belong in the
+        // tax registration, not in a GlobalID (0088 would mean a GLN).
+        if (! empty($company->vat_number)) {
+            $document->addDocumentSellerTaxRegistration('VA', $company->vat_number);
+        }
+        if (! empty($company->tax_number)) {
+            $document->addDocumentSellerTaxRegistration('FC', $company->tax_number);
+        }
 
         $document->setDocumentSellerAddress(
             $company->address ?? '',
@@ -128,25 +155,34 @@ class ERechnungService
             $this->getCountryCode($company->country ?? 'Deutschland')
         );
 
+        // BG-6 seller contact: XRechnung requires name, phone AND email
+        // (BR-DE-5/6/7) — an empty name fails validation.
         $document->setDocumentSellerContact(
-            '',
+            $company->managing_director ?: $company->name,
             '',
             $company->phone ?? '',
             '',
             $company->email ?? ''
         );
 
+        // BT-34 seller electronic address (scheme EM = email unless the
+        // company configured a Peppol/other address in the settings).
+        $sellerElectronicAddress = $company->getSetting('electronic_address') ?: $company->email;
+        if (! empty($sellerElectronicAddress)) {
+            $document->setDocumentSellerCommunication(
+                $company->getSetting('electronic_address_scheme') ?: 'EM',
+                $sellerElectronicAddress
+            );
+        }
+
         // Buyer (Customer) information
         $document->setDocumentBuyer(
             $customer->company_name ?? $customer->name,
-            $customer->commercial_register ?? null
+            $customer->number ?: null
         );
 
-        if ($customer->vat_number) {
-            $document->addDocumentBuyerGlobalId(
-                $customer->vat_number,
-                '0088'
-            );
+        if (! empty($customer->vat_number)) {
+            $document->addDocumentBuyerTaxRegistration('VA', $customer->vat_number);
         }
 
         $document->setDocumentBuyerAddress(
@@ -159,12 +195,17 @@ class ERechnungService
         );
 
         $document->setDocumentBuyerContact(
-            '',
+            $customer->contact_person ?? $customer->name ?? '',
             '',
             $customer->phone ?? '',
             '',
             $customer->email ?? ''
         );
+
+        // BT-49 buyer electronic address.
+        if (! empty($customer->email)) {
+            $document->setDocumentBuyerCommunication('EM', $customer->email);
+        }
 
         // Payment terms
         if ($invoice->due_date) {
@@ -193,9 +234,9 @@ class ERechnungService
                 $document->addDocumentAllowanceCharge(
                     $amount,
                     false,
-                    ZugferdDutyTaxFeeCategories::STANDARD_RATE,
+                    $taxCategory,
                     'VAT',
-                    $this->taxPercent($item->tax_rate ?? $invoice->tax_rate),
+                    $isStandardRegime ? $this->taxPercent($item->tax_rate ?? $invoice->tax_rate) : 0.0,
                     null,
                     null,
                     null,
@@ -224,17 +265,15 @@ class ERechnungService
                 $item->product_id ?? null
             );
 
-            $document->setDocumentPositionGrossPrice($item->unit_price ?? 0);
             $document->setDocumentPositionNetPrice($item->unit_price ?? 0);
-            $document->setDocumentPositionQuantity($item->quantity ?? 1, 'C62');
+            $document->setDocumentPositionQuantity($item->quantity ?? 1, $this->unitCode($item->unit ?? null));
 
             $document->setDocumentPositionLineSummation($lineTotal);
 
-            $taxRate = $item->tax_rate ?? 19.0;
             $document->addDocumentPositionTax(
-                ZugferdDutyTaxFeeCategories::STANDARD_RATE,
+                $taxCategory,
                 'VAT',
-                $taxRate
+                $isStandardRegime ? $this->taxPercent($item->tax_rate ?? $invoice->tax_rate) : 0.0
             );
         }
 
@@ -256,46 +295,39 @@ class ERechnungService
 
         // Add tax breakdown
         $vatBreakdown = $invoice->getVatBreakdown();
-        if (count($vatBreakdown) > 0) {
+        if ($isStandardRegime && count($vatBreakdown) > 0) {
             foreach ($vatBreakdown as $data) {
                 $document->addDocumentTax(
-                    ZugferdDutyTaxFeeCategories::STANDARD_RATE,
+                    $taxCategory,
                     'VAT',
                     $data['net_amount'],
                     $data['tax_amount'],
                     $data['rate'] * 100
                 );
             }
-        } elseif (($invoice->vat_regime ?? 'standard') === 'standard') {
+        } elseif ($isStandardRegime) {
             $taxRate = ($invoice->tax_rate ?? 0.19) * 100;
             $document->addDocumentTax(
-                ZugferdDutyTaxFeeCategories::STANDARD_RATE,
+                $taxCategory,
                 'VAT',
                 $subtotal,
                 $taxAmount,
                 $taxRate
             );
         } else {
-            // Special regimes (tax exempt or reverse charge)
-            $category = match ($invoice->vat_regime) {
-                'reverse_charge' => ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE,
-                'reverse_charge_domestic' => ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE,
-                'intra_community' => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_FOR_EEA_INTRACOMMUNITY_SUPPLY_OF_GOODS_AND_SERVICES,
-                'export' => ZugferdDutyTaxFeeCategories::FREE_EXPORT_ITEM_TAX_NOT_CHARGED,
-                'small_business' => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
-                default => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
-            };
-
+            // Special regimes: category E/AE/K/G breakdowns MUST carry an
+            // exemption reason (BR-E-10/AE-10/IC-10/G-10).
             $document->addDocumentTax(
-                $category,
+                $taxCategory,
                 'VAT',
                 $subtotal,
                 0,
-                0
+                0,
+                $this->exemptionReasonFor($invoice)
             );
         }
 
-        // Payment means (if bank details available)
+        // BG-16 payment instructions — mandatory for XRechnung (BR-DE-1).
         if ($company->bank_iban) {
             $document->addDocumentPaymentMean(
                 '58', // SEPA credit transfer
@@ -305,10 +337,81 @@ class ERechnungService
                 null,
                 null,
                 $company->bank_iban,
+                $company->bank_account_holder ?: $company->name,
                 null,
                 $company->bank_bic ?? null
             );
+        } else {
+            // No bank details configured: still emit the payment-means group
+            // so XRechnung validation does not fail outright.
+            $document->addDocumentPaymentMean('30', 'Zahlung per Überweisung');
         }
+    }
+
+    /**
+     * EN 16931 invoice type code (BT-3) for the invoice.
+     */
+    private function typeCodeFor(Invoice $invoice): string
+    {
+        return match ($invoice->invoice_type ?? Invoice::TYPE_STANDARD) {
+            Invoice::TYPE_KORREKTURRECHNUNG => '384',
+            Invoice::TYPE_ABSCHLAGSRECHNUNG => '326',
+            default => '380',
+        };
+    }
+
+    /**
+     * The VAT category (BT-151/BT-118) shared by all lines of this invoice,
+     * derived from its vat_regime.
+     */
+    private function taxCategoryFor(Invoice $invoice): string
+    {
+        return match ($invoice->vat_regime ?? 'standard') {
+            'reverse_charge', 'reverse_charge_domestic' => ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE,
+            'intra_community' => ZugferdDutyTaxFeeCategories::VAT_EXEMPT_FOR_EEA_INTRACOMMUNITY_SUPPLY_OF_GOODS_AND_SERVICES,
+            'export' => ZugferdDutyTaxFeeCategories::FREE_EXPORT_ITEM_TAX_NOT_CHARGED,
+            'small_business' => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
+            'standard' => ZugferdDutyTaxFeeCategories::STANDARD_RATE,
+            default => ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX,
+        };
+    }
+
+    /**
+     * BT-120 exemption reason text for non-standard VAT regimes.
+     */
+    private function exemptionReasonFor(Invoice $invoice): string
+    {
+        return match ($invoice->vat_regime ?? 'standard') {
+            'reverse_charge', 'reverse_charge_domestic' => 'Steuerschuldnerschaft des Leistungsempfängers (Reverse Charge, § 13b UStG)',
+            'intra_community' => 'Steuerfreie innergemeinschaftliche Lieferung (§ 4 Nr. 1b UStG)',
+            'export' => 'Steuerfreie Ausfuhrlieferung (§ 4 Nr. 1a UStG)',
+            'small_business' => 'Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß § 19 UStG',
+            default => 'Steuerbefreit',
+        };
+    }
+
+    /**
+     * Map the item's unit label to a UN/ECE Recommendation 20 code (BT-130).
+     */
+    private function unitCode(?string $unit): string
+    {
+        return match (mb_strtolower(trim((string) $unit))) {
+            'std.', 'std', 'stunde', 'stunden', 'h' => 'HUR',
+            'tag', 'tage' => 'DAY',
+            'm²', 'qm' => 'MTK',
+            'm³', 'cbm' => 'MTQ',
+            'm', 'meter', 'lfm' => 'MTR',
+            'km' => 'KMT',
+            'kg' => 'KGM',
+            't', 'tonne', 'tonnen' => 'TNE',
+            'l', 'liter' => 'LTR',
+            'pauschal', 'psch.', 'psch' => 'LS',
+            'set' => 'SET',
+            'paket', 'pkt.' => 'XPK',
+            'karton' => 'CT',
+            'prozent', '%' => 'P1',
+            default => 'H87', // piece
+        };
     }
 
     /**
@@ -320,8 +423,10 @@ class ERechnungService
      */
     private function resolveProfile(Invoice $invoice): int
     {
+        // XRechnung 3.0 is the version mandated since 2024-02 — the older
+        // 1.2/2.x customization IDs are rejected by ZRE/OZG-RE and Peppol.
         if (! empty($invoice->customer?->leitweg_id)) {
-            return ZugferdProfiles::PROFILE_XRECHNUNG;
+            return ZugferdProfiles::PROFILE_XRECHNUNG_3;
         }
 
         // `settings` is a HasMany of key/value rows, not an object — use
@@ -330,10 +435,10 @@ class ERechnungService
 
         return match ($profile) {
             'MINIMUM' => ZugferdProfiles::PROFILE_MINIMUM,
-            'BASIC' => ZugferdProfiles::PROFILE_BASICWL,
+            'BASIC' => ZugferdProfiles::PROFILE_BASIC,
             'EN16931' => ZugferdProfiles::PROFILE_EN16931,
             'EXTENDED' => ZugferdProfiles::PROFILE_EXTENDED,
-            'XRECHNUNG' => ZugferdProfiles::PROFILE_XRECHNUNG,
+            'XRECHNUNG' => ZugferdProfiles::PROFILE_XRECHNUNG_3,
             default => ZugferdProfiles::PROFILE_EN16931,
         };
     }

@@ -55,13 +55,13 @@ class InvoiceMailer
         try {
             $this->configureSmtp($company);
 
-            $pdf = $this->renderInvoicePdf($invoice);
+            [$pdfContent, $xrechnungXml, $eInvoiceKind] = $this->buildAttachments($invoice, $company);
 
             Mail::send('emails.invoice-sent', [
                 'invoice' => $invoice,
                 'company' => $company,
                 'customMessage' => $customMessage,
-            ], function ($message) use ($to, $cc, $subject, $invoice, $pdf, $replyTo) {
+            ], function ($message) use ($to, $cc, $subject, $invoice, $pdfContent, $xrechnungXml, $replyTo) {
                 $message->to($to);
                 if (! empty($cc)) {
                     $message->cc($cc);
@@ -70,9 +70,14 @@ class InvoiceMailer
                     $message->replyTo($replyTo);
                 }
                 $message->subject($subject);
-                $message->attachData($pdf->output(), "Rechnung_{$invoice->number}.pdf", [
+                $message->attachData($pdfContent, "Rechnung_{$invoice->number}.pdf", [
                     'mime' => 'application/pdf',
                 ]);
+                if ($xrechnungXml !== null) {
+                    $message->attachData($xrechnungXml, "XRechnung_{$invoice->number}.xml", [
+                        'mime' => 'application/xml',
+                    ]);
+                }
             });
 
             $this->logEmail(
@@ -90,6 +95,7 @@ class InvoiceMailer
                     'invoice_number' => $invoice->number,
                     'invoice_total' => $invoice->total,
                     'has_pdf_attachment' => true,
+                    'e_invoice' => $eInvoiceKind,
                 ]
             );
 
@@ -138,6 +144,52 @@ class InvoiceMailer
                 'exception' => $e,
             ];
         }
+    }
+
+    /**
+     * Build the mail attachments honoring the company's E-Rechnung settings:
+     * with ZUGFeRD enabled the attached PDF *is* the e-invoice (embedded XML),
+     * with XRechnung enabled the XML is attached alongside. Generation
+     * failures fall back to the plain PDF so invoice dispatch never breaks.
+     *
+     * @return array{0: string, 1: string|null, 2: string|null} [pdf, xml, kind]
+     */
+    private function buildAttachments(Invoice $invoice, $company): array
+    {
+        $flag = fn (string $key) => filter_var($company->getSetting($key, false), FILTER_VALIDATE_BOOLEAN);
+
+        $erechnungEnabled = $flag('erechnung_enabled');
+        $pdfContent = null;
+        $xrechnungXml = null;
+        $kind = null;
+
+        if ($erechnungEnabled && $flag('zugferd_enabled')) {
+            try {
+                $pdfContent = app(ERechnungService::class)->generateZugferd($invoice);
+                $kind = 'zugferd';
+            } catch (\Throwable $e) {
+                Log::warning('ZUGFeRD generation failed, sending plain PDF instead.', [
+                    'invoice_id' => $invoice->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($erechnungEnabled && $flag('xrechnung_enabled')) {
+            try {
+                $xrechnungXml = app(ERechnungService::class)->generateXRechnung($invoice);
+                $kind = $kind === 'zugferd' ? 'zugferd+xrechnung' : 'xrechnung';
+            } catch (\Throwable $e) {
+                Log::warning('XRechnung generation failed, sending without XML attachment.', [
+                    'invoice_id' => $invoice->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $pdfContent ??= $this->renderInvoicePdf($invoice)->output();
+
+        return [$pdfContent, $xrechnungXml, $kind];
     }
 
     /**

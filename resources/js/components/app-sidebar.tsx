@@ -33,6 +33,7 @@ import {
     Search,
     Check,
     Repeat,
+    FileSearch,
     Settings,
 } from "lucide-react"
 import {
@@ -577,6 +578,16 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
                                     <Link href="/dunning" className="flex items-center min-w-0">
                                         <Bell className="shrink-0" />
                                         <span className="truncate">Mahnwesen</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            )}
+                            {has("invoices") && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isActive("/e-invoice/viewer")}>
+                                    <Link href="/e-invoice/viewer" className="flex items-center min-w-0">
+                                        <FileSearch />
+                                        <span className="truncate">E-Rechnung Viewer</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

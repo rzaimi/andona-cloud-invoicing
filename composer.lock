@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1a244e415447484b5fc2024acbe95672",
+    "content-hash": "460c29dc80a7cb1c7d4f937637095350",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -1770,6 +1770,80 @@
                 "source": "https://github.com/horstoeko/zugferd/tree/v1.0.132"
             },
             "time": "2026-08-30T14:11:24+00:00"
+        },
+        {
+            "name": "horstoeko/zugferdublbridge",
+            "version": "v1.0.20",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/horstoeko/zugferdublbridge.git",
+                "reference": "d488533064b32503215dfe19d640679355e1943c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/horstoeko/zugferdublbridge/zipball/d488533064b32503215dfe19d640679355e1943c",
+                "reference": "d488533064b32503215dfe19d640679355e1943c",
+                "shasum": ""
+            },
+            "require": {
+                "ext-dom": "*",
+                "ext-libxml": "*",
+                "php": ">=7.3"
+            },
+            "require-dev": {
+                "ext-json": "*",
+                "ext-simplexml": "*",
+                "friendsofphp/php-cs-fixer": "^3",
+                "horstoeko/stringmanagement": "^1",
+                "nette/php-generator": "*",
+                "php-parallel-lint/php-parallel-lint": "^1.4",
+                "phpdocumentor/reflection-docblock": "^6",
+                "phpstan/phpstan": "^1|^2.1",
+                "phpstan/phpstan-deprecation-rules": "^1|^2",
+                "phpstan/phpstan-strict-rules": "^1|^2",
+                "phpunit/phpunit": "^9.6",
+                "rector/rector": "^2"
+            },
+            "type": "package",
+            "autoload": {
+                "psr-4": {
+                    "horstoeko\\zugferdublbridge\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Daniel Erling",
+                    "email": "daniel@erling.com.de",
+                    "role": "lead"
+                }
+            ],
+            "description": "Convert Factur-X/ZUGFeRD (CII-Syntax) to PEPPOL (UBL-Syntax) and visa versa",
+            "homepage": "https://github.com/horstoeko/zugferdublbridge",
+            "keywords": [
+                "ZUGFeRD",
+                "cii",
+                "convert",
+                "electronic",
+                "factur-x",
+                "invoice",
+                "ubl",
+                "xrechnung"
+            ],
+            "support": {
+                "issues": "https://github.com/horstoeko/zugferdublbridge/issues",
+                "source": "https://github.com/horstoeko/zugferdublbridge/tree/v1.0.20"
+            },
+            "funding": [
+                {
+                    "url": "https://paypal.me/horstoeko",
+                    "type": "custom"
+                }
+            ],
+            "time": "2026-11-01T10:57:01+00:00"
         },
         {
             "name": "inertiajs/inertia-laravel",

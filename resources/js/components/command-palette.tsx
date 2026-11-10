@@ -40,6 +40,7 @@ const STATIC_ENTRIES: NavEntry[] = [
     { group: "Navigieren", label: "Ausgaben",          href: "/expenses",         icon: ReceiptText, module: "expenses" },
     { group: "Navigieren", label: "Kalender",          href: "/calendar",         icon: CalendarIcon, module: "calendar" },
     { group: "Navigieren", label: "Einstellungen",     href: "/settings",         icon: Settings },
+    { group: "Navigieren", label: "E-Rechnung Viewer", href: "/e-invoice/viewer", icon: ReceiptText, module: "invoices" },
     { group: "Navigieren", label: "Rechnungslayouts",  href: "/invoice-layouts",  icon: LayoutTemplate, module: "invoices" },
     { group: "Navigieren", label: "Angebotslayouts",   href: "/offer-layouts",    icon: LayoutTemplate, module: "offers" },
 ]
