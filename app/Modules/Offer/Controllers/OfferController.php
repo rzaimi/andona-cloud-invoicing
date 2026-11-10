@@ -191,7 +191,8 @@ class OfferController extends Controller
                 $company->getSetting('offer_number_format')
                     ?? $company->getSetting('offer_prefix', 'AN-')
             );
-            $offerNumber = $svc->next($format, Offer::where('company_id', $effectiveCompanyId)->pluck('number'));
+            $minCounter = (int) ($company->getSetting('offer_next_counter') ?? 1);
+            $offerNumber = $svc->next($format, Offer::where('company_id', $effectiveCompanyId)->pluck('number'), null, $minCounter);
 
             $vatRegime = $validated['vat_regime'] ?? 'standard';
 
