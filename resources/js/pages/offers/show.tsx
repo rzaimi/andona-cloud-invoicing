@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CheckCircle, XCircle, Clock, Eye } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CheckCircle, XCircle, Clock, Eye, Copy } from "lucide-react"
 import { useState } from "react"
 import AppLayout from "@/layouts/app-layout"
 import { SendEmailDialog } from "@/components/send-email-dialog"
@@ -194,6 +194,13 @@ export default function OffersShow() {
                                 Bearbeiten
                             </Button>
                         </Link>
+                        <Button
+                            variant="outline"
+                            onClick={() => router.post(route("offers.duplicate", offer.id))}
+                        >
+                            <Copy className="mr-2 h-4 w-4" />
+                            Kopieren
+                        </Button>
                         <Button
                             variant="outline"
                             onClick={() => window.open(route("offers.pdf", offer.id), "_blank")}
@@ -431,6 +438,14 @@ export default function OffersShow() {
                                 >
                                     <Download className="mr-2 h-4 w-4" />
                                     PDF herunterladen
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-start"
+                                    onClick={() => router.post(route("offers.duplicate", offer.id))}
+                                >
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Kopieren
                                 </Button>
                                 <Button
                                     variant="outline"

@@ -42,6 +42,9 @@
             color: #1a1a1a;
             font-size: 15px;
         }
+        .content p.custom-message {
+            white-space: pre-wrap;
+        }
         .invoice-details {
             background-color: transparent;
             padding: 0;
@@ -96,10 +99,6 @@
         </div>
 
         <div class="content">
-            <p>Sehr geehrte Damen und Herren{{ $invoice->customer ? ' von ' . $invoice->customer->name : '' }},</p>
-            
-            <p>anbei erhalten Sie die Rechnung <strong>{{ $invoice->number }}</strong> vom {{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}.</p>
-
             @php
                 $detailsSetting = '1';
                 if (is_object($company) && method_exists($company, 'getSetting')) {
@@ -108,7 +107,17 @@
                     $detailsSetting = (string) $company->email_show_document_details;
                 }
                 $showDocumentDetails = $detailsSetting !== '0';
+                $customBody = isset($customMessage) ? trim((string) $customMessage) : '';
             @endphp
+
+            @if($customBody !== '')
+            <p class="custom-message">{{ $customBody }}</p>
+            @else
+            <p>Sehr geehrte Damen und Herren{{ $invoice->customer ? ' von ' . $invoice->customer->name : '' }},</p>
+
+            <p>anbei erhalten Sie die Rechnung <strong>{{ $invoice->number }}</strong> vom {{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}.</p>
+            @endif
+
             @if($showDocumentDetails)
             <div class="invoice-details">
                 <table>
@@ -132,6 +141,7 @@
             </div>
             @endif
 
+            @if($customBody === '')
             @if($invoice->notes)
             <p><strong>Hinweise:</strong><br>{{ $invoice->notes }}</p>
             @endif
@@ -143,6 +153,7 @@
             <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
 
             <p>Mit freundlichen Grüßen<br>{{ $company->name }}</p>
+            @endif
         </div>
 
         <div class="contact-info">

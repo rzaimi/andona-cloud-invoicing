@@ -122,6 +122,16 @@ class DocumentResendEmailTest extends TestCase
         ])->assertRedirect()->assertSessionHas('success');
 
         $this->assertSame('sent', $offer->fresh()->status);
+        $this->assertDatabaseHas('email_logs', [
+            'company_id' => $this->company->id,
+            'recipient_email' => 'einkauf@example.com',
+            'subject' => 'Angebot aktualisiert',
+            'type' => 'offer',
+            'related_type' => 'Offer',
+            'related_id' => $offer->id,
+            'status' => 'sent',
+            'body' => 'Bitte die neue Fassung beachten.',
+        ]);
     }
 
     private function makeInvoice(string $status): Invoice

@@ -68,6 +68,45 @@ class EmailDocumentDetailsTest extends TestCase
         $this->assertStringContainsString('RE-2024-0001', $html);
     }
 
+    public function test_a_custom_message_replaces_the_standard_letter(): void
+    {
+        $invoice = view('emails.invoice-sent', [
+            'invoice' => (object) [
+                'number' => 'RE-2024-0001',
+                'issue_date' => '2026-10-12',
+                'due_date' => '2026-11-11',
+                'total' => 148.75,
+                'notes' => 'Interne Notiz',
+                'customer' => (object) ['name' => 'Musterkunde GmbH'],
+            ],
+            'company' => $this->company('0'),
+            'customMessage' => "Guten Tag,\n\nbitte beachten Sie die geänderte Fassung.",
+        ])->render();
+
+        $offer = view('emails.offer-sent', [
+            'offer' => (object) [
+                'number' => 'AN-2026-0001',
+                'issue_date' => '2026-10-12',
+                'valid_until' => '2026-11-11',
+                'total' => 250,
+                'notes' => 'Interne Notiz',
+                'customer' => (object) ['name' => 'Musterkunde GmbH'],
+            ],
+            'company' => $this->company('0'),
+            'customMessage' => 'Bitte nur diese Angebotsfassung verwenden.',
+        ])->render();
+
+        $this->assertStringContainsString('bitte beachten Sie die geänderte Fassung.', $invoice);
+        $this->assertStringNotContainsString('anbei erhalten Sie die Rechnung', $invoice);
+        $this->assertStringNotContainsString('Interne Notiz', $invoice);
+        $this->assertStringNotContainsString('Fälligkeitsdatum', $invoice);
+
+        $this->assertStringContainsString('Bitte nur diese Angebotsfassung verwenden.', $offer);
+        $this->assertStringNotContainsString('folgendes Angebot', $offer);
+        $this->assertStringNotContainsString('Interne Notiz', $offer);
+        $this->assertStringNotContainsString('Angebotsnummer', $offer);
+    }
+
     private function renderInvoice(string $setting): string
     {
         return view('emails.invoice-sent', [

@@ -15,7 +15,9 @@ use App\Modules\Product\Models\Product;
 use App\Services\FormattingService;
 use App\Services\NumberFormatService;
 use App\Services\SettingsService;
+use App\Traits\LogsEmails;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,7 @@ use Inertia\Inertia;
 
 class OfferController extends Controller
 {
+    use LogsEmails;
     public function index(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
@@ -435,6 +438,97 @@ class OfferController extends Controller
             ->with('success', 'Angebot wurde erfolgreich gelöscht.');
     }
 
+    public function duplicate(Offer $offer)
+    {
+        $this->authorize('view', $offer);
+        $this->authorize('create', Offer::class);
+
+        $offer->load(['items', 'company']);
+
+        $copy = null;
+        $attempts = 0;
+        do {
+            $collision = false;
+            try {
+                $copy = DB::transaction(function () use ($offer) {
+                    $company = Company::whereKey($offer->company_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    $svc = new NumberFormatService;
+                    $format = $svc->normaliseToFormat(
+                        $company->getSetting('offer_number_format')
+                            ?? $company->getSetting('offer_prefix', 'AN-')
+                    );
+                    $minCounter = (int) ($company->getSetting('offer_next_counter') ?? 1);
+                    $number = $svc->next(
+                        $format,
+                        Offer::where('company_id', $offer->company_id)->pluck('number'),
+                        null,
+                        $minCounter
+                    );
+
+                    $validityDays = 30;
+                    if ($offer->issue_date && $offer->valid_until) {
+                        $validityDays = max(1, (int) abs($offer->issue_date->diffInDays($offer->valid_until)));
+                    }
+
+                    $copy = Offer::create([
+                        'number' => $number,
+                        'company_id' => $offer->company_id,
+                        'customer_id' => $offer->customer_id,
+                        'user_id' => request()->user()->id,
+                        'status' => 'draft',
+                        'issue_date' => now()->toDateString(),
+                        'valid_until' => now()->addDays($validityDays)->toDateString(),
+                        'notes' => $offer->notes,
+                        'bauvorhaben' => $offer->bauvorhaben,
+                        'terms_conditions' => $offer->terms_conditions,
+                        'validity_days' => $offer->validity_days,
+                        'layout_id' => $offer->layout_id,
+                        'vat_regime' => $offer->vat_regime ?? 'standard',
+                        'tax_rate' => $offer->tax_rate,
+                    ]);
+
+                    $copy->company_snapshot = $copy->createCompanySnapshot();
+                    $copy->save();
+
+                    foreach ($offer->items as $item) {
+                        $newItem = new OfferItem([
+                            'offer_id' => $copy->id,
+                            'product_id' => $item->product_id,
+                            'description' => $item->description,
+                            'quantity' => $item->quantity,
+                            'unit_price' => $item->unit_price,
+                            'unit' => $item->unit,
+                            'tax_rate' => $item->tax_rate,
+                            'discount_type' => $item->discount_type,
+                            'discount_value' => $item->discount_value,
+                            'sort_order' => $item->sort_order,
+                        ]);
+                        $newItem->calculateTotal();
+                        $newItem->save();
+                    }
+
+                    $copy->calculateTotals();
+                    $copy->save();
+
+                    return $copy;
+                });
+            } catch (UniqueConstraintViolationException $e) {
+                $collision = true;
+                if (++$attempts >= 5) {
+                    return back()->with('error', 'Fehler beim Kopieren: Angebotsnummer konnte nicht generiert werden.');
+                }
+            } catch (\Throwable $e) {
+                return back()->with('error', 'Fehler beim Kopieren des Angebots: '.$e->getMessage());
+            }
+        } while ($collision);
+
+        return redirect()->route('offers.show', $copy)
+            ->with('success', "Angebot {$offer->number} wurde als Entwurf kopiert.");
+    }
+
     public function convertToInvoice(Offer $offer)
     {
         $this->authorize('update', $offer);
@@ -642,6 +736,8 @@ class OfferController extends Controller
             $replyTo = $company->smtp_reply_to ?: null;
 
             // Send email
+            $offer->loadMissing('customer');
+
             Mail::send('emails.offer-sent', [
                 'offer' => $offer,
                 'company' => $company,
@@ -667,10 +763,42 @@ class OfferController extends Controller
                 $offer->update(['status' => 'sent']);
             }
 
+            $this->logEmail(
+                companyId: $offer->company_id,
+                recipientEmail: $validated['to'],
+                subject: $validated['subject'] ?: "Angebot {$offer->number}",
+                type: 'offer',
+                customerId: $offer->customer_id,
+                recipientName: $offer->customer?->name,
+                body: $validated['message'] ?? null,
+                relatedType: 'Offer',
+                relatedId: $offer->id,
+                metadata: [
+                    'cc' => $validated['cc'] ?? null,
+                    'offer_number' => $offer->number,
+                    'offer_total' => $offer->total,
+                    'has_pdf_attachment' => true,
+                ],
+            );
+
             return redirect()->back()->with('success', 'Angebot wurde erfolgreich per E-Mail versendet.');
 
         } catch (\Exception $e) {
             Log::error('Failed to send offer email: '.$e->getMessage());
+
+            $this->logEmail(
+                companyId: $offer->company_id,
+                recipientEmail: $validated['to'],
+                subject: $validated['subject'] ?: "Angebot {$offer->number}",
+                type: 'offer',
+                customerId: $offer->customer_id,
+                recipientName: $offer->customer?->name,
+                body: $validated['message'] ?? null,
+                relatedType: 'Offer',
+                relatedId: $offer->id,
+                status: 'failed',
+                errorMessage: $e->getMessage(),
+            );
 
             return back()->withErrors(['email' => 'E-Mail konnte nicht versendet werden: '.$e->getMessage()]);
         }

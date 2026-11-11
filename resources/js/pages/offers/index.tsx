@@ -23,6 +23,7 @@ import {
     Send,
     Download,
     Eye,
+    Copy,
     MoreHorizontal,
     ArrowUpDown,
     ChevronDown,
@@ -453,6 +454,10 @@ export default function OffersIndex() {
                                                                             <Edit className="mr-2 h-4 w-4" />
                                                                             Bearbeiten
                                                                         </Link>
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => router.post(route("offers.duplicate", offer.id))}>
+                                                                        <Copy className="mr-2 h-4 w-4" />
+                                                                        Kopieren
                                                                     </DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => window.open(route("offers.pdf", offer.id), "_blank")}>
                                                                         <FileText className="mr-2 h-4 w-4" />
