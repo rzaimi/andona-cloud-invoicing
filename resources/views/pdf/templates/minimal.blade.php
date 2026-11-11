@@ -93,8 +93,8 @@
                 'returnBorder' => $border,
             ])
             @if($customer)
-            <div style="font-size:{{ $fs }}px; line-height:1.5;">
-                @if($customer->name ?? null)<span style="font-weight:600;">{{ $customer->name }}</span><br>@endif
+            <div style="font-size:{{ $fs }}px; font-weight:400; line-height:1.5;">
+                @if($customer->name ?? null){{ $customer->name }}<br>@endif
                 @if(($ls['content']['show_contact_person'] ?? false) && ($customer->contact_person ?? null))<span style="color:{{ $soft }};">{{ $customer->contact_person }}</span><br>@endif
                 @if($customer->address ?? null){{ $customer->address }}<br>@endif
                 @if(($customer->postal_code ?? null) || ($customer->city ?? null)){{ trim(($customer->postal_code ?? '').' '.($customer->city ?? '')) }}@endif

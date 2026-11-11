@@ -100,6 +100,16 @@
             
             <p>vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:</p>
 
+            @php
+                $detailsSetting = '1';
+                if (is_object($company) && method_exists($company, 'getSetting')) {
+                    $detailsSetting = (string) ($company->getSetting('email_show_document_details', '1') ?? '1');
+                } elseif (isset($company->email_show_document_details)) {
+                    $detailsSetting = (string) $company->email_show_document_details;
+                }
+                $showDocumentDetails = $detailsSetting !== '0';
+            @endphp
+            @if($showDocumentDetails)
             <div class="offer-details">
                 <table>
                     <tr>
@@ -120,6 +130,7 @@
                     </tr>
                 </table>
             </div>
+            @endif
 
             @if($offer->notes)
             <p><strong>Hinweise:</strong><br>{{ $offer->notes }}</p>

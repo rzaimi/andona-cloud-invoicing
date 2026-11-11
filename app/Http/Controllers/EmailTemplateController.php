@@ -91,6 +91,7 @@ class EmailTemplateController extends Controller
             'vat_number' => $companyModel?->vat_number ?? 'DE123456789',
             'iban' => $iban,
             'bic' => $bic,
+            'email_show_document_details' => $this->previewDocumentDetails($companyModel),
         ];
 
         $sampleInvoice = $this->createSampleInvoice($daysOverdue, $reminderFee);
@@ -141,6 +142,16 @@ class EmailTemplateController extends Controller
             'offer' => $sampleOffer,
             'customer' => $sampleCustomer,
         ];
+    }
+
+    /** Query param wins so the settings preview follows the switch before a full save. */
+    private function previewDocumentDetails(?Company $company): string
+    {
+        if (request()->exists('show_details')) {
+            return request()->boolean('show_details') ? '1' : '0';
+        }
+
+        return ($company?->getSetting('email_show_document_details', '1') ?? '1') !== '0' ? '1' : '0';
     }
 
     public function previewInvoiceSent()

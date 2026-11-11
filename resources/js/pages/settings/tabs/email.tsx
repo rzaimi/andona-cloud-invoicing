@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useForm } from "@inertiajs/react"
+import { router, useForm } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
 import { CheckCircle2, Eye, EyeOff, ExternalLink } from "lucide-react"
 import { route } from "ziggy-js"
 
@@ -123,11 +124,26 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
         smtp_from_address: emailSettings?.smtp_from_address || "",
         smtp_from_name: emailSettings?.smtp_from_name || "",
         smtp_reply_to: emailSettings?.smtp_reply_to || "",
+        email_show_document_details: emailSettings?.email_show_document_details !== false,
     })
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         post(route("settings.email.update"))
+    }
+
+    const previewUrl = (name: string) => route(name, {
+        show_details: data.email_show_document_details ? 1 : 0,
+    })
+
+    const updateDocumentDetails = (checked: boolean) => {
+        setData("email_show_document_details", checked)
+        router.post(route("settings.email.document-details"), {
+            email_show_document_details: checked,
+        }, {
+            preserveScroll: true,
+            preserveState: true,
+        })
     }
 
     return (
@@ -280,6 +296,30 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
 
             <Card>
                 <CardHeader>
+                    <CardTitle>Inhalt</CardTitle>
+                    <CardDescription>
+                        Steuert, welche Angaben in den Versand-E-Mails für Rechnungen und Angebote stehen.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="email-show-document-details">Dokumentdetails in der E-Mail</Label>
+                            <p className="text-sm text-muted-foreground">
+                                Nummer, Datum, Fälligkeit und Gesamtbetrag bei Rechnungen. Bei Angeboten Nummer, Datum, Gültig bis und Gesamtbetrag.
+                            </p>
+                        </div>
+                        <Switch
+                            id="email-show-document-details"
+                            checked={data.email_show_document_details}
+                            onCheckedChange={updateDocumentDetails}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
                     <CardTitle>E-Mail Vorlagen Vorschau</CardTitle>
                     <CardDescription>
                         Vorschau aller verfügbaren E-Mail-Vorlagen
@@ -402,7 +442,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                 <div className="flex-1 overflow-hidden border rounded-lg bg-white">
                     {previewTemplate ? (
                         <iframe
-                            src={route(previewTemplate.route)}
+                            src={previewUrl(previewTemplate.route)}
                             className="w-full h-full min-h-[600px] border-0"
                             title={`Email Preview: ${previewTemplate.name}`}
                             style={{ minHeight: '600px' }}
@@ -417,7 +457,7 @@ export default function EmailSettingsTab({ emailSettings }: EmailSettingsTabProp
                     {previewTemplate && (
                         <Button
                             variant="outline"
-                            onClick={() => window.open(route(previewTemplate.route), "_blank")}
+                            onClick={() => window.open(previewUrl(previewTemplate.route), "_blank")}
                         >
                             <ExternalLink className="mr-2 h-4 w-4" />
                             In neuem Tab öffnen

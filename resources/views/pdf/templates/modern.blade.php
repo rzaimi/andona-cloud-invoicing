@@ -93,8 +93,8 @@
             ])
             @endif
             @if($customer)
-            <div style="font-size:{{ $fs }}px; line-height:1.5;">
-                @if($customer->name ?? null)<div style="font-weight:600;">{{ $customer->name }}</div>@endif
+            <div style="font-size:{{ $fs }}px; font-weight:400; line-height:1.5;">
+                @if($customer->name ?? null)<div>{{ $customer->name }}</div>@endif
                 @if(($ls['content']['show_contact_person'] ?? false) && ($customer->contact_person ?? null))<div style="color:{{ $muted }};">{{ $customer->contact_person }}</div>@endif
                 @if($customer->address ?? null)<div>{{ $customer->address }}</div>@endif
                 @if(($customer->postal_code ?? null) || ($customer->city ?? null))<div>{{ trim(($customer->postal_code ?? '').' '.($customer->city ?? '')) }}</div>@endif

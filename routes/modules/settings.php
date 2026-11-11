@@ -13,6 +13,7 @@ Route::get('/settings/email', function () {
     return redirect()->route('settings.index', ['tab' => 'email']);
 })->name('settings.email');
 Route::post('/settings/email', [SettingsController::class, 'updateEmail'])->name('settings.email.update');
+Route::post('/settings/email/document-details', [SettingsController::class, 'updateEmailDocumentDetails'])->name('settings.email.document-details');
 
 Route::get('/settings/reminders', function () {
     return redirect()->route('settings.index', ['tab' => 'reminders']);

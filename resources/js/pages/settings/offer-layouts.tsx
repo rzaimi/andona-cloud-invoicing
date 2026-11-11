@@ -58,6 +58,7 @@ interface OfferLayoutSettings {
     content: {
         show_company_address: boolean
         show_unit_column: boolean
+        show_ust_column: boolean
         show_notes: boolean
         show_bank_details: boolean
         show_company_registration: boolean
@@ -132,6 +133,7 @@ const getDefaultSettings = (): OfferLayoutSettings => ({
     content: {
         show_company_address: true,
         show_unit_column: true,
+        show_ust_column: true,
         show_notes: true,
         show_bank_details: true,
         show_company_registration: true,
@@ -185,6 +187,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             defaults.content = {
                 show_company_address: true,
                 show_unit_column: true,
+                show_ust_column: true,
                 show_notes: true,
                 show_bank_details: true,
                 show_company_registration: true,
@@ -213,6 +216,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             defaults.content = {
                 show_company_address: true,
                 show_unit_column: true,
+                show_ust_column: true,
                 show_notes: true,
                 show_bank_details: true,
                 show_company_registration: true,
@@ -241,6 +245,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             defaults.content = {
                 show_company_address: true,
                 show_unit_column: true,
+                show_ust_column: true,
                 show_notes: true,
                 show_bank_details: false,
                 show_company_registration: false,
@@ -269,6 +274,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             defaults.content = {
                 show_company_address: true,
                 show_unit_column: true,
+                show_ust_column: true,
                 show_notes: true,
                 show_bank_details: true,
                 show_company_registration: true,
@@ -297,6 +303,7 @@ const getTemplateDefaults = (templateId: string, templates: Template[]): Partial
             defaults.content = {
                 show_company_address: true,
                 show_unit_column: true,
+                show_ust_column: true,
                 show_notes: true,
                 show_bank_details: true,
                 show_company_registration: true,
@@ -348,6 +355,7 @@ const mergeWithDefaults = (settings: Partial<OfferLayoutSettings> | null): Offer
             ...defaults.content,
             show_company_address: true,
             show_unit_column: settings.content?.show_unit_column ?? defaults.content.show_unit_column,
+            show_ust_column: settings.content?.show_ust_column ?? defaults.content.show_ust_column,
             show_notes: settings.content?.show_notes ?? defaults.content.show_notes,
             show_bank_details: settings.content?.show_bank_details ?? defaults.content.show_bank_details,
             show_company_registration: settings.content?.show_company_registration ?? defaults.content.show_company_registration,
@@ -380,11 +388,12 @@ const COLOR_PRESETS = [
     "#dc2626", "#7c3aed", "#ea580c", "#475569",
 ]
 
-const CONTENT_TOGGLES: Array<{ key: "show_bauvorhaben" | "show_customer_number" | "show_contact_person" | "show_unit_column" | "show_item_codes" | "show_row_number" | "show_tax_breakdown" | "show_notes"; label: string }> = [
+const CONTENT_TOGGLES: Array<{ key: "show_bauvorhaben" | "show_customer_number" | "show_contact_person" | "show_unit_column" | "show_ust_column" | "show_item_codes" | "show_row_number" | "show_tax_breakdown" | "show_notes"; label: string }> = [
     { key: "show_bauvorhaben",     label: "BV (Bauvorhaben)" },
     { key: "show_customer_number", label: "Kundennummer" },
     { key: "show_contact_person",  label: "Ansprechpartner" },
     { key: "show_unit_column",     label: "Einheitsspalte" },
+    { key: "show_ust_column",      label: "USt.-Spalte" },
     { key: "show_item_codes",      label: "Artikelnummern" },
     { key: "show_row_number",      label: "Positionsnummern" },
     { key: "show_tax_breakdown",   label: "Steueraufschlüsselung" },

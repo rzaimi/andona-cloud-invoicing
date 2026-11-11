@@ -100,6 +100,16 @@
             
             <p>anbei erhalten Sie die Rechnung <strong>{{ $invoice->number }}</strong> vom {{ \Carbon\Carbon::parse($invoice->issue_date)->format('d.m.Y') }}.</p>
 
+            @php
+                $detailsSetting = '1';
+                if (is_object($company) && method_exists($company, 'getSetting')) {
+                    $detailsSetting = (string) ($company->getSetting('email_show_document_details', '1') ?? '1');
+                } elseif (isset($company->email_show_document_details)) {
+                    $detailsSetting = (string) $company->email_show_document_details;
+                }
+                $showDocumentDetails = $detailsSetting !== '0';
+            @endphp
+            @if($showDocumentDetails)
             <div class="invoice-details">
                 <table>
                     <tr>
@@ -120,6 +130,7 @@
                     </tr>
                 </table>
             </div>
+            @endif
 
             @if($invoice->notes)
             <p><strong>Hinweise:</strong><br>{{ $invoice->notes }}</p>

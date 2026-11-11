@@ -97,6 +97,7 @@ class SettingsController extends Controller
             'smtp_from_address' => $company->smtp_from_address ?? $company->email,
             'smtp_from_name' => $company->smtp_from_name ?? $company->name,
             'smtp_reply_to' => $company->smtp_reply_to ?? '',
+            'email_show_document_details' => ($company->getSetting('email_show_document_details', '1') ?? '1') !== '0',
         ];
 
         $reminderSettings = [
@@ -477,6 +478,7 @@ class SettingsController extends Controller
                 'smtp_from_address' => $company->smtp_from_address ?? $company->email,
                 'smtp_from_name' => $company->smtp_from_name ?? $company->name,
                 'smtp_reply_to' => $company->smtp_reply_to ?? '',
+                'email_show_document_details' => ($company->getSetting('email_show_document_details', '1') ?? '1') !== '0',
             ],
         ]);
     }
@@ -495,6 +497,7 @@ class SettingsController extends Controller
             'smtp_from_address' => 'required|email|max:255',
             'smtp_from_name' => 'required|string|max:255',
             'smtp_reply_to' => 'nullable|email|max:255',
+            'email_show_document_details' => 'required|boolean',
         ]);
 
         // Don't update password if it's the masked value
@@ -507,11 +510,36 @@ class SettingsController extends Controller
             $validated['smtp_encryption'] = null;
         }
 
+        $company->setSetting(
+            'email_show_document_details',
+            $request->boolean('email_show_document_details') ? '1' : '0',
+            'string',
+            'Dokumentdetails (Nummer, Datum, Fälligkeit, Betrag) in Rechnungs- und Angebots-E-Mails anzeigen',
+        );
+        unset($validated['email_show_document_details']);
+
         // Use helper method to save SMTP settings (normalized to company_settings)
         $company->setSmtpSettings($validated);
 
         return redirect()->route('settings.email')
             ->with('success', 'E-Mail Einstellungen wurden erfolgreich aktualisiert.');
+    }
+
+    public function updateEmailDocumentDetails(Request $request)
+    {
+        $request->validate([
+            'email_show_document_details' => 'required|boolean',
+        ]);
+
+        $company = Company::find($this->getEffectiveCompanyId());
+        $company->setSetting(
+            'email_show_document_details',
+            $request->boolean('email_show_document_details') ? '1' : '0',
+            'string',
+            'Dokumentdetails (Nummer, Datum, Fälligkeit, Betrag) in Rechnungs- und Angebots-E-Mails anzeigen',
+        );
+
+        return back();
     }
 
     public function reminders(Request $request)

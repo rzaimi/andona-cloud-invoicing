@@ -326,6 +326,7 @@ class InitializeCompanyData extends Command
             'content' => [
                 'show_item_images'   => false,
                 'show_item_codes'    => true,
+                'show_ust_column'    => true,
                 'show_row_number'    => true,
                 'show_bauvorhaben'   => false,
                 'show_customer_number' => true,

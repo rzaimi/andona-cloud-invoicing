@@ -25,7 +25,10 @@
     $showBorderColor      = $layoutSettings['colors']['text'] ?? '#1f2937';
     // Show USt. column only for standard VAT invoices. For §19, §13b,
     // intra-community and export regimes the tax column must stay hidden.
-    $showUstColumn        = ($doc->vat_regime ?? 'standard') === 'standard';
+    // Layouts can also turn the column off; missing setting keeps it visible.
+    $showUstSetting       = $layoutSettings['content']['show_ust_column'] ?? true;
+    $showUstColumn        = ($doc->vat_regime ?? 'standard') === 'standard'
+        && filter_var($showUstSetting, FILTER_VALIDATE_BOOLEAN);
 
     $hasAnyDiscount = $doc->items->contains(
         fn($item) => (float)($item->discount_amount ?? 0) > 0.0001
