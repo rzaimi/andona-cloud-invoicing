@@ -5,6 +5,7 @@ namespace App\Modules\Offer\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
+use App\Modules\Customer\Services\CustomerRecipientResolver;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceItem;
 use App\Modules\Invoice\Models\InvoiceLayout;
@@ -28,6 +29,7 @@ use Inertia\Inertia;
 class OfferController extends Controller
 {
     use LogsEmails;
+
     public function index(Request $request)
     {
         $companyId = $this->getEffectiveCompanyId();
@@ -704,9 +706,15 @@ class OfferController extends Controller
     {
         $this->authorize('send', $offer);
 
+        // CC arrives as a list from the recipient picker (or a single
+        // address from older clients) — validate every address.
+        $request->merge(['cc' => CustomerRecipientResolver::normalizeCc($request->input('cc'))]);
+
         $validated = $request->validate([
             'to' => 'required|email',
-            'cc' => 'nullable|email',
+            'to_name' => 'nullable|string|max:255',
+            'cc' => 'nullable|array|max:10',
+            'cc.*' => 'email',
             'subject' => 'required|string|max:255',
             'message' => 'nullable|string|max:2000',
         ]);
@@ -769,7 +777,7 @@ class OfferController extends Controller
                 subject: $validated['subject'] ?: "Angebot {$offer->number}",
                 type: 'offer',
                 customerId: $offer->customer_id,
-                recipientName: $offer->customer?->name,
+                recipientName: ($validated['to_name'] ?? null) ?: $offer->customer?->name,
                 body: $validated['message'] ?? null,
                 relatedType: 'Offer',
                 relatedId: $offer->id,
@@ -792,7 +800,7 @@ class OfferController extends Controller
                 subject: $validated['subject'] ?: "Angebot {$offer->number}",
                 type: 'offer',
                 customerId: $offer->customer_id,
-                recipientName: $offer->customer?->name,
+                recipientName: ($validated['to_name'] ?? null) ?: $offer->customer?->name,
                 body: $validated['message'] ?? null,
                 relatedType: 'Offer',
                 relatedId: $offer->id,

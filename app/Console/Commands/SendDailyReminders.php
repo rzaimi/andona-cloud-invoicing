@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Jobs\SendOfferExpiryReminder;
 use App\Modules\Company\Models\Company;
+use App\Modules\Customer\Models\CustomerContact;
+use App\Modules\Customer\Services\CustomerRecipientResolver;
 use App\Modules\Offer\Models\Offer;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -85,21 +87,24 @@ class SendDailyReminders extends Command
                 ->where('status', 'sent')
                 ->whereDate('valid_until', '>=', $today)
                 ->whereDate('valid_until', '<=', $threeDaysFromNow)
-                ->with('customer')
+                ->with(['customer', 'customer.contacts'])
                 ->get();
 
+            $resolver = app(CustomerRecipientResolver::class);
+
             foreach ($expiringOffers as $offer) {
-                if (! $offer->customer || ! $offer->customer->email) {
+                $recipient = $resolver->resolve($offer->customer, CustomerContact::PURPOSE_OFFER)['to'];
+                if ($recipient === null) {
                     continue;
                 }
 
                 $daysRemaining = $today->diffInDays(Carbon::parse($offer->valid_until));
 
                 if ($dryRun) {
-                    $this->line("  [DRY RUN] Would send expiry reminder for offer {$offer->number} ({$daysRemaining} days remaining) to {$offer->customer->email}");
+                    $this->line("  [DRY RUN] Would send expiry reminder for offer {$offer->number} ({$daysRemaining} days remaining) to {$recipient}");
                 } else {
                     SendOfferExpiryReminder::dispatch($offer->id);
-                    $this->line("  Queued expiry reminder for offer {$offer->number} ({$daysRemaining} days remaining) to {$offer->customer->email}");
+                    $this->line("  Queued expiry reminder for offer {$offer->number} ({$daysRemaining} days remaining) to {$recipient}");
                 }
             }
         }

@@ -25,9 +25,14 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
         tax_number: "",
         vat_number: "",
         leitweg_id: "",
-        contact_person: "",
         customer_type: "business" as "business" | "private",
+        // Optional first Ansprechpartner; more can be added on the customer page.
+        first_contact: { name: "", email: "", title: "", phone: "" },
     })
+
+    const contactErrors = errors as Record<string, string>
+    const setFirstContact = (field: "name" | "email" | "title" | "phone", value: string) =>
+        setData("first_contact", { ...data.first_contact, [field]: value })
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -159,22 +164,69 @@ export default function CustomersCreate({ breadcrumbs }: { breadcrumbs?: Breadcr
                                     />
                                     {errors.phone && <p className="text-red-600 text-sm">{errors.phone}</p>}
                                 </div>
-
-                                {data.customer_type === "business" && (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="contact_person">Ansprechpartner</Label>
-                                        <Input
-                                            id="contact_person"
-                                            value={data.contact_person}
-                                            onChange={(e) => setData("contact_person", e.target.value)}
-                                            placeholder="z.B. Herr Müller"
-                                        />
-                                        {errors.contact_person && <p className="text-red-600 text-sm">{errors.contact_person}</p>}
-                                    </div>
-                                )}
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* First contact person */}
+                    {data.customer_type === "business" && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Ansprechpartner (optional)</CardTitle>
+                                <CardDescription>
+                                    Erste Kontaktperson beim Kunden. Weitere Ansprechpartner und die Zuordnung, wer
+                                    Rechnungen, Mahnungen oder Angebote erhält, legen Sie danach auf der Kundenseite fest.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="first_contact_name">Name</Label>
+                                        <Input
+                                            id="first_contact_name"
+                                            value={data.first_contact.name}
+                                            onChange={(e) => setFirstContact("name", e.target.value)}
+                                            placeholder="z.B. Anna Müller"
+                                        />
+                                        {contactErrors["first_contact.name"] && (
+                                            <p className="text-red-600 text-sm">{contactErrors["first_contact.name"]}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="first_contact_email">E-Mail-Adresse</Label>
+                                        <Input
+                                            id="first_contact_email"
+                                            type="email"
+                                            value={data.first_contact.email}
+                                            onChange={(e) => setFirstContact("email", e.target.value)}
+                                            placeholder="z.B. a.mueller@beispiel.de"
+                                        />
+                                        {contactErrors["first_contact.email"] && (
+                                            <p className="text-red-600 text-sm">{contactErrors["first_contact.email"]}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="first_contact_title">Position</Label>
+                                        <Input
+                                            id="first_contact_title"
+                                            value={data.first_contact.title}
+                                            onChange={(e) => setFirstContact("title", e.target.value)}
+                                            placeholder="z.B. Buchhaltung"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="first_contact_phone">Telefon</Label>
+                                        <Input
+                                            id="first_contact_phone"
+                                            value={data.first_contact.phone}
+                                            onChange={(e) => setFirstContact("phone", e.target.value)}
+                                            placeholder="z.B. +49 30 12345678"
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Address Information */}
                     <Card>

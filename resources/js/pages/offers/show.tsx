@@ -537,6 +537,7 @@ export default function OffersShow() {
                 type="offer"
                 documentId={offer.id}
                 documentNumber={offer.number}
+                customerId={offer.customer?.id ?? offer.customer_id}
                 customerEmail={offer.customer?.email}
                 customerName={offer.customer?.name}
                 issueDate={offer.issue_date}

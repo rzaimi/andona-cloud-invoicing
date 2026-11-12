@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Modules\Company\Models\Company;
+use App\Modules\Customer\Models\CustomerContact;
+use App\Modules\Customer\Services\CustomerRecipientResolver;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Modules\Invoice\Models\InvoiceItem;
@@ -124,7 +126,7 @@ class RecurringInvoiceService
 
             // Best-effort auto-send AFTER the schedule is advanced so a mail
             // failure never causes a double-generation on the next run.
-            if ($profile->auto_send && $invoice && $profile->customer?->email) {
+            if ($profile->auto_send && $invoice && $this->invoiceRecipients($profile)['to'] !== null) {
                 $this->autoSend($profile, $invoice);
             }
 
@@ -325,9 +327,21 @@ class RecurringInvoiceService
      * Fire the shared mailer. Failures are logged but swallowed — we do NOT
      * roll back the invoice, because invoice numbers must stay gap-free.
      */
+    /**
+     * Contacts flagged for invoices win over the customer's main email.
+     *
+     * @return array{to: ?string, to_name: ?string, cc: list<string>}
+     */
+    private function invoiceRecipients(RecurringInvoiceProfile $profile): array
+    {
+        return app(CustomerRecipientResolver::class)
+            ->resolve($profile->customer, CustomerContact::PURPOSE_INVOICE);
+    }
+
     private function autoSend(RecurringInvoiceProfile $profile, Invoice $invoice): void
     {
-        $to = $profile->customer?->email;
+        $recipients = $this->invoiceRecipients($profile);
+        $to = $recipients['to'];
         if (! $to) {
             return;
         }
@@ -346,6 +360,8 @@ class RecurringInvoiceService
             to: $to,
             subject: $subject,
             customMessage: $body,
+            cc: $recipients['cc'],
+            recipientName: $recipients['to_name'],
         );
 
         if (! $result['ok']) {

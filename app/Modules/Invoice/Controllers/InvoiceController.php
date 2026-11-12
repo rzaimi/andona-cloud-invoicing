@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendInvoiceEmail;
 use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
+use App\Modules\Customer\Models\CustomerContact;
+use App\Modules\Customer\Services\CustomerRecipientResolver;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Modules\Invoice\Models\InvoiceItem;
@@ -79,12 +81,12 @@ class InvoiceController extends Controller
 
         // Calculate statistics
         $stats = [
-            'total'     => Invoice::forCompany($companyId)->count(),
-            'draft'     => Invoice::forCompany($companyId)->where('status', 'draft')->count(),
-            'queued'    => Invoice::forCompany($companyId)->where('status', 'queued')->count(),
-            'sent'      => Invoice::forCompany($companyId)->where('status', 'sent')->count(),
-            'paid'      => Invoice::forCompany($companyId)->where('status', 'paid')->count(),
-            'overdue'   => Invoice::forCompany($companyId)->where('status', 'overdue')->count(),
+            'total' => Invoice::forCompany($companyId)->count(),
+            'draft' => Invoice::forCompany($companyId)->where('status', 'draft')->count(),
+            'queued' => Invoice::forCompany($companyId)->where('status', 'queued')->count(),
+            'sent' => Invoice::forCompany($companyId)->where('status', 'sent')->count(),
+            'paid' => Invoice::forCompany($companyId)->where('status', 'paid')->count(),
+            'overdue' => Invoice::forCompany($companyId)->where('status', 'overdue')->count(),
             'cancelled' => Invoice::forCompany($companyId)->where('status', 'cancelled')->count(),
         ];
 
@@ -146,9 +148,9 @@ class InvoiceController extends Controller
         ]);
 
         $allowed = [
-            'draft'  => ['sent', 'cancelled', 'queued'],
+            'draft' => ['sent', 'cancelled', 'queued'],
             'queued' => ['draft', 'sent', 'cancelled'], // allow reverting if job fails
-            'sent'   => ['cancelled'],
+            'sent' => ['cancelled'],
             'overdue' => ['cancelled'],
         ];
 
@@ -1037,9 +1039,15 @@ class InvoiceController extends Controller
     {
         $this->authorize('send', $invoice);
 
+        // CC arrives as a list from the recipient picker (or a single
+        // address from older clients) — validate every address.
+        $request->merge(['cc' => CustomerRecipientResolver::normalizeCc($request->input('cc'))]);
+
         $validated = $request->validate([
             'to' => 'required|email',
-            'cc' => 'nullable|email',
+            'to_name' => 'nullable|string|max:255',
+            'cc' => 'nullable|array|max:10',
+            'cc.*' => 'email',
             'subject' => 'required|string|max:255',
             'message' => 'nullable|string|max:2000',
         ]);
@@ -1075,7 +1083,8 @@ class InvoiceController extends Controller
             to: $validated['to'],
             subject: $validated['subject'] ?: "Rechnung {$invoice->number}",
             customMessage: $validated['message'] ?? null,
-            cc: $validated['cc'] ?? null,
+            cc: $validated['cc'] ?? [],
+            recipientName: $validated['to_name'] ?? null,
         );
 
         return redirect()->back()->with('success', 'Rechnung wird per E-Mail versendet.');
@@ -1377,7 +1386,10 @@ class InvoiceController extends Controller
             if ($validated['send_email'] ?? false) {
                 try {
                     $company = $correctionInvoice->company;
-                    if ($company->smtp_host && $company->smtp_username && $correctionInvoice->customer && $correctionInvoice->customer->email) {
+                    // Contacts flagged for invoices win over the customer's main email.
+                    $recipients = app(CustomerRecipientResolver::class)
+                        ->resolve($correctionInvoice->customer, CustomerContact::PURPOSE_INVOICE);
+                    if ($company->smtp_host && $company->smtp_username && $recipients['to'] !== null) {
                         // Configure SMTP settings dynamically
                         Config::set('mail.default', 'smtp');
                         Config::set('mail.mailers.smtp.host', $company->smtp_host);
@@ -1392,21 +1404,42 @@ class InvoiceController extends Controller
                         $pdf = $this->generateInvoicePdf($correctionInvoice);
 
                         // Send email
+                        $correctionSubject = 'Stornorechnung '.$correctionInvoice->number;
+                        $correctionMessage = 'Die Stornorechnung '.$correctionInvoice->number.' wurde erstellt und storniert die Rechnung '.$invoice->number.'.';
+
                         Mail::send('emails.invoice-sent', [
                             'invoice' => $correctionInvoice,
                             'company' => $company,
                             'customer' => $correctionInvoice->customer,
-                            'message' => 'Die Stornorechnung '.$correctionInvoice->number.' wurde erstellt und storniert die Rechnung '.$invoice->number.'.',
-                        ], function ($message) use ($correctionInvoice, $pdf) {
-                            $message->to($correctionInvoice->customer->email)
-                                ->subject('Stornorechnung '.$correctionInvoice->number)
+                            'customMessage' => $correctionMessage,
+                        ], function ($message) use ($correctionInvoice, $pdf, $recipients, $correctionSubject) {
+                            $message->to($recipients['to']);
+                            if ($recipients['cc'] !== []) {
+                                $message->cc($recipients['cc']);
+                            }
+                            $message->subject($correctionSubject)
                                 ->attachData($pdf->output(), 'Stornorechnung_'.$correctionInvoice->number.'.pdf', [
                                     'mime' => 'application/pdf',
                                 ]);
                         });
 
-                        // Log email
-                        $this->logEmail('invoice-sent', $correctionInvoice->customer->email, $correctionInvoice->id, $correctionInvoice->company_id);
+                        $this->logEmail(
+                            companyId: $correctionInvoice->company_id,
+                            recipientEmail: $recipients['to'],
+                            subject: $correctionSubject,
+                            type: 'invoice',
+                            customerId: $correctionInvoice->customer_id,
+                            recipientName: $recipients['to_name'],
+                            body: $correctionMessage,
+                            relatedType: 'Invoice',
+                            relatedId: $correctionInvoice->id,
+                            metadata: [
+                                'cc' => $recipients['cc'],
+                                'invoice_number' => $correctionInvoice->number,
+                                'corrects_invoice' => $invoice->number,
+                                'has_pdf_attachment' => true,
+                            ],
+                        );
                         $emailSent = true;
                     }
                 } catch (\Exception $e) {

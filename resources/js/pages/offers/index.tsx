@@ -552,6 +552,7 @@ export default function OffersIndex() {
                     type="offer"
                     documentId={selectedOffer.id}
                     documentNumber={selectedOffer.number}
+                    customerId={selectedOffer.customer?.id ?? selectedOffer.customer_id}
                     customerEmail={selectedOffer.customer?.email}
                     customerName={selectedOffer.customer?.name}
                     issueDate={selectedOffer.issue_date}

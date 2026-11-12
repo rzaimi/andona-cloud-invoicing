@@ -12,7 +12,6 @@ import {
     FileText,
     EuroIcon,
     Euro,
-    User,
     Hash,
     Globe,
     AlertCircle,
@@ -28,6 +27,7 @@ import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CustomerContactsCard } from "@/components/customer-contacts-card"
 import AppLayout from "@/layouts/app-layout"
 import type { Customer, Invoice, Offer, BreadcrumbItem, PageProps } from "@/types"
 
@@ -205,8 +205,9 @@ export default function CustomerShow() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Customer Details */}
-                    <Card className="lg:col-span-1">
+                    {/* Customer Details + contacts */}
+                    <div className="lg:col-span-1 space-y-6">
+                    <Card>
                         <CardHeader>
                             <CardTitle>Kundendetails</CardTitle>
                         </CardHeader>
@@ -234,14 +235,6 @@ export default function CustomerShow() {
                                     <a href={`tel:${customer.phone}`} className="text-sm text-blue-600 hover:underline">
                                         {customer.phone}
                                     </a>
-                                </div>
-                            )}
-
-                            {customer.contact_person && (
-                                <div className="flex items-center space-x-2">
-                                    <User className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm font-medium">Ansprechpartner:</span>
-                                    <span className="text-sm">{customer.contact_person}</span>
                                 </div>
                             )}
 
@@ -296,6 +289,9 @@ export default function CustomerShow() {
                             <div className="text-xs text-muted-foreground">Erstellt am: {formatDate(customer.created_at)}</div>
                         </CardContent>
                     </Card>
+
+                    <CustomerContactsCard customerId={customer.id} contacts={customer.contacts ?? []} />
+                    </div>
 
                     {/* Invoices and Offers */}
                     <Card className="lg:col-span-2">

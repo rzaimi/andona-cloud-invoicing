@@ -4,6 +4,8 @@ namespace App\Modules\Mahnung\Services;
 
 use App\Models\EmailLog;
 use App\Modules\Company\Models\Company;
+use App\Modules\Customer\Models\CustomerContact;
+use App\Modules\Customer\Services\CustomerRecipientResolver;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Modules\Invoice\Models\InvoiceLayout;
@@ -182,7 +184,7 @@ class DunningService
             return ['ok' => false, 'error' => 'E-Mail Einstellungen sind nicht konfiguriert.'];
         }
 
-        if (! $invoice->customer?->email) {
+        if ($this->recipients($invoice)['to'] === null) {
             return ['ok' => false, 'error' => 'Kunde hat keine E-Mail-Adresse.'];
         }
 
@@ -208,13 +210,14 @@ class DunningService
 
             // Failed dunning mails are legally relevant (Zugang der Mahnung) —
             // record them so the workspace can surface and retry them.
+            $recipients = $this->recipients($invoice);
             $this->logEmail(
                 companyId: $company->id,
-                recipientEmail: $invoice->customer->email,
+                recipientEmail: $recipients['to'],
                 subject: $invoice->getReminderLevelNameForLevel($level).' - Rechnung '.$invoice->number,
                 type: 'mahnung',
                 customerId: $invoice->customer_id,
-                recipientName: $invoice->customer->name,
+                recipientName: $recipients['to_name'],
                 relatedType: 'Invoice',
                 relatedId: $invoice->id,
                 metadata: ['reminder_level' => $level],
@@ -275,7 +278,7 @@ class DunningService
 
         return $this->openDunningQuery($company->id)
             ->get()
-            ->filter(fn (Invoice $invoice) => $invoice->customer?->email
+            ->filter(fn (Invoice $invoice) => $this->recipients($invoice)['to'] !== null
                 && $this->nextDueLevel($invoice, $company) !== null)
             ->values();
     }
@@ -296,6 +299,18 @@ class DunningService
         return $this->invoicesDueForEscalation($company, requireAutoSend: false)->count();
     }
 
+    /**
+     * Who receives Mahnungen for this invoice: the customer's contacts
+     * flagged for reminders, else the customer's main email.
+     *
+     * @return array{to: ?string, to_name: ?string, cc: list<string>}
+     */
+    private function recipients(Invoice $invoice): array
+    {
+        return app(CustomerRecipientResolver::class)
+            ->resolve($invoice->customer, CustomerContact::PURPOSE_REMINDER);
+    }
+
     public function openDunningQuery(?string $companyId)
     {
         return Invoice::forCompany($companyId)
@@ -304,7 +319,7 @@ class DunningService
             ->whereDate('due_date', '<', now()->toDateString())
             ->unsettled()
             ->withSum(['payments as completed_payments_sum' => fn ($q) => $q->where('status', 'completed')], 'amount')
-            ->with(['customer:id,name,email', 'company']);
+            ->with(['customer:id,name,email', 'customer.contacts', 'company']);
     }
 
     public function workspaceQuery(?string $companyId)
@@ -398,6 +413,7 @@ class DunningService
 
         $pdf = app()->runningUnitTests() ? null : $this->renderInvoicePdf($invoice);
         $replyTo = $company->smtp_reply_to ?: null;
+        $recipients = $this->recipients($invoice);
 
         Mail::send($template, [
             'invoice' => $invoice,
@@ -409,8 +425,11 @@ class DunningService
             'paidAmount' => $paidAmount,
             'feesIncluded' => $feesIncluded,
             'girocodePng' => $girocodePng,
-        ], function ($message) use ($invoice, $pdf, $subject, $replyTo) {
-            $message->to($invoice->customer->email);
+        ], function ($message) use ($invoice, $pdf, $subject, $replyTo, $recipients) {
+            $message->to($recipients['to']);
+            if ($recipients['cc'] !== []) {
+                $message->cc($recipients['cc']);
+            }
             if ($replyTo) {
                 $message->replyTo($replyTo);
             }
@@ -424,14 +443,15 @@ class DunningService
 
         $this->logEmail(
             companyId: $company->id,
-            recipientEmail: $invoice->customer->email,
+            recipientEmail: $recipients['to'],
             subject: $subject,
             type: 'mahnung',
             customerId: $invoice->customer_id,
-            recipientName: $invoice->customer->name,
+            recipientName: $recipients['to_name'],
             relatedType: 'Invoice',
             relatedId: $invoice->id,
             metadata: [
+                'cc' => $recipients['cc'],
                 'reminder_level' => $level,
                 'reminder_level_name' => $invoice->getReminderLevelNameForLevel($level),
                 'invoice_number' => $invoice->number,

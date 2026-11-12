@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Modules\Customer\Services\CustomerRecipientResolver;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceAuditLog;
 use App\Modules\Invoice\Models\InvoiceLayout;
@@ -27,7 +28,8 @@ class InvoiceMailer
      * @param  string  $to  recipient email
      * @param  string|null  $subject  overrides default subject
      * @param  string|null  $customMessage  optional plain-text body to embed
-     * @param  string|null  $cc  optional CC address
+     * @param  array|string|null  $cc  optional CC address(es)
+     * @param  string|null  $recipientName  name of the addressed contact, logged instead of the customer name
      * @return array{ok: bool, error?: string, exception?: \Throwable}
      */
     public function send(
@@ -35,9 +37,12 @@ class InvoiceMailer
         string $to,
         ?string $subject = null,
         ?string $customMessage = null,
-        ?string $cc = null
+        array|string|null $cc = null,
+        ?string $recipientName = null
     ): array {
         $invoice->loadMissing(['customer', 'company', 'items.product', 'layout', 'user', 'correctsInvoice']);
+
+        $cc = CustomerRecipientResolver::normalizeCc($cc);
 
         $company = $invoice->company;
 
@@ -86,7 +91,7 @@ class InvoiceMailer
                 subject: $subject,
                 type: 'invoice',
                 customerId: $invoice->customer_id,
-                recipientName: $invoice->customer?->name,
+                recipientName: $recipientName ?: $invoice->customer?->name,
                 body: $customMessage,
                 relatedType: 'Invoice',
                 relatedId: $invoice->id,

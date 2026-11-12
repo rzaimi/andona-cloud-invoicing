@@ -20,7 +20,10 @@ class SendInvoiceEmail implements ShouldQueue
         public readonly string $to,
         public readonly ?string $subject = null,
         public readonly ?string $customMessage = null,
-        public readonly ?string $cc = null,
+        // A list of addresses; a plain string is still accepted so jobs
+        // queued before contacts existed deserialize and run.
+        public readonly array|string|null $cc = null,
+        public readonly ?string $recipientName = null,
     ) {}
 
     public function handle(InvoiceMailer $mailer): void
@@ -42,6 +45,7 @@ class SendInvoiceEmail implements ShouldQueue
             subject: $this->subject,
             customMessage: $this->customMessage,
             cc: $this->cc,
+            recipientName: $this->recipientName,
         );
 
         if (! ($result['ok'] ?? false)) {
@@ -80,7 +84,7 @@ class SendInvoiceEmail implements ShouldQueue
 
         Log::error('SendInvoiceEmail permanently failed', [
             'invoice_id' => $this->invoiceId,
-            'error'      => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

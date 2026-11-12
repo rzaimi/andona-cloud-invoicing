@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Modules\Customer\Models\CustomerContact;
+use App\Modules\Customer\Services\CustomerRecipientResolver;
 use App\Modules\Offer\Models\Offer;
 use App\Traits\ConfiguresCompanySmtp;
 use App\Traits\LogsEmails;
@@ -28,7 +30,11 @@ class SendOfferExpiryReminder implements ShouldQueue
     {
         $offer = Offer::with(['items', 'customer', 'company', 'user'])->find($this->offerId);
 
-        if (! $offer || ! $offer->company || ! $offer->customer?->email) {
+        // Contacts flagged for offers win over the customer's main email.
+        $recipients = app(CustomerRecipientResolver::class)
+            ->resolve($offer?->customer, CustomerContact::PURPOSE_OFFER);
+
+        if (! $offer || ! $offer->company || $recipients['to'] === null) {
             Log::warning('SendOfferExpiryReminder skipped: offer, company, or recipient missing', [
                 'offer_id' => $this->offerId,
             ]);
@@ -58,8 +64,11 @@ class SendOfferExpiryReminder implements ShouldQueue
         Mail::send('emails.offer-reminder', [
             'offer' => $offer,
             'company' => $company,
-        ], function ($message) use ($offer, $pdf, $subject, $replyTo) {
-            $message->to($offer->customer->email);
+        ], function ($message) use ($offer, $pdf, $subject, $replyTo, $recipients) {
+            $message->to($recipients['to']);
+            if ($recipients['cc'] !== []) {
+                $message->cc($recipients['cc']);
+            }
             if ($replyTo) {
                 $message->replyTo($replyTo);
             }
@@ -71,11 +80,11 @@ class SendOfferExpiryReminder implements ShouldQueue
 
         $this->logEmail(
             companyId: $company->id,
-            recipientEmail: $offer->customer->email,
+            recipientEmail: $recipients['to'],
             subject: $subject,
             type: 'reminder',
             customerId: $offer->customer_id,
-            recipientName: $offer->customer->name,
+            recipientName: $recipients['to_name'],
             relatedType: 'Offer',
             relatedId: $offer->id,
             metadata: [

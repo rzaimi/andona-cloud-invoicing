@@ -1,5 +1,6 @@
-import { useState } from "react"
-import { useForm, router } from "@inertiajs/react"
+import { useEffect, useRef, useState } from "react"
+import { useForm } from "@inertiajs/react"
+import { route } from "ziggy-js"
 import {
     Dialog,
     DialogContent,
@@ -14,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Mail, Send } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { RecipientPicker, type RecipientContact } from "@/components/recipient-picker"
 
 interface SendEmailDialogProps {
     open: boolean
@@ -21,6 +23,8 @@ interface SendEmailDialogProps {
     type: "invoice" | "offer"
     documentId: string
     documentNumber: string
+    /** Enables picking the recipient/CC from the customer's contacts. */
+    customerId?: string
     customerEmail?: string
     customerName?: string
     issueDate?: string
@@ -46,10 +50,14 @@ function buildDefaultMessage(
     dueDate?: string,
     validUntil?: string,
     isResend?: boolean,
+    contactName?: string | null,
 ): string {
-    const greeting = customerName
-        ? `Sehr geehrte Damen und Herren von ${customerName},`
-        : "Sehr geehrte Damen und Herren,"
+    // A selected contact gets a personal (gender-neutral) greeting.
+    const greeting = contactName
+        ? `Guten Tag ${contactName},`
+        : customerName
+            ? `Sehr geehrte Damen und Herren von ${customerName},`
+            : "Sehr geehrte Damen und Herren,"
 
     const fmt = (d?: string) =>
         d ? new Date(d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""
@@ -93,6 +101,7 @@ export function SendEmailDialog({
     type,
     documentId,
     documentNumber,
+    customerId,
     customerEmail,
     customerName,
     issueDate,
@@ -102,13 +111,78 @@ export function SendEmailDialog({
     onSuccess,
 }: SendEmailDialogProps) {
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [contacts, setContacts] = useState<RecipientContact[]>([])
+
+    const messageFor = (contactName?: string | null) =>
+        buildDefaultMessage(type, documentNumber, customerName, issueDate, dueDate, validUntil, isResend, contactName)
 
     const { data, setData, post, processing, reset } = useForm({
         to: customerEmail || "",
-        cc: "",
+        to_name: "",
+        cc: [] as string[],
         subject: buildDefaultSubject(type, documentNumber, isResend),
-        message: buildDefaultMessage(type, documentNumber, customerName, issueDate, dueDate, validUntil, isResend),
+        message: messageFor(null),
     })
+
+    // The last auto-generated message: while the textarea still equals it,
+    // the greeting follows the selected recipient; once edited, it is left alone.
+    const generatedMessage = useRef(data.message)
+    // Set once the user picks or types a recipient, so late-arriving
+    // defaults never overwrite a deliberate choice.
+    const recipientTouched = useRef(false)
+
+    const applyRecipient = (email: string, name: string | null, cc?: string[]) => {
+        setData((current) => {
+            const next = { ...current, to: email, to_name: name ?? "", cc: cc ?? current.cc }
+            if (current.message === generatedMessage.current) {
+                next.message = messageFor(name)
+                generatedMessage.current = next.message
+            }
+            return next
+        })
+    }
+
+    // Load the customer's contacts and the default recipients for this
+    // document type (the same rule the automatic emails use).
+    useEffect(() => {
+        if (!open || !customerId) return
+
+        let cancelled = false
+        recipientTouched.current = false
+
+        fetch(route("customers.contacts.index", { customer: customerId, purpose: type }), {
+            headers: { Accept: "application/json" },
+            credentials: "same-origin",
+        })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((payload) => {
+                if (cancelled || !payload) return
+
+                const loaded: RecipientContact[] = payload.contacts ?? []
+                setContacts(loaded)
+
+                const defaults = payload.defaults
+                if (recipientTouched.current || !defaults?.to) return
+
+                const isContact = loaded.some(
+                    (contact) => contact.email.toLowerCase() === String(defaults.to).toLowerCase(),
+                )
+                applyRecipient(defaults.to, isContact ? defaults.to_name : null, defaults.cc ?? [])
+            })
+            .catch(() => {
+                // Contacts are a convenience — the dialog works with the plain address.
+            })
+
+        return () => {
+            cancelled = true
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, customerId, type])
+
+    const resetForm = () => {
+        reset()
+        generatedMessage.current = messageFor(null)
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -120,7 +194,7 @@ export function SendEmailDialog({
             preserveScroll: true,
             onSuccess: () => {
                 onOpenChange(false)
-                reset()
+                resetForm()
                 if (onSuccess) {
                     onSuccess()
                 }
@@ -134,7 +208,7 @@ export function SendEmailDialog({
     const handleClose = () => {
         if (!processing) {
             onOpenChange(false)
-            reset()
+            resetForm()
             setErrors({})
         }
     }
@@ -168,30 +242,21 @@ export function SendEmailDialog({
                             </Alert>
                         )}
 
-                        <div className="space-y-2">
-                            <Label htmlFor="to">Empfänger *</Label>
-                            <Input
-                                id="to"
-                                type="email"
-                                value={data.to}
-                                onChange={(e) => setData("to", e.target.value)}
-                                placeholder="kunde@example.com"
-                                required
-                            />
-                            {errors.to && <p className="text-sm text-red-600">{errors.to}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="cc">CC (Optional)</Label>
-                            <Input
-                                id="cc"
-                                type="email"
-                                value={data.cc}
-                                onChange={(e) => setData("cc", e.target.value)}
-                                placeholder="kopie@example.com"
-                            />
-                            {errors.cc && <p className="text-sm text-red-600">{errors.cc}</p>}
-                        </div>
+                        <RecipientPicker
+                            contacts={contacts}
+                            to={data.to}
+                            onToChange={(email, name) => {
+                                recipientTouched.current = true
+                                applyRecipient(email, name)
+                            }}
+                            cc={data.cc}
+                            onCcChange={(cc) => {
+                                recipientTouched.current = true
+                                setData("cc", cc)
+                            }}
+                            toError={errors.to}
+                            ccError={errors.cc}
+                        />
 
                         <div className="space-y-2">
                             <Label htmlFor="subject">Betreff *</Label>

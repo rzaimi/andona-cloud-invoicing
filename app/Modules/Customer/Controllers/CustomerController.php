@@ -3,6 +3,7 @@
 namespace App\Modules\Customer\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Company\Models\Company;
 use App\Modules\Customer\Models\Customer;
 use App\Services\ContextService;
 use App\Services\NumberFormatService;
@@ -27,7 +28,7 @@ class CustomerController extends Controller
         $companyId = $this->getEffectiveCompanyId();
 
         $allowedSortColumns = ['name', 'email', 'created_at', 'status', 'number'];
-        $sortBy    = in_array($request->get('sort_by'), $allowedSortColumns, true) ? $request->get('sort_by') : 'created_at';
+        $sortBy = in_array($request->get('sort_by'), $allowedSortColumns, true) ? $request->get('sort_by') : 'created_at';
         $sortOrder = $request->get('sort_order') === 'asc' ? 'asc' : 'desc';
 
         $query = Customer::forCompany($companyId);
@@ -36,8 +37,8 @@ class CustomerController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('number', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('number', 'like', "%{$search}%");
             });
         }
 
@@ -66,15 +67,16 @@ class CustomerController extends Controller
 
         $customers->getCollection()->transform(function ($customer) use ($invoiceStats) {
             $stats = $invoiceStats->get($customer->id);
-            $customer->total_invoices      = $stats?->total_invoices      ?? 0;
-            $customer->total_revenue       = $stats?->total_revenue        ?? 0;
-            $customer->outstanding_amount  = $stats?->outstanding_amount   ?? 0;
+            $customer->total_invoices = $stats?->total_invoices ?? 0;
+            $customer->total_revenue = $stats?->total_revenue ?? 0;
+            $customer->outstanding_amount = $stats?->outstanding_amount ?? 0;
+
             return $customer;
         });
 
         return Inertia::render('customers/index', [
             'customers' => $customers,
-            'filters'   => $request->only(['search', 'status', 'sort_by', 'sort_order']),
+            'filters' => $request->only(['search', 'status', 'sort_by', 'sort_order']),
         ]);
     }
 
@@ -104,21 +106,32 @@ class CustomerController extends Controller
             'tax_number' => 'nullable|string|max:50',
             'vat_number' => 'nullable|string|max:50',
             'leitweg_id' => 'nullable|string|max:64',
-            'contact_person' => 'nullable|string|max:255',
             'customer_type' => 'required|in:business,private',
             'status' => 'nullable|in:active,inactive',
+            // Optional first Ansprechpartner; more are managed on the customer page.
+            'first_contact' => 'nullable|array',
+            'first_contact.name' => 'nullable|required_with:first_contact.email|string|max:255',
+            'first_contact.email' => 'nullable|required_with:first_contact.name|email|max:255',
+            'first_contact.title' => 'nullable|string|max:255',
+            'first_contact.phone' => 'nullable|string|max:50',
+        ], [
+            'first_contact.name.required_with' => 'Bitte geben Sie den Namen des Ansprechpartners ein.',
+            'first_contact.email.required_with' => 'Bitte geben Sie die E-Mail-Adresse des Ansprechpartners ein.',
         ]);
 
+        $firstContact = $validated['first_contact'] ?? null;
+        unset($validated['first_contact']);
+
         // Set default status if not provided
-        if (!isset($validated['status'])) {
+        if (! isset($validated['status'])) {
             $validated['status'] = 'active';
         }
 
         // Generate customer number using dynamic format setting
         $companyId = $this->getEffectiveCompanyId();
-        $company   = \App\Modules\Company\Models\Company::find($companyId);
-        $svc       = new NumberFormatService();
-        $format    = $svc->normaliseToFormat(
+        $company = Company::find($companyId);
+        $svc = new NumberFormatService;
+        $format = $svc->normaliseToFormat(
             $company->getSetting('customer_number_format')
                 ?? $company->getSetting('customer_prefix', 'KU-')
         );
@@ -126,7 +139,17 @@ class CustomerController extends Controller
         $validated['company_id'] = $companyId;
         $validated['user_id'] = $user->id;
 
-        Customer::create($validated);
+        $customer = Customer::create($validated);
+
+        if (! empty($firstContact['name']) && ! empty($firstContact['email'])) {
+            $customer->contacts()->create([
+                'company_id' => $companyId,
+                'name' => $firstContact['name'],
+                'email' => $firstContact['email'],
+                'title' => $firstContact['title'] ?? null,
+                'phone' => $firstContact['phone'] ?? null,
+            ]);
+        }
 
         return redirect()->route('customers.index')
             ->with('success', 'Kunde erfolgreich erstellt.');
@@ -140,7 +163,7 @@ class CustomerController extends Controller
     {
         $this->authorize('viewAny', Customer::class);
 
-        $term      = trim((string) $request->query('q', ''));
+        $term = trim((string) $request->query('q', ''));
         $companyId = $this->getEffectiveCompanyId();
 
         $query = Customer::forCompany($companyId)->select('id', 'name', 'number');
@@ -148,7 +171,7 @@ class CustomerController extends Controller
         if ($term !== '') {
             $query->where(function ($q) use ($term) {
                 $q->where('name', 'like', "%{$term}%")
-                  ->orWhere('number', 'like', "%{$term}%");
+                    ->orWhere('number', 'like', "%{$term}%");
             });
         }
 
@@ -172,6 +195,7 @@ class CustomerController extends Controller
                 $query->orderBy('issue_date', 'desc');
             },
             'documents',
+            'contacts',
         ]);
 
         // Calculate customer statistics
@@ -187,7 +211,7 @@ class CustomerController extends Controller
 
         return Inertia::render('customers/show', [
             'customer' => $customer,
-            'stats'    => $stats,
+            'stats' => $stats,
         ]);
     }
 
@@ -198,7 +222,7 @@ class CustomerController extends Controller
     {
         $this->authorize('update', $customer);
 
-        $customer->load('documents');
+        $customer->load(['documents', 'contacts']);
 
         return Inertia::render('customers/edit', [
             'customer' => $customer,
@@ -223,7 +247,6 @@ class CustomerController extends Controller
             'tax_number' => 'nullable|string|max:50',
             'vat_number' => 'nullable|string|max:50',
             'leitweg_id' => 'nullable|string|max:64',
-            'contact_person' => 'nullable|string|max:255',
             'customer_type' => 'required|in:business,private',
             'status' => 'required|in:active,inactive',
         ]);
@@ -245,9 +268,9 @@ class CustomerController extends Controller
         $this->authorize('view', $customer);
 
         $companyId = $this->getEffectiveCompanyId();
-        $company   = \App\Modules\Company\Models\Company::find($companyId);
-        $svc       = new NumberFormatService();
-        $format    = $svc->normaliseToFormat(
+        $company = Company::find($companyId);
+        $svc = new NumberFormatService;
+        $format = $svc->normaliseToFormat(
             $company->getSetting('customer_number_format')
                 ?? $company->getSetting('customer_prefix', 'KU-')
         );
@@ -257,8 +280,17 @@ class CustomerController extends Controller
         // not the source tenant (important when super-admins cross company boundaries).
         $newCustomer->company_id = $companyId;
         $newCustomer->number = $svc->next($format, Customer::where('company_id', $companyId)->pluck('number'));
-        $newCustomer->name   = $customer->name . ' (Kopie)';
+        $newCustomer->name = $customer->name.' (Kopie)';
         $newCustomer->save();
+
+        // Carry the Ansprechpartner over (primary first so the invariants
+        // in CustomerContact assign the same primary on the copy).
+        foreach ($customer->contacts as $contact) {
+            $newCustomer->contacts()->create(array_merge(
+                $contact->only(['name', 'email', 'title', 'phone', 'is_primary', 'receives_invoices', 'receives_reminders', 'receives_offers', 'sort_order']),
+                ['company_id' => $companyId]
+            ));
+        }
 
         return redirect()->route('customers.edit', $newCustomer)
             ->with('success', 'Kunde erfolgreich dupliziert.');

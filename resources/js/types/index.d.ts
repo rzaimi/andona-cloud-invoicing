@@ -47,6 +47,20 @@ export interface User {
     updated_at: string
 }
 
+export interface CustomerContact {
+    id: string
+    customer_id: string
+    name: string
+    email: string | null
+    title?: string | null
+    phone?: string | null
+    is_primary: boolean
+    receives_invoices: boolean
+    receives_reminders: boolean
+    receives_offers: boolean
+    sort_order: number
+}
+
 export interface Customer {
     id: string
     company_id: string
@@ -61,7 +75,9 @@ export interface Customer {
     tax_number?: string
     vat_number?: string
     leitweg_id?: string
+    /** Name of the primary contact — derived from `contacts`, read-only. */
     contact_person?: string
+    contacts?: CustomerContact[]
     customer_type: "business" | "private"
     status: "active" | "inactive"
     company?: Company

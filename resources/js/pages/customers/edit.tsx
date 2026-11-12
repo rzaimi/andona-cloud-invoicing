@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Building2, User, FileText, Download } from "lucide-react"
+import { CustomerContactsCard } from "@/components/customer-contacts-card"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Customer, PageProps } from "@/types"
 
@@ -50,7 +51,6 @@ export default function CustomersEdit() {
         tax_number: customer.tax_number || "",
         vat_number: customer.vat_number || "",
         leitweg_id: customer.leitweg_id || "",
-        contact_person: customer.contact_person || "",
         customer_type: customer.customer_type || "business",
         status: customer.status || "active",
     })
@@ -168,18 +168,6 @@ export default function CustomersEdit() {
                                     <Input id="phone" value={data.phone} onChange={(e) => setData("phone", e.target.value)} />
                                     {errors.phone && <p className="text-red-600 text-sm">{errors.phone}</p>}
                                 </div>
-
-                                {data.customer_type === "business" && (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="contact_person">Ansprechpartner</Label>
-                                        <Input
-                                            id="contact_person"
-                                            value={data.contact_person}
-                                            onChange={(e) => setData("contact_person", e.target.value)}
-                                        />
-                                        {errors.contact_person && <p className="text-red-600 text-sm">{errors.contact_person}</p>}
-                                    </div>
-                                )}
 
                                 <div className="space-y-2">
                                     <Label htmlFor="status">Status</Label>
@@ -302,6 +290,9 @@ export default function CustomersEdit() {
                             </CardContent>
                         </Card>
                     )}
+
+                    {/* Contact persons — saved independently of the form above */}
+                    <CustomerContactsCard customerId={customer.id} contacts={customer.contacts ?? []} />
 
                     {/* Documents */}
                     {customer.documents && customer.documents.length > 0 && (

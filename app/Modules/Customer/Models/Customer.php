@@ -3,6 +3,7 @@
 namespace App\Modules\Customer\Models;
 
 use App\Modules\Company\Models\Company;
+use App\Modules\Document\Models\Document;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Offer\Models\Offer;
 use App\Services\NumberFormatService;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Customer extends Model
 {
@@ -61,11 +63,21 @@ class Customer extends Model
     }
 
     /**
+     * Contact persons (Ansprechpartner), primary first.
+     */
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(CustomerContact::class)
+            ->orderByDesc('is_primary')
+            ->orderBy('sort_order');
+    }
+
+    /**
      * Documents linked to this customer
      */
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
-        return $this->morphMany(\App\Modules\Document\Models\Document::class, 'linkable');
+        return $this->morphMany(Document::class, 'linkable');
     }
 
     public function scopeActive($query)
@@ -90,14 +102,14 @@ class Customer extends Model
 
     public function generateCustomerNumber(): string
     {
-        $company    = $this->company ?? Company::find($this->company_id);
-        $svc        = new NumberFormatService();
-        $format     = $svc->normaliseToFormat(
+        $company = $this->company ?? Company::find($this->company_id);
+        $svc = new NumberFormatService;
+        $format = $svc->normaliseToFormat(
             $company->getSetting('customer_number_format')
                 ?? $company->getSetting('customer_prefix', 'KU-')
         );
         $minCounter = (int) ($company->getSetting('customer_next_counter') ?? 1);
-        $numbers    = static::where('company_id', $this->company_id)->pluck('number');
+        $numbers = static::where('company_id', $this->company_id)->pluck('number');
 
         return $svc->next($format, $numbers, null, $minCounter);
     }
@@ -106,8 +118,8 @@ class Customer extends Model
     {
         $parts = array_filter([
             $this->address,
-            $this->postal_code . ' ' . $this->city,
-            $this->country
+            $this->postal_code.' '.$this->city,
+            $this->country,
         ]);
 
         return implode(', ', $parts);

@@ -645,6 +645,7 @@ export default function InvoicesIndex() {
                     type="invoice"
                     documentId={selectedInvoice.id}
                     documentNumber={selectedInvoice.number}
+                    customerId={selectedInvoice.customer?.id ?? selectedInvoice.customer_id}
                     customerEmail={selectedInvoice.customer?.email}
                     customerName={selectedInvoice.customer?.name}
                     issueDate={selectedInvoice.issue_date}

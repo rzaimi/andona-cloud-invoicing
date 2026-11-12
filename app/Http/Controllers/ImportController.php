@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Modules\Customer\Models\Customer;
-use App\Modules\Product\Models\Product;
-use App\Modules\Product\Models\Category;
 use App\Modules\Invoice\Models\Invoice;
 use App\Modules\Invoice\Models\InvoiceItem;
-use App\Modules\User\Models\User;
+use App\Modules\Product\Models\Category;
+use App\Modules\Product\Models\Product;
 use App\Services\ContextService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -41,13 +41,13 @@ class ImportController extends Controller
 
         $companyId = $this->getEffectiveCompanyId();
         $file = $request->file('file');
-        
+
         $errors = [];
         $success = [];
         $skipped = [];
-        
+
         $handle = fopen($file->getRealPath(), 'r');
-        
+
         // Skip UTF-8 BOM if present
         $firstLine = fgets($handle);
         if (substr($firstLine, 0, 3) === "\xEF\xBB\xBF") {
@@ -56,13 +56,13 @@ class ImportController extends Controller
         } else {
             rewind($handle);
         }
-        
+
         // Read header row
         $header = fgetcsv($handle, 0, ';');
-        if (!$header) {
+        if (! $header) {
             return back()->withErrors(['file' => 'Die CSV-Datei ist leer oder ungültig.']);
         }
-        
+
         // Map German headers to English field names
         $headerMap = [
             'Nummer' => 'number',
@@ -79,7 +79,7 @@ class ImportController extends Controller
             'Typ' => 'customer_type',
             'Status' => 'status',
         ];
-        
+
         $mappedHeaders = [];
         foreach ($header as $index => $col) {
             $col = trim($col);
@@ -87,93 +87,110 @@ class ImportController extends Controller
                 $mappedHeaders[$index] = $headerMap[$col];
             }
         }
-        
+
         $rowNumber = 1;
-        
+
         DB::beginTransaction();
         try {
             while (($row = fgetcsv($handle, 0, ';')) !== false) {
                 $rowNumber++;
-                
+
                 // Skip empty rows
                 if (empty(array_filter($row))) {
                     continue;
                 }
-                
+
                 $data = [];
                 foreach ($mappedHeaders as $index => $field) {
                     $data[$field] = isset($row[$index]) ? trim($row[$index]) : null;
                 }
-                
+
                 // Skip if no name or email
                 if (empty($data['name']) && empty($data['email'])) {
                     $skipped[] = "Zeile {$rowNumber}: Kein Name oder E-Mail angegeben";
+
                     continue;
                 }
-                
+
                 // Validate data
                 $validator = Validator::make($data, [
                     'email' => 'nullable|email',
                     'customer_type' => 'nullable|in:business,private',
                     'status' => 'nullable|in:active,inactive',
                 ]);
-                
+
                 if ($validator->fails()) {
-                    $errors[] = "Zeile {$rowNumber}: " . implode(', ', $validator->errors()->all());
+                    $errors[] = "Zeile {$rowNumber}: ".implode(', ', $validator->errors()->all());
+
                     continue;
                 }
-                
+
                 // Check if customer already exists (by number or email)
                 $existing = Customer::forCompany($companyId)
                     ->where(function ($q) use ($data) {
-                        if (!empty($data['number'])) {
+                        if (! empty($data['number'])) {
                             $q->where('number', $data['number']);
                         }
-                        if (!empty($data['email'])) {
+                        if (! empty($data['email'])) {
                             $q->orWhere('email', $data['email']);
                         }
                     })
                     ->first();
-                
+
                 if ($existing) {
                     $skipped[] = "Zeile {$rowNumber}: Kunde existiert bereits ({$data['number']} oder {$data['email']})";
+
                     continue;
                 }
-                
+
                 // Set defaults
                 $data['company_id'] = $companyId;
                 $data['customer_type'] = $data['customer_type'] ?? 'business';
                 $data['status'] = $data['status'] ?? 'active';
-                
+
+                // The Ansprechpartner column becomes a contact (which syncs
+                // customers.contact_person itself), not a raw column write.
+                $contactName = $data['contact_person'] ?? null;
+                unset($data['contact_person']);
+
                 // Create customer
                 $customer = Customer::create($data);
+
+                if (! empty($contactName)) {
+                    $customer->contacts()->create([
+                        'company_id' => $companyId,
+                        'name' => $contactName,
+                        'email' => ($data['email'] ?? null) ?: null,
+                    ]);
+                }
+
                 $success[] = "Zeile {$rowNumber}: Kunde '{$customer->name}' erfolgreich importiert";
             }
-            
+
             DB::commit();
-            
+
             fclose($handle);
-            
-            $message = count($success) . ' Kunden erfolgreich importiert.';
+
+            $message = count($success).' Kunden erfolgreich importiert.';
             if (count($skipped) > 0) {
-                $message .= ' ' . count($skipped) . ' Zeilen übersprungen.';
+                $message .= ' '.count($skipped).' Zeilen übersprungen.';
             }
             if (count($errors) > 0) {
-                $message .= ' ' . count($errors) . ' Fehler aufgetreten.';
+                $message .= ' '.count($errors).' Fehler aufgetreten.';
             }
-            
+
             return back()->with('success', $message)
                 ->with('import_details', [
                     'success' => $success,
                     'skipped' => $skipped,
                     'errors' => $errors,
                 ]);
-                
+
         } catch (\Exception $e) {
             DB::rollBack();
             fclose($handle);
-            
-            return back()->withErrors(['file' => 'Fehler beim Import: ' . $e->getMessage()]);
+
+            return back()->withErrors(['file' => 'Fehler beim Import: '.$e->getMessage()]);
         }
     }
 
@@ -188,13 +205,13 @@ class ImportController extends Controller
 
         $companyId = $this->getEffectiveCompanyId();
         $file = $request->file('file');
-        
+
         $errors = [];
         $success = [];
         $skipped = [];
-        
+
         $handle = fopen($file->getRealPath(), 'r');
-        
+
         // Skip UTF-8 BOM if present
         $firstLine = fgets($handle);
         if (substr($firstLine, 0, 3) === "\xEF\xBB\xBF") {
@@ -203,13 +220,13 @@ class ImportController extends Controller
         } else {
             rewind($handle);
         }
-        
+
         // Read header row
         $header = fgetcsv($handle, 0, ';');
-        if (!$header) {
+        if (! $header) {
             return back()->withErrors(['file' => 'Die CSV-Datei ist leer oder ungültig.']);
         }
-        
+
         // Map German headers to English field names
         $headerMap = [
             'Nummer' => 'number',
@@ -228,7 +245,7 @@ class ImportController extends Controller
             'Service' => 'is_service',
             'Status' => 'status',
         ];
-        
+
         $mappedHeaders = [];
         foreach ($header as $index => $col) {
             $col = trim($col);
@@ -236,38 +253,39 @@ class ImportController extends Controller
                 $mappedHeaders[$index] = $headerMap[$col];
             }
         }
-        
+
         $rowNumber = 1;
-        
+
         DB::beginTransaction();
         try {
             while (($row = fgetcsv($handle, 0, ';')) !== false) {
                 $rowNumber++;
-                
+
                 // Skip empty rows
                 if (empty(array_filter($row))) {
                     continue;
                 }
-                
+
                 $data = [];
                 foreach ($mappedHeaders as $index => $field) {
                     $data[$field] = isset($row[$index]) ? trim($row[$index]) : null;
                 }
-                
+
                 // Skip if no name
                 if (empty($data['name'])) {
                     $skipped[] = "Zeile {$rowNumber}: Kein Name angegeben";
+
                     continue;
                 }
-                
+
                 // Handle category
                 $categoryId = null;
-                if (!empty($data['category_name'])) {
+                if (! empty($data['category_name'])) {
                     $category = Category::where('company_id', $companyId)
                         ->where('name', $data['category_name'])
                         ->first();
-                    
-                    if (!$category) {
+
+                    if (! $category) {
                         // Create category if it doesn't exist
                         $category = Category::create([
                             'company_id' => $companyId,
@@ -277,7 +295,7 @@ class ImportController extends Controller
                     $categoryId = $category->id;
                 }
                 unset($data['category_name']);
-                
+
                 // Convert price strings (German format: 12,34) to float
                 if (isset($data['price'])) {
                     $data['price'] = $this->parseGermanNumber($data['price']);
@@ -285,13 +303,13 @@ class ImportController extends Controller
                 if (isset($data['cost_price'])) {
                     $data['cost_price'] = $this->parseGermanNumber($data['cost_price']);
                 }
-                
+
                 // Convert tax rate from percentage to decimal
                 if (isset($data['tax_rate'])) {
                     $taxRate = $this->parseGermanNumber($data['tax_rate']);
                     $data['tax_rate'] = $taxRate / 100; // Convert from percentage
                 }
-                
+
                 // Convert boolean strings
                 if (isset($data['track_stock'])) {
                     $data['track_stock'] = in_array(strtolower($data['track_stock']), ['ja', 'yes', '1', 'true']);
@@ -299,7 +317,7 @@ class ImportController extends Controller
                 if (isset($data['is_service'])) {
                     $data['is_service'] = in_array(strtolower($data['is_service']), ['ja', 'yes', '1', 'true']);
                 }
-                
+
                 // Convert numeric fields
                 if (isset($data['stock_quantity'])) {
                     $data['stock_quantity'] = (int) $this->parseGermanNumber($data['stock_quantity']);
@@ -307,7 +325,7 @@ class ImportController extends Controller
                 if (isset($data['min_stock_level'])) {
                     $data['min_stock_level'] = (int) $this->parseGermanNumber($data['min_stock_level']);
                 }
-                
+
                 // Validate data
                 $validator = Validator::make($data, [
                     'price' => 'nullable|numeric|min:0',
@@ -317,29 +335,31 @@ class ImportController extends Controller
                     'min_stock_level' => 'nullable|integer|min:0',
                     'status' => 'nullable|in:active,inactive',
                 ]);
-                
+
                 if ($validator->fails()) {
-                    $errors[] = "Zeile {$rowNumber}: " . implode(', ', $validator->errors()->all());
+                    $errors[] = "Zeile {$rowNumber}: ".implode(', ', $validator->errors()->all());
+
                     continue;
                 }
-                
+
                 // Check if product already exists (by number or SKU)
                 $existing = Product::forCompany($companyId)
                     ->where(function ($q) use ($data) {
-                        if (!empty($data['number'])) {
+                        if (! empty($data['number'])) {
                             $q->where('number', $data['number']);
                         }
-                        if (!empty($data['sku'])) {
+                        if (! empty($data['sku'])) {
                             $q->orWhere('sku', $data['sku']);
                         }
                     })
                     ->first();
-                
+
                 if ($existing) {
                     $skipped[] = "Zeile {$rowNumber}: Produkt existiert bereits ({$data['number']} oder {$data['sku']})";
+
                     continue;
                 }
-                
+
                 // Set defaults
                 $data['company_id'] = $companyId;
                 $data['category_id'] = $categoryId;
@@ -350,36 +370,36 @@ class ImportController extends Controller
                 $data['is_service'] = $data['is_service'] ?? false;
                 $data['stock_quantity'] = $data['stock_quantity'] ?? 0;
                 $data['min_stock_level'] = $data['min_stock_level'] ?? 0;
-                
+
                 // Create product
                 $product = Product::create($data);
                 $success[] = "Zeile {$rowNumber}: Produkt '{$product->name}' erfolgreich importiert";
             }
-            
+
             DB::commit();
-            
+
             fclose($handle);
-            
-            $message = count($success) . ' Produkte erfolgreich importiert.';
+
+            $message = count($success).' Produkte erfolgreich importiert.';
             if (count($skipped) > 0) {
-                $message .= ' ' . count($skipped) . ' Zeilen übersprungen.';
+                $message .= ' '.count($skipped).' Zeilen übersprungen.';
             }
             if (count($errors) > 0) {
-                $message .= ' ' . count($errors) . ' Fehler aufgetreten.';
+                $message .= ' '.count($errors).' Fehler aufgetreten.';
             }
-            
+
             return back()->with('success', $message)
                 ->with('import_details', [
                     'success' => $success,
                     'skipped' => $skipped,
                     'errors' => $errors,
                 ]);
-                
+
         } catch (\Exception $e) {
             DB::rollBack();
             fclose($handle);
-            
-            return back()->withErrors(['file' => 'Fehler beim Import: ' . $e->getMessage()]);
+
+            return back()->withErrors(['file' => 'Fehler beim Import: '.$e->getMessage()]);
         }
     }
 
@@ -394,13 +414,13 @@ class ImportController extends Controller
 
         $companyId = $this->getEffectiveCompanyId();
         $file = $request->file('file');
-        
+
         $errors = [];
         $success = [];
         $skipped = [];
-        
+
         $handle = fopen($file->getRealPath(), 'r');
-        
+
         // Skip UTF-8 BOM if present
         $firstLine = fgets($handle);
         if (substr($firstLine, 0, 3) === "\xEF\xBB\xBF") {
@@ -409,13 +429,13 @@ class ImportController extends Controller
         } else {
             rewind($handle);
         }
-        
+
         // Read header row
         $header = fgetcsv($handle, 0, ';');
-        if (!$header) {
+        if (! $header) {
             return back()->withErrors(['file' => 'Die CSV-Datei ist leer oder ungültig.']);
         }
-        
+
         // Map German headers to English field names
         $headerMap = [
             'Rechnungsnummer' => 'number',
@@ -433,7 +453,7 @@ class ImportController extends Controller
             'Zahlungsmethode' => 'payment_method',
             'Zahlungsbedingungen' => 'payment_terms',
         ];
-        
+
         $mappedHeaders = [];
         foreach ($header as $index => $col) {
             $col = trim($col);
@@ -441,64 +461,67 @@ class ImportController extends Controller
                 $mappedHeaders[$index] = $headerMap[$col];
             }
         }
-        
+
         $rowNumber = 1;
         $currentUser = $request->user();
-        
+
         DB::beginTransaction();
         try {
             while (($row = fgetcsv($handle, 0, ';')) !== false) {
                 $rowNumber++;
-                
+
                 // Skip empty rows
                 if (empty(array_filter($row))) {
                     continue;
                 }
-                
+
                 $data = [];
                 foreach ($mappedHeaders as $index => $field) {
                     $data[$field] = isset($row[$index]) ? trim($row[$index]) : null;
                 }
-                
+
                 // Skip if no invoice number
                 if (empty($data['number'])) {
                     $skipped[] = "Zeile {$rowNumber}: Keine Rechnungsnummer angegeben";
+
                     continue;
                 }
-                
+
                 // Check if invoice already exists
                 $existing = Invoice::forCompany($companyId)
                     ->where('number', $data['number'])
                     ->first();
-                
+
                 if ($existing) {
                     $skipped[] = "Zeile {$rowNumber}: Rechnung '{$data['number']}' existiert bereits";
+
                     continue;
                 }
-                
+
                 // Find or create customer
                 $customer = null;
-                if (!empty($data['customer_number'])) {
+                if (! empty($data['customer_number'])) {
                     $customer = Customer::forCompany($companyId)
                         ->where('number', $data['customer_number'])
                         ->first();
-                } elseif (!empty($data['customer_email'])) {
+                } elseif (! empty($data['customer_email'])) {
                     $customer = Customer::forCompany($companyId)
                         ->where('email', $data['customer_email'])
                         ->first();
-                } elseif (!empty($data['customer_name'])) {
+                } elseif (! empty($data['customer_name'])) {
                     $customer = Customer::forCompany($companyId)
                         ->where('name', $data['customer_name'])
                         ->first();
                 }
-                
-                if (!$customer) {
+
+                if (! $customer) {
                     // Create customer if not found
                     if (empty($data['customer_name'])) {
                         $errors[] = "Zeile {$rowNumber}: Kunde nicht gefunden und kein Name angegeben";
+
                         continue;
                     }
-                    
+
                     $customer = Customer::create([
                         'company_id' => $companyId,
                         'name' => $data['customer_name'],
@@ -506,31 +529,32 @@ class ImportController extends Controller
                         'status' => 'active',
                     ]);
                 }
-                
+
                 // Parse dates (German format: dd.mm.yyyy)
                 $issueDate = null;
-                if (!empty($data['issue_date'])) {
+                if (! empty($data['issue_date'])) {
                     try {
-                        $issueDate = \Carbon\Carbon::createFromFormat('d.m.Y', $data['issue_date']);
+                        $issueDate = Carbon::createFromFormat('d.m.Y', $data['issue_date']);
                     } catch (\Exception $e) {
                         try {
-                            $issueDate = \Carbon\Carbon::parse($data['issue_date']);
+                            $issueDate = Carbon::parse($data['issue_date']);
                         } catch (\Exception $e2) {
                             $errors[] = "Zeile {$rowNumber}: Ungültiges Rechnungsdatum: {$data['issue_date']}";
+
                             continue;
                         }
                     }
                 } else {
                     $issueDate = now();
                 }
-                
+
                 $dueDate = null;
-                if (!empty($data['due_date'])) {
+                if (! empty($data['due_date'])) {
                     try {
-                        $dueDate = \Carbon\Carbon::createFromFormat('d.m.Y', $data['due_date']);
+                        $dueDate = Carbon::createFromFormat('d.m.Y', $data['due_date']);
                     } catch (\Exception $e) {
                         try {
-                            $dueDate = \Carbon\Carbon::parse($data['due_date']);
+                            $dueDate = Carbon::parse($data['due_date']);
                         } catch (\Exception $e2) {
                             $dueDate = $issueDate->copy()->addDays(14); // Default 14 days
                         }
@@ -538,22 +562,22 @@ class ImportController extends Controller
                 } else {
                     $dueDate = $issueDate->copy()->addDays(14);
                 }
-                
+
                 // Parse amounts
                 $subtotal = $this->parseGermanNumber($data['subtotal'] ?? '0');
                 $taxAmount = $this->parseGermanNumber($data['tax_amount'] ?? '0');
                 $total = $this->parseGermanNumber($data['total'] ?? '0');
-                
+
                 // Parse tax rate (percentage to decimal)
                 $taxRate = 0.19; // Default 19%
-                if (!empty($data['tax_rate'])) {
+                if (! empty($data['tax_rate'])) {
                     $taxRateValue = $this->parseGermanNumber($data['tax_rate']);
                     $taxRate = $taxRateValue / 100; // Convert from percentage
                 } elseif ($subtotal > 0) {
                     // Calculate tax rate from amounts
                     $taxRate = $taxAmount / $subtotal;
                 }
-                
+
                 // Validate data
                 $validator = Validator::make([
                     'number' => $data['number'],
@@ -566,12 +590,13 @@ class ImportController extends Controller
                     'subtotal' => 'nullable|numeric|min:0',
                     'total' => 'nullable|numeric|min:0',
                 ]);
-                
+
                 if ($validator->fails()) {
-                    $errors[] = "Zeile {$rowNumber}: " . implode(', ', $validator->errors()->all());
+                    $errors[] = "Zeile {$rowNumber}: ".implode(', ', $validator->errors()->all());
+
                     continue;
                 }
-                
+
                 // Create invoice
                 $invoice = Invoice::create([
                     'company_id' => $companyId,
@@ -589,7 +614,7 @@ class ImportController extends Controller
                     'payment_method' => $data['payment_method'] ?? null,
                     'payment_terms' => $data['payment_terms'] ?? null,
                 ]);
-                
+
                 // If no items, create a single item from the totals
                 if ($subtotal > 0) {
                     InvoiceItem::create([
@@ -604,34 +629,34 @@ class ImportController extends Controller
                         'sort_order' => 0,
                     ]);
                 }
-                
+
                 $success[] = "Zeile {$rowNumber}: Rechnung '{$invoice->number}' erfolgreich importiert";
             }
-            
+
             DB::commit();
-            
+
             fclose($handle);
-            
-            $message = count($success) . ' Rechnungen erfolgreich importiert.';
+
+            $message = count($success).' Rechnungen erfolgreich importiert.';
             if (count($skipped) > 0) {
-                $message .= ' ' . count($skipped) . ' Zeilen übersprungen.';
+                $message .= ' '.count($skipped).' Zeilen übersprungen.';
             }
             if (count($errors) > 0) {
-                $message .= ' ' . count($errors) . ' Fehler aufgetreten.';
+                $message .= ' '.count($errors).' Fehler aufgetreten.';
             }
-            
+
             return back()->with('success', $message)
                 ->with('import_details', [
                     'success' => $success,
                     'skipped' => $skipped,
                     'errors' => $errors,
                 ]);
-                
+
         } catch (\Exception $e) {
             DB::rollBack();
             fclose($handle);
-            
-            return back()->withErrors(['file' => 'Fehler beim Import: ' . $e->getMessage()]);
+
+            return back()->withErrors(['file' => 'Fehler beim Import: '.$e->getMessage()]);
         }
     }
 
@@ -643,11 +668,10 @@ class ImportController extends Controller
         if (empty($value)) {
             return 0;
         }
-        
+
         // Remove spaces and convert comma to dot
         $value = str_replace([' ', ','], ['', '.'], $value);
-        
+
         return (float) $value;
     }
 }
-

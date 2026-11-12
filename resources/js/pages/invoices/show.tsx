@@ -6,18 +6,7 @@ import { Head, Link, router, usePage } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
 import { ArrowLeft, Edit, Trash2, FileText, Download, Send, CreditCard, Plus, CheckCircle, Clock, XCircle, Eye, RefreshCw, GitBranch, Loader2, FlagTriangleRight, Copy, MoreHorizontal, Bell } from "lucide-react"
 import {
     DropdownMenu,
@@ -26,6 +15,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { SendEmailDialog } from "@/components/send-email-dialog"
 import AppLayout from "@/layouts/app-layout"
 import type { BreadcrumbItem, Invoice, InvoiceItem, PageProps } from "@/types"
 import { route } from "ziggy-js"
@@ -185,56 +175,7 @@ export default function InvoicesShow() {
     }
 
     const [isSendDialogOpen, setIsSendDialogOpen] = useState(false)
-    const [isSending, setIsSending] = useState(false)
-    const [sendForm, setSendForm] = useState({
-        to: invoice.customer?.email || "",
-        cc: "",
-        subject: `Rechnung ${invoice.number}`,
-        message: "" as string,
-    })
-
-    const handleOpenSendDialog = () => {
-        const fmt = (d?: string) =>
-            d ? new Date(d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""
-        const greeting = invoice.customer?.name
-            ? `Sehr geehrte Damen und Herren von ${invoice.customer.name},`
-            : "Sehr geehrte Damen und Herren,"
-        const defaultMessage = [
-            greeting,
-            "",
-            invoice.status === "draft"
-                ? `anbei erhalten Sie die Rechnung ${invoice.number}${invoice.issue_date ? ` vom ${fmt(invoice.issue_date)}` : ""}.`
-                : `anbei erhalten Sie erneut die Rechnung ${invoice.number}${invoice.issue_date ? ` vom ${fmt(invoice.issue_date)}` : ""}.`,
-            "",
-            "Die Rechnung als PDF-Datei finden Sie im Anhang dieser E-Mail.",
-            ...(invoice.due_date
-                ? ["", `Bitte überweisen Sie den Betrag bis zum ${fmt(invoice.due_date)} unter Angabe der Rechnungsnummer ${invoice.number}.`]
-                : []),
-            "",
-            "Bei Fragen stehen wir Ihnen gerne zur Verfügung.",
-            "",
-            "Mit freundlichen Grüßen",
-        ].join("\n")
-
-        setSendForm({
-            to: invoice.customer?.email || "",
-            cc: "",
-            subject: invoice.status === "draft"
-                ? `Rechnung ${invoice.number}`
-                : `Rechnung ${invoice.number} – erneute Zusendung`,
-            message: defaultMessage,
-        })
-        setIsSendDialogOpen(true)
-    }
-
-    const handleSendInvoice = (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsSending(true)
-        router.post(route("invoices.send", invoice.id), sendForm, {
-            onFinish: () => setIsSending(false),
-            onSuccess: () => setIsSendDialogOpen(false),
-        })
-    }
+    const handleOpenSendDialog = () => setIsSendDialogOpen(true)
 
     const payments = invoice.payments || []
     const completedPayments = payments.filter(p => p.status === 'completed')
@@ -768,81 +709,20 @@ export default function InvoicesShow() {
                     </div>
                 </div>
             </div>
-            {/* Send Invoice Dialog */}
-            <Dialog open={isSendDialogOpen} onOpenChange={setIsSendDialogOpen}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>{invoice.status === "draft" ? "Rechnung versenden" : "Rechnung erneut senden"}</DialogTitle>
-                        <DialogDescription>
-                            {invoice.status === "draft"
-                                ? `Rechnung ${invoice.number} per E-Mail an den Kunden senden. Die PDF wird automatisch angehängt.`
-                                : `Senden Sie die Rechnung ${invoice.number} erneut als PDF. Sie können eine andere Empfängeradresse eintragen.`}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={handleSendInvoice} className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="send-to">Empfänger (An) *</Label>
-                            <Input
-                                id="send-to"
-                                type="email"
-                                value={sendForm.to}
-                                onChange={(e) => setSendForm({ ...sendForm, to: e.target.value })}
-                                placeholder="kunde@beispiel.de"
-                                required
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="send-cc">CC (optional)</Label>
-                            <Input
-                                id="send-cc"
-                                type="email"
-                                value={sendForm.cc}
-                                onChange={(e) => setSendForm({ ...sendForm, cc: e.target.value })}
-                                placeholder="kopie@beispiel.de"
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="send-subject">Betreff *</Label>
-                            <Input
-                                id="send-subject"
-                                value={sendForm.subject}
-                                onChange={(e) => setSendForm({ ...sendForm, subject: e.target.value })}
-                                placeholder="Rechnung ..."
-                                required
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="send-message">Nachricht (optional)</Label>
-                            <Textarea
-                                id="send-message"
-                                value={sendForm.message}
-                                onChange={(e) => setSendForm({ ...sendForm, message: e.target.value })}
-                                placeholder="Sehr geehrte Damen und Herren, ..."
-                                rows={8}
-                            />
-                        </div>
-
-                        <DialogFooter>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsSendDialogOpen(false)}
-                                disabled={isSending}
-                            >
-                                Abbrechen
-                            </Button>
-                            <Button type="submit" disabled={isSending}>
-                                <Send className="mr-2 h-4 w-4" />
-                                {isSending ? "Wird gesendet..." : "Rechnung senden"}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <SendEmailDialog
+                key={`${invoice.id}-${invoice.status}`}
+                open={isSendDialogOpen}
+                onOpenChange={setIsSendDialogOpen}
+                type="invoice"
+                documentId={invoice.id}
+                documentNumber={invoice.number}
+                customerId={invoice.customer?.id ?? invoice.customer_id}
+                customerEmail={invoice.customer?.email}
+                customerName={invoice.customer?.name}
+                issueDate={invoice.issue_date}
+                dueDate={invoice.due_date}
+                isResend={invoice.status !== "draft"}
+            />
         </AppLayout>
     )
 }
