@@ -51,8 +51,23 @@ class InvoiceItem extends Model
         return (float) $this->unit_price < 0;
     }
 
+    /** EP (Einheitspreis) is an alternative and does not count toward the sum. */
+    public function isAlternative(): bool
+    {
+        return strcasecmp(trim((string) $this->unit), 'EP') === 0;
+    }
+
     public function calculateTotal(): void
     {
+        if ($this->isAlternative()) {
+            $this->discount_type = null;
+            $this->discount_value = null;
+            $this->discount_amount = 0;
+            $this->total = 0;
+
+            return;
+        }
+
         $baseTotal = $this->quantity * $this->unit_price;
 
         // Abzug lines are already negative; a line discount on top would

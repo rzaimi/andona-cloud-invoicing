@@ -32,5 +32,6 @@ return [
         'VE',      // Verpackungseinheit
         'Pauschal',
         'RP',      // Rechenposten
+        'EP',      // Einheitspreis — Alternativposition, zählt nicht zur Summe
     ],
 ];

@@ -19,7 +19,7 @@ import axios from "axios"
 import AppLayout from "@/layouts/app-layout"
 import { AbschlagSelectionDialog } from "@/components/abschlag-selection-dialog"
 import type { AbschlagRef, SelectableAbschlag } from "@/components/abschlag-selection-dialog"
-import { useUnits } from "@/hooks/use-units"
+import { isAlternativeUnit, useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer, Invoice, InvoiceItem, PageProps } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { GaebImportButton, gaebLineItems } from "@/components/gaeb-import-button"
@@ -185,7 +185,7 @@ export default function InvoicesEdit() {
     useEffect(() => {
         // Calculate each item's total with discount
         const itemsWithTotals = (data.items as any[]).map((item: any) => {
-            const baseTotal = item.quantity * item.unit_price
+            const baseTotal = isAlternativeUnit(item.unit) ? 0 : item.quantity * item.unit_price
             const isAbzug = Number(item.unit_price) < 0
             let discountAmount = 0
             if (!isAbzug && item.discount_type && item.discount_value !== null) {
@@ -272,13 +272,13 @@ export default function InvoicesEdit() {
             if (item.id === id) {
                 const updatedItem = { ...item, [field]: value }
                 // Recalculate total when quantity, unit_price, or discount changes
-                if (field === "quantity" || field === "unit_price" || field === "discount_type" || field === "discount_value") {
-                    if (field === "unit_price" && Number(updatedItem.unit_price) < 0) {
+                if (field === "quantity" || field === "unit_price" || field === "unit" || field === "discount_type" || field === "discount_value") {
+                    if (isAlternativeUnit(updatedItem.unit) || (field === "unit_price" && Number(updatedItem.unit_price) < 0)) {
                         updatedItem.discount_type = null
                         updatedItem.discount_value = null
                     }
                     const isAbzug = Number(updatedItem.unit_price) < 0
-                    const baseTotal = Number(updatedItem.quantity) * Number(updatedItem.unit_price)
+                    const baseTotal = isAlternativeUnit(updatedItem.unit) ? 0 : Number(updatedItem.quantity) * Number(updatedItem.unit_price)
                     let discountAmount = 0
                     if (!isAbzug && updatedItem.discount_type && updatedItem.discount_value !== null) {
                         if (updatedItem.discount_type === 'percentage') {
@@ -837,7 +837,7 @@ export default function InvoicesEdit() {
                                             updatedItems[existingItemIndex] = {
                                                 ...existingItem,
                                                 quantity: existingItem.quantity + item.quantity,
-                                                total: (existingItem.quantity + item.quantity) * existingItem.unit_price,
+                                                total: isAlternativeUnit(existingItem.unit) ? 0 : (existingItem.quantity + item.quantity) * existingItem.unit_price,
                                             }
                                             setData("items", updatedItems)
                                         } else {
@@ -852,7 +852,7 @@ export default function InvoicesEdit() {
                                                 unit_price: item.unit_price,
                                                 unit: item.unit,
                                                 tax_rate: item.tax_rate || settings.tax_rate || 0.19,
-                                                total: item.quantity * item.unit_price,
+                                                total: isAlternativeUnit(item.unit) ? 0 : item.quantity * item.unit_price,
                                                 discount_type: null,
                                                 discount_value: null,
                                                 discount_amount: 0,

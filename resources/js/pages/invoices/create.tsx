@@ -16,7 +16,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from "@dnd-kit/utilities"
 import axios from "axios"
 import AppLayout from "@/layouts/app-layout"
-import { useUnits } from "@/hooks/use-units"
+import { isAlternativeUnit, useUnits } from "@/hooks/use-units"
 import type { BreadcrumbItem, Customer, PageProps } from "@/types"
 import { ProductSelectorDialog } from "@/components/product-selector-dialog"
 import { GaebImportButton, gaebLineItems } from "@/components/gaeb-import-button"
@@ -168,7 +168,7 @@ export default function InvoicesCreate() {
     useEffect(() => {
         // Calculate each item's total with discount
         const itemsWithTotals = (data.items as InvoiceItem[]).map((item: InvoiceItem) => {
-            const baseTotal = item.quantity * item.unit_price
+            const baseTotal = isAlternativeUnit(item.unit) ? 0 : item.quantity * item.unit_price
             const isAbzug = Number(item.unit_price) < 0
             let discountAmount = 0
             if (!isAbzug && item.discount_type && item.discount_value !== null) {
@@ -254,13 +254,13 @@ export default function InvoicesCreate() {
             if (item.id === id) {
                 const updatedItem = { ...item, [field]: value }
                 // Recalculate total when quantity, unit_price, or discount changes
-                if (field === "quantity" || field === "unit_price" || field === "discount_type" || field === "discount_value") {
-                    if (field === "unit_price" && Number(updatedItem.unit_price) < 0) {
+                if (field === "quantity" || field === "unit_price" || field === "unit" || field === "discount_type" || field === "discount_value") {
+                    if (isAlternativeUnit(updatedItem.unit) || (field === "unit_price" && Number(updatedItem.unit_price) < 0)) {
                         updatedItem.discount_type = null
                         updatedItem.discount_value = null
                     }
                     const isAbzug = Number(updatedItem.unit_price) < 0
-                    const baseTotal = Number(updatedItem.quantity) * Number(updatedItem.unit_price)
+                    const baseTotal = isAlternativeUnit(updatedItem.unit) ? 0 : Number(updatedItem.quantity) * Number(updatedItem.unit_price)
                     let discountAmount = 0
                     if (!isAbzug && updatedItem.discount_type && updatedItem.discount_value !== null) {
                         const dv = typeof updatedItem.discount_value === "number" ? updatedItem.discount_value : 0
@@ -690,7 +690,7 @@ export default function InvoicesCreate() {
                                         updatedItems[existingItemIndex] = {
                                             ...existingItem,
                                             quantity: existingItem.quantity + item.quantity,
-                                            total: (existingItem.quantity + item.quantity) * existingItem.unit_price,
+                                            total: isAlternativeUnit(existingItem.unit) ? 0 : (existingItem.quantity + item.quantity) * existingItem.unit_price,
                                         }
                                         setData("items", updatedItems)
                                     } else {
@@ -705,7 +705,7 @@ export default function InvoicesCreate() {
                                             unit_price: item.unit_price,
                                             unit: item.unit,
                                             tax_rate: item.tax_rate || settings.tax_rate || 0.19,
-                                            total: item.quantity * item.unit_price,
+                                            total: isAlternativeUnit(item.unit) ? 0 : item.quantity * item.unit_price,
                                             discount_type: null,
                                             discount_value: null,
                                             discount_amount: 0,

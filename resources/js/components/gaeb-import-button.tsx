@@ -1,4 +1,5 @@
 import { Fragment, useRef, useState } from "react"
+import { isAlternativeUnit } from "@/hooks/use-units"
 import { usePage } from "@inertiajs/react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -32,7 +33,7 @@ export function gaebLineItems(positions: GaebPosition[], taxRate: number) {
         unit_price: position.unit_price,
         unit: position.unit,
         tax_rate: taxRate,
-        total: position.quantity * position.unit_price,
+        total: isAlternativeUnit(position.unit) ? 0 : position.quantity * position.unit_price,
         discount_type: null as null,
         discount_value: null as null,
         discount_amount: 0,

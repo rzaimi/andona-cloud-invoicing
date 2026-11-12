@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Trash2 } from "lucide-react"
 import type { Customer } from "@/types"
+import { isAlternativeUnit } from "@/hooks/use-units"
 
 export interface RecurringFormItem {
     id?: string
@@ -138,7 +139,7 @@ export function RecurringProfileForm({
         data.items.forEach((it) => {
             const q = Number(it.quantity) || 0
             const p = Number(it.unit_price) || 0
-            let line = q * p
+            let line = isAlternativeUnit(it.unit) ? 0 : q * p
             if (it.discount_type === "percentage" && it.discount_value) {
                 line -= line * (Number(it.discount_value) / 100)
             } else if (it.discount_type === "fixed" && it.discount_value) {

@@ -10,8 +10,13 @@ const FALLBACK_UNITS = [
     "Stk.", "Std.", "Tag", "Woche", "Monat", "Jahr",
     "m", "lfm", "m²", "m³", "kg", "g", "t", "l", "ml",
     "Paket", "Set", "Palette", "Rolle", "VE",
-    "Pauschal", "RP",
+    "Pauschal", "RP", "EP",
 ]
+
+/** EP (Einheitspreis) is an alternative line and is excluded from the sum. */
+export function isAlternativeUnit(unit: string | null | undefined): boolean {
+    return (unit ?? "").trim().toUpperCase() === "EP"
+}
 
 export function useUnits(): string[] {
     const { props } = usePage<any>()

@@ -222,6 +222,13 @@ class ERechnungService
         $position = 0;
 
         foreach ($invoice->items as $index => $item) {
+            // Alternative lines (unit EP) are shown on the PDF with a total of 0.
+            // They are not part of the charged amount, so they stay out of the
+            // e-invoice. A non-zero price with a zero line sum would fail EN 16931.
+            if (strcasecmp(trim((string) ($item->unit ?? '')), 'EP') === 0) {
+                continue;
+            }
+
             $itemNet = (float) ($item->total ?? ($item->quantity * $item->unit_price));
             $isAbzug = (float) $item->unit_price < 0 || $itemNet < 0;
 
